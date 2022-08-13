@@ -765,6 +765,7 @@ int32_t AudioStream::GetBufferDesc(BufferDesc &bufDesc)
         if (!freeBufferQ_.empty()) {
             bufDesc.buffer = freeBufferQ_.front().buffer;
             bufDesc.bufLength = freeBufferQ_.front().bufLength;
+            bufDesc.dataLength = freeBufferQ_.front().dataLength;
             freeBufferQ_.pop();
         } else {
             bufDesc.buffer = nullptr;
@@ -863,7 +864,7 @@ void AudioStream::WriteBuffers()
             }
             AUDIO_DEBUG_LOG("AudioStream::WriteBuffers !filledBufferQ_.empty()");
             stream.buffer = filledBufferQ_.front().buffer;
-            stream.bufferLen = filledBufferQ_.front().dataLength;
+            stream.bufferLen = filledBufferQ_.front().bufLength;
             AUDIO_DEBUG_LOG("AudioStream::WriteBuffers stream.bufferLen:%{public}d", stream.bufferLen);
             if (stream.buffer == nullptr) {
                 AUDIO_ERR_LOG("AudioStream::WriteBuffers stream.buffer == nullptr return");
