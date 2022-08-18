@@ -73,24 +73,29 @@ SLresult AudioPlayerAdapter::SetPlayStateAdapter(SLuint32 id, SLuint32 state)
 {
     AudioRenderer* pRender = GetAudioRenderById(id);
     SLresult slResult = SL_RESULT_SUCCESS;
-    bool reseult = false;
+    bool result = false;
+    bool rtStop = false;
+    bool rtRelease = false;
+    int32_t rtClear = -1;
     switch (state) {
         case SL_PLAYSTATE_PLAYING:
-            reseult = pRender->Start();
+            result = pRender->Start();
             break;
         case SL_PLAYSTATE_PAUSED:
-            reseult = pRender->Pause();
+            result = pRender->Pause();
             break;
         case SL_PLAYSTATE_STOPPED: {
-            reseult = pRender->Clear();
-            reseult = reseult && pRender->Stop();
-            reseult = reseult && pRender->Release();
+            rtStop = pRender->Stop();
+            rtClear = pRender->Clear();
+            rtRelease = pRender->Release();
+            result = rtStop && !rtClear && rtRelease;
             break;
         }
         default:
             AUDIO_ERR_LOG("AudioPlayerAdapter::play state not supported ");
             break;
     }
+    slResult = result ? SL_RESULT_SUCCESS : SL_RESULT_RESOURCE_ERROR;
     return slResult;
 }
 
