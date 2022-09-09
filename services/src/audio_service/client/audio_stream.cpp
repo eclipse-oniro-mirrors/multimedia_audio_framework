@@ -764,8 +764,6 @@ int32_t AudioStream::GetBufferDesc(BufferDesc &bufDesc)
         return ERR_INCORRECT_MODE;
     }
 
-    lock_guard<mutex> lock(mBufferQueueLock);
-
     if (renderMode_ == RENDER_MODE_CALLBACK) {
         if (!freeBufferQ_.empty()) {
             bufDesc.buffer = freeBufferQ_.front().buffer;
@@ -800,8 +798,6 @@ int32_t AudioStream::GetBufQueueState(BufferQueueState &bufState)
         return ERR_INCORRECT_MODE;
     }
 
-    lock_guard<mutex> lock(mBufferQueueLock);
-
     if (renderMode_ == RENDER_MODE_CALLBACK) {
         bufState.numBuffers = filledBufferQ_.size();
     }
@@ -825,8 +821,6 @@ int32_t AudioStream::Enqueue(const BufferDesc &bufDesc)
         AUDIO_ERR_LOG("AudioStream::Enqueue: failed. bufDesc.buffer == nullptr.");
         return ERR_INVALID_PARAM;
     }
-
-    lock_guard<mutex> lock(mBufferQueueLock);
 
     if (renderMode_ == RENDER_MODE_CALLBACK) {
         AUDIO_DEBUG_LOG("AudioStream::Enqueue: filledBuffer length: %{public}zu.", bufDesc.bufLength);
