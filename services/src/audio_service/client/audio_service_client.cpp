@@ -320,7 +320,6 @@ int32_t AudioServiceClient::SaveReadCallback(const std::weak_ptr<AudioCapturerRe
 
 void AudioServiceClient::PAStreamWriteCb(pa_stream *stream, size_t length, void *userdata)
 {
-    AUDIO_DEBUG_LOG("AudioServiceClient::Inside PA write callback");
     if (!userdata) {
         AUDIO_ERR_LOG("AudioServiceClient::PAStreamWriteCb: userdata is null");
         return;
@@ -329,21 +328,6 @@ void AudioServiceClient::PAStreamWriteCb(pa_stream *stream, size_t length, void 
     auto asClient = static_cast<AudioServiceClient *>(userdata);
     auto mainLoop = static_cast<pa_threaded_mainloop *>(asClient->mainLoop);
     pa_threaded_mainloop_signal(mainLoop, 0);
-
-    if (asClient->renderMode_ != RENDER_MODE_CALLBACK) {
-        return;
-    }
-
-    std::shared_ptr<AudioRendererWriteCallback> cb = asClient->writeCallback_.lock();
-    if (cb != nullptr) {
-        size_t requestSize;
-        asClient->GetMinimumBufferSize(requestSize);
-        AUDIO_INFO_LOG("AudioServiceClient::PAStreamWriteCb: cb != nullptr firing OnWriteData");
-        AUDIO_INFO_LOG("AudioServiceClient::OnWriteData requestSize : %{public}zu", requestSize);
-        cb->OnWriteData(requestSize);
-    } else {
-        AUDIO_ERR_LOG("AudioServiceClient::PAStreamWriteCb: cb == nullptr not firing OnWriteData");
-    }
 }
 
 void AudioServiceClient::PAStreamReadCb(pa_stream *stream, size_t length, void *userdata)
