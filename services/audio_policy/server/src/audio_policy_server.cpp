@@ -1224,24 +1224,6 @@ bool AudioPolicyServer::VerifyClientPermission(const std::string &permissionName
         return false;
     }
 
-    if (privacyFlag) {
-        if (state == AUDIO_PERMISSION_START) {
-            if (PrivacyKit::IsAllowedUsingPermission(clientTokenId, MICROPHONE_PERMISSION)) {
-                res = PrivacyKit::StartUsingPermission(clientTokenId, MICROPHONE_PERMISSION);
-                if (res != 0) {
-                    AUDIO_ERR_LOG("start using perm error for client %{public}d", clientTokenId);
-                }
-            } else {
-                AUDIO_ERR_LOG("app background, not allow using perm for client %{public}d", clientTokenId);
-            }
-        } else {
-            res = PrivacyKit::StopUsingPermission(clientTokenId, MICROPHONE_PERMISSION);
-            if (res != 0) {
-                AUDIO_ERR_LOG("stop using perm error for client %{public}d", clientTokenId);
-            }
-        }
-    }
-
     return true;
 }
 
