@@ -143,6 +143,8 @@ ohos_shared_library("audio_policy_service") {
     "//foundation/distributeddatamgr/datamgr_service/services/distributeddataservice/adapter:distributeddata_adapter",
     "//foundation/distributeddatamgr/kv_store/interfaces/innerkits/distributeddata:distributeddata_inner",
     "//foundation/multimedia/audio_framework/frameworks/native/audioadapter:pulse_audio_service_adapter",
+    "//foundation/multimedia/audio_framework/services/audio_policy:audio_config.para",
+    "//foundation/multimedia/audio_framework/services/audio_policy:audio_config.para.dac",
     "//foundation/multimedia/audio_framework/services/audio_policy:audio_dump",
     "//foundation/multimedia/audio_framework/services/audio_service:audio_client",
     "//third_party/libxml2:xml2",
@@ -180,6 +182,18 @@ ohos_prebuilt_etc("audio_interrupt_policy_config") {
   relative_install_dir = "audio"
   install_images = [ chipset_base_dir ]
   part_name = "multimedia_audio_framework"
+}
+
+ohos_prebuilt_etc("audio_config.para") {
+  source = "//foundation/multimedia/audio_framework/services/audio_policy/etc/audio_config.para"
+  part_name = "multimedia_audio_framework"
+  module_install_dir = "etc/param"
+}
+
+ohos_prebuilt_etc("audio_config.para.dac") {
+  source = "//foundation/multimedia/audio_framework/services/audio_policy/etc/audio_config.para.dac"
+  part_name = "multimedia_audio_framework"
+  module_install_dir = "etc/param"
 }
 
 config("audio_policy_client_config") {
