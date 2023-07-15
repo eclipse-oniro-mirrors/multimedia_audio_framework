@@ -89,6 +89,7 @@ public:
     AudioEffectMode GetAudioEffectMode() const override;
     int64_t GetFramesWritten() const override;
     int32_t SetAudioEffectMode(AudioEffectMode effectMode) const override;
+    bool SwitchStream(DeviceType deviceType);
 
     AudioPrivacyType privacyType_ = PRIVACY_TYPE_PUBLIC;
     AudioRendererInfo rendererInfo_ = {CONTENT_TYPE_MUSIC, STREAM_USAGE_MEDIA, 0};
@@ -112,6 +113,8 @@ private:
 #endif
     std::shared_ptr<AudioRendererStateChangeCallbackImpl> audioDeviceChangeCallback_ = nullptr;
     DeviceInfo currentDeviceInfo = {};
+    bool isFastRenderer_ = false;
+    void SetSelfRendererStateCallback();
 };
 
 class AudioRendererInterruptCallbackImpl : public AudioInterruptCallback {

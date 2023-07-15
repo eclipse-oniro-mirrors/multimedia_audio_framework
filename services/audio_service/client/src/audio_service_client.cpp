@@ -1654,6 +1654,46 @@ void AudioServiceClient::SetClientID(int32_t clientPid, int32_t clientUid)
     clientUid_ = clientUid;
 }
 
+IAudioStream::StreamClass AudioServiceClient::GetStreamClass()
+{
+    return streamClass_;
+}
+
+void AudioServiceClient::GetSwitchInfo(SwitchInfo& info)
+{
+//    GetAudioStreamParams(info.params);
+//    info.eStreamType = eStreamType_;
+//    info.state = state_;
+//    info.sessionId = sessionId_;
+//    info.cachePath = cachePath_;
+//    info.rendererSampleRate = rendererSampleRate;
+//    info.underFlowCount = underFlowCount;
+//    info.effectMode = effectMode;
+//    info.renderMode = renderMode_;
+//    info.captureMode = captureMode_;
+//    info.renderRate = renderRate;
+//    info.clientPid = clientPid_;
+//    info.clientUid = clientUid_;
+}
+
+void AudioServiceClient::SetSwitchInfo(SwitchInfo info)
+{
+    // we set params according by setparams
+    // SetAudioStreamInfo(info.params, nullptr);
+//    eStreamType = info.eStreamType;
+//    state = info.state;
+//    sessionID = info.sessionId;
+//    cachePath = info.cachePath;
+//    rendererSampleRat = info.rendererSampleRate;
+//    underFlowCoun = info.underFlowCount;
+//    effectMod = info.effectMode;
+//    renderMode = info.renderMode;
+//    captureMode = info.captureMode;
+//    renderRat = info.renderRate;
+//    clientPid = info.clientPid;
+//    clientUid = info.clientUid;
+}
+
 void AudioServiceClient::HandleCapturePositionCallbacks(size_t bytesRead)
 {
     mTotalBytesRead += bytesRead;

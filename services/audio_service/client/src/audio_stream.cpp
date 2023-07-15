@@ -94,7 +94,7 @@ State AudioStream::GetState()
     return state_;
 }
 
-int32_t AudioStream::GetAudioSessionID(uint32_t &sessionID)
+int32_t AudioStream::GetAudioSessionID(uint32_t & sessionID)
 {
     if ((state_ == RELEASED) || (state_ == NEW)) {
         return ERR_ILLEGAL_STATE;
@@ -929,6 +929,61 @@ int64_t AudioStream::GetFramesWritten()
 int64_t AudioStream::GetFramesRead()
 {
     return GetStreamFramesRead();
+}
+
+void AudioStream::GetSwitchInfo(SwitchInfo& info)
+{
+    GetAudioStreamParams(info.params);
+
+    info.rendererInfo = rendererInfo_;
+    info.capturerInfo = capturerInfo_;
+    info.eStreamType = eStreamType_;
+    info.state = state_;
+    info.sessionId = sessionId_;
+    // info.cachePath = cachePath_;
+    // info.rendererSampleRate = rendererSampleRate;
+    // info.underFlowCount = underFlowCount;
+    // info.effectMode = effectMode;
+    // info.renderMode = renderMode_;
+    // info.captureMode = captureMode_;
+    // info.renderRate = renderRate;
+    // info.clientPid = clientPid_;
+    //info.clientUid = clientUid_;
+
+    // info.frameMarkPosition = mFrameMarkPosition;
+
+    // info.renderPositionCb = mRenderPositionCb;
+}
+
+void AudioStream::SetSwitchInfo(SwitchInfo info)
+{
+    SetApplicationCachePath(info.cachePath);
+    SetRendererInfo(info.rendererInfo);
+    SetRendererInfo(info.rendererInfo);
+    SetClientID(info.clientPid, info.clientUid);
+    SetAudioStreamInfo(info.params, info.proxyObj);
+    SetAudioEffectMode(info.effectMode);
+    SetPrivacyType(info.privacyType);
+    SetVolume(info.volume);
+
+    // set callback
+    if ((info.renderPositionCb != nullptr) && (info.frameMarkPosition > 0)) {
+        SetRendererPositionCallback(info.frameMarkPosition, info.renderPositionCb);
+    }
+
+    if ((info.capturePositionCb != nullptr) && (info.frameMarkPosition > 0)) {
+        SetCapturerPositionCallback(info.frameMarkPosition, info.capturePositionCb);
+    }
+
+    if ((info.renderPeriodPositionCb != nullptr) && (info.framePeriodNumber > 0)) {
+        SetRendererPeriodPositionCallback(info.framePeriodNumber, info.renderPeriodPositionCb);
+    }
+
+    if ((info.capturePeriodPositionCb != nullptr) && (info.framePeriodNumber > 0)) {
+        SetCapturerPeriodPositionCallback(info.framePeriodNumber, info.capturePeriodPositionCb);
+    }
+    SetStreamCallback(info.audioStreamCallback);
+    SetRendererWriteCallback(info.rendererWriteCallback);
 }
 } // namespace AudioStandard
 } // namespace OHOS

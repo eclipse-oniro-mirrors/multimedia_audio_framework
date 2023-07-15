@@ -517,6 +517,21 @@ void FastAudioStream::SetPrivacyType(AudioPrivacyType privacyType)
     AUDIO_DEBUG_LOG("SetPrivacyType in");
 }
 
+
+IAudioStream::StreamClass FastAudioStream::GetStreamClass()
+{
+    return IAudioStream::StreamClass::PA_STREAM;
+}
+
+void FastAudioStream::GetSwitchInfo(IAudioStream::SwitchInfo& info)
+{
+
+}
+void FastAudioStream::SetSwitchInfo(IAudioStream::SwitchInfo info)
+{
+
+}
+
 void FastAudioStreamCallback::OnHandleData(size_t length)
 {
     CHECK_AND_RETURN_LOG(renderCallback_!= nullptr, "%{public}s renderCallback_ is null.", __func__);

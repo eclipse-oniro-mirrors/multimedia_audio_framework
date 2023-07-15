@@ -94,6 +94,9 @@ public:
     // Recording related APIs
     int32_t Read(uint8_t &buffer, size_t userSize, bool isBlockingRead) override;
 
+    void GetSwitchInfo(SwitchInfo& info) override;
+    void SetSwitchInfo(SwitchInfo info) override;
+
 private:
     AudioStreamType eStreamType_;
     AudioMode eMode_;

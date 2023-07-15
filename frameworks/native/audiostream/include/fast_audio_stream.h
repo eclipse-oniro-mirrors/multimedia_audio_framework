@@ -126,6 +126,11 @@ public:
     int32_t SetBufferSizeInMsec(int32_t bufferSizeInMsec) override;
     void SetApplicationCachePath(const std::string cachePath) override;
 
+    void GetSwitchInfo(IAudioStream::SwitchInfo& info) override;
+    void SetSwitchInfo(IAudioStream::SwitchInfo info) override;
+
+    IAudioStream::StreamClass GetStreamClass() override;
+
 private:
     AudioStreamType eStreamType_;
     AudioMode eMode_;
