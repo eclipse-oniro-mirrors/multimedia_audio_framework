@@ -410,9 +410,7 @@ private:
 
     void UpdateInputDeviceInfo(DeviceType deviceType);
 
-    void UpdateStreamChangeDeviceInfoForPlayback(AudioStreamChangeInfo &streamChangeInfo);
-
-    void UpdateStreamChangeDeviceInfoForRecord(AudioStreamChangeInfo &streamChangeInfo);
+    void UpdateStreamChangeDeviceInfo(AudioMode &mode, AudioStreamChangeInfo &streamChangeInfo);
 
     void UpdateTrackerDeviceChange(const vector<sptr<AudioDeviceDescriptor>> &desc);
 
