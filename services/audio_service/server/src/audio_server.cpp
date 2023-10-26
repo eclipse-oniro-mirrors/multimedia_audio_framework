@@ -26,6 +26,7 @@
 #include "system_ability_definition.h"
 
 #include "audio_capturer_source.h"
+#include "remote_audio_capturer_source.h"
 #include "audio_errors.h"
 #include "audio_log.h"
 #include "audio_manager_listener_proxy.h"
@@ -364,12 +365,25 @@ int32_t AudioServer::SetMicrophoneMute(bool isMute)
         AUDIO_ERR_LOG("SetMicrophoneMute refused for %{public}d", callingUid);
         return ERR_PERMISSION_DENIED;
     }
+
+    RemoteAudioCapturerSource *remoteAudioCapturerSourceInstance =
+        RemoteAudioCapturerSource::GetInstance(REMOTE_NETWORK_ID);
+
+    if (remoteAudioCapturerSourceInstance) {
+        if (remoteAudioCapturerSourceInstance->IsInited()) {
+            return remoteAudioCapturerSourceInstance->SetMute(isMute);
+        } else {
+            AUDIO_INFO_LOG("Remote capturer is not initalized. Set the flag mute state flag");
+            return 0;
+        }
+    }
+
     AudioCapturerSource *audioCapturerSourceInstance = AudioCapturerSource::GetInstance();
 
     if (!audioCapturerSourceInstance->IsInited()) {
-            AUDIO_INFO_LOG("Capturer is not initialized. Set the flag mute state flag");
-            AudioCapturerSource::micMuteState_ = isMute;
-            return 0;
+        AUDIO_INFO_LOG("Capturer is not initialized. Set the flag mute state flag");
+        AudioCapturerSource::micMuteState_ = isMute;
+        return 0;
     }
 
     return audioCapturerSourceInstance->SetMute(isMute);
