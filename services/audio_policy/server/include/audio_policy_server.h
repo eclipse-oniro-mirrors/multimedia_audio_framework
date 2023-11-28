@@ -433,8 +433,6 @@ private:
     void GetPolicyData(PolicyData &policyData);
     void GetDeviceInfo(PolicyData &policyData);
     void GetGroupInfo(PolicyData &policyData);
-    
-    int32_t OffloadStopPlaying(const AudioInterrupt &audioInterrupt);
 
     // externel function call
 #ifdef FEATURE_MULTIMODALINPUT_INPUT
