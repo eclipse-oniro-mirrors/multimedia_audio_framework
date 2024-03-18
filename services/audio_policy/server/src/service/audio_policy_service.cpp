@@ -185,9 +185,8 @@ bool AudioPolicyService::Init(void)
     audioDeviceManager_.ParseDeviceXml();
     audioPnpServer_.init();
 
-    CHECK_AND_RETURN_RET_LOG(audioPolicyConfigParser_.LoadConfiguration(), false,
-        "Audio Policy Config Load Configuration failed");
-    CHECK_AND_RETURN_RET_LOG(audioPolicyConfigParser_.Parse(), false, "Audio Config Parse failed");
+    CHECK_AND_RETURN_RET_LOG(configParser_.LoadConfiguration(), false, "Audio Config Load Configuration failed");
+    CHECK_AND_RETURN_RET_LOG(configParser_.Parse(), false, "Audio Config Parse failed");
     MaxRenderInstanceInit();
 
 #ifdef FEATURE_DTMF_TONE
@@ -507,7 +506,7 @@ void AudioPolicyService::OffloadStreamSetCheck(uint32_t sessionId)
         AUDIO_DEBUG_LOG("StreamType not allowed get offload mode, Skipped");
         return;
     }
-
+    
     int32_t channelCount = GetChannelCount(sessionId);
     if ((channelCount != AudioChannel::MONO) && (channelCount != AudioChannel::STEREO)) {
         AUDIO_DEBUG_LOG("ChannelNum not allowed get offload mode, Skipped");
@@ -3674,28 +3673,6 @@ void AudioPolicyService::AddAudioDevice(AudioModuleInfo& moduleInfo, InternalDev
     AddMicrophoneDescriptor(audioDescriptor);
 }
 
-void AudioPolicyService::OnAudioPolicyXmlParsingCompleted(
-    const std::map<AdaptersType, AudioAdapterInfo> adapterInfoMap)
-{
-    AUDIO_INFO_LOG("adapterInfo num [%{public}zu]", adapterInfoMap.size());
-    CHECK_AND_RETURN_LOG(!adapterInfoMap.empty(), "failed to parse audiopolicy xml file. Received data is empty");
-    adapterInfoMap_ = adapterInfoMap;
-
-    for (auto &adapterInfo : adapterInfoMap_) {
-        for (auto &deviceInfos : (adapterInfo.second).deviceInfos_) {
-            if (deviceInfos.name_ == ADAPTER_DEVICE_PRIMARY_EARPIECE) {
-                hasEarpiece_ = true;
-                break;
-            }
-        }
-        if (hasEarpiece_) {
-            break;
-        }
-    }
-
-    audioDeviceManager_.UpdateEarpieceStatus(hasEarpiece_);
-}
-
 // Parser callbacks
 void AudioPolicyService::OnXmlParsingCompleted(const std::unordered_map<ClassType, std::list<AudioModuleInfo>> &xmlData)
 {
@@ -3719,21 +3696,6 @@ void AudioPolicyService::OnInterruptGroupParsed(std::unordered_map<std::string, 
     CHECK_AND_RETURN_LOG(!interruptGroupData.empty(), "failed to parse xml file. Received data is empty");
 
     interruptGroupData_ = interruptGroupData;
-}
-
-void AudioPolicyService::GetAudioAdapterInfos(std::map<AdaptersType, AudioAdapterInfo> &adapterInfoMap)
-{
-    adapterInfoMap = adapterInfoMap_;
-}
-
-void AudioPolicyService::GetVolumeGroupData(std::unordered_map<std::string, std::string>& volumeGroupData)
-{
-    volumeGroupData = volumeGroupData_;
-}
-
-void AudioPolicyService::GetInterruptGroupData(std::unordered_map<std::string, std::string>& interruptGroupData)
-{
-    interruptGroupData = interruptGroupData_;
 }
 
 void AudioPolicyService::AddAudioPolicyClientProxyMap(int32_t clientPid, const sptr<IAudioPolicyClient>& cb)
@@ -5097,15 +5059,10 @@ int32_t AudioPolicyService::OnCapturerSessionAdded(uint64_t sessionID, SessionIn
         std::lock_guard<std::mutex> lck(ioHandlesMutex_);
         if (!isSourceLoaded) {
             auto moduleInfo = primaryMicModuleInfo_;
-            for (const auto&[adapterType, audioAdapterInfo] : adapterInfoMap_) {
-                CHECK_AND_CONTINUE_LOG(moduleInfo.className == audioAdapterInfo.adapterName_,
-                    "module class name unmatch.");
-                RectifyModuleInfo(moduleInfo, audioAdapterInfo, targetInfo);
-                break;
-            }
-            AUDIO_INFO_LOG("rate:%{public}s, channels:%{public}s, bufferSize:%{public}s",
-                moduleInfo.rate.c_str(), moduleInfo.channels.c_str(), moduleInfo.bufferSize.c_str());
-
+            auto [targetSourceType, targetRate, targetChannels] = targetInfo;
+            moduleInfo.rate = std::to_string(targetRate);
+            moduleInfo.channels = std::to_string(targetChannels);
+            moduleInfo.sourceType = std::to_string(targetSourceType);
             AudioIOHandle ioHandle = audioPolicyManager_.OpenAudioPort(moduleInfo);
             CHECK_AND_RETURN_RET_LOG(ioHandle != OPEN_PORT_FAILURE, ERROR,
                 "CapturerSessionAdded: OpenAudioPort failed %{public}d", ioHandle);
@@ -5113,6 +5070,9 @@ int32_t AudioPolicyService::OnCapturerSessionAdded(uint64_t sessionID, SessionIn
             IOHandles_[PRIMARY_MIC] = ioHandle;
             audioPolicyManager_.SetDeviceActive(ioHandle, currentActiveInputDevice_.deviceType_,
                 moduleInfo.name, true);
+
+            currentRate = targetRate;
+            currentSourceType = targetSourceType;
         }
         sessionWithNormalSourceType_[sessionID] = sessionInfo;
     } else {
@@ -5120,29 +5080,6 @@ int32_t AudioPolicyService::OnCapturerSessionAdded(uint64_t sessionID, SessionIn
     }
     AUDIO_INFO_LOG("sessionID: %{public}" PRIu64 " OnCapturerSessionAdded end", sessionID);
     return SUCCESS;
-}
-
-void AudioPolicyService::RectifyModuleInfo(AudioModuleInfo moduleInfo, AudioAdapterInfo audioAdapterInfo,
-    SourceInfo targetInfo)
-{
-    auto [targetSourceType, targetRate, targetChannels] = targetInfo;
-    for (auto &adapterModuleInfo : audioAdapterInfo.moduleInfos_) {
-        if (moduleInfo.role == adapterModuleInfo.moduleType_ &&
-            adapterModuleInfo.name_.find(MODULE_SINK_OFFLOAD) == std::string::npos) {
-            for (const auto&[rate, channels, format, bufferSize] : adapterModuleInfo.profileInfos_) {
-                CHECK_AND_CONTINUE_LOG(rate == std::to_string(targetRate), "audio rate unmatch.");
-                CHECK_AND_CONTINUE_LOG(channels == std::to_string(targetChannels), "audio channels unmatch.");
-                moduleInfo.rate = std::to_string(targetRate);
-                moduleInfo.channels = std::to_string(targetChannels);
-                moduleInfo.bufferSize = bufferSize;
-                AUDIO_INFO_LOG("match success. rate:%{public}s, channels:%{public}s, bufferSize:%{public}s",
-                    moduleInfo.rate.c_str(), moduleInfo.channels.c_str(), moduleInfo.bufferSize.c_str());
-            }
-        }
-    }
-    moduleInfo.sourceType = std::to_string(targetSourceType);
-    currentRate = targetRate;
-    currentSourceType = targetSourceType;
 }
 
 std::vector<sptr<AudioDeviceDescriptor>> AudioPolicyService::DeviceFilterByUsage(AudioDeviceUsage usage,

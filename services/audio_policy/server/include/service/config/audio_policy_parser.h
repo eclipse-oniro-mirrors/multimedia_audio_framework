@@ -81,7 +81,8 @@ private:
         std::unordered_map<std::string, std::string> &interruptGroupMap, ModuleInfo &moduleInfo);
     void GetCommontAudioModuleInfo(ModuleInfo &moduleInfo, AudioModuleInfo &audioModuleInfo);
     ClassType GetClassTypeByAdapterType(AdaptersType adapterType);
-    void GetOffloadAndOpenMicState(AudioAdapterInfo &adapterInfo, bool &shouldEnableOffload);
+    void GetOffloadAndOpenMicState(AudioAdapterInfo &adapterInfo, bool &shouldEnableOffload,
+        bool &shouldOpenMicSpeaker);
     std::string ExtractPropertyValue(const std::string &propName, xmlNode &node);
 
     IPortObserver &portObserver_;
