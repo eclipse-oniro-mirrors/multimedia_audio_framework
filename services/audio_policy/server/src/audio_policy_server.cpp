@@ -1357,9 +1357,6 @@ void AudioPolicyServer::GetPolicyData(PolicyData &policyData)
     policyData.availableMicrophones = GetAvailableMicrophones();
     // Get Audio Effect Manager Information
     audioPolicyService_.GetEffectManagerInfo(policyData.oriEffectConfig, policyData.availableEffects);
-    audioPolicyService_.GetAudioAdapterInfos(policyData.adapterInfoMap);
-    audioPolicyService_.GetVolumeGroupData(policyData.volumeGroupData);
-    audioPolicyService_.GetInterruptGroupData(policyData.interruptGroupData);
 }
 
 void AudioPolicyServer::GetStreamVolumeInfoMap(StreamVolumeInfoMap& streamVolumeInfos)

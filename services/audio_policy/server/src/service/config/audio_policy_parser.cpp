@@ -138,11 +138,11 @@ void AudioPolicyParser::GetCommontAudioModuleInfo(ModuleInfo &moduleInfo, AudioM
     }
 
     audioModuleInfo.lib = moduleInfo.lib_;
-    if (moduleInfo.profileInfos_.begin() != moduleInfo.profileInfos_.end()) {
-        audioModuleInfo.rate = moduleInfo.profileInfos_.begin()->rate_;
-        audioModuleInfo.format = moduleInfo.profileInfos_.begin()->format_;
-        audioModuleInfo.channels = moduleInfo.profileInfos_.begin()->channels_;
-        audioModuleInfo.bufferSize = moduleInfo.profileInfos_.begin()->bufferSize_;
+    if (moduleInfo.profileInfos_.rbegin() != moduleInfo.profileInfos_.rend()) {
+        audioModuleInfo.rate = moduleInfo.profileInfos_.rbegin()->rate_;
+        audioModuleInfo.format = moduleInfo.profileInfos_.rbegin()->format_;
+        audioModuleInfo.channels = moduleInfo.profileInfos_.rbegin()->channels_;
+        audioModuleInfo.bufferSize = moduleInfo.profileInfos_.rbegin()->bufferSize_;
     }
     audioModuleInfo.fileName = moduleInfo.file_;
     audioModuleInfo.renderInIdleState = moduleInfo.renderInIdleState_;
@@ -166,12 +166,13 @@ ClassType AudioPolicyParser::GetClassTypeByAdapterType(AdaptersType adapterType)
 }
 
 void AudioPolicyParser::GetOffloadAndOpenMicState(AudioAdapterInfo &adapterInfo,
-    bool &shouldEnableOffload)
+    bool &shouldEnableOffload, bool &shouldOpenMicSpeaker)
 {
     for (auto &moduleInfo : adapterInfo.moduleInfos_) {
         if (moduleInfo.moduleType_ == MODULE_TYPE_SINK &&
             moduleInfo.name_.find(MODULE_SINK_OFFLOAD) != std::string::npos) {
             shouldEnableOffload = true;
+            shouldOpenMicSpeaker = true;
         }
     }
 }
@@ -183,8 +184,9 @@ void AudioPolicyParser::ConvertAdapterInfoToAudioModuleInfo(
     for (auto &[adapterType, adapterInfo] : adapterInfoMap_) {
         std::list<AudioModuleInfo> audioModuleList = {};
         bool shouldEnableOffload = false;
+        bool shouldOpenMicSpeaker = false;
         if (adapterType == AdaptersType::TYPE_PRIMARY) {
-            GetOffloadAndOpenMicState(adapterInfo, shouldEnableOffload);
+            GetOffloadAndOpenMicState(adapterInfo, shouldEnableOffload, shouldOpenMicSpeaker);
         }
 
         for (auto &moduleInfo : adapterInfo.moduleInfos_) {
@@ -202,9 +204,18 @@ void AudioPolicyParser::ConvertAdapterInfoToAudioModuleInfo(
                 audioModuleInfo.className = FILE_CLASS;
             }
 
+            shouldOpenMicSpeaker ? audioModuleInfo.OpenMicSpeaker = "1" : audioModuleInfo.OpenMicSpeaker = "0";
             if (adapterType == AdaptersType::TYPE_PRIMARY &&
                 shouldEnableOffload && moduleInfo.moduleType_ == MODULE_TYPE_SINK) {
                 audioModuleInfo.offloadEnable = "1";
+            }
+            if (adapterType == AdaptersType::TYPE_PRIMARY &&
+                !shouldEnableOffload && moduleInfo.moduleType_ == MODULE_TYPE_SINK) {
+                audioModuleInfo.bufferSize = "4096";
+            }
+            if (adapterType == AdaptersType::TYPE_PRIMARY &&
+                !shouldEnableOffload && moduleInfo.moduleType_ == MODULE_TYPE_SOURCE) {
+                audioModuleInfo.bufferSize = "8192";
             }
             audioModuleList.push_back(audioModuleInfo);
         }
