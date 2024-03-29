@@ -456,21 +456,6 @@ void AudioServiceClient::PAStreamEventCb(pa_stream *stream, const char *event, p
         pa_threaded_mainloop_signal(asClient->mainLoop, 0);
         AUDIO_DEBUG_LOG("receive event signal_mainloop");
     }
-
-    if (!strcmp(event, "state_changed")) {
-        const char *old_state = pa_proplist_gets(pl, "old_state");
-        const char *new_state = pa_proplist_gets(pl, "new_state");
-        AUDIO_INFO_LOG("old state : %{public}s, new state : %{public}s",
-            old_state, new_state);
-        if (asClient != nullptr) {
-            if (!strcmp(old_state, "RUNNING") && !strcmp(new_state, "CORKED")) {
-                asClient->UpdateStreamPosition(UpdatePositionTimeNode::CORKED_NODE);
-            }
-            if (!strcmp(old_state, "CORKED") && !strcmp(new_state, "RUNNING")) {
-                asClient->UpdateStreamPosition(UpdatePositionTimeNode::RUNNING_NODE);
-            }
-        }
-    }
 }
 
 void AudioServiceClient::PAStreamLatencyUpdateCb(pa_stream *stream, void *userdata)
