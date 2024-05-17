@@ -188,6 +188,8 @@ public:
     void HandleRenderMarkReachedEvent(int64_t rendererMarkPosition);
     void HandleRenderPeriodReachedEvent(int64_t rendererPeriodNumber);
 
+    void GetStreamSwitchInfo(SwitchInfo &info);
+
     void OnSpatializationStateChange(const AudioSpatializationState &spatializationState);
     void UpdateLatencyTimestamp(std::string &timestamp, bool isRenderer) override;
 

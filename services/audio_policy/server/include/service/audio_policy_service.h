@@ -787,6 +787,29 @@ private:
 
     int32_t ShowDialog();
 
+    int32_t GetVoipPlaybackDeviceInfo(const AudioProcessConfig &config, DeviceInfo &deviceInfo);
+
+    int32_t GetVoipRecordDeviceInfo(const AudioProcessConfig &config, DeviceInfo &deviceInfo);
+
+    int32_t GetVoipDeviceInfo(const AudioProcessConfig &config, DeviceInfo &deviceInfo, int32_t type,
+        std::vector<sptr<AudioDeviceDescriptor>> &preferredDeviceList);
+
+    int32_t GetPreferredOutputStreamTypeInner(DeviceType deviceType, int32_t flags);
+
+    int32_t GetPreferredInputStreamTypeInner(DeviceType deviceType, int32_t flags);
+
+    bool NotifyRecreateRendererStream(bool isUpdateActiveDevice,
+        const std::unique_ptr<AudioRendererChangeInfo> &rendererChangeInfo);
+
+    void TriggerRecreateRendererStreamCallback(int32_t callerPid, int32_t sessionId, int32_t streamFlag);
+
+    bool NotifyRecreateCapturerStream(bool isUpdateActiveDevice,
+        const std::unique_ptr<AudioCapturerChangeInfo> &capturerChangeInfo);
+
+    void TriggerRecreateCapturerStreamCallback(int32_t callerPid, int32_t sessionId, int32_t streamFlag);
+
+    bool HasLowLatencyCapability(DeviceType deviceType, bool isRemote);
+
     int32_t HandleAbsBluetoothVolume(const std::string &macAddress, const int32_t volumeLevel);
 
     DeviceUsage GetDeviceUsage(const AudioDeviceDescriptor &desc);
