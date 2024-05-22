@@ -508,7 +508,15 @@ bool AudioCapturerPrivate::Start() const
     // When the cellular call stream is starting, only need to activate audio interrupt.
     CHECK_AND_RETURN_RET(!isVoiceCallCapturer_, true);
 
-    return audioStream_->StartAudioStream();
+    bool result = audioStream_->StartAudioStream();
+    if (!result) {
+        ret = AudioPolicyManager::GetInstance().DeactivateAudioInterrupt(audioInterrupt_);
+        if (ret != 0) {
+            AUDIO_WARNING_LOG("AudioCapturer: DeactivateAudioInterrupt Failed");
+        }
+    }
+
+    return result;
 }
 
 int32_t AudioCapturerPrivate::Read(uint8_t &buffer, size_t userSize, bool isBlockingRead) const
