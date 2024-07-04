@@ -193,7 +193,7 @@ int32_t EnhanceChainManagerProcess(const char *sceneKey, uint32_t length)
         AUDIO_ERR_LOG("%{public}s process failed", sceneKeyString.c_str());
         return ERROR;
     }
-    AUDIO_INFO_LOG("%{public}s process success", sceneKeyString.c_str());
+    AUDIO_DEBUG_LOG("%{public}s process success", sceneKeyString.c_str());
     return SUCCESS;
 }
 

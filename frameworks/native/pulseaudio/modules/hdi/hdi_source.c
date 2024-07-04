@@ -369,7 +369,9 @@ static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
 
 static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct Userdata *u)
 {
-    GetCapturerFrameFromHdi(chunk, u);
+    if (GetCapturerFrameFromHdi(chunk, u) != 0) {
+        return -1;
+    }
 
     uint32_t sceneNum = UpdateEnhanceSceneList(u->source, u->sceneList, chunk);
 
