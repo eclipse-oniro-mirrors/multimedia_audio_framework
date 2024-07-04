@@ -339,14 +339,13 @@ int32_t AudioEnhanceChainManager::CopyToEnhanceBuffer(void *data, uint32_t lengt
     if (enhanceBuffer_ == nullptr) {
         return ERROR;
     }
-    AUDIO_INFO_LOG("length: %{public}u chunk length: %{public}u", length, enhanceBuffer_->length);
+    AUDIO_DEBUG_LOG("length: %{public}u chunk length: %{public}u", length, enhanceBuffer_->length);
     if ((length > enhanceBuffer_->length)) {
         return ERROR;
     }
     CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferIn.data(), length, data, length) == 0,
         ERROR, "memcpy error in data to enhanceBuffer->micBufferIn");
     memset_s(enhanceBuffer_->ecBuffer.data(), enhanceBuffer_->lengthEc, 0, enhanceBuffer_->lengthEc);
-    AUDIO_INFO_LOG("copy to EnhanceBuffer success");
     return SUCCESS;
 }
 
@@ -361,7 +360,6 @@ int32_t AudioEnhanceChainManager::CopyFromEnhanceBuffer(void *data, uint32_t len
     }
     CHECK_AND_RETURN_RET_LOG(memcpy_s(data, length, enhanceBuffer_->micBufferOut.data(), length) == 0,
         ERROR, "memcpy error in micBufferOut to data");
-    AUDIO_INFO_LOG("copy from EnhanceBuffer success");
     return SUCCESS;
 }
 
@@ -379,7 +377,7 @@ int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const std::string &scen
         AUDIO_ERR_LOG("Apply %{public}s failed.", sceneKey.c_str());
          return ERROR;
      }
-    AUDIO_INFO_LOG("Apply %{public}s success", sceneKey.c_str());
+    AUDIO_DEBUG_LOG("Apply %{public}s success", sceneKey.c_str());
      return SUCCESS;
  }
 

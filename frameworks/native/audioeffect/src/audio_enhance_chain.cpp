@@ -178,7 +178,6 @@ int32_t AudioEnhanceChain::GetOneFrameInputData(std::unique_ptr<EnhanceBuffer> &
             algoCache_.cache[i].data(), algoAttr_.byteLenPerFrame);
         CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "memcpy error in cache to input");
     }
-    AUDIO_INFO_LOG("GetOneFrameInputData success");
     return SUCCESS;
 }
 
@@ -190,7 +189,7 @@ int32_t AudioEnhanceChain::ApplyEnhanceChain(std::unique_ptr<EnhanceBuffer> &enh
 
     uint32_t inputLen = algoAttr_.byteLenPerFrame * algoAttr_.batchLen;
     uint32_t outputLen = algoAttr_.byteLenPerFrame * algoSupportedConfig_.outNum;
-    AUDIO_INFO_LOG("inputLen = %{public}u outputLen = %{public}u", inputLen, outputLen);
+    AUDIO_DEBUG_LOG("inputLen = %{public}u outputLen = %{public}u", inputLen, outputLen);
 
     if (standByEnhanceHandles_.size() == 0) {
         AUDIO_DEBUG_LOG("audioEnhanceChain->standByEnhanceHandles is empty");
@@ -219,7 +218,6 @@ int32_t AudioEnhanceChain::ApplyEnhanceChain(std::unique_ptr<EnhanceBuffer> &enh
     CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer->micBufferOut.data(), outputLen, audioBufOut_.raw, outputLen) == 0,
         ERROR, "memcpy error in audioBufOut_ to enhanceBuffer->output");
     DumpFileUtil::WriteDumpFile(dumpFileOut_, enhanceBuffer->micBufferOut.data(), (uint64_t)length);
-    AUDIO_INFO_LOG("ApplyEnhanceChain success");
     return SUCCESS;
 }
 
