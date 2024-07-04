@@ -25,6 +25,11 @@
 namespace OHOS {
 namespace AudioStandard {
 
+const std::vector<std::string> NEED_EC_SCENE = {
+    "SCENE_VOIP_UP",
+    "SCENE_PRE_ENHANCE",
+};
+
 struct EnhanceBuffer {
     std::vector<uint8_t> ecBuffer;  // voip: ref data = mic data * 2
     std::vector<uint8_t> micBufferIn; // mic data input
@@ -48,6 +53,12 @@ struct AlgoConfig {
     uint32_t outNum;
 };
 
+struct AlgoCache {
+    std::vector<std::vector<uint8_t>> cache;
+    std::vector<uint8_t> input;
+    std::vector<uint8_t> output;
+};
+
 class AudioEnhanceChain {
 public:
     AudioEnhanceChain(const std::string &scene, const std::string &mode);
@@ -57,10 +68,13 @@ public:
     void GetAlgoConfig(AudioBufferConfig &algoConfig);
     uint32_t GetAlgoBufferSize();
     uint32_t GetAlgoBufferSizeEc();
+    int32_t ApplyEnhanceChain(std::unique_ptr<EnhanceBuffer> &enhanceBuffer, uint32_t length);
 
 private:
     void InitAudioEnhanceChain();
+    void InitDump();
     void ReleaseEnhanceChain();
+    int32_t GetOneFrameInputData(std::unique_ptr<EnhanceBuffer> &enhanceBuffer);
 
     bool setConfigFlag_;
     std::mutex chainMutex_;
@@ -68,6 +82,10 @@ private:
     std::string enhanceMode_;
     AlgoAttr algoAttr_;
     AlgoConfig algoSupportedConfig_;
+    AlgoCache algoCache_;
+    FILE *dumpFileIn_ = nullptr;
+    FILE *dumpFileOut_ = nullptr;
+    bool needEcFlag;
     std::vector<AudioEffectHandle> standByEnhanceHandles_;
     std::vector<AudioEffectLibrary*> enhanceLibHandles_;
 };

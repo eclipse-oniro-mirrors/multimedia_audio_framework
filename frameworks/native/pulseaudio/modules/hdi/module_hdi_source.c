@@ -74,7 +74,7 @@ static const char * const VALID_MODARGS[] = {
 
 static pa_hook_result_t SourceOutputProplistChangedCb(pa_core *c, pa_source_output *so)
 {
-    AUDIO_DEBUG_LOG("Trigger SourceOutputProplistChangedCb");
+    AUDIO_INFO_LOG("Trigger SourceOutputProplistChangedCb");
     pa_assert(c);
     const char *sceneMode = pa_proplist_gets(so->proplist, "scene.mode");
     const char *sceneType = pa_proplist_gets(so->proplist, "scene.type");
@@ -86,7 +86,7 @@ static pa_hook_result_t SourceOutputProplistChangedCb(pa_core *c, pa_source_outp
 
 static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
 {
-    AUDIO_DEBUG_LOG("Trigger SourceOutputPutCb");
+    AUDIO_INFO_LOG("Trigger SourceOutputPutCb");
     pa_assert(c);
     const char *sceneType = pa_proplist_gets(so->proplist, "scene.type");
     const char *sceneMode = pa_proplist_gets(so->proplist, "scene.mode");
@@ -102,7 +102,7 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
 
 static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
 {
-    AUDIO_DEBUG_LOG("Trigger SourceOutputUnlinkCb");
+    AUDIO_INFO_LOG("Trigger SourceOutputUnlinkCb");
     pa_assert(c);
     const char *sceneType = pa_proplist_gets(so->proplist, "scene.type");
     const char *upDevice = pa_proplist_gets(so->proplist, "device.up");

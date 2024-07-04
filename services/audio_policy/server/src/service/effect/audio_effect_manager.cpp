@@ -71,7 +71,7 @@ static int32_t UpdateUnsupportedScene(std::string &scene)
         (scene != "SCENE_GAME") &&
         (scene != "SCENE_SPEECH") &&
         (scene != "SCENE_RING") &&
-        (scene != "SCENE_VOIP_3A") &&
+        (scene != "SCENE_VOIP_UP") &&
         (scene != "SCENE_RECORD") &&
         (scene != "SCENE_MEETING") &&
         (scene != "SCENE_OTHERS")) {
@@ -85,7 +85,7 @@ static int32_t UpdateUnsupportedScene(std::string &scene)
 static int32_t UpdateUnsupportedEnhanceScene(std::string &scene)
 {
     int32_t isSupported = 0;
-    if ((scene != "SCENE_VOIP_3A") &&
+    if ((scene != "SCENE_VOIP_UP") &&
         (scene != "SCENE_RECORD")) {
         AUDIO_INFO_LOG("[supportedEnhanceConfig LOG9]:stream-> The scene of %{public}s is unsupported, \
             and this scene is deleted!", scene.c_str());

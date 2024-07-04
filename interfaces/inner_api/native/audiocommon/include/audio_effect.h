@@ -156,7 +156,7 @@ enum AudioEffectScene {
 * Enumerates the audio enhance scene effect type.
 */
 enum AudioEnhanceScene {
-    SCENE_VOIP_3A = 0,
+    SCENE_VOIP_UP = 0,
     SCENE_RECORD = 1
 };
 
@@ -190,7 +190,7 @@ const std::unordered_map<AudioEffectScene, std::string> AUDIO_SUPPORTED_SCENE_TY
 };
 
 const std::unordered_map<AudioEnhanceScene, std::string> AUDIO_ENHANCE_SUPPORTED_SCENE_TYPES {
-    {SCENE_VOIP_3A, "SCENE_VOIP_3A"},
+    {SCENE_VOIP_UP, "SCENE_VOIP_UP"},
     {SCENE_RECORD, "SCENE_RECORD"}
 };
 

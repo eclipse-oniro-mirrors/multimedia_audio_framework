@@ -837,7 +837,7 @@ const std::string PaAdapterManager::GetEnhanceSceneName(SourceType sourceType)
             break;
         case SOURCE_TYPE_VOICE_CALL:
         case SOURCE_TYPE_VOICE_COMMUNICATION:
-            name = "SCENE_VOIP_3A";
+            name = "SCENE_VOIP_UP";
             break;
         default:
             name = "SCENE_OTHERS";

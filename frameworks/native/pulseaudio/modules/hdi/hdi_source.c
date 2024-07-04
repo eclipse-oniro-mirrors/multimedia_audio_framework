@@ -29,15 +29,21 @@
 #include <pulsecore/rtpoll.h>
 #include <pulsecore/thread-mq.h>
 #include <pulsecore/thread.h>
+#include <pulsecore/mix.h>
+#include <pulsecore/memblockq.c>
+#include <pulsecore/source.h>
+#include <pulsecore/source-output.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include "audio_hdiadapter_info.h"
+#include "securec.h"
 #include "audio_log.h"
 #include "audio_source_type.h"
 #include "audio_utils_c.h"
 #include "capturer_source_adapter.h"
+#include "audio_enhance_chain_adapter.h"
 #include "v3_0/audio_types.h"
 #include "v3_0/iaudio_manager.h"
 
@@ -55,6 +61,8 @@
 #define AUDIO_POINT_NUM  1024
 #define AUDIO_FRAME_NUM_IN_BUF 30
 #define HDI_WAKEUP_BUFFER_TIME (PA_USEC_PER_SEC * 2)
+#define MAX_SCENE_NUM 5
+#define MAX_SCENE_NAME_LEN 50
 
 const char *DEVICE_CLASS_REMOTE = "remote";
 
@@ -73,6 +81,7 @@ struct Userdata {
     bool IsCapturerStarted;
     struct CapturerSourceAdapter *sourceAdapter;
     pa_usec_t delayTime;
+    char sceneList[MAX_SCENE_NUM][MAX_SCENE_NAME_LEN];
 };
 
 static int PaHdiCapturerInit(struct Userdata *u);
@@ -125,7 +134,6 @@ static void UserdataFree(struct Userdata *u)
         u->sourceAdapter->CapturerSourceDeInit(u->sourceAdapter->wapper);
         UnLoadSourceAdapter(u->sourceAdapter);
     }
-
     pa_xfree(u);
 }
 
@@ -195,6 +203,130 @@ static int SourceSetStateInIoThreadCb(pa_source *s, pa_source_state_t newState,
     return 0;
 }
 
+static void PushData(pa_source_output *sourceOutput, pa_memchunk *chunk)
+{
+    pa_source_output_assert_ref(sourceOutput);
+    pa_source_output_assert_io_context(sourceOutput);
+    pa_assert(chunk);
+    AUDIO_INFO_LOG("chunk length: %{public}lu", chunk->length);
+
+    if (!sourceOutput->thread_info.direct_on_input) {
+        pa_source_output_push(sourceOutput, chunk);
+    }
+}
+
+static void PostSourceData(pa_source *source, pa_source_output *sourceOutput, pa_memchunk *chunk)
+{
+    pa_source_assert_ref(source);
+    pa_source_assert_io_context(source);
+    pa_assert(PA_SOURCE_IS_LINKED(source->thread_info.state));
+    pa_assert(chunk);
+
+    if (source->thread_info.state == PA_SOURCE_SUSPENDED) {
+        return;
+    }
+
+    if (source->thread_info.soft_muted || !pa_cvolume_is_norm(&source->thread_info.soft_volume)) {
+        pa_memchunk vchunk = *chunk;
+        pa_memblock_ref(vchunk.memblock);
+        pa_memchunk_make_writable(&vchunk, 0);
+        if (source->thread_info.soft_muted || pa_cvolume_is_muted(&source->thread_info.soft_volume)) {
+            pa_silence_memchunk(&vchunk, &source->sample_spec);
+        } else {
+            pa_volume_memchunk(&vchunk, &source->sample_spec, &source->thread_info.soft_volume);
+        }
+        PushData(sourceOutput, &vchunk);
+        pa_memblock_unref(vchunk.memblock);
+    } else {
+        PushData(sourceOutput, chunk);
+    }
+}
+
+static void EnhanceProcess(const char *sceneKey, pa_memchunk *chunk)
+{
+    pa_assert(sceneKey);
+    pa_assert(chunk);
+    void *src = pa_memblock_acquire_chunk(chunk);
+    AUDIO_INFO_LOG("chunk length: %{public}lu scene: %{public}s", chunk->length, sceneKey);
+    pa_memblock_release(chunk->memblock);
+
+    if (CopyToEnhanceBufferAdapter(src, chunk->length) != 0) {
+        return;
+    }
+    if (EnhanceChainManagerProcess(sceneKey, chunk->length) != 0) {
+        return;
+    }
+    void *dst = pa_memblock_acquire_chunk(chunk);
+    CopyFromEnhanceBufferAdapter(dst, chunk->length);
+    pa_memblock_release(chunk->memblock);
+}
+
+static void EnhanceProcessAndPost(pa_source *source, const char *scene, pa_memchunk *chunk)
+{
+    pa_source_assert_ref(source);
+    pa_assert(scene);
+    pa_assert(chunk);
+
+    void *state = NULL;
+    pa_source_output *sourceOutput;
+    while ((sourceOutput = pa_hashmap_iterate(source->thread_info.outputs, &state, NULL))) {
+        pa_source_output_assert_ref(sourceOutput);
+        const char *sourceOutputSceneType = pa_proplist_gets(sourceOutput->proplist, "scene.type");
+        const char *sourceOutputUpDevice = pa_proplist_gets(sourceOutput->proplist, "device.up");
+        const char *sourceOutputDownDevice = pa_proplist_gets(sourceOutput->proplist, "device.down");
+        char *sceneKey = ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice);
+        if (strcmp(scene, sceneKey) != 0) {
+            AUDIO_INFO_LOG("source output scene type:%{public}s post data directly.", sceneKey);
+            PostSourceData(source, sourceOutput, chunk);
+        }
+        // EnhanceProcess
+        EnhanceProcess(sceneKey, chunk);
+        PostSourceData(source, sourceOutput, chunk);
+    }
+}
+
+static bool CheckRepeat(char sceneList[MAX_SCENE_NUM][MAX_SCENE_NAME_LEN], char *sceneKey, uint32_t len)
+{
+    if (len == 0) {
+        return false;
+    }
+    for (uint32_t i = 0; i < len; ++i) {
+        if (!strcmp(sceneList[i], sceneKey)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static uint32_t UpdateEnhanceSceneList(pa_source *source, char sceneList[MAX_SCENE_NUM][MAX_SCENE_NAME_LEN],
+    pa_memchunk *chunk)
+{
+    pa_source_assert_ref(source);
+    void *state = NULL;
+    pa_source_output *sourceOutput;
+    uint32_t index = 0;
+    while ((sourceOutput = pa_hashmap_iterate(source->thread_info.outputs, &state, NULL))) {
+        pa_source_output_assert_ref(sourceOutput);
+        const char *sourceOutputSceneType = pa_proplist_gets(sourceOutput->proplist, "scene.type");
+        const char *sourceOutputUpDevice = pa_proplist_gets(sourceOutput->proplist, "device.up");
+        const char *sourceOutputDownDevice = pa_proplist_gets(sourceOutput->proplist, "device.down");
+        char *sceneKey = ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice);
+
+        if (!EnhanceChainManagerExist(sceneKey)) {
+            // The current source output has no audio enhance chain. Directly post data.
+            PostSourceData(source, sourceOutput, chunk);
+            continue;
+        }
+        if (CheckRepeat(sceneList, sceneKey, index)) {
+            continue;
+        }
+        memcpy_s(sceneList[index], strlen(sceneKey), sceneKey, strlen(sceneKey));
+        AUDIO_INFO_LOG("sceneList[%{public}u] add: %{public}s", index, sceneList[index]);
+        ++index;
+    }
+    return index;
+}
+
 static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
 {
     uint64_t requestBytes;
@@ -218,21 +350,32 @@ static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
         AUDIO_ERR_LOG("HDI Source: Error replyBytes > requestBytes. Requested data Length: "
                 "%{public}" PRIu64 ", Read: %{public}" PRIu64 " bytes", requestBytes, replyBytes);
         pa_memblock_unref(chunk->memblock);
-        return 0;
+        return -1;
     }
 
     if (replyBytes == 0) {
         AUDIO_ERR_LOG("HDI Source: Failed to read, Requested data Length: %{public}" PRIu64 " bytes,"
                 " Read: %{public}" PRIu64 " bytes", requestBytes, replyBytes);
         pa_memblock_unref(chunk->memblock);
-        return 0;
+        return -1;
     }
 
     chunk->index = 0;
     chunk->length = replyBytes;
-    pa_source_post(u->source, chunk);
-    pa_memblock_unref(chunk->memblock);
 
+    return 0;
+}
+
+static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct Userdata *u)
+{
+    GetCapturerFrameFromHdi(chunk, u);
+
+    uint32_t sceneNum = UpdateEnhanceSceneList(u->source, u->sceneList, chunk);
+
+    for (uint32_t i = 0; i < sceneNum; ++i) {
+        EnhanceProcessAndPost(u->source, u->sceneList[i], chunk);
+    }
+    pa_memblock_unref(chunk->memblock);
     return 0;
 }
 
@@ -255,7 +398,7 @@ static bool PaRtpollSetTimerFunc(struct Userdata *u, bool timerElapsed)
     if (timerElapsed) {
         chunk.length = pa_usec_to_bytes(now - u->timestamp, &u->source->sample_spec);
         if (chunk.length > 0) {
-            int ret = GetCapturerFrameFromHdi(&chunk, u);
+            int ret = GetCapturerFrameFromHdiAndProcess(&chunk, u);
             if (ret != 0) {
                 return false;
             }
@@ -376,7 +519,7 @@ static int PaSetSourceProperties(pa_module *m, pa_modargs *ma, const pa_sample_s
     data.driver = __FILE__;
     data.module = m;
 
-    //if sourcetype is wakeup, source suspend after init
+    // if sourcetype is wakeup, source suspend after init
     if (u->attrs.sourceType == SOURCE_TYPE_WAKEUP) {
         data.suspend_cause = PA_SUSPEND_IDLE;
     }
