@@ -376,7 +376,7 @@ int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const std::string &scen
     if (audioEnhanceChain->ApplyEnhanceChain(enhanceBuffer_, length) != SUCCESS) {
         AUDIO_ERR_LOG("Apply %{public}s failed.", sceneKey.c_str());
         return ERROR;
-     }
+    }
     AUDIO_DEBUG_LOG("Apply %{public}s success", sceneKey.c_str());
     return SUCCESS;
 }
