@@ -30,6 +30,7 @@
 #endif
 #include "volume_tools.h"
 #include "policy_handler.h"
+#include "audio_enhance_chain_manager.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -1092,6 +1093,11 @@ int32_t RendererInServer::OffloadSetVolume(float volume)
     }
     AUDIO_INFO_LOG("sessionId %{public}u set volume:%{public}f [volumeType:%{public}d deviceType:%{public}d systemVol:"
         "%{public}f]", streamIndex_, volume, volumeType, deviceType, systemVol);
+
+    AudioEnhanceChainManager *audioEnhanceChainManager = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainManager != nullptr, ERROR, "audioEnhanceChainManager is nullptr");
+    int32_t ret = audioEnhanceChainManager->SetStreamVolumeInfo(streamIndex_, volume);
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "SetStreamVolumeInfo failed");
     return stream_->OffloadSetVolume(systemVol * volume);
 }
 
@@ -1126,7 +1132,7 @@ int32_t RendererInServer::SetSilentModeAndMixWithOthers(bool on)
     return SUCCESS;
 }
 
-int32_t RendererInServer::SetClientVolume()
+int32_t RendererInServer::SetClientVolume(bool isStreamVolumeChange, bool isMediaServiceAndOffloadEnable)
 {
     if (audioServerBuffer_ == nullptr) {
         AUDIO_WARNING_LOG("buffer in not inited");
@@ -1134,6 +1140,20 @@ int32_t RendererInServer::SetClientVolume()
     }
     float clientVolume = audioServerBuffer_->GetStreamVolume();
     int32_t ret = stream_->SetClientVolume(clientVolume);
+    if (isStreamVolumeChange && !isMediaServiceAndOffloadEnable) {
+        SetStreamVolumeInfoForEnhanceChain();
+    }
+    return ret;
+}
+
+int32_t RendererInServer::SetStreamVolumeInfoForEnhanceChain()
+{
+    uint32_t sessionId = streamIndex_;
+    float streamVolume = audioServerBuffer_->GetStreamVolume();
+    AudioEnhanceChainManager *audioEnhanceChainManager = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainManager != nullptr, ERROR, "audioEnhanceChainManager is nullptr");
+    int32_t ret = audioEnhanceChainManager->SetStreamVolumeInfo(sessionId, streamVolume);
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "SetStreamVolumeInfo failed");
     return ret;
 }
 } // namespace AudioStandard

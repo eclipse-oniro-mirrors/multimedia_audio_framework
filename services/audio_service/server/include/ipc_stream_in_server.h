@@ -108,7 +108,7 @@ public:
 
     int32_t SetSilentModeAndMixWithOthers(bool on) override;
 
-    int32_t SetClientVolume() override;
+    int32_t SetClientVolume(bool isStreamVolumeChange, bool isMediaServiceAndOffloadEnable) override;
 
     // for inner-capturer
     std::shared_ptr<RendererInServer> GetRenderer();

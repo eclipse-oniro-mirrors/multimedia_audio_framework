@@ -92,7 +92,7 @@ public:
 
     int32_t GetStreamManagerType() const noexcept;
     int32_t SetSilentModeAndMixWithOthers(bool on);
-    int32_t SetClientVolume();
+    int32_t SetClientVolume(bool isStreamVolumeChange, bool isMediaServiceAndOffloadEnable);
 public:
     const AudioProcessConfig processConfig_;
 private:
@@ -107,6 +107,7 @@ private:
     void WriteMuteDataSysEvent(uint8_t *buffer, size_t bufferSize);
     void ReportDataToResSched(bool isSilent);
     void OtherStreamEnqueue(const BufferDesc &bufferDesc);
+    int32_t SetStreamVolumeInfoForEnhanceChain();
     std::mutex statusLock_;
     std::condition_variable statusCv_;
     std::shared_ptr<IRendererStream> stream_ = nullptr;

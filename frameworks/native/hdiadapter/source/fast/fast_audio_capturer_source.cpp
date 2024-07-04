@@ -73,6 +73,7 @@ public:
     int32_t UpdateAppsUid(const int32_t appsUid[PA_MAX_OUTPUTS_PER_SOURCE],
         const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
+    int32_t GetCaptureId(uint32_t &captureId) const override;
 
     FastAudioCapturerSourceInner();
     ~FastAudioCapturerSourceInner() override;
@@ -89,7 +90,6 @@ private:
     static constexpr uint32_t AUDIO_CHANNELCOUNT = 2;
     static constexpr uint32_t AUDIO_SAMPLE_RATE_48K = 48000;
     static constexpr uint32_t INT_32_MAX = 0x7fffffff;
-    static constexpr uint32_t FAST_INPUT_STREAM_ID = 22; // 14 + 1 * 8
     int32_t routeHandle_ = -1;
 
     IAudioSourceAttr attr_ = {};
@@ -177,7 +177,7 @@ void FastAudioCapturerSourceInner::InitAttrsCapture(struct AudioSampleAttributes
     attrs.format = AUDIO_FORMAT_TYPE_PCM_16_BIT;
     attrs.channelCount = AUDIO_CHANNELCOUNT;
     attrs.interleaved = true;
-    attrs.streamId = FAST_INPUT_STREAM_ID;
+    attrs.streamId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_FAST);
     attrs.period = 0;
     attrs.frameSize = PCM_16_BIT * attrs.channelCount / PCM_8_BIT;
     attrs.isBigEndian = false;
@@ -589,7 +589,7 @@ int32_t FastAudioCapturerSourceInner::SetInputRoute(DeviceType inputDevice, Audi
     sink.role = AUDIO_PORT_SINK_ROLE;
     sink.type = AUDIO_PORT_MIX_TYPE;
     sink.ext.mix.moduleId = 0;
-    sink.ext.mix.streamId = FAST_INPUT_STREAM_ID;
+    sink.ext.mix.streamId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_FAST);
     sink.ext.device.desc = const_cast<char*>("");
 
     AudioRoute route = {
@@ -745,6 +745,12 @@ int32_t FastAudioCapturerSourceInner::UpdateAppsUid(const std::vector<int32_t> &
     runningLockManager_->UpdateAppsUidToPowerMgr();
 #endif
 
+    return SUCCESS;
+}
+
+int32_t FastAudioCapturerSourceInner::GetCaptureId(uint32_t &captureId) const
+{
+    captureId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_FAST);
     return SUCCESS;
 }
 } // namespace AudioStandard

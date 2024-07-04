@@ -84,6 +84,7 @@ int32_t LoadSourceAdapter(const char *device, const char *deviceNetworkId, const
     adapter->CapturerSourceSetVolume = IAudioCapturerSourceSetVolume;
     adapter->CapturerSourceGetVolume = IAudioCapturerSourceGetVolume;
     adapter->CapturerSourceAppsUid = IAudioCapturerSourceUpdateAppsUid;
+    adapter->CapturerSourceGetCaptureId = IAudioCapturerSourceGetCaptureId;
 
     *sourceAdapter = adapter;
 

@@ -951,6 +951,10 @@ int32_t AudioServer::SetMicrophoneMute(bool isMute)
         (*it)->SetMute(isMute);
     }
 
+    int ret = SetMicrophoneMuteForEnhanceChain(isMute);
+    if (ret != SUCCESS) {
+        AUDIO_WARNING_LOG("SetMicrophoneMuteForEnhanceChain failed.");
+    }
     return SUCCESS;
 }
 
@@ -1763,7 +1767,15 @@ int32_t AudioServer::NotifyStreamVolumeChanged(AudioStreamType streamType, float
         AUDIO_ERR_LOG("NotifyStreamVolumeChanged refused for %{public}d", callingUid);
         return ERR_NOT_SUPPORTED;
     }
-    return AudioService::GetInstance()->NotifyStreamVolumeChanged(streamType, volume);
+    int32_t ret = AudioService::GetInstance()->NotifyStreamVolumeChanged(streamType, volume);
+    if (ret != SUCCESS) {
+        AUDIO_WARNING_LOG("NotifyStreamVolumeChanged failed");
+    }
+    ret = SetVolumeInfoForEnhanceChain(streamType);
+    if (ret != SUCCESS) {
+        AUDIO_WARNING_LOG("SetVolumeInfoForEnhanceChain failed");
+    }
+    return SUCCESS;
 }
 
 int32_t AudioServer::SetSpatializationSceneType(AudioSpatializationSceneType spatializationSceneType)
@@ -1895,6 +1907,29 @@ void AudioServer::LoadHdiEffectModel()
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
     CHECK_AND_RETURN_LOG(audioEffectChainManager != nullptr, "audioEffectChainManager is nullptr");
     audioEffectChainManager->InitHdiState();
+}
+
+int32_t AudioServer::SetVolumeInfoForEnhanceChain(const AudioStreamType &streamType)
+{
+    AudioEnhanceChainManager *audioEnhanceChainManager = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainManager != nullptr, ERROR, "audioEnhanceChainManager is nullptr");
+    AudioVolumeType volumeType = PolicyHandler::GetInstance().GetVolumeTypeFromStreamType(streamType);
+    DeviceType deviceType = PolicyHandler::GetInstance().GetActiveOutPutDevice();
+    Volume vol = {false, 0.0f, 0};
+    PolicyHandler::GetInstance().GetSharedVolume(volumeType, deviceType, vol);
+    float systemVol = vol.isMute ? 0.0f : vol.volumeFloat;
+    if (PolicyHandler::GetInstance().IsAbsVolumeSupported() &&
+        PolicyHandler::GetInstance().GetActiveOutPutDevice() == DEVICE_TYPE_BLUETOOTH_A2DP) {
+        systemVol = 1.0f; // 1.0f for a2dp abs volume
+    }
+    return audioEnhanceChainManager->SetVolumeInfo(volumeType, systemVol);
+}
+
+int32_t AudioServer::SetMicrophoneMuteForEnhanceChain(const bool &isMute)
+{
+    AudioEnhanceChainManager *audioEnhanceChainManager = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainManager != nullptr, ERROR, "audioEnhanceChainManager is nullptr");
+    return audioEnhanceChainManager->SetMicrophoneMuteInfo(isMute);
 }
 } // namespace AudioStandard
 } // namespace OHOS

@@ -313,8 +313,9 @@ int32_t IpcStreamStub::HandleSetSilentModeAndMixWithOthers(MessageParcel &data, 
 
 int32_t IpcStreamStub::HandleSetClientVolume(MessageParcel &data, MessageParcel &reply)
 {
-    (void)data;
-    reply.WriteInt32(SetClientVolume());
+    bool isStreamVolumeChange = data.ReadBool();
+    bool isMediaServiceAndOffloadEnable = data.ReadBool();
+    reply.WriteInt32(SetClientVolume(isStreamVolumeChange, isMediaServiceAndOffloadEnable));
     return AUDIO_OK;
 }
 } // namespace AudioStandard

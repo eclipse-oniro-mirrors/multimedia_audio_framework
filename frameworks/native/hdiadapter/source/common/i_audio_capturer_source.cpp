@@ -143,72 +143,59 @@ void IAudioCapturerSourceDeInit(void *wapper)
 
 int32_t IAudioCapturerSourceStop(void *wapper)
 {
-    int32_t ret;
-
     IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
     CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, ERR_INVALID_HANDLE, "null audioCapturerSource");
     if (!iAudioCapturerSource->IsInited())
         return SUCCESS;
 
-    ret = iAudioCapturerSource->Stop();
+    int32_t ret = iAudioCapturerSource->Stop();
 
     return ret;
 }
 
 int32_t IAudioCapturerSourceStart(void *wapper)
 {
-    int32_t ret;
-
     IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
     CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, ERR_INVALID_HANDLE, "null audioCapturerSource");
     bool isInited = iAudioCapturerSource->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT,
-        "audioCapturer Not Inited! Init the capturer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT, "audioCapturer Not Inited! Init the capturer first");
 
-    ret = iAudioCapturerSource->Start();
+    int32_t ret = iAudioCapturerSource->Start();
 
     return ret;
 }
 
 int32_t IAudioCapturerSourceFrame(void *wapper, char *frame, uint64_t requestBytes, uint64_t *replyBytes)
 {
-    int32_t ret;
     IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
     CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, ERR_INVALID_HANDLE, "null audioCapturerSource");
     bool isInited = iAudioCapturerSource->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT,
-        "audioCapturer Not Inited! Init the capturer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT, "audioCapturer Not Inited! Init the capturer first");
 
-    ret = iAudioCapturerSource->CaptureFrame(frame, requestBytes, *replyBytes);
+    int32_t ret = iAudioCapturerSource->CaptureFrame(frame, requestBytes, *replyBytes);
 
     return ret;
 }
 
 int32_t IAudioCapturerSourceSetVolume(void *wapper, float left, float right)
 {
-    int32_t ret;
-
     IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
     CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, ERR_INVALID_HANDLE, "null audioCapturerSource");
     bool isInited = iAudioCapturerSource->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT,
-        "audioCapturer Not Inited! Init the capturer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT, "audioCapturer Not Inited! Init the capturer first");
 
-    ret = iAudioCapturerSource->SetVolume(left, right);
+    int32_t ret = iAudioCapturerSource->SetVolume(left, right);
 
     return ret;
 }
 
 int32_t IAudioCapturerSourceGetVolume(void *wapper, float *left, float *right)
 {
-    int32_t ret;
-
     IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
     CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, ERR_INVALID_HANDLE, "null audioCapturerSource");
     bool isInited = iAudioCapturerSource->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT,
-        "audioCapturer Not Inited! Init the capturer first\n");
-    ret = iAudioCapturerSource->GetVolume(*left, *right);
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT, "audioCapturer Not Inited! Init the capturer first");
+    int32_t ret = iAudioCapturerSource->GetVolume(*left, *right);
 
     return ret;
 }
@@ -219,22 +206,19 @@ bool IAudioCapturerSourceIsMuteRequired(void *wapper)
     IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
     CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, muteStat, "null audioCapturerSource");
     bool isInited = iAudioCapturerSource->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, muteStat,
-        "audioCapturer Not Inited! Init the capturer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, muteStat, "audioCapturer Not Inited! Init the capturer first");
     iAudioCapturerSource->GetMute(muteStat);
     return muteStat;
 }
 
 int32_t IAudioCapturerSourceSetMute(void *wapper, bool isMute)
 {
-    int32_t ret;
     IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
     CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, ERR_INVALID_HANDLE, "null audioCapturerSource");
     bool isInited = iAudioCapturerSource->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT,
-        "audioCapturer Not Inited! Init the capturer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT, "audioCapturer Not Inited! Init the capturer first");
 
-    ret = iAudioCapturerSource->SetMute(isMute);
+    int32_t ret = iAudioCapturerSource->SetMute(isMute);
 
     return ret;
 }
@@ -242,15 +226,24 @@ int32_t IAudioCapturerSourceSetMute(void *wapper, bool isMute)
 int32_t IAudioCapturerSourceUpdateAppsUid(void *wapper, const int32_t appsUid[MAX_MIX_CHANNELS],
     const size_t size)
 {
-    int32_t ret;
     IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
     CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, ERR_INVALID_HANDLE, "null audioCapturerSource");
     bool isInited = iAudioCapturerSource->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT,
-        "audioCapturer Not Inited! Init the capturer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT, "audioCapturer Not Inited! Init the capturer first");
 
-    ret = iAudioCapturerSource->UpdateAppsUid(appsUid, size);
+    int32_t ret = iAudioCapturerSource->UpdateAppsUid(appsUid, size);
 
+    return ret;
+}
+
+int32_t IAudioCapturerSourceGetCaptureId(void *wapper, uint32_t *captureId)
+{
+    IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
+    CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, ERR_INVALID_HANDLE, "null audioCapturerSource");
+    bool isInited = iAudioCapturerSource->IsInited();
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT, "audioCapturer Not Inited! Init the capturer first");
+
+    int32_t ret = iAudioCapturerSource->GetCaptureId(*captureId);
     return ret;
 }
 #ifdef __cplusplus

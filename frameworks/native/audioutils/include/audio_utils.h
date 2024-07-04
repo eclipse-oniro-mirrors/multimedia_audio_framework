@@ -386,6 +386,36 @@ bool CasWithCompare(std::atomic<T> &atomicVar, T newValue, Compare compare)
 
     return true;
 }
+
+enum AudioHdiUniqueIDBase : uint32_t {
+    // 0-4 is reserved for other modules
+    AUDIO_HDI_CAPTURE_ID_BASE = 5,
+    AUDIO_HDI_RENDER_ID_BASE = 6,
+};
+
+enum HdiCaptureOffset : uint32_t {
+    HDI_CAPTURE_OFFSET_PRIMARY = 1,
+    HDI_CAPTURE_OFFSET_FAST = 2,
+    HDI_CAPTURE_OFFSET_REMOTE = 3,
+    HDI_CAPTURE_OFFSET_REMOTE_FAST = 4,
+    HDI_CAPTURE_OFFSET_USB = 5,
+};
+
+enum HdiRenderOffset : uint32_t {
+    HDI_RENDER_OFFSET_PRIMARY = 1,
+    HDI_RENDER_OFFSET_FAST = 2,
+    HDI_RENDER_OFFSET_REMOTE = 3,
+    HDI_RENDER_OFFSET_REMOTE_FAST = 4,
+    HDI_RENDER_OFFSET_BLUETOOTH = 5,
+    HDI_RENDER_OFFSET_OFFLOAD = 6,
+    HDI_RENDER_OFFSET_MULTICHANNEL = 7,
+    HDI_RENDER_OFFSET_DIRECT = 8,
+    HDI_RENDER_OFFSET_VOIP = 9,
+    HDI_RENDER_OFFSET_DP = 10,
+    HDI_RENDER_OFFSET_USB = 11,
+};
+
+uint32_t GenerateUniqueID(AudioHdiUniqueIDBase base, uint32_t offset);
 } // namespace AudioStandard
 } // namespace OHOS
 #endif // AUDIO_UTILS_H

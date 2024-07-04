@@ -91,6 +91,7 @@ public:
 
     int32_t UpdateAppsUid(const int32_t appsUid[PA_MAX_OUTPUTS_PER_SOURCE], const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
+    int32_t GetCaptureId(uint32_t &captureId) const override;
 
 private:
     int32_t CreateCapture(const struct AudioPort &capturePort);
@@ -110,7 +111,6 @@ private:
     static constexpr uint32_t AUDIO_SAMPLE_RATE_48K = 48000;
     static constexpr uint32_t DEEP_BUFFER_CAPTURER_PERIOD_SIZE = 3840;
     static constexpr uint32_t INT_32_MAX = 0x7fffffff;
-    static constexpr uint32_t REMOTE_FAST_INPUT_STREAM_ID = 38; // 14 + 3 * 8
     static constexpr int32_t EVENT_DES_SIZE = 60;
     static constexpr int64_t SECOND_TO_NANOSECOND = 1000000000;
     static constexpr int64_t CAPTURE_FIRST_FRIME_WAIT_NANO = 20000000; // 20ms
@@ -365,7 +365,7 @@ void RemoteFastAudioCapturerSourceInner::InitAttrs(struct AudioSampleAttributes 
     attrs.startThreshold = DEEP_BUFFER_CAPTURER_PERIOD_SIZE / (attrs.frameSize);
     attrs.stopThreshold = INT_32_MAX;
     attrs.silenceThreshold = attr_.bufferSize;
-    attrs.streamId = REMOTE_FAST_INPUT_STREAM_ID;
+    attrs.streamId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_REMOTE_FAST);
 }
 
 AudioFormat RemoteFastAudioCapturerSourceInner::ConvertToHdiFormat(HdiAdapterFormat format)
@@ -682,7 +682,7 @@ int32_t RemoteFastAudioCapturerSourceInner::SetInputRoute(DeviceType inputDevice
     sink.role = AudioPortRole::AUDIO_PORT_SINK_ROLE;
     sink.type = AudioPortType::AUDIO_PORT_MIX_TYPE;
     sink.ext.mix.moduleId = 0;
-    sink.ext.mix.streamId = REMOTE_FAST_INPUT_STREAM_ID;
+    sink.ext.mix.streamId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_REMOTE_FAST);
 
     AudioRoute route;
     route.sources.push_back(source);
@@ -810,6 +810,12 @@ int32_t RemoteFastAudioCapturerSourceInner::UpdateAppsUid(const std::vector<int3
 {
     AUDIO_WARNING_LOG("not supported.");
     return ERR_NOT_SUPPORTED;
+}
+
+int32_t RemoteFastAudioCapturerSourceInner::GetCaptureId(uint32_t &captureId) const
+{
+    captureId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_REMOTE_FAST);
+    return SUCCESS;
 }
 } // namespace AudioStandard
 } // namesapce OHOS

@@ -34,16 +34,17 @@
 #include "audio_errors.h"
 #include "audio_utils.h"
 #include "parameters.h"
+#include "audio_enhance_chain_manager.h"
 
 using namespace std;
 
 namespace OHOS {
 namespace AudioStandard {
 namespace {
-    const int64_t SECOND_TO_NANOSECOND = 1000000000;
-    const unsigned int DEINIT_TIME_OUT_SECONDS = 5;
-    const uint16_t GET_MAX_AMPLITUDE_FRAMES_THRESHOLD = 10;
-}
+const int64_t SECOND_TO_NANOSECOND = 1000000000;
+const unsigned int DEINIT_TIME_OUT_SECONDS = 5;
+const uint16_t GET_MAX_AMPLITUDE_FRAMES_THRESHOLD = 10;
+} // namespace
 class AudioCapturerSourceInner : public AudioCapturerSource {
 public:
     int32_t Init(const IAudioSourceAttr &attr) override;
@@ -82,6 +83,7 @@ public:
     int32_t UpdateAppsUid(const int32_t appsUid[PA_MAX_OUTPUTS_PER_SOURCE],
         const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
+    int32_t GetCaptureId(uint32_t &captureId) const override;
 
     explicit AudioCapturerSourceInner(const std::string &halName = "primary");
     ~AudioCapturerSourceInner();
@@ -90,7 +92,6 @@ private:
     static constexpr int32_t HALF_FACTOR = 2;
     static constexpr uint32_t MAX_AUDIO_ADAPTER_NUM = 5;
     static constexpr float MAX_VOLUME_LEVEL = 15.0f;
-    static constexpr uint32_t PRIMARY_INPUT_STREAM_ID = 14; // 14 + 0 * 8
     static constexpr uint32_t USB_DEFAULT_BUFFERSIZE = 3840;
     static constexpr uint32_t STEREO_CHANNEL_COUNT = 2;
 
@@ -107,6 +108,7 @@ private:
     void CheckLatencySignal(uint8_t *frame, size_t replyBytes);
 
     void CheckUpdateState(char *frame, uint64_t replyBytes);
+    int32_t SetAudioRouteInfoForEnhanceChain(const DeviceType &inputDevice);
 
     IAudioSourceAttr attr_ = {};
     bool sourceInited_ = false;
@@ -186,6 +188,7 @@ public:
     int32_t UpdateAppsUid(const int32_t appsUid[PA_MAX_OUTPUTS_PER_SOURCE],
         const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
+    int32_t GetCaptureId(uint32_t &captureId) const override;
 
     AudioCapturerSourceWakeup() = default;
     ~AudioCapturerSourceWakeup() = default;
@@ -453,7 +456,7 @@ void AudioCapturerSourceInner::InitAttrsCapture(struct AudioSampleAttributes &at
     attrs.channelCount = AUDIO_CHANNELCOUNT;
     attrs.sampleRate = AUDIO_SAMPLE_RATE_48K;
     attrs.interleaved = true;
-    attrs.streamId = PRIMARY_INPUT_STREAM_ID;
+    attrs.streamId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_PRIMARY);
     attrs.type = AUDIO_IN_MEDIA;
     attrs.period = DEEP_BUFFER_CAPTURE_PERIOD_SIZE;
     attrs.frameSize = PCM_16_BIT * attrs.channelCount / PCM_8_BIT;
@@ -569,6 +572,7 @@ int32_t AudioCapturerSourceInner::CreateCapture(struct AudioPort &capturePort)
         attr_.sourceType, param.sourceType);
     ret = audioAdapter_->CreateCapture(audioAdapter_, &deviceDesc, &param, &audioCapture_, &captureId_);
     CHECK_AND_RETURN_RET_LOG(audioCapture_ != nullptr && ret >= 0, ERR_NOT_STARTED, "Create capture failed");
+    SetAudioRouteInfoForEnhanceChain(currentActiveDevice_);
 
     return 0;
 }
@@ -841,10 +845,14 @@ int32_t AudioCapturerSourceInner::SetInputRoute(DeviceType inputDevice, AudioPor
         return SUCCESS;
     }
     currentActiveDevice_ = inputDevice;
+    int32_t ret = SetAudioRouteInfoForEnhanceChain(currentActiveDevice_);
+    if (ret != SUCCESS) {
+        AUDIO_WARNING_LOG("SetAudioRouteInfoForEnhanceChain failed");
+    }
     AudioRouteNode source = {};
     AudioRouteNode sink = {};
 
-    int32_t ret = SetInputPortPin(inputDevice, source);
+    ret = SetInputPortPin(inputDevice, source);
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "SetOutputRoute FAILED: %{public}d", ret);
 
     inputPortPin = source.ext.device.type;
@@ -859,7 +867,7 @@ int32_t AudioCapturerSourceInner::SetInputRoute(DeviceType inputDevice, AudioPor
     sink.role = AUDIO_PORT_SINK_ROLE;
     sink.type = AUDIO_PORT_MIX_TYPE;
     sink.ext.mix.moduleId = 0;
-    sink.ext.mix.streamId = PRIMARY_INPUT_STREAM_ID;
+    sink.ext.mix.streamId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_PRIMARY);
     sink.ext.device.desc = (char *)"";
 
     AudioRoute route = {
@@ -1236,6 +1244,33 @@ int32_t AudioCapturerSourceInner::UpdateAppsUid(const std::vector<int32_t> &apps
     return SUCCESS;
 }
 
+int32_t AudioCapturerSourceInner::GetCaptureId(uint32_t &captureId) const
+{
+    if (halName_ == "usb") {
+        captureId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_USB);
+    } else {
+        captureId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_PRIMARY);
+    }
+    return SUCCESS;
+}
+
+int32_t AudioCapturerSourceInner::SetAudioRouteInfoForEnhanceChain(const DeviceType &inputDevice)
+{
+    AudioEnhanceChainManager *audioEnhanceChainManager = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainManager != nullptr, ERROR, "audioEnhanceChainManager is nullptr");
+    uint32_t captureId = 0;
+    int32_t ret = GetCaptureId(captureId);
+    if (ret != SUCCESS) {
+        AUDIO_WARNING_LOG("GetCaptureId failed");
+    }
+    if (halName_ == "usb") {
+        audioEnhanceChainManager->SetInputDevice(captureId, DEVICE_TYPE_USB_ARM_HEADSET);
+    } else {
+        audioEnhanceChainManager->SetInputDevice(captureId, inputDevice);
+    }
+    return SUCCESS;
+}
+
 int32_t AudioCapturerSourceWakeup::Init(const IAudioSourceAttr &attr)
 {
     std::lock_guard<std::mutex> lock(wakeupMutex_);
@@ -1415,6 +1450,12 @@ int32_t AudioCapturerSourceWakeup::UpdateAppsUid(const int32_t appsUid[PA_MAX_OU
 int32_t AudioCapturerSourceWakeup::UpdateAppsUid(const std::vector<int32_t> &appsUid)
 {
     return audioCapturerSource_.UpdateAppsUid(appsUid);
+}
+
+int32_t AudioCapturerSourceWakeup::GetCaptureId(uint32_t &captureId) const
+{
+    int ret = audioCapturerSource_.GetCaptureId(captureId);
+    return ret;
 }
 } // namespace AudioStandard
 } // namesapce OHOS

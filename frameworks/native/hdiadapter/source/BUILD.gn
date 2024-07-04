@@ -31,10 +31,14 @@ ohos_shared_library("audio_capturer_source") {
     "common",
     "../common/include",
     "../../audioutils/include",
+    "../../audioeffect/include",
     "../../../../interfaces/inner_api/native/audiocommon/include",
   ]
 
-  deps = [ "../../audioutils:audio_utils" ]
+  deps = [
+    "../../audioeffect:audio_effect",
+    "../../audioutils:audio_utils",
+  ]
 
   external_deps = [
     "c_utils:utils",
