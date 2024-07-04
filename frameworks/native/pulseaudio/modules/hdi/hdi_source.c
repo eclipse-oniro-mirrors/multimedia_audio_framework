@@ -208,7 +208,7 @@ static void PushData(pa_source_output *sourceOutput, pa_memchunk *chunk)
     pa_source_output_assert_ref(sourceOutput);
     pa_source_output_assert_io_context(sourceOutput);
     pa_assert(chunk);
-    AUDIO_DEBUG_LOG("chunk length: %{public}lu", chunk->length);
+    AUDIO_DEBUG_LOG("chunk length: %{public}zu", chunk->length);
 
     if (!sourceOutput->thread_info.direct_on_input) {
         pa_source_output_push(sourceOutput, chunk);
@@ -247,7 +247,7 @@ static void EnhanceProcess(const char *sceneKey, pa_memchunk *chunk)
     pa_assert(sceneKey);
     pa_assert(chunk);
     void *src = pa_memblock_acquire_chunk(chunk);
-    AUDIO_DEBUG_LOG("chunk length: %{public}lu scene: %{public}s", chunk->length, sceneKey);
+    AUDIO_DEBUG_LOG("chunk length: %{public}zu scene: %{public}s", chunk->length, sceneKey);
     pa_memblock_release(chunk->memblock);
 
     if (CopyToEnhanceBufferAdapter(src, chunk->length) != 0) {
@@ -320,7 +320,8 @@ static uint32_t UpdateEnhanceSceneList(pa_source *source, char sceneList[MAX_SCE
         if (CheckRepeat(sceneList, sceneKey, index)) {
             continue;
         }
-        memcpy_s(sceneList[index], strlen(sceneKey), sceneKey, strlen(sceneKey));
+        CHECK_AND_CONTINUE_LOG(memcpy_s(sceneList[index], strlen(sceneKey), sceneKey, strlen(sceneKey)) == 0,
+            "memcpy from sceneKey to sceneList failed.");
         AUDIO_DEBUG_LOG("sceneList[%{public}u] add: %{public}s", index, sceneList[index]);
         ++index;
     }

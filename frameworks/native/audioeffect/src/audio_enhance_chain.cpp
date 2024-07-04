@@ -33,7 +33,8 @@ const uint32_t MILLISECOND = 1000;
 const uint32_t DEFAULT_FRAMELENGTH = 20;
 const uint32_t DEFAULT_SAMPLE_RATE = 48000;
 const uint32_t DEFAULT_DATAFORMAT = 16;
-const uint32_t DEFAULT_REF_NUM = 0;  // if sceneType is voip, refNum is 8
+const uint32_t DEFAULT_REF_NUM = 0;
+const uint32_t DEFAULT_VOIP_REF_NUM = 8;
 const uint32_t DEFAULT_MIC_NUM = 4;
 const uint32_t DEFAULT_OUT_NUM = 4;
 
@@ -58,7 +59,7 @@ void AudioEnhanceChain::InitAudioEnhanceChain()
     
     if (count(NEED_EC_SCENE.begin(), NEED_EC_SCENE.end(), sceneType_)) {
         needEcFlag = true;
-        algoSupportedConfig_.refNum = 2;  // TODO: wait Ec stream
+        algoSupportedConfig_.refNum = DEFAULT_VOIP_REF_NUM;
     }
 
     uint32_t batchLen = algoSupportedConfig_.refNum + algoSupportedConfig_.micNum;

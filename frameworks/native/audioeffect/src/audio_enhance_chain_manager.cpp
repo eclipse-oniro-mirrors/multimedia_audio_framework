@@ -375,10 +375,10 @@ int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const std::string &scen
     auto audioEnhanceChain = sceneTypeToEnhanceChainMap_[sceneKey];
     if (audioEnhanceChain->ApplyEnhanceChain(enhanceBuffer_, length) != SUCCESS) {
         AUDIO_ERR_LOG("Apply %{public}s failed.", sceneKey.c_str());
-         return ERROR;
+        return ERROR;
      }
     AUDIO_DEBUG_LOG("Apply %{public}s success", sceneKey.c_str());
-     return SUCCESS;
+    return SUCCESS;
  }
 
 } // namespace AudioStandard
