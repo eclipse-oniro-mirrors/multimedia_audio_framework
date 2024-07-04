@@ -320,7 +320,7 @@ static uint32_t UpdateEnhanceSceneList(pa_source *source, char sceneList[MAX_SCE
         if (CheckRepeat(sceneList, sceneKey, index)) {
             continue;
         }
-        CHECK_AND_CONTINUE_LOG(memcpy_s(sceneList[index], strlen(sceneKey), sceneKey, strlen(sceneKey)) == 0,
+        CHECK_AND_RETURN_RET_LOG(memcpy_s(sceneList[index], strlen(sceneKey), sceneKey, strlen(sceneKey)) == 0, index,
             "memcpy from sceneKey to sceneList failed.");
         AUDIO_DEBUG_LOG("sceneList[%{public}u] add: %{public}s", index, sceneList[index]);
         ++index;
