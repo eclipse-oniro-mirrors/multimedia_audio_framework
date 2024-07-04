@@ -379,7 +379,7 @@ int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const std::string &scen
      }
     AUDIO_DEBUG_LOG("Apply %{public}s success", sceneKey.c_str());
     return SUCCESS;
- }
+}
 
 } // namespace AudioStandard
 } // namespace OHOS
