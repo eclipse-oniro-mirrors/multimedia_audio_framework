@@ -274,7 +274,10 @@ static void EnhanceProcessAndPost(pa_source *source, const char *scene, pa_memch
         const char *sourceOutputSceneType = pa_proplist_gets(sourceOutput->proplist, "scene.type");
         const char *sourceOutputUpDevice = pa_proplist_gets(sourceOutput->proplist, "device.up");
         const char *sourceOutputDownDevice = pa_proplist_gets(sourceOutput->proplist, "device.down");
-        char *sceneKey = ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice);
+        char sceneKey[MAX_SCENE_NAME_LEN];
+        if (ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice, sceneKey) != 0) {
+            continue;
+        }
         if (strcmp(scene, sceneKey) != 0) {
             AUDIO_INFO_LOG("source output scene type:%{public}s post data directly.", sceneKey);
             PostSourceData(source, sourceOutput, chunk);
@@ -310,7 +313,10 @@ static uint32_t UpdateEnhanceSceneList(pa_source *source, char sceneList[MAX_SCE
         const char *sourceOutputSceneType = pa_proplist_gets(sourceOutput->proplist, "scene.type");
         const char *sourceOutputUpDevice = pa_proplist_gets(sourceOutput->proplist, "device.up");
         const char *sourceOutputDownDevice = pa_proplist_gets(sourceOutput->proplist, "device.down");
-        char *sceneKey = ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice);
+        char sceneKey[MAX_SCENE_NAME_LEN];
+        if (ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice, sceneKey) != 0) {
+            continue;
+        }
 
         if (!EnhanceChainManagerExist(sceneKey)) {
             // The current source output has no audio enhance chain. Directly post data.

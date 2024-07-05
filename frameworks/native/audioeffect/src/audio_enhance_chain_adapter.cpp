@@ -32,6 +32,7 @@ constexpr int32_t SAMPLE_FORMAT_U8 = 8;
 constexpr int32_t SAMPLE_FORMAT_S16LE = 16;
 constexpr int32_t SAMPLE_FORMAT_S24LE = 24;
 constexpr int32_t SAMPLE_FORMAT_S32LE = 32;
+constexpr int32_t MAX_SCENE_NAME_LEN = 50;
 
 const std::map<int32_t, pa_sample_format_t> FORMAT_CONVERT_MAP {
     {SAMPLE_FORMAT_U8, PA_SAMPLE_U8},
@@ -197,7 +198,7 @@ int32_t EnhanceChainManagerProcess(const char *sceneKey, uint32_t length)
     return SUCCESS;
 }
 
-char *ConcatStr(const char *sceneType, const char *upDevice, const char *downDevice)
+int32_t ConcatStr(const char *sceneType, const char *upDevice, const char *downDevice, char *sceneKey)
 {
     std::string sceneTypeString = "";
     std::string upDeviceString = "";
@@ -212,5 +213,13 @@ char *ConcatStr(const char *sceneType, const char *upDevice, const char *downDev
         downDeviceString = downDevice;
     }
     std::string sceneKeyString = sceneTypeString + "_&_" + upDeviceString + "_&_" + downDeviceString + "\0";
-    return const_cast<char *>(sceneKeyString.c_str());
+    if (sceneKeyString.size() > MAX_SCENE_NAME_LEN) {
+        return ERROR;
+    }
+    int32_t ret = memcpy_s(sceneKey, sceneKeyString.size(), sceneKeyString.c_str(), sceneKeyString.size());
+    if (ret != 0) {
+        AUDIO_ERR_LOG("memcpy from sceneKeyString to sceneKey failed");
+        return ERROR;
+    }
+    return SUCCESS;
 }

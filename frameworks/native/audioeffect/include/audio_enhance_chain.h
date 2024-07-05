@@ -85,7 +85,7 @@ private:
     AlgoCache algoCache_;
     FILE *dumpFileIn_ = nullptr;
     FILE *dumpFileOut_ = nullptr;
-    bool needEcFlag;
+    bool needEcFlag_;
     std::vector<AudioEffectHandle> standByEnhanceHandles_;
     std::vector<AudioEffectLibrary*> enhanceLibHandles_;
 };

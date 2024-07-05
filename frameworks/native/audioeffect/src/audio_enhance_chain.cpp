@@ -50,7 +50,7 @@ AudioEnhanceChain::AudioEnhanceChain(const std::string &scene, const std::string
 void AudioEnhanceChain::InitAudioEnhanceChain()
 {
     setConfigFlag_ = false;
-    needEcFlag = false;
+    needEcFlag_ = false;
     enhanceLibHandles_.clear();
     standByEnhanceHandles_.clear();
 
@@ -58,7 +58,7 @@ void AudioEnhanceChain::InitAudioEnhanceChain()
         DEFAULT_REF_NUM, DEFAULT_OUT_NUM};
     
     if (count(NEED_EC_SCENE.begin(), NEED_EC_SCENE.end(), sceneType_)) {
-        needEcFlag = true;
+        needEcFlag_ = true;
         algoSupportedConfig_.refNum = DEFAULT_VOIP_REF_NUM;
     }
 
