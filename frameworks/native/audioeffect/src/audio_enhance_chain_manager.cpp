@@ -153,7 +153,7 @@ int32_t AudioEnhanceChainManager::InitEnhanceBuffer()
         enhanceBuffer_->micBufferOut.resize(len);
         enhanceBuffer_->length = len;
         enhanceBuffer_->lengthEc = lenEc;
-        AUDIO_INFO_LOG("InitEnhanceBuffer SUCCESS");
+        AUDIO_INFO_LOG("enhanceBuffer_ init SUCCESS");
         return SUCCESS;
     }
     if ((len > enhanceBuffer_->length)) {
@@ -163,7 +163,7 @@ int32_t AudioEnhanceChainManager::InitEnhanceBuffer()
     if (lenEc > enhanceBuffer_->lengthEc) {
         enhanceBuffer_->ecBuffer.resize(lenEc);
     }
-    AUDIO_INFO_LOG("InitEnhanceBuffer SUCCESS");
+    AUDIO_INFO_LOG("enhanceBuffer_ update SUCCESS");
     return SUCCESS;
 }
 
@@ -340,10 +340,7 @@ int32_t AudioEnhanceChainManager::CopyToEnhanceBuffer(void *data, uint32_t lengt
         return ERROR;
     }
     AUDIO_DEBUG_LOG("length: %{public}u chunk length: %{public}u", length, enhanceBuffer_->length);
-    if ((length > enhanceBuffer_->length)) {
-        return ERROR;
-    }
-    CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferIn.data(), length, data, length) == 0,
+    CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferIn.data(), enhanceBuffer_->length, data, length) == 0,
         ERROR, "memcpy error in data to enhanceBuffer->micBufferIn");
     memset_s(enhanceBuffer_->ecBuffer.data(), enhanceBuffer_->lengthEc, 0, enhanceBuffer_->lengthEc);
     return SUCCESS;
@@ -367,7 +364,7 @@ int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const std::string &scen
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     if (!sceneTypeToEnhanceChainMap_.count(sceneKey)) {
-        CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferOut.data(), length,
+        CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferOut.data(), enhanceBuffer_->length,
             enhanceBuffer_->micBufferIn.data(), length) == 0, ERROR, "memcpy error in apply enhance");
         AUDIO_ERR_LOG("Can not find %{public}s in sceneTypeToEnhanceChainMap_", sceneKey.c_str());
         return ERROR;

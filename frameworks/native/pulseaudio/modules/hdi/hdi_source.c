@@ -37,8 +37,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "audio_hdiadapter_info.h"
 #include "securec.h"
+#include "audio_hdiadapter_info.h"
 #include "audio_log.h"
 #include "audio_source_type.h"
 #include "audio_utils_c.h"
@@ -275,7 +275,8 @@ static void EnhanceProcessAndPost(pa_source *source, const char *scene, pa_memch
         const char *sourceOutputUpDevice = pa_proplist_gets(sourceOutput->proplist, "device.up");
         const char *sourceOutputDownDevice = pa_proplist_gets(sourceOutput->proplist, "device.down");
         char sceneKey[MAX_SCENE_NAME_LEN];
-        if (ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice, sceneKey) != 0) {
+        if (ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice, sceneKey,
+            MAX_SCENE_NAME_LEN) != 0) {
             continue;
         }
         if (strcmp(scene, sceneKey) != 0) {
@@ -314,7 +315,8 @@ static uint32_t UpdateEnhanceSceneList(pa_source *source, char sceneList[MAX_SCE
         const char *sourceOutputUpDevice = pa_proplist_gets(sourceOutput->proplist, "device.up");
         const char *sourceOutputDownDevice = pa_proplist_gets(sourceOutput->proplist, "device.down");
         char sceneKey[MAX_SCENE_NAME_LEN];
-        if (ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice, sceneKey) != 0) {
+        if (ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice, sceneKey,
+            MAX_SCENE_NAME_LEN) != 0) {
             continue;
         }
 
