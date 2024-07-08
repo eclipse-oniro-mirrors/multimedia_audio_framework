@@ -74,6 +74,7 @@ static int32_t UpdateUnsupportedScene(std::string &scene)
         (scene != "SCENE_VOIP_3A") &&
         (scene != "SCENE_RECORD") &&
         (scene != "SCENE_MEETING") &&
+        (scene != "SCENE_VOIP") &&
         (scene != "SCENE_OTHERS")) {
         AUDIO_INFO_LOG("[supportedEffectConfig LOG9]:stream-> The scene of %{public}s is unsupported, \
             and this scene is deleted!", scene.c_str());
