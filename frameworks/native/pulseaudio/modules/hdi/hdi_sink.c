@@ -68,7 +68,7 @@
 #define IN_CHANNEL_NUM_MAX 16
 #define OUT_CHANNEL_NUM_MAX 2
 #define DEFAULT_FRAMELEN 2048
-#define SCENE_TYPE_NUM 7
+#define SCENE_TYPE_NUM 8
 #define HDI_MIN_MS_MAINTAIN 30
 #define OFFLOAD_HDI_CACHE1 200 // ms, should equal with val in client
 #define OFFLOAD_HDI_CACHE2 7000 // ms, should equal with val in client
@@ -112,11 +112,11 @@ bool g_paHaveDisabled = false;
 time_t g_speakerPaAllStreamStartVolZeroTime = 0;
 bool g_speakerPaHaveClosed = false;
 time_t g_speakerPaClosedTime = 0;
-bool g_effectAllStreamVolumeZeroMap[SCENE_TYPE_NUM] = {false, false, false, false, false, false, false};
-bool g_effectHaveDisabledMap[SCENE_TYPE_NUM] = {false, false, false, false, false, false, false};
-time_t g_effectStartVolZeroTimeMap[SCENE_TYPE_NUM] = {0, 0, 0, 0, 0, 0, 0};
+bool g_effectAllStreamVolumeZeroMap[SCENE_TYPE_NUM] = {false};
+bool g_effectHaveDisabledMap[SCENE_TYPE_NUM] = {false};
+time_t g_effectStartVolZeroTimeMap[SCENE_TYPE_NUM] = {0};
 char *const SCENE_TYPE_SET[SCENE_TYPE_NUM] = {"SCENE_MUSIC", "SCENE_GAME", "SCENE_MOVIE", "SCENE_SPEECH", "SCENE_RING",
-    "SCENE_OTHERS", "EFFECT_NONE"};
+    "SCENE_VOIP", "SCENE_OTHERS", "EFFECT_NONE"};
 const int32_t COMMON_SCENE_TYPE_INDEX = 0;
 
 enum HdiInputType { HDI_INPUT_TYPE_PRIMARY, HDI_INPUT_TYPE_OFFLOAD, HDI_INPUT_TYPE_MULTICHANNEL };
