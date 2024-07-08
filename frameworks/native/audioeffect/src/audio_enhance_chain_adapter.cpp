@@ -142,6 +142,14 @@ pa_sample_spec EnhanceChainManagerGetAlgoConfig(const char *sceneType, const cha
     return sampleSpec;
 }
 
+bool EnhanceChainManagerIsEmptyEnhanceChain()
+{
+    AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
+        true, "null audioEnhanceChainManager");
+    return audioEnhanceChainMananger->IsEmptyEnhanceChain();
+}
+
 int32_t EnhanceChainManagerInitEnhanceBuffer()
 {
     AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();

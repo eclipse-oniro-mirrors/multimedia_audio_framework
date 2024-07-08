@@ -381,6 +381,14 @@ static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct User
         return -1;
     }
 
+    bool ret = EnhanceChainManagerIsEmptyEnhanceChain();
+    if (ret) {
+        // if none enhance chain exist, post data as the original method
+        pa_source_post(u->source, chunk);
+        pa_memblock_unref(chunk->memblock);
+        return 0;
+    }
+
     uint32_t sceneNum = UpdateEnhanceSceneList(u->source, u->sceneList, chunk);
 
     for (uint32_t i = 0; i < sceneNum; ++i) {

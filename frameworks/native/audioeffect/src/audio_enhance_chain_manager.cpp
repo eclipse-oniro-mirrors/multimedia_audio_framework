@@ -330,7 +330,16 @@ bool AudioEnhanceChainManager::IsEmptyEnhanceChain()
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     CHECK_AND_RETURN_RET_LOG(isInitialized_, ERROR, "has not been initialized");
-    return sceneTypeToEnhanceChainMap_.size() == 0;
+    if(sceneTypeToEnhanceChainMap_.size() == 0) {
+        return true;
+    }
+    bool ret = true;
+    for (auto &item : sceneTypeToEnhanceChainMap_) {
+        if (!item.IsEmptyEnhanceHandles()) {
+            ret = false;
+        }
+    }
+    return ret;
 }
 
 int32_t AudioEnhanceChainManager::CopyToEnhanceBuffer(void *data, uint32_t length)
