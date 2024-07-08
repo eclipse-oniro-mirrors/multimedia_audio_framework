@@ -335,7 +335,7 @@ bool AudioEnhanceChainManager::IsEmptyEnhanceChain()
     }
     bool ret = true;
     for (auto &item : sceneTypeToEnhanceChainMap_) {
-        if (!item.IsEmptyEnhanceHandles()) {
+        if (!item.second->IsEmptyEnhanceHandles()) {
             ret = false;
         }
     }
