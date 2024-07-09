@@ -142,6 +142,14 @@ pa_sample_spec EnhanceChainManagerGetAlgoConfig(const char *sceneType, const cha
     return sampleSpec;
 }
 
+bool EnhanceChainManagerIsEmptyEnhanceChain()
+{
+    AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
+        true, "null audioEnhanceChainManager");
+    return audioEnhanceChainMananger->IsEmptyEnhanceChain();
+}
+
 int32_t EnhanceChainManagerInitEnhanceBuffer()
 {
     AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
@@ -152,4 +160,71 @@ int32_t EnhanceChainManagerInitEnhanceBuffer()
         return ERROR;
     }
     return audioEnhanceChainMananger->InitEnhanceBuffer();
+}
+
+int32_t CopyToEnhanceBufferAdapter(void *data, uint32_t length)
+{
+    AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
+        ERROR, "null audioEnhanceChainManager");
+    CHECK_AND_RETURN_RET_LOG(data != nullptr, ERROR, "data null");
+    uint32_t ret = audioEnhanceChainMananger->CopyToEnhanceBuffer(data, length);
+    if (ret != 0) {
+        return ERROR;
+    }
+    return SUCCESS;
+}
+
+int32_t CopyFromEnhanceBufferAdapter(void *data, uint32_t length)
+{
+    AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
+        ERROR, "null audioEnhanceChainManager");
+    CHECK_AND_RETURN_RET_LOG(data != nullptr, ERROR, "data null");
+    uint32_t ret = audioEnhanceChainMananger->CopyFromEnhanceBuffer(data, length);
+    if (ret != 0) {
+        return ERROR;
+    }
+    return SUCCESS;
+}
+
+int32_t EnhanceChainManagerProcess(const char *sceneKey, uint32_t length)
+{
+    AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
+        ERR_INVALID_HANDLE, "null audioEnhanceChainManager");
+    std::string sceneKeyString = "";
+    if (sceneKey) {
+        sceneKeyString = sceneKey;
+    }
+    if (audioEnhanceChainMananger->ApplyAudioEnhanceChain(sceneKeyString, length) != SUCCESS) {
+        AUDIO_ERR_LOG("%{public}s process failed", sceneKeyString.c_str());
+        return ERROR;
+    }
+    AUDIO_DEBUG_LOG("%{public}s process success", sceneKeyString.c_str());
+    return SUCCESS;
+}
+
+int32_t ConcatStr(const char *sceneType, const char *upDevice, const char *downDevice, char *sceneKey,
+    uint32_t sceneKeyLen)
+{
+    std::string sceneTypeString = "";
+    std::string upDeviceString = "";
+    std::string downDeviceString = "";
+    if (sceneType) {
+        sceneTypeString = sceneType;
+    }
+    if (upDevice) {
+        upDeviceString = upDevice;
+    }
+    if (downDevice) {
+        downDeviceString = downDevice;
+    }
+    std::string sceneKeyString = sceneTypeString + "_&_" + upDeviceString + "_&_" + downDeviceString + "\0";
+    int32_t ret = memcpy_s(sceneKey, sceneKeyLen, sceneKeyString.c_str(), sceneKeyString.size());
+    if (ret != 0) {
+        AUDIO_ERR_LOG("memcpy from sceneKeyString to sceneKey failed");
+        return ERROR;
+    }
+    return SUCCESS;
 }

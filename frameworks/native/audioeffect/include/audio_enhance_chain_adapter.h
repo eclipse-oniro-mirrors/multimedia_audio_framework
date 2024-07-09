@@ -30,7 +30,14 @@ int32_t EnhanceChainManagerCreateCb(const char *sceneType, const char *enhanceMo
 int32_t EnhanceChainManagerReleaseCb(const char *sceneType, const char *upDevice, const char *downDevice);
 bool EnhanceChainManagerExist(const char *sceneKey);
 pa_sample_spec EnhanceChainManagerGetAlgoConfig(const char *sceneType, const char *upDevice, const char *downDevice);
+bool EnhanceChainManagerIsEmptyEnhanceChain();
 int32_t EnhanceChainManagerInitEnhanceBuffer();
+int32_t CopyToEnhanceBufferAdapter(void *data, uint32_t length);
+int32_t CopyFromEnhanceBufferAdapter(void *data, uint32_t length);
+int32_t EnhanceChainManagerProcess(const char *sceneKey, uint32_t length);
+int32_t ConcatStr(const char *sceneType, const char *upDevice, const char *downDevice, char *sceneKey,
+    uint32_t sceneKeyLen);
+
 
 #ifdef __cplusplus
 }

@@ -46,6 +46,9 @@ public:
         const std::string &downDevice);
     bool IsEmptyEnhanceChain();
     int32_t InitEnhanceBuffer();
+    int32_t CopyToEnhanceBuffer(void *data, uint32_t length);
+    int32_t CopyFromEnhanceBuffer(void *data, uint32_t length);
+    int32_t ApplyAudioEnhanceChain(const std::string &sceneKey, uint32_t length);
 
 private:
     int32_t SetAudioEnhanceChainDynamic(const std::string &sceneType, const std::string &sceneMode,
@@ -59,7 +62,7 @@ private:
     std::map<std::string, std::vector<std::string>> enhanceChainToEnhancesMap_;
     std::map<std::string, std::shared_ptr<AudioEffectLibEntry>> enhanceToLibraryEntryMap_;
     std::map<std::string, std::string> enhanceToLibraryNameMap_;
-    std::shared_ptr<EnhanceBuffer> enhanceBuffer_ = nullptr;
+    std::unique_ptr<EnhanceBuffer> enhanceBuffer_ = nullptr;
     std::mutex chainManagerMutex_;
     bool isInitialized_;
 };
