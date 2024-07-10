@@ -29,9 +29,12 @@
 
 #include "audio_log.h"
 #include "audio_enhance_chain_adapter.h"
+#include "userdata.h"
 
 pa_source *PaHdiSourceNew(pa_module *m, pa_modargs *ma, const char *driver);
 void PaHdiSourceFree(pa_source *s);
+void IncreScenekeyCount(pa_hashmap *sceneMap, const char *key);
+bool DecreScenekeyCount(pa_hashmap *sceneMap, const char *key);
 
 PA_MODULE_AUTHOR("OpenHarmony");
 PA_MODULE_DESCRIPTION("OpenHarmony HDI Source");
@@ -94,9 +97,17 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
     const char *downDevice = pa_proplist_gets(so->proplist, "device.down");
     int32_t ret = EnhanceChainManagerCreateCb(sceneType, sceneMode, upDevice, downDevice);
     if (ret != 0) {
+        pa_proplist_sets(so->proplist, "scene.bypass", DEFAULT_SCENE_BYPASS);
         return PA_HOOK_OK;
     }
     EnhanceChainManagerInitEnhanceBuffer();
+    struct Userdata *u = (struct Userdata *)so->source->userdata;
+    char sceneKey[MAX_SCENE_NAME_LEN];
+    ret = ConcatStr(sceneType, upDevice, downDevice, sceneKey, MAX_SCENE_NAME_LEN);
+    if (ret != 0) {
+        return PA_HOOK_OK;
+    }
+    IncreScenekeyCount(u->sceneToCountMap, sceneKey);
     return PA_HOOK_OK;
 }
 
@@ -108,6 +119,13 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
     const char *upDevice = pa_proplist_gets(so->proplist, "device.up");
     const char *downDevice = pa_proplist_gets(so->proplist, "device.down");
     EnhanceChainManagerReleaseCb(sceneType, upDevice, downDevice);
+    struct Userdata *u = (struct Userdata *)so->source->userdata;
+    char sceneKey[MAX_SCENE_NAME_LEN];
+    int32_t ret = ConcatStr(sceneType, upDevice, downDevice, sceneKey, MAX_SCENE_NAME_LEN);
+    if (ret != 0) {
+        return PA_HOOK_OK;
+    }
+    DecreScenekeyCount(u->sceneToCountMap, sceneKey);
     return PA_HOOK_OK;
 }
 
