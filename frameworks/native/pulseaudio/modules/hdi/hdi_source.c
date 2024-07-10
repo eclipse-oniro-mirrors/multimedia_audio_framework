@@ -33,10 +33,7 @@
 #include <pulsecore/memblockq.c>
 #include <pulsecore/source.h>
 #include <pulsecore/source-output.h>
-#include <pulsecore/mix.h>
-#include <pulsecore/memblockq.c>
-#include <pulsecore/source.h>
-#include <pulsecore/source-output.h>
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
