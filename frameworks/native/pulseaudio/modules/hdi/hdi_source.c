@@ -70,34 +70,6 @@
 
 const char *DEVICE_CLASS_REMOTE = "remote";
 
-void IncreScenekeyCount(pa_hashmap *sceneMap, const char *key)
-{
-    char *sceneKey;
-    uint32_t *num = NULL;
-    if ((num = (uint32_t *)pa_hashmap_get(sceneMap, key)) != NULL) {
-        (*num)++;
-    } else {
-        sceneKey = strdup(key);
-        num = pa_xnew0(uint32_t, 1);
-        *num = 1;
-        pa_hashmap_put(sceneMap, sceneKey, num);
-    }
-}
-
-
-bool DecreScenekeyCount(pa_hashmap *sceneMap, const char *key)
-{
-    uint32_t *num = NULL;
-    if ((num = (uint32_t *)pa_hashmap_get(sceneMap, key)) != NULL) {
-        (*num)--;
-        if (*num == 0) {
-            pa_hashmap_remove_and_free(sceneMap, key);
-        }
-        return true;
-    }
-    return false;
-}
-
 static int PaHdiCapturerInit(struct Userdata *u);
 static void PaHdiCapturerExit(struct Userdata *u);
 

@@ -33,8 +33,6 @@
 
 pa_source *PaHdiSourceNew(pa_module *m, pa_modargs *ma, const char *driver);
 void PaHdiSourceFree(pa_source *s);
-void IncreScenekeyCount(pa_hashmap *sceneMap, const char *key);
-bool DecreScenekeyCount(pa_hashmap *sceneMap, const char *key);
 
 PA_MODULE_AUTHOR("OpenHarmony");
 PA_MODULE_DESCRIPTION("OpenHarmony HDI Source");
@@ -74,6 +72,34 @@ static const char * const VALID_MODARGS[] = {
     "source_type",
     NULL
 };
+
+static void IncreScenekeyCount(pa_hashmap *sceneMap, const char *key)
+{
+    char *sceneKey;
+    uint32_t *num = NULL;
+    if ((num = (uint32_t *)pa_hashmap_get(sceneMap, key)) != NULL) {
+        (*num)++;
+    } else {
+        sceneKey = strdup(key);
+        num = pa_xnew0(uint32_t, 1);
+        *num = 1;
+        pa_hashmap_put(sceneMap, sceneKey, num);
+    }
+}
+
+
+static bool DecreScenekeyCount(pa_hashmap *sceneMap, const char *key)
+{
+    uint32_t *num = NULL;
+    if ((num = (uint32_t *)pa_hashmap_get(sceneMap, key)) != NULL) {
+        (*num)--;
+        if (*num == 0) {
+            pa_hashmap_remove_and_free(sceneMap, key);
+        }
+        return true;
+    }
+    return false;
+}
 
 static pa_hook_result_t SourceOutputProplistChangedCb(pa_core *c, pa_source_output *so)
 {
