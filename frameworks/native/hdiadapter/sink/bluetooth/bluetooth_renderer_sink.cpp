@@ -119,6 +119,7 @@ public:
     int32_t UpdateAppsUid(const int32_t appsUid[MAX_MIX_CHANNELS],
         const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
+    int32_t GetRenderId(uint32_t &renderId) const override;
 
     explicit BluetoothRendererSinkInner(bool isBluetoothLowLatency = false);
     ~BluetoothRendererSinkInner();
@@ -1095,6 +1096,12 @@ int32_t BluetoothRendererSinkInner::UpdateAppsUid(const std::vector<int32_t> &ap
     runningLockManager_->UpdateAppsUidToPowerMgr();
 #endif
 
+    return SUCCESS;
+}
+
+int32_t BluetoothRendererSinkInner::GetRenderId(uint32_t &renderId) const
+{
+    renderId = GenerateUniqueID(AUDIO_HDI_RENDER_ID_BASE, HDI_RENDER_OFFSET_BLUETOOTH);
     return SUCCESS;
 }
 } // namespace AudioStandard

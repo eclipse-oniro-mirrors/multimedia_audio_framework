@@ -50,6 +50,8 @@ constexpr int32_t UID_DISTRIBUTED_AUDIO_SA = 3055;
 constexpr int32_t UID_FOUNDATION_SA = 5523;
 constexpr int32_t UID_DISTRIBUTED_CALL_SA = 3069;
 
+const uint32_t UNIQUE_ID_INTERVAL = 8;
+
 constexpr size_t FIRST_CHAR = 1;
 constexpr size_t MIN_LEN = 8;
 constexpr size_t HEAD_STR_LEN = 2;
@@ -72,7 +74,8 @@ const std::set<SourceType> NO_BACKGROUND_CHECK_SOURCE_TYPE = {
     SOURCE_TYPE_VOICE_CALL,
     SOURCE_TYPE_REMOTE_CAST
 };
-}
+} // namespace
+
 int64_t ClockTime::GetCurNano()
 {
     int64_t result = -1; // -1 for bad result.
@@ -1157,6 +1160,11 @@ std::string GetEncryptStr(const std::string &src)
     }
 
     return dst;
+}
+
+uint32_t GenerateUniqueID(AudioHdiUniqueIDBase base, uint32_t offset)
+{
+    return base + offset * UNIQUE_ID_INTERVAL;
 }
 } // namespace AudioStandard
 } // namespace OHOS

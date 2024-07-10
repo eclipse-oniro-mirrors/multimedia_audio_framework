@@ -93,7 +93,7 @@ public:
 
     virtual int32_t SetSilentModeAndMixWithOthers(bool on) = 0;
 
-    virtual int32_t SetClientVolume() = 0;
+    virtual int32_t SetClientVolume(bool isStreamVolumeChange, bool isMediaServiceAndOffloadEnable) = 0;
     // IPC code.
     enum IpcStreamMsg : uint32_t {
         ON_REGISTER_STREAM_LISTENER = 0,

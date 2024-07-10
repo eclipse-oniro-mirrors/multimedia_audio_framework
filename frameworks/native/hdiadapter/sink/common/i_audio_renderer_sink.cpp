@@ -161,7 +161,7 @@ int32_t IAudioRendererSinkStart(struct RendererSinkAdapter *adapter)
     IAudioRendererSink *audioRendererSink = static_cast<IAudioRendererSink *>(adapter->wapper);
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     CHECK_AND_RETURN_RET_LOG(audioRendererSink->IsInited(), ERR_NOT_STARTED,
-        "audioRenderer Not Inited! Init the renderer first\n");
+        "audioRenderer Not Inited! Init the renderer first");
 
     return audioRendererSink->Start();
 }
@@ -195,7 +195,7 @@ int32_t IAudioRendererSinkRenderFrame(struct RendererSinkAdapter *adapter, char 
     IAudioRendererSink *audioRendererSink = static_cast<IAudioRendererSink *>(adapter->wapper);
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first");
 
     int32_t ret = audioRendererSink->RenderFrame(*data, len, *writeLen);
     return ret;
@@ -208,7 +208,7 @@ int32_t IAudioRendererSinkSetVolume(struct RendererSinkAdapter *adapter, float l
     IAudioRendererSink *audioRendererSink = static_cast<IAudioRendererSink *>(adapter->wapper);
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first");
 
     int32_t ret = audioRendererSink->SetVolume(left, right);
     return ret;
@@ -221,7 +221,7 @@ int32_t IAudioRendererSinkGetVolume(struct RendererSinkAdapter *adapter, float *
     IAudioRendererSink *audioRendererSink = static_cast<IAudioRendererSink *>(adapter->wapper);
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first");
 
     int32_t ret = audioRendererSink->GetVolume(*left, *right);
     return ret;
@@ -234,7 +234,7 @@ int32_t IAudioRendererSinkGetLatency(struct RendererSinkAdapter *adapter, uint32
     IAudioRendererSink *audioRendererSink = static_cast<IAudioRendererSink *>(adapter->wapper);
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first");
 
     CHECK_AND_RETURN_RET_LOG(latency, ERR_INVALID_PARAM, "IAudioRendererSinkGetLatency failed latency null");
 
@@ -249,7 +249,7 @@ int32_t IAudioRendererSinkRegCallback(struct RendererSinkAdapter *adapter, int8_
     IOffloadAudioRendererSink *audioRendererSink = static_cast<IOffloadAudioRendererSink *>(adapter->wapper);
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first");
     auto *callback = reinterpret_cast<OnRenderCallback*>(cb);
     audioRendererSink->RegisterRenderCallback(callback, userdata);
     return SUCCESS;
@@ -263,7 +263,7 @@ int32_t IAudioRendererSinkGetPresentationPosition(struct RendererSinkAdapter *ad
     IOffloadAudioRendererSink *audioRendererSink = static_cast<IOffloadAudioRendererSink *>(adapter->wapper);
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
-    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first\n");
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first");
 
     return audioRendererSink->GetPresentationPosition(*frames, *timeSec, *timeNanoSec);
 }
@@ -276,7 +276,7 @@ int32_t IAudioRendererSinkFlush(struct RendererSinkAdapter *adapter)
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
     CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED,
-        "audioRenderer Not Inited! Init the renderer first, Renderer Flush failed\n");
+        "audioRenderer Not Inited! Init the renderer first, Renderer Flush failed");
 
     return audioRendererSink->Flush();
 }
@@ -289,7 +289,7 @@ int32_t IAudioRendererSinkReset(struct RendererSinkAdapter *adapter)
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
     CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED,
-        "audioRenderer Not Inited! Init the renderer first, Renderer Reset failed\n");
+        "audioRenderer Not Inited! Init the renderer first, Renderer Reset failed");
 
     return audioRendererSink->Reset();
 }
@@ -302,7 +302,7 @@ int32_t IAudioRendererSinkSetBufferSize(struct RendererSinkAdapter *adapter, uin
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
     CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED,
-        "audioRenderer Not Inited! Init the renderer first, Renderer SetBufferSize failed\n");
+        "audioRenderer Not Inited! Init the renderer first, Renderer SetBufferSize failed");
 
     return audioRendererSink->SetBufferSize(sizeMs);
 }
@@ -315,7 +315,7 @@ int32_t IAudioRendererSinkOffloadRunningLockInit(struct RendererSinkAdapter *ada
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
     CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED,
-        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed\n");
+        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed");
 
     return audioRendererSink->OffloadRunningLockInit();
 }
@@ -328,7 +328,7 @@ int32_t IAudioRendererSinkOffloadRunningLockLock(struct RendererSinkAdapter *ada
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
     CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED,
-        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed\n");
+        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed");
 
     return audioRendererSink->OffloadRunningLockLock();
 }
@@ -341,7 +341,7 @@ int32_t IAudioRendererSinkOffloadRunningLockUnlock(struct RendererSinkAdapter *a
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
     CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED,
-        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed\n");
+        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed");
 
     return audioRendererSink->OffloadRunningLockUnlock();
 }
@@ -354,7 +354,7 @@ int32_t IAudioRendererSinkSetPaPower(struct RendererSinkAdapter *adapter, int32_
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
     CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED,
-        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed\n");
+        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed");
 
     int32_t ret = audioRendererSink->SetPaPower(flag);
     return ret;
@@ -369,12 +369,25 @@ int32_t IAudioRendererSinkUpdateAppsUid(struct RendererSinkAdapter *adapter, con
     CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
     bool isInited = audioRendererSink->IsInited();
     CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED,
-        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed\n");
+        "audioRenderer Not Inited! Init the renderer first, Renderer Resume failed");
 
     int32_t ret = audioRendererSink->UpdateAppsUid(appsUid, size);
     return ret;
 }
 
+int32_t IAudioRendererSinkGetRenderId(struct RendererSinkAdapter *adapter, uint32_t *renderId)
+{
+    CHECK_AND_RETURN_RET_LOG(adapter != nullptr, ERR_INVALID_HANDLE, "null RendererSinkAdapter");
+
+    IAudioRendererSink *audioRendererSink = static_cast<IAudioRendererSink *>(adapter->wapper);
+    CHECK_AND_RETURN_RET_LOG(audioRendererSink != nullptr, ERR_INVALID_HANDLE, "null audioRendererSink");
+    bool isInited = audioRendererSink->IsInited();
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED,
+        "audioRenderer Not Inited! Init the renderer first, Renderer GetRenderId failed");
+
+    int32_t ret = audioRendererSink->GetRenderId(*renderId);
+    return ret;
+}
 #ifdef __cplusplus
 }
 #endif

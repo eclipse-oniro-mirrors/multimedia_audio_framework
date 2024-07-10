@@ -481,6 +481,7 @@ int32_t IpcStreamProxy::GetStreamManagerType()
     CHECK_AND_RETURN_RET_LOG(ret == AUDIO_OK, ret, "failed, ipc error: %{public}d", ret);
     return reply.ReadInt32();
 }
+
 int32_t IpcStreamProxy::SetSilentModeAndMixWithOthers(bool on)
 {
     MessageParcel data;
@@ -498,7 +499,7 @@ int32_t IpcStreamProxy::SetSilentModeAndMixWithOthers(bool on)
     return ret;
 }
 
-int32_t IpcStreamProxy::SetClientVolume()
+int32_t IpcStreamProxy::SetClientVolume(bool isStreamVolumeChange, bool isMediaServiceAndOffloadEnable)
 {
     MessageParcel data;
     MessageParcel reply;

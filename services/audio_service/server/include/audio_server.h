@@ -179,6 +179,8 @@ private:
     const std::string GetUsbParameter();
     void WriteServiceStartupError();
     bool IsNormalIpcStream(const AudioProcessConfig &config) const;
+    int32_t SetVolumeInfoForEnhanceChain(const AudioStreamType &streamType);
+    int32_t SetMicrophoneMuteForEnhanceChain(const bool &isMute);
 
 private:
     static constexpr int32_t MEDIA_SERVICE_UID = 1013;

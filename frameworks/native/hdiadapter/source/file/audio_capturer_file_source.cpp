@@ -204,5 +204,11 @@ int32_t AudioCapturerFileSource::UpdateAppsUid(const std::vector<int32_t> &appsU
     AUDIO_WARNING_LOG("not supported.");
     return ERR_NOT_SUPPORTED;
 }
+
+int32_t AudioCapturerFileSource::GetCaptureId(uint32_t &captureId) const
+{
+    AUDIO_WARNING_LOG("not supported.");
+    return ERR_NOT_SUPPORTED;
+}
 } // namespace AudioStandard
 } // namespace OHOS

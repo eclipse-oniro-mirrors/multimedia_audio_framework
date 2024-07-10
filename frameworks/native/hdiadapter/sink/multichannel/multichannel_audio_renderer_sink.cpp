@@ -54,7 +54,6 @@ const uint32_t PCM_8_BIT = 8;
 const uint32_t PCM_16_BIT = 16;
 const uint32_t PCM_24_BIT = 24;
 const uint32_t PCM_32_BIT = 32;
-const uint32_t MULTICHANNEL_OUTPUT_STREAM_ID = 61; // 13 + 6 * 8
 const uint32_t STEREO_CHANNEL_COUNT = 2;
 const uint16_t GET_MAX_AMPLITUDE_FRAMES_THRESHOLD = 10;
 
@@ -106,6 +105,7 @@ public:
 
     int32_t UpdateAppsUid(const int32_t appsUid[MAX_MIX_CHANNELS], const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
+    int32_t GetRenderId(uint32_t &renderId) const override;
 
     explicit MultiChannelRendererSinkInner(const std::string &halName = "multichannel");
     ~MultiChannelRendererSinkInner();
@@ -390,7 +390,7 @@ void InitAttrs(struct AudioSampleAttributes &attrs)
     attrs.channelCount = CHANNEL_6;
     attrs.sampleRate = AUDIO_SAMPLE_RATE_48K;
     attrs.interleaved = true;
-    attrs.streamId = MULTICHANNEL_OUTPUT_STREAM_ID;
+    attrs.streamId = GenerateUniqueID(AUDIO_HDI_RENDER_ID_BASE, HDI_RENDER_OFFSET_MULTICHANNEL);
     attrs.type = AUDIO_MULTI_CHANNEL;
     attrs.period = DEEP_BUFFER_RENDER_PERIOD_SIZE;
     attrs.isBigEndian = false;
@@ -789,7 +789,7 @@ int32_t MultiChannelRendererSinkInner::SetOutputRoute(DeviceType outputDevice, A
     source.role = AUDIO_PORT_SOURCE_ROLE;
     source.type = AUDIO_PORT_MIX_TYPE;
     source.ext.mix.moduleId = 0;
-    source.ext.mix.streamId = MULTICHANNEL_OUTPUT_STREAM_ID;
+    source.ext.mix.streamId = GenerateUniqueID(AUDIO_HDI_RENDER_ID_BASE, HDI_RENDER_OFFSET_MULTICHANNEL);
     source.ext.device.desc = (char *)"";
 
     sink.portId = static_cast<int32_t>(audioPort_.portId);
@@ -1157,6 +1157,12 @@ int32_t MultiChannelRendererSinkInner::UpdateAppsUid(const int32_t appsUid[MAX_M
 int32_t MultiChannelRendererSinkInner::UpdateAppsUid(const std::vector<int32_t> &appsUid)
 {
     AUDIO_WARNING_LOG("not supported.");
+    return SUCCESS;
+}
+
+int32_t MultiChannelRendererSinkInner::GetRenderId(uint32_t &renderId) const
+{
+    renderId = GenerateUniqueID(AUDIO_HDI_RENDER_ID_BASE, HDI_RENDER_OFFSET_MULTICHANNEL);
     return SUCCESS;
 }
 } // namespace AudioStandard

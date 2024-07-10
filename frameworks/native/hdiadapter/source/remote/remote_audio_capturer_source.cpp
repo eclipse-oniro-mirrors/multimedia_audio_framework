@@ -53,7 +53,7 @@ namespace OHOS {
 namespace AudioStandard {
 namespace {
 const uint16_t GET_MAX_AMPLITUDE_FRAMES_THRESHOLD = 10;
-}
+} // namespace
 
 class RemoteAudioCapturerSourceInner : public RemoteAudioCapturerSource, public IAudioDeviceAdapterCallback {
 public:
@@ -91,6 +91,7 @@ public:
 
     int32_t UpdateAppsUid(const int32_t appsUid[PA_MAX_OUTPUTS_PER_SOURCE], const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
+    int32_t GetCaptureId(uint32_t &captureId) const override;
 private:
     int32_t CreateCapture(const AudioPort &capturePort);
     int32_t SetInputPortPin(DeviceType inputDevice, AudioRouteNode &source);
@@ -100,7 +101,6 @@ private:
     void CheckUpdateState(char *frame, uint64_t replyBytes);
 
 private:
-    static constexpr uint32_t REMOTE_INPUT_STREAM_ID = 30; // 14 + 2 * 8
     const uint32_t maxInt32 = 0x7fffffff;
     const uint32_t audioBufferSize = 16 * 1024;
     const uint32_t deepBufferCapturePeriodSize = 4096;
@@ -280,7 +280,7 @@ int32_t RemoteAudioCapturerSourceInner::CreateCapture(const struct AudioPort &ca
     struct AudioSampleAttributes param;
     param.type = AudioCategory::AUDIO_IN_MEDIA;
     param.period = deepBufferCapturePeriodSize;
-    param.streamId = REMOTE_INPUT_STREAM_ID;
+    param.streamId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_REMOTE);
     param.isSignedData = true;
     param.stopThreshold = maxInt32;
     param.silenceThreshold = audioBufferSize;
@@ -558,7 +558,7 @@ int32_t RemoteAudioCapturerSourceInner::SetInputRoute(DeviceType inputDevice)
     sink.role = AudioPortRole::AUDIO_PORT_SINK_ROLE;
     sink.type = AudioPortType::AUDIO_PORT_MIX_TYPE;
     sink.ext.mix.moduleId = 0;
-    sink.ext.mix.streamId = REMOTE_INPUT_STREAM_ID;
+    sink.ext.mix.streamId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_REMOTE);
 
     AudioRoute route;
     route.sources.push_back(source);
@@ -682,6 +682,11 @@ int32_t RemoteAudioCapturerSourceInner::UpdateAppsUid(const std::vector<int32_t>
     AUDIO_WARNING_LOG("not supported.");
     return ERR_NOT_SUPPORTED;
 }
+
+int32_t RemoteAudioCapturerSourceInner::GetCaptureId(uint32_t &captureId) const
+{
+    captureId = GenerateUniqueID(AUDIO_HDI_CAPTURE_ID_BASE, HDI_CAPTURE_OFFSET_REMOTE);
+    return SUCCESS;
+}
 } // namespace AudioStandard
 } // namesapce OHOS
-

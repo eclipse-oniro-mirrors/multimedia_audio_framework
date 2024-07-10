@@ -51,7 +51,6 @@ const uint32_t PCM_8_BIT = 8;
 const uint32_t PCM_16_BIT = 16;
 const uint32_t PCM_24_BIT = 24;
 const uint32_t PCM_32_BIT = 32;
-const uint32_t OFFLOAD_OUTPUT_STREAM_ID = 53; // 13+5*8
 const uint32_t STEREO_CHANNEL_COUNT = 2;
 #ifdef FEATURE_POWER_MANAGER
 constexpr int32_t RUNNINGLOCK_LOCK_TIMEOUTMS_LASTING = -1;
@@ -119,6 +118,7 @@ public:
 
     int32_t UpdateAppsUid(const int32_t appsUid[MAX_MIX_CHANNELS], const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
+    int32_t GetRenderId(uint32_t &renderId) const override;
 
     OffloadAudioRendererSinkInner();
     ~OffloadAudioRendererSinkInner();
@@ -412,7 +412,7 @@ void InitAttrs(struct AudioSampleAttributes &attrs)
     attrs.channelCount = AUDIO_CHANNELCOUNT;
     attrs.sampleRate = AUDIO_SAMPLE_RATE_48K;
     attrs.interleaved = true;
-    attrs.streamId = OFFLOAD_OUTPUT_STREAM_ID;
+    attrs.streamId = GenerateUniqueID(AUDIO_HDI_RENDER_ID_BASE, HDI_RENDER_OFFSET_OFFLOAD);
     attrs.type = AUDIO_OFFLOAD;
     attrs.period = DEEP_BUFFER_RENDER_PERIOD_SIZE;
     attrs.isBigEndian = false;
@@ -1030,6 +1030,12 @@ int32_t OffloadAudioRendererSinkInner::UpdateAppsUid(const int32_t appsUid[MAX_M
 int32_t OffloadAudioRendererSinkInner::UpdateAppsUid(const std::vector<int32_t> &appsUid)
 {
     AUDIO_WARNING_LOG("not supported.");
+    return SUCCESS;
+}
+
+int32_t OffloadAudioRendererSinkInner::GetRenderId(uint32_t &renderId) const
+{
+    renderId = GenerateUniqueID(AUDIO_HDI_RENDER_ID_BASE, HDI_RENDER_OFFSET_OFFLOAD);
     return SUCCESS;
 }
 } // namespace AudioStandard

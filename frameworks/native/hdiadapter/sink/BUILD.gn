@@ -33,16 +33,21 @@ ohos_shared_library("audio_renderer_sink") {
     "common",
     "../common/include",
     "../../audioutils/include",
+    "../../audioeffect/include",
     "../../../../interfaces/inner_api/native/audiocommon/include",
   ]
 
-  deps = [ "../../audioutils:audio_utils" ]
+  deps = [
+    "../../audioeffect:audio_effect",
+    "../../audioutils:audio_utils",
+  ]
 
   external_deps = [
     "c_utils:utils",
     "drivers_interface_audio:libaudio_proxy_3.0",
     "hilog:libhilog",
     "init:libbegetutil",
+    "pulseaudio:pulse",
   ]
   defines = []
   if (audio_framework_feature_power_manager) {

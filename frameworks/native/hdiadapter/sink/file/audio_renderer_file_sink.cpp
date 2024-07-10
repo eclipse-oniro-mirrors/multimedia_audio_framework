@@ -244,5 +244,9 @@ int32_t AudioRendererFileSink::UpdateAppsUid(const std::vector<int32_t> &appsUid
     return SUCCESS;
 }
 
+int32_t AudioRendererFileSink::GetRenderId(uint32_t &renderId) const
+{
+    return ERR_NOT_SUPPORTED;
+}
 } // namespace AudioStandard
 } // namespace OHOS

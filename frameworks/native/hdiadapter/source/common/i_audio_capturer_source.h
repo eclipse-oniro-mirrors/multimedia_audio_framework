@@ -96,6 +96,7 @@ public:
     {
         return 0;
     }
+    virtual int32_t GetCaptureId(uint32_t &captureId) const = 0;
 };
 
 class IMmapAudioCapturerSource : public IAudioCapturerSource {

@@ -68,7 +68,6 @@ const uint32_t PCM_8_BIT = 8;
 const uint32_t PCM_16_BIT = 16;
 const uint32_t PCM_24_BIT = 24;
 const uint32_t PCM_32_BIT = 32;
-const uint32_t REMOTE_FAST_OUTPUT_STREAM_ID = 37; // 13 + 3 * 8
 const int64_t SECOND_TO_NANOSECOND = 1000000000;
 const int32_t INVALID_FD = -1;
 }
@@ -119,6 +118,7 @@ public:
 
     int32_t UpdateAppsUid(const int32_t appsUid[MAX_MIX_CHANNELS], const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
+    int32_t GetRenderId(uint32_t &renderId) const override;
 
     std::string GetNetworkId();
     IAudioSinkCallback* GetParamCallback();
@@ -437,7 +437,7 @@ void RemoteFastAudioRendererSinkInner::InitAttrs(struct AudioSampleAttributes &a
     attrs.channelCount = AUDIO_CHANNELCOUNT;
     attrs.sampleRate = AUDIO_SAMPLE_RATE_48K;
     attrs.interleaved = 0;
-    attrs.streamId = REMOTE_FAST_OUTPUT_STREAM_ID;
+    attrs.streamId = GenerateUniqueID(AUDIO_HDI_RENDER_ID_BASE, HDI_RENDER_OFFSET_REMOTE_FAST);
     attrs.period = DEEP_BUFFER_RENDER_PERIOD_SIZE;
     attrs.isBigEndian = false;
     attrs.isSignedData = true;
@@ -760,6 +760,12 @@ int32_t RemoteFastAudioRendererSinkInner::UpdateAppsUid(const std::vector<int32_
 {
     AUDIO_WARNING_LOG("not supported.");
     return ERR_NOT_SUPPORTED;
+}
+
+int32_t RemoteFastAudioRendererSinkInner::GetRenderId(uint32_t &renderId) const
+{
+    renderId = GenerateUniqueID(AUDIO_HDI_RENDER_ID_BASE, HDI_RENDER_OFFSET_REMOTE_FAST);
+    return SUCCESS;
 }
 } // namespace AudioStandard
 } // namespace OHOS

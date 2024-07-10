@@ -49,11 +49,16 @@ public:
     int32_t CopyToEnhanceBuffer(void *data, uint32_t length);
     int32_t CopyFromEnhanceBuffer(void *data, uint32_t length);
     int32_t ApplyAudioEnhanceChain(const std::string &sceneKey, uint32_t length);
+    int32_t SetInputDevice(const uint32_t &captureId, const DeviceType &inputDevice);
+    int32_t SetOutputDevice(const uint32_t &renderId, const DeviceType &outputDevice);
+    int32_t SetVolumeInfo(const AudioVolumeType &volumeType, const float &systemVol);
+    int32_t SetMicrophoneMuteInfo(const bool &isMute);
+    int32_t SetStreamVolumeInfo(const uint32_t &sessionId, const float &streamVol);
 
 private:
     int32_t SetAudioEnhanceChainDynamic(const std::string &sceneType, const std::string &sceneMode,
         const std::string &upDevice, const std::string &downDevice);
-    
+
     int32_t FreeEnhanceBuffer();
     
     std::map<std::string, std::shared_ptr<AudioEnhanceChain>> sceneTypeToEnhanceChainMap_;
@@ -65,6 +70,15 @@ private:
     std::unique_ptr<EnhanceBuffer> enhanceBuffer_ = nullptr;
     std::mutex chainManagerMutex_;
     bool isInitialized_;
+    uint32_t captureId_ = 0;
+    uint32_t renderId_ = 0;
+    uint32_t sessionId_ = 0;
+    DeviceType inputDevice_ = DEVICE_TYPE_MIC;
+    DeviceType outputDevice_ = DEVICE_TYPE_SPEAKER;
+    AudioVolumeType volumeType_ = STREAM_MUSIC;
+    float systemVol_ = 0.0f;
+    float streamVol_ = 0.0f;
+    bool isMute_ = false;
 };
 
 }  // namespace AudioStandard

@@ -387,5 +387,43 @@ int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const std::string &scen
     return SUCCESS;
 }
 
+int32_t AudioEnhanceChainManager::SetInputDevice(const uint32_t &captureId, const DeviceType &inputDevice)
+{
+    captureId_ = captureId;
+    inputDevice_ = inputDevice;
+    AUDIO_INFO_LOG("success, captureId: %{public}d, inputDevice: %{public}d", captureId_, inputDevice_);
+    return SUCCESS;
+}
+
+int32_t AudioEnhanceChainManager::SetOutputDevice(const uint32_t &renderId, const DeviceType &outputDevice)
+{
+    renderId_ = renderId;
+    outputDevice_ = outputDevice;
+    AUDIO_INFO_LOG("success, renderId: %{public}d, outputDevice: %{public}d", renderId_, outputDevice_);
+    return SUCCESS;
+}
+
+int32_t AudioEnhanceChainManager::SetVolumeInfo(const AudioVolumeType &volumeType, const float &systemVol)
+{
+    volumeType_ = volumeType;
+    systemVol_ = systemVol;
+    AUDIO_INFO_LOG("success, volumeType: %{public}d, systemVol: %{public}f", volumeType_, systemVol_);
+    return SUCCESS;
+}
+
+int32_t AudioEnhanceChainManager::SetMicrophoneMuteInfo(const bool &isMute)
+{
+    isMute_ = isMute;
+    AUDIO_INFO_LOG("success, isMute: %{public}d", isMute_);
+    return SUCCESS;
+}
+
+int32_t AudioEnhanceChainManager::SetStreamVolumeInfo(const uint32_t &sessionId, const float &streamVol)
+{
+    sessionId_ = sessionId;
+    streamVol_ = streamVol;
+    AUDIO_INFO_LOG("success, sessionId: %{public}d, streamVol: %{public}f", sessionId_, streamVol_);
+    return SUCCESS;
+}
 } // namespace AudioStandard
 } // namespace OHOS

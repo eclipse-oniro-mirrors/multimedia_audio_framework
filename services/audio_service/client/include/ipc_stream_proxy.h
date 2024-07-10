@@ -86,7 +86,7 @@ public:
 
     int32_t SetSilentModeAndMixWithOthers(bool on) override;
 
-    int32_t SetClientVolume() override;
+    int32_t SetClientVolume(bool isStreamVolumeChange, bool isMediaServiceAndOffloadEnable) override;
 private:
     static inline BrokerDelegator<IpcStreamProxy> delegator_;
 };
