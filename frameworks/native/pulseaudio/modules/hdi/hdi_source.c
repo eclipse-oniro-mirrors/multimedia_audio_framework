@@ -253,7 +253,6 @@ static void EnhanceProcessAndPost(pa_source *source, const char *scene, pa_memch
     pa_source_assert_ref(source);
     pa_assert(scene);
     pa_assert(enhanceChunk);
-    
     void *state = NULL;
     pa_source_output *sourceOutput;
     char sceneKey[MAX_SCENE_NAME_LEN];
@@ -288,7 +287,6 @@ static void PostDataBypass(pa_source *source, pa_memchunk *chunk)
             continue;
         }
         if (strcmp(sourceOutputSceneBypass, DEFAULT_SCENE_BYPASS) == 0) {
-            AUDIO_DEBUG_LOG("bypass: post data directly");
             PostSourceData(source, sourceOutput, chunk);
         }
     }
@@ -299,7 +297,9 @@ static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
     uint64_t requestBytes;
     uint64_t replyBytes = 0;
     void *p = NULL;
-
+    chunk->length = u->bufferSize;
+    AUDIO_DEBUG_LOG("HDI Source: chunk.length = u->bufferSize: %{public}zu", chunk->length);
+    chunk->memblock = pa_memblock_new(u->core->mempool, chunk->length);
     pa_assert(chunk->memblock);
     p = pa_memblock_acquire(chunk->memblock);
     pa_assert(p);
@@ -332,11 +332,6 @@ static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
 
 static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct Userdata *u)
 {
-    // new chunks
-    chunk->length = u->bufferSize;
-    AUDIO_DEBUG_LOG("HDI Source: chunk.length = u->bufferSize: %{public}zu", chunk->length);
-    chunk->memblock = pa_memblock_new(u->core->mempool, chunk->length);
-
     if (GetCapturerFrameFromHdi(chunk, u) != 0) {
         return -1;
     }
