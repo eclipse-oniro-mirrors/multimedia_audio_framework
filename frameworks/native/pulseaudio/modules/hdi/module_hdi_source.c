@@ -73,7 +73,7 @@ static const char * const VALID_MODARGS[] = {
     NULL
 };
 
-static void IncreScenekeyCount(pa_hashmap *sceneMap, const char *key)
+static void IncreaseScenekeyCount(pa_hashmap *sceneMap, const char *key)
 {
     char *sceneKey;
     uint32_t *num = NULL;
@@ -88,7 +88,7 @@ static void IncreScenekeyCount(pa_hashmap *sceneMap, const char *key)
 }
 
 
-static bool DecreScenekeyCount(pa_hashmap *sceneMap, const char *key)
+static bool DecreaseScenekeyCount(pa_hashmap *sceneMap, const char *key)
 {
     uint32_t *num = NULL;
     if ((num = (uint32_t *)pa_hashmap_get(sceneMap, key)) != NULL) {
@@ -123,6 +123,7 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
     const char *downDevice = pa_proplist_gets(so->proplist, "device.down");
     int32_t ret = EnhanceChainManagerCreateCb(sceneType, sceneMode, upDevice, downDevice);
     if (ret != 0) {
+        AUDIO_INFO_LOG("Create EnhanceChain failed, set to bypass");
         pa_proplist_sets(so->proplist, "scene.bypass", DEFAULT_SCENE_BYPASS);
         return PA_HOOK_OK;
     }
@@ -131,9 +132,10 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
     char sceneKey[MAX_SCENE_NAME_LEN];
     ret = ConcatStr(sceneType, upDevice, downDevice, sceneKey, MAX_SCENE_NAME_LEN);
     if (ret != 0) {
+        AUDIO_ERR_LOG("Get sceneKey of sourceOutput to put failed");
         return PA_HOOK_OK;
     }
-    IncreScenekeyCount(u->sceneToCountMap, sceneKey);
+    IncreaseScenekeyCount(u->sceneToCountMap, sceneKey);
     return PA_HOOK_OK;
 }
 
@@ -149,9 +151,10 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
     char sceneKey[MAX_SCENE_NAME_LEN];
     int32_t ret = ConcatStr(sceneType, upDevice, downDevice, sceneKey, MAX_SCENE_NAME_LEN);
     if (ret != 0) {
+        AUDIO_ERR_LOG("Get sceneKey of sourceOutput to unlink failed");
         return PA_HOOK_OK;
     }
-    DecreScenekeyCount(u->sceneToCountMap, sceneKey);
+    DecreaseScenekeyCount(u->sceneToCountMap, sceneKey);
     return PA_HOOK_OK;
 }
 
