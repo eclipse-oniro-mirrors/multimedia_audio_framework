@@ -181,8 +181,12 @@ int32_t AudioEnhanceChainManager::CreateAudioEnhanceChainDynamic(const std::stri
             sceneTypeToEnhanceChainCountMap_.erase(sceneTypeAndDeviceKey);
             sceneTypeToEnhanceChainMap_.erase(sceneTypeAndDeviceKey);
             return ERROR;
-            }
+        }
         sceneTypeToEnhanceChainCountMap_[sceneTypeAndDeviceKey]++;
+        audioEnhanceChain = sceneTypeToEnhanceChainMap_[sceneTypeAndDeviceKey];
+        if (audioEnhanceChain->IsEmptyEnhanceHandles()) {
+            return ERROR;
+        }
         return SUCCESS;
     } else {
         audioEnhanceChain = std::make_shared<AudioEnhanceChain>(scene, mode);

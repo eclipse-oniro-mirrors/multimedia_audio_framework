@@ -29,6 +29,7 @@
 
 #include "audio_log.h"
 #include "audio_enhance_chain_adapter.h"
+#include "userdata.h"
 
 pa_source *PaHdiSourceNew(pa_module *m, pa_modargs *ma, const char *driver);
 void PaHdiSourceFree(pa_source *s);
@@ -72,6 +73,34 @@ static const char * const VALID_MODARGS[] = {
     NULL
 };
 
+static void IncreaseScenekeyCount(pa_hashmap *sceneMap, const char *key)
+{
+    char *sceneKey;
+    uint32_t *num = NULL;
+    if ((num = (uint32_t *)pa_hashmap_get(sceneMap, key)) != NULL) {
+        (*num)++;
+    } else {
+        sceneKey = strdup(key);
+        num = pa_xnew0(uint32_t, 1);
+        *num = 1;
+        pa_hashmap_put(sceneMap, sceneKey, num);
+    }
+}
+
+
+static bool DecreaseScenekeyCount(pa_hashmap *sceneMap, const char *key)
+{
+    uint32_t *num = NULL;
+    if ((num = (uint32_t *)pa_hashmap_get(sceneMap, key)) != NULL) {
+        (*num)--;
+        if (*num == 0) {
+            pa_hashmap_remove_and_free(sceneMap, key);
+        }
+        return true;
+    }
+    return false;
+}
+
 static pa_hook_result_t SourceOutputProplistChangedCb(pa_core *c, pa_source_output *so)
 {
     AUDIO_INFO_LOG("Trigger SourceOutputProplistChangedCb");
@@ -94,9 +123,19 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
     const char *downDevice = pa_proplist_gets(so->proplist, "device.down");
     int32_t ret = EnhanceChainManagerCreateCb(sceneType, sceneMode, upDevice, downDevice);
     if (ret != 0) {
+        AUDIO_INFO_LOG("Create EnhanceChain failed, set to bypass");
+        pa_proplist_sets(so->proplist, "scene.bypass", DEFAULT_SCENE_BYPASS);
         return PA_HOOK_OK;
     }
     EnhanceChainManagerInitEnhanceBuffer();
+    struct Userdata *u = (struct Userdata *)so->source->userdata;
+    char sceneKey[MAX_SCENE_NAME_LEN];
+    ret = ConcatStr(sceneType, upDevice, downDevice, sceneKey, MAX_SCENE_NAME_LEN);
+    if (ret != 0) {
+        AUDIO_ERR_LOG("Get sceneKey of sourceOutput to put failed");
+        return PA_HOOK_OK;
+    }
+    IncreaseScenekeyCount(u->sceneToCountMap, sceneKey);
     return PA_HOOK_OK;
 }
 
@@ -108,6 +147,14 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
     const char *upDevice = pa_proplist_gets(so->proplist, "device.up");
     const char *downDevice = pa_proplist_gets(so->proplist, "device.down");
     EnhanceChainManagerReleaseCb(sceneType, upDevice, downDevice);
+    struct Userdata *u = (struct Userdata *)so->source->userdata;
+    char sceneKey[MAX_SCENE_NAME_LEN];
+    int32_t ret = ConcatStr(sceneType, upDevice, downDevice, sceneKey, MAX_SCENE_NAME_LEN);
+    if (ret != 0) {
+        AUDIO_ERR_LOG("Get sceneKey of sourceOutput to unlink failed");
+        return PA_HOOK_OK;
+    }
+    DecreaseScenekeyCount(u->sceneToCountMap, sceneKey);
     return PA_HOOK_OK;
 }
 

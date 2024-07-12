@@ -78,8 +78,8 @@ void AudioEnhanceChain::InitAudioEnhanceChain()
 void AudioEnhanceChain::InitDump()
 {
     std::string dumpFileName = "Enhance_";
-    std::string dumpFileInName = dumpFileName + GetTime() + "_In.pcm";
-    std::string dumpFileOutName = dumpFileName + GetTime() + "_Out.pcm";
+    std::string dumpFileInName = dumpFileName + sceneType_ + "_" + GetTime() + "_In.pcm";
+    std::string dumpFileOutName = dumpFileName + sceneType_ + "_" + GetTime() + "_Out.pcm";
     DumpFileUtil::OpenDumpFile(DUMP_SERVER_PARA, dumpFileInName, &dumpFileIn_);
     DumpFileUtil::OpenDumpFile(DUMP_SERVER_PARA, dumpFileOutName, &dumpFileOut_);
 }
