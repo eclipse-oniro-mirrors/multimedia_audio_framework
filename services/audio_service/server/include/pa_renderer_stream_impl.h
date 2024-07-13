@@ -91,6 +91,7 @@ private:
     int32_t OffloadUpdatePolicy(AudioOffloadType statePolicy, bool force);
     void ResetOffload();
     int32_t OffloadUpdatePolicyInWrite();
+    int32_t UpdateEffectSessionInfo();
     // offload end
 
     uint32_t streamIndex_ = static_cast<uint32_t>(-1); // invalid index
@@ -134,6 +135,7 @@ private:
     // offload end
     std::mutex fadingMutex_;
     std::condition_variable fadingCondition_;
+    float clientVolume_ = 1.0f;
 
     static inline std::atomic<int32_t> bufferNullCount_ = 0;
 };
