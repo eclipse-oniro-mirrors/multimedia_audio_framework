@@ -1769,7 +1769,7 @@ int32_t AudioServer::NotifyStreamVolumeChanged(AudioStreamType streamType, float
     }
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
     audioEffectChainManager->SystemVolumeUpdate(volume);
-    AUDIO_INFO_LOG("streamType : %{public}s , systemVolume : %{public}f", streamType, volume);
+    AUDIO_INFO_LOG("streamType : %{public}d , systemVolume : %{public}f", streamType, volume);
     int32_t ret = AudioService::GetInstance()->NotifyStreamVolumeChanged(streamType, volume);
     if (ret != SUCCESS) {
         AUDIO_WARNING_LOG("NotifyStreamVolumeChanged failed");
