@@ -28,6 +28,7 @@ namespace AudioStandard {
 
 const uint32_t NUM_SET_EFFECT_PARAM = 5;
 const uint32_t DEFAULT_SAMPLE_RATE = 48000;
+const uint32_t MAX_UINT_VOLUME = 65535;
 const uint32_t DEFAULT_NUM_CHANNEL = STEREO;
 const uint64_t DEFAULT_NUM_CHANNELLAYOUT = CH_LAYOUT_STEREO;
 

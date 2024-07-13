@@ -26,6 +26,9 @@
 
 namespace OHOS {
 namespace AudioStandard {
+
+const uint32_t MAX_UINT_VOLUME_NUM = 10000;
+
 static int32_t CheckValidEffectLibEntry(const std::shared_ptr<AudioEffectLibEntry> &libEntry, const std::string &effect,
     const std::string &libName)
 {

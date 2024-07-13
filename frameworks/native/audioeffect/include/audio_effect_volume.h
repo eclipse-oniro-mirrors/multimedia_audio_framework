@@ -23,8 +23,6 @@
 namespace OHOS {
 namespace AudioStandard {
 
-const uint32_t MAX_UINT_VOLUME = 10000;
-
 class AudioEffectVolume {
 public:
     AudioEffectVolume();
