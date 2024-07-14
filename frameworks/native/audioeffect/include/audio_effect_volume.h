@@ -38,6 +38,7 @@ public:
 private:
     float dspVolume_;
     float systemVolume_;
+    std::recursive_mutex volumeMutex_;
     std::map<std::string, float> SceneTypeToVolumeMap_;
     std::map<std::string, float> SessionIDToVolumeMap_;
 };
