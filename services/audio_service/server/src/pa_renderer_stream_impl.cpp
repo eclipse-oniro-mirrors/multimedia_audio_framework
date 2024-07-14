@@ -164,8 +164,10 @@ int32_t PaRendererStreamImpl::Start()
     pa_operation_unref(operation);
 
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
-    std::string sessionIDTemp = std::to_string(streamIndex_);
-    audioEffectVolume->SetStreamVolume(sessionIDTemp, clientVolume_);
+    if (audioEffectVolume != nullptr) {
+        std::string sessionIDTemp = std::to_string(streamIndex_);
+        audioEffectVolume->SetStreamVolume(sessionIDTemp, clientVolume_);
+    }
 
     return SUCCESS;
 }
@@ -207,8 +209,10 @@ int32_t PaRendererStreamImpl::Pause()
     pa_threaded_mainloop_unlock(mainloop_);
 
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
-    std::string sessionIDTemp = std::to_string(streamIndex_);
-    audioEffectVolume->StreamVolumeDelete(sessionIDTemp);
+    if (audioEffectVolume != nullptr) {
+        std::string sessionIDTemp = std::to_string(streamIndex_);
+        audioEffectVolume->StreamVolumeDelete(sessionIDTemp);
+    }
 
     return SUCCESS;
 }
@@ -277,8 +281,10 @@ int32_t PaRendererStreamImpl::Stop()
     pa_operation_unref(operation);
 
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
-    std::string sessionIDTemp = std::to_string(streamIndex_);
-    audioEffectVolume->StreamVolumeDelete(sessionIDTemp);
+    if (audioEffectVolume != nullptr) {
+        std::string sessionIDTemp = std::to_string(streamIndex_);
+        audioEffectVolume->StreamVolumeDelete(sessionIDTemp);
+    }
 
     return SUCCESS;
 }

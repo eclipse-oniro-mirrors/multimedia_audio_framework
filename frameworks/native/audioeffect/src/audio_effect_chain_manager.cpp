@@ -583,6 +583,7 @@ int32_t AudioEffectChainManager::EffectApVolumeUpdate(std::shared_ptr<AudioEffec
         }
         std::string sceneTypeAndDeviceKey = it->first + "_&_" + GetDeviceTypeName();
         auto audioEffectChain = SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey];
+        CHECK_AND_RETURN_RET_LOG(audioEffectChain != nullptr, ERROR, "null audioEffectChain");
         if (static_cast<int32_t>(audioEffectChain->GetFinalVolume() * MAX_UINT_VOLUME_NUM) !=
             static_cast<int32_t>(volumeMax * MAX_UINT_VOLUME_NUM)) {
             audioEffectChain->SetFinalVolume(volumeMax);
@@ -626,6 +627,7 @@ int32_t AudioEffectChainManager::StreamVolumeUpdate(const std::string sessionIDS
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
     // update session info
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     audioEffectVolume->SetStreamVolume(sessionIDString, streamVolume);
     int32_t ret;
     AUDIO_INFO_LOG("streamVolume is %{public}f", audioEffectVolume->GetStreamVolume(sessionIDString));
@@ -638,10 +640,10 @@ int32_t AudioEffectChainManager::SystemVolumeUpdate(const float systemVolume)
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
     // update session info
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     audioEffectVolume->SetSystemVolume(systemVolume);
-    int32_t ret;
     AUDIO_INFO_LOG("systemVolume is %{public}f", audioEffectVolume->GetSystemVolume());
-    ret = EffectVolumeUpdate(audioEffectVolume);
+    int32_t ret = EffectVolumeUpdate(audioEffectVolume);
     return ret;
 }
 
