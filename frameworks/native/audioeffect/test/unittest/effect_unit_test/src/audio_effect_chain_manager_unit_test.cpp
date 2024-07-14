@@ -1039,7 +1039,7 @@ HWTEST(AudioEffectChainManagerUnitTest, StreamVolumeUpdate_001, TestSize.Level1)
     float streamVolume = 0.666;
 
     AudioEffectChainManager::GetInstance()->CreateAudioEffectChainDynamic("SCENE_MOVIE");
-    int32_t result = AudioEffectChainManager::GetInstance()->StreamVolumeUpdate(streamVolume, sessionIDString);
+    int32_t result = AudioEffectChainManager::GetInstance()->StreamVolumeUpdate(sessionIDString, streamVolume);
     EXPECT_EQ(ERROR, result);
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
