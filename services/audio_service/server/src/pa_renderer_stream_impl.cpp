@@ -139,6 +139,7 @@ int32_t PaRendererStreamImpl::InitParams()
     // In plan: Get data from xml
     effectSceneName_ = processConfig_.rendererInfo.sceneType;
 
+    clientVolume_ = 1.0f;
     ResetOffload();
 
     return SUCCESS;
@@ -161,6 +162,13 @@ int32_t PaRendererStreamImpl::Start()
     streamCmdStatus_ = 0;
     operation = pa_stream_cork(paStream_, 0, PAStreamStartSuccessCb, reinterpret_cast<void *>(this));
     pa_operation_unref(operation);
+
+    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
+    if (audioEffectVolume != nullptr) {
+        std::string sessionIDTemp = std::to_string(streamIndex_);
+        audioEffectVolume->SetStreamVolume(sessionIDTemp, clientVolume_);
+    }
+
     return SUCCESS;
 }
 
@@ -199,6 +207,13 @@ int32_t PaRendererStreamImpl::Pause()
     operation = pa_stream_cork(paStream_, 1, PAStreamPauseSuccessCb, reinterpret_cast<void *>(this));
     pa_operation_unref(operation);
     pa_threaded_mainloop_unlock(mainloop_);
+
+    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
+    if (audioEffectVolume != nullptr) {
+        std::string sessionIDTemp = std::to_string(streamIndex_);
+        audioEffectVolume->StreamVolumeDelete(sessionIDTemp);
+    }
+
     return SUCCESS;
 }
 
@@ -264,6 +279,13 @@ int32_t PaRendererStreamImpl::Stop()
         reinterpret_cast<void *>(this));
     CHECK_AND_RETURN_RET_LOG(operation != nullptr, ERR_OPERATION_FAILED, "pa_stream_cork operation is null");
     pa_operation_unref(operation);
+
+    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
+    if (audioEffectVolume != nullptr) {
+        std::string sessionIDTemp = std::to_string(streamIndex_);
+        audioEffectVolume->StreamVolumeDelete(sessionIDTemp);
+    }
+
     return SUCCESS;
 }
 
@@ -1126,6 +1148,9 @@ int32_t PaRendererStreamImpl::SetClientVolume(float clientVolume)
         AUDIO_ERR_LOG("pa_proplist_new failed");
         return ERR_OPERATION_FAILED;
     }
+
+    AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
+    audioEffectChainManager->StreamVolumeUpdate(std::to_string(streamIndex_), clientVolume);
 
     if (clientVolume == MIN_VOLUME) {
         pa_proplist_sets(propList, "clientVolumeIsZero", "true");

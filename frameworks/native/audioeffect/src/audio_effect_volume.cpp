@@ -38,31 +38,50 @@ std::shared_ptr<AudioEffectVolume> AudioEffectVolume::GetInstance()
     return effectVolume;
 }
 
-void AudioEffectVolume::SetApVolume(std::string sceneType, uint32_t volume)
+void AudioEffectVolume::SetSystemVolume(const float systemVolume)
 {
-    if (!SceneTypeToVolumeMap_.count(sceneType)) {
-        SceneTypeToVolumeMap_.insert(std::make_pair(sceneType, volume));
+    AUDIO_DEBUG_LOG("systemVolume: %{public}f", systemVolume);
+    systemVolume_ = systemVolume;
+}
+
+float AudioEffectVolume::GetSystemVolume()
+{
+    return systemVolume_;
+}
+
+void AudioEffectVolume::SetStreamVolume(const std::string sessionID, const float streamVolume)
+{
+    std::lock_guard<std::recursive_mutex> lock(volumeMutex_);
+    AUDIO_DEBUG_LOG("SetStreamVolume: %{public}f", streamVolume);
+    SessionIDToVolumeMap_[sessionID] = streamVolume;
+}
+
+float AudioEffectVolume::GetStreamVolume(const std::string sessionID)
+{
+    if (!SessionIDToVolumeMap_.count(sessionID)) {
+        return 1.0;
     } else {
-        SceneTypeToVolumeMap_[sceneType] = volume;
+        return SessionIDToVolumeMap_[sessionID];
     }
 }
 
-uint32_t AudioEffectVolume::GetApVolume(std::string sceneType)
+int32_t AudioEffectVolume::StreamVolumeDelete(const std::string sessionID)
 {
-    if (!SceneTypeToVolumeMap_.count(sceneType)) {
+    if (!SessionIDToVolumeMap_.count(sessionID)) {
         return 0;
     } else {
-        return SceneTypeToVolumeMap_[sceneType];
+        SessionIDToVolumeMap_.erase(sessionID);
+        return 0;
     }
 }
 
-void AudioEffectVolume::SetDspVolume(uint32_t volume)
+void AudioEffectVolume::SetDspVolume(const float volume)
 {
-    AUDIO_DEBUG_LOG("setDspVolume: %{public}u", volume);
+    AUDIO_DEBUG_LOG("setDspVolume: %{public}f", volume);
     dspVolume_ = volume;
 }
 
-uint32_t AudioEffectVolume::GetDspVolume()
+float AudioEffectVolume::GetDspVolume()
 {
     return dspVolume_;
 }

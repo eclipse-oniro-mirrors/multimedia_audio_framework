@@ -28,6 +28,7 @@ namespace AudioStandard {
 
 const uint32_t NUM_SET_EFFECT_PARAM = 5;
 const uint32_t DEFAULT_SAMPLE_RATE = 48000;
+const uint32_t MAX_UINT_VOLUME = 65535;
 const uint32_t DEFAULT_NUM_CHANNEL = STEREO;
 const uint64_t DEFAULT_NUM_CHANNELLAYOUT = CH_LAYOUT_STEREO;
 
@@ -164,12 +165,9 @@ int32_t AudioEffectChain::SetEffectParamToHandle(AudioEffectHandle handle, Audio
     *data++ = 0;
 #endif
     AUDIO_DEBUG_LOG("set ap integration rotation: %{public}u", *(data - 1));
-    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
-    if (audioEffectVolume == nullptr) {
-        *data++ = 0;
-    } else {
-        *data++ = audioEffectVolume->GetApVolume(sceneType_);
-    }
+    AUDIO_DEBUG_LOG("set ap integration sceneType_ : %{public}s finalVolume_ : %{publix}f",
+        sceneType_.c_str(), finalVolume_);
+    *data++ = static_cast<int32_t>(finalVolume_ * MAX_UINT_VOLUME);
     AUDIO_DEBUG_LOG("set ap integration volume: %{public}u", *(data - 1));
     cmdInfo = {sizeof(AudioEffectParam) + sizeof(int32_t) * NUM_SET_EFFECT_PARAM, effectParam};
     int32_t ret = (*handle)->command(handle, EFFECT_CMD_SET_PARAM, &cmdInfo, &replyInfo);
@@ -378,6 +376,16 @@ void AudioEffectChain::InitEffectChain()
         CHECK_AND_RETURN_LOG(ret == 0, "[%{public}s] with mode [%{public}s], either one of libs EFFECT_CMD_ENABLE fail",
             sceneType_.c_str(), effectMode_.c_str());
     }
+}
+
+void AudioEffectChain::SetFinalVolume(const float volume)
+{
+    finalVolume_ = volume;
+}
+
+float AudioEffectChain::GetFinalVolume()
+{
+    return finalVolume_;
 }
 } // namespace AudioStandard
 } // namespace OHOS

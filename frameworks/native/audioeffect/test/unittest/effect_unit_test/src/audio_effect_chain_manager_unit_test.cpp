@@ -40,7 +40,6 @@ namespace AudioStandard {
 namespace {
 constexpr uint32_t INFOCHANNELS = 2;
 constexpr uint64_t INFOCHANNELLAYOUT = 0x3;
-constexpr uint32_t INFOVOLUME = 50;
     
 vector<EffectChain> DEFAULT_EFFECT_CHAINS = {{"EFFECTCHAIN_SPK_MUSIC", {}, ""}, {"EFFECTCHAIN_BT_MUSIC", {}, ""}};
 
@@ -56,7 +55,6 @@ SessionEffectInfo DEFAULT_INFO = {
     INFOCHANNELS,
     INFOCHANNELLAYOUT,
     "0",
-    INFOVOLUME
 };
 }
 
@@ -1034,14 +1032,13 @@ HWTEST(AudioEffectChainManagerUnitTest, EffectRotationUpdate_002, TestSize.Level
 * @tc.number : EffectVolumeUpdate_001
 * @tc.desc   : Test EffectVolumeUpdate interface.Test EffectDspVolumeUpdate and EffectApVolumeUpdate simultaneously.
 */
-HWTEST(AudioEffectChainManagerUnitTest, EffectVolumeUpdate_001, TestSize.Level1)
+HWTEST(AudioEffectChainManagerUnitTest, StreamVolumeUpdate_001, TestSize.Level1)
 {
     string sessionIDString = "123456";
-    uint32_t volume = 60;
+    float streamVolume = 0.666;
 
-    AudioEffectChainManager::GetInstance()->SessionInfoMapAdd(sessionIDString, DEFAULT_INFO);
     AudioEffectChainManager::GetInstance()->CreateAudioEffectChainDynamic("SCENE_MOVIE");
-    int32_t result = AudioEffectChainManager::GetInstance()->EffectVolumeUpdate(sessionIDString, volume);
+    int32_t result = AudioEffectChainManager::GetInstance()->StreamVolumeUpdate(sessionIDString, streamVolume);
     EXPECT_EQ(ERROR, result);
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
@@ -1052,14 +1049,13 @@ HWTEST(AudioEffectChainManagerUnitTest, EffectVolumeUpdate_001, TestSize.Level1)
 * @tc.desc   : Test EffectVolumeUpdate interface(using abnormal use case).
 *              Test EffectDspVolumeUpdate and EffectApVolumeUpdate simultaneously.
 */
-HWTEST(AudioEffectChainManagerUnitTest, EffectVolumeUpdate_002, TestSize.Level1)
+HWTEST(AudioEffectChainManagerUnitTest, SystemVolumeUpdate_001, TestSize.Level1)
 {
-    string sessionIDString = "123456";
-    uint32_t volume = 123456;
+    float systemVolume = 0.888;
 
-    AudioEffectChainManager::GetInstance()->SessionInfoMapAdd(sessionIDString, DEFAULT_INFO);
+
     AudioEffectChainManager::GetInstance()->CreateAudioEffectChainDynamic("SCENE_MOVIE");
-    int32_t result = AudioEffectChainManager::GetInstance()->EffectVolumeUpdate(sessionIDString, volume);
+    int32_t result = AudioEffectChainManager::GetInstance()->SystemVolumeUpdate(systemVolume);
     EXPECT_EQ(ERROR, result);
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
