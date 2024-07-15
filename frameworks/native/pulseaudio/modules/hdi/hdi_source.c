@@ -46,8 +46,8 @@
 #include "audio_utils_c.h"
 #include "capturer_source_adapter.h"
 #include "audio_enhance_chain_adapter.h"
-#include "v3_0/audio_types.h"
-#include "v3_0/iaudio_manager.h"
+#include "v4_0/audio_types.h"
+#include "v4_0/iaudio_manager.h"
 
 #define DEFAULT_SOURCE_NAME "hdi_input"
 #define DEFAULT_DEVICE_CLASS "primary"
