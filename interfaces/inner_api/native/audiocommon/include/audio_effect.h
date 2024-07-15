@@ -35,6 +35,7 @@ constexpr int32_t AUDIO_EFFECT_COUNT_UPPER_LIMIT = 20;
 constexpr int32_t AUDIO_EFFECT_COUNT_STREAM_USAGE_UPPER_LIMIT = 200;
 constexpr int32_t AUDIO_EFFECT_COUNT_FIRST_NODE_UPPER_LIMIT = 1;
 constexpr int32_t AUDIO_EFFECT_COUNT_POST_SECOND_NODE_UPPER_LIMIT = 1;
+constexpr int32_t AUDIO_EFFECT_COUNT_PRE_SECOND_NODE_UPPER_LIMIT = 1;
 constexpr int32_t AUDIO_EFFECT_CHAIN_CONFIG_UPPER_LIMIT = 64; // max conf for sceneType + effectMode + deviceType
 constexpr int32_t AUDIO_EFFECT_CHAIN_COUNT_UPPER_LIMIT = 32; // max num of effectChain
 constexpr int32_t AUDIO_EFFECT_COUNT_PER_CHAIN_UPPER_LIMIT = 16; // max num of effect per effectChain
@@ -74,6 +75,7 @@ struct Library {
 struct Effect {
     std::string name;
     std::string libraryName;
+    std::vector<std::string> effectProperty;
 };
 
 struct EffectChain {
@@ -87,13 +89,13 @@ struct Device {
     std::string chain;
 };
 
-struct Preprocess {
+struct PreStreamScene {
     std::string stream;
     std::vector<std::string> mode;
     std::vector<std::vector<Device>> device;
 };
 
-struct EffectSceneStream {
+struct PostStreamScene {
     std::string stream;
     std::vector<std::string> mode;
     std::vector<std::vector<Device>> device;
@@ -104,8 +106,18 @@ struct SceneMappingItem {
     std::string sceneType;
 };
 
+struct PreProcessConfig {
+    int32_t maxExtSceneNum;
+    std::vector<PreStreamScene> defaultScenes;
+    std::vector<PreStreamScene> priorScenes;
+    std::vector<PreStreamScene> normalScenes;
+};
+ 
 struct PostProcessConfig {
-    std::vector<EffectSceneStream> effectSceneStreams;
+    int32_t maxExtSceneNum;
+    std::vector<PostStreamScene> defaultScenes;
+    std::vector<PostStreamScene> priorScenes;
+    std::vector<PostStreamScene> normalScenes;
     std::vector<SceneMappingItem> sceneMap;
 };
 
@@ -114,8 +126,16 @@ struct OriginalEffectConfig {
     std::vector<Library> libraries;
     std::vector<Effect> effects;
     std::vector<EffectChain> effectChains;
-    std::vector<Preprocess> preProcess;
+    PreProcessConfig preProcess;
     PostProcessConfig postProcess;
+};
+
+struct EffectChainManagerParam {
+    uint32_t maxExtraNum;
+    std::string defaultSceneName;
+    std::vector<std::string> priorSceneList;
+    std::unordered_map<std::string, std::string> sceneTypeToChainNameMap;
+    std::unordered_map<std::string, std::string> effectDefaultProperty;
 };
 
 struct StreamEffectMode {
@@ -123,7 +143,14 @@ struct StreamEffectMode {
     std::vector<Device> devicePort;
 };
 
+enum ScenePriority {
+    DEFAULT_SCENE = 0,
+    PRIOR_SCENE = 1,
+    NORMAL_SCENE = 2
+};
+
 struct Stream {
+    ScenePriority priority;
     std::string scene;
     std::vector<StreamEffectMode> streamEffectMode;
 };
@@ -150,7 +177,7 @@ enum AudioEffectScene {
     SCENE_GAME = 3,
     SCENE_SPEECH = 4,
     SCENE_RING = 5,
-    SCENE_VOIP = 6
+    SCENE_VOIP_DOWN = 6,
 };
 
 /**
@@ -158,7 +185,9 @@ enum AudioEffectScene {
 */
 enum AudioEnhanceScene {
     SCENE_VOIP_UP = 0,
-    SCENE_RECORD = 1
+    SCENE_RECORD = 1,
+    SCENE_PRE_ENHANCE = 2,
+    SCENE_ASR = 4,
 };
 
 /**
@@ -187,12 +216,15 @@ const std::unordered_map<AudioEffectScene, std::string> AUDIO_SUPPORTED_SCENE_TY
     {SCENE_MOVIE, "SCENE_MOVIE"},
     {SCENE_GAME, "SCENE_GAME"},
     {SCENE_SPEECH, "SCENE_SPEECH"},
-    {SCENE_RING, "SCENE_RING"}
+    {SCENE_RING, "SCENE_RING"},
+    {SCENE_VOIP_DOWN, "SCENE_VOIP_DOWN"},
 };
 
 const std::unordered_map<AudioEnhanceScene, std::string> AUDIO_ENHANCE_SUPPORTED_SCENE_TYPES {
     {SCENE_VOIP_UP, "SCENE_VOIP_UP"},
-    {SCENE_RECORD, "SCENE_RECORD"}
+    {SCENE_RECORD, "SCENE_RECORD"},
+    {SCENE_ASR, "SCENE_ASR"},
+    {SCENE_PRE_ENHANCE, "SCENE_PRE_ENHANCE"},
 };
 
 const std::unordered_map<AudioEffectMode, std::string> AUDIO_SUPPORTED_SCENE_MODES {
