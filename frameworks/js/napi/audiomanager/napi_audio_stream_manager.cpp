@@ -95,6 +95,12 @@ napi_value NapiAudioStreamMgr::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getAudioEffectInfoArray", GetEffectInfoArray),
         DECLARE_NAPI_FUNCTION("getAudioEffectInfoArraySync", GetEffectInfoArraySync),
         DECLARE_NAPI_FUNCTION("getHardwareOutputSamplingRate", GetHardwareOutputSamplingRate),
+        DECLARE_NAPI_FUNCTION("getSupportedAudioEffectProperty", GetSupportedAudioEffectProperty),
+        DECLARE_NAPI_FUNCTION("getAudioEffectProperty", GetAudioEffectProperty),
+        DECLARE_NAPI_FUNCTION("setAudioEffectProperty", SetAudioEffectProperty),
+        DECLARE_NAPI_FUNCTION("getSupportedAudioEnhanceProperty", GetSupportedAudioEnhanceProperty),
+        DECLARE_NAPI_FUNCTION("getAudioEnhanceProperty", GetAudioEnhanceProperty),
+        DECLARE_NAPI_FUNCTION("setAudioEnhanceProperty", SetAudioEnhanceProperty),
     };
 
     status = napi_define_class(env, AUDIO_STREAM_MGR_NAPI_CLASS_NAME.c_str(), NAPI_AUTO_LENGTH, Construct, nullptr,
@@ -644,6 +650,123 @@ napi_value NapiAudioStreamMgr::Off(napi_env env, napi_callback_info info)
 
     UnregisterCallback(env, jsThis, callbackName);
     return undefinedResult;
+}
+
+napi_value NapiAudioStreamMgr::GetSupportedAudioEffectProperty(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    size_t argc = PARAM0;
+    auto *napiStreamMgr = GetParamWithSync(env, info, argc, nullptr);
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr != nullptr, result, "napiStreamMgr is nullptr");
+    CHECK_AND_RETURN_RET_LOG(argc == PARAM0, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of options must be empty"), "argcCount invalid");
+
+    AudioEffectPropertyArray propertyArray = {};
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr->audioStreamMngr_ != nullptr, result, "audioStreamMngr_ is nullptr");
+    int32_t ret = napiStreamMgr->audioStreamMngr_->GetSupportedAudioEffectProperty(propertyArray);
+    CHECK_AND_RETURN_RET_LOG(ret == AUDIO_OK, result, "Get Supported Audio Effect Property failure!");
+    NapiParamUtils::SetEffectProperty(env, propertyArray, result);
+    return result;
+}
+
+napi_value NapiAudioStreamMgr::GetSupportedAudioEnhanceProperty(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    size_t argc = PARAM0;
+    auto *napiStreamMgr = GetParamWithSync(env, info, argc, nullptr);
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr != nullptr, result, "napiStreamMgr is nullptr");
+    CHECK_AND_RETURN_RET_LOG(argc == PARAM0, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of options must be empty"), "argcCount invalid");
+
+    AudioEnhancePropertyArray propertyArray = {};
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr->audioStreamMngr_ != nullptr, result, "audioStreamMngr_ is nullptr");
+    int32_t ret = napiStreamMgr->audioStreamMngr_->GetSupportedAudioEnhanceProperty(propertyArray);
+    CHECK_AND_RETURN_RET_LOG(ret == AUDIO_OK, result, "Get Supported Audio Enhance Property failure!");
+    NapiParamUtils::SetEnhanceProperty(env, propertyArray, result);
+    return result;
+}
+
+napi_value NapiAudioStreamMgr::GetAudioEffectProperty(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    size_t argc = PARAM0;
+    auto *napiStreamMgr = GetParamWithSync(env, info, argc, nullptr);
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr != nullptr, result, "napiStreamMgr is nullptr");
+    CHECK_AND_RETURN_RET_LOG(argc == PARAM0, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of options must be empty"), "argcCount invalid");
+
+    AudioEffectPropertyArray propertyArray = {};
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr->audioStreamMngr_ != nullptr, result, "audioStreamMngr_ is nullptr");
+    int32_t ret = napiStreamMgr->audioStreamMngr_->GetAudioEffectProperty(propertyArray);
+    CHECK_AND_RETURN_RET_LOG(ret == AUDIO_OK, result, "Get Audio Effect Property failure!");
+    NapiParamUtils::SetEffectProperty(env, propertyArray, result);
+    return result;
+}
+
+napi_value NapiAudioStreamMgr::SetAudioEffectProperty(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value args[ARGS_ONE] = {};
+    auto *napiStreamMgr = GetParamWithSync(env, info, argc, args);
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr != nullptr, result, "napiStreamMgr is nullptr");
+    CHECK_AND_RETURN_RET_LOG(argc == ARGS_ONE, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: mandatory parameters are left unspecified"), "argcCount invalid");
+
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, args[PARAM0], &valueType);
+    CHECK_AND_RETURN_RET_LOG(valueType == napi_object, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of options must be array"), "invaild valueType");
+
+    AudioEffectPropertyArray propertyArray = {};
+    NapiParamUtils::GetEffectPropertyArray(env, propertyArray, args[PARAM0]);
+
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr->audioStreamMngr_ != nullptr, result, "audioStreamMngr_ is nullptr");
+    CHECK_AND_RETURN_RET_LOG(propertyArray.property.size() > 0, result, "input array is empty");
+    int32_t ret = napiStreamMgr->audioStreamMngr_->SetAudioEffectProperty(propertyArray);
+    CHECK_AND_RETURN_RET_LOG(ret == AUDIO_OK, result, "Set Audio Effect Property failure!");
+    return result;
+}
+
+napi_value NapiAudioStreamMgr::GetAudioEnhanceProperty(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    size_t argc = PARAM0;
+    auto *napiStreamMgr = GetParamWithSync(env, info, argc, nullptr);
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr != nullptr, result, "napiStreamMgr is nullptr");
+    CHECK_AND_RETURN_RET_LOG(argc == PARAM0, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of options must be empty"), "argcCount invalid");
+
+    AudioEnhancePropertyArray propertyArray = {};
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr->audioStreamMngr_ != nullptr, result, "audioStreamMngr_ is nullptr");
+    int32_t ret = napiStreamMgr->audioStreamMngr_->GetAudioEnhanceProperty(propertyArray);
+    CHECK_AND_RETURN_RET_LOG(ret == AUDIO_OK, result, "Get Audio Enhance Property failure!");
+    NapiParamUtils::SetEnhanceProperty(env, propertyArray, result);
+    return result;
+}
+
+napi_value NapiAudioStreamMgr::SetAudioEnhanceProperty(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value args[ARGS_ONE] = {};
+    auto *napiStreamMgr = GetParamWithSync(env, info, argc, args);
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr != nullptr, result, "napiStreamMgr is nullptr");
+    CHECK_AND_RETURN_RET_LOG(argc == ARGS_ONE, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: mandatory parameters are left unspecified"), "argcCount invalid");
+
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, args[PARAM0], &valueType);
+    CHECK_AND_RETURN_RET_LOG(valueType == napi_object, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of options must be array"), "invaild valueType");
+
+    AudioEnhancePropertyArray propertyArray = {};
+    NapiParamUtils::GetEnhancePropertyArray(env, propertyArray, args[PARAM0]);
+    CHECK_AND_RETURN_RET_LOG(napiStreamMgr->audioStreamMngr_ != nullptr, result, "audioStreamMngr_ is nullptr");
+    CHECK_AND_RETURN_RET_LOG(propertyArray.property.size() > 0, result, "input array is empty");
+    int32_t ret = napiStreamMgr->audioStreamMngr_->SetAudioEnhanceProperty(propertyArray);
+    CHECK_AND_RETURN_RET_LOG(ret == AUDIO_OK, result, "Set Audio Enhance Property failure!");
+    return result;
 }
 }  // namespace AudioStandard
 }  // namespace OHOS
