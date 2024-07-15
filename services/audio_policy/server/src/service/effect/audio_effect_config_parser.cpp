@@ -173,7 +173,6 @@ static void LoadEffectConfigLibraries(OriginalEffectConfig &result, const xmlNod
 
 static void LoadEffectProperty(OriginalEffectConfig &result, const xmlNode *thirdNode, const int32_t effectIdx)
 {
-    // TODO if need check the result.effects[effectIdx]
     CHECK_AND_RETURN_LOG(thirdNode->xmlChildrenNode, "effect '%{public}s' does not support effectProperty settings.",
         result.effects[effectIdx].name.c_str());
     int32_t countProperty = 0;
@@ -512,7 +511,8 @@ static void LoadPreProcessCfg(OriginalEffectConfig &result, xmlNode *secondNode)
         } else if (!xmlStrcmp(currNode->name, reinterpret_cast<const xmlChar*>("normalScene"))) {
             int32_t maxExtraNum = 0;
             if (xmlHasProp(currNode, reinterpret_cast<const xmlChar*>("maxExtSceneNumber"))) {
-                maxExtraNum = atoi(reinterpret_cast<char*>(xmlGetProp(currNode, reinterpret_cast<const xmlChar*>("maxExtSceneNumber"))));
+                maxExtraNum = atoi(reinterpret_cast<char*>(xmlGetProp(currNode,
+                    reinterpret_cast<const xmlChar*>("maxExtSceneNumber"))));
             }
             result.preProcess.maxExtSceneNum = maxExtraNum;
             LoadPreStreamScenesCheck(result.preProcess.normalScenes, currNode,
@@ -524,8 +524,8 @@ static void LoadPreProcessCfg(OriginalEffectConfig &result, xmlNode *secondNode)
     }
 }
  
-static void LoadEffectConfigPreProcessCfg(OriginalEffectConfig &result, const xmlNode *currNode,
-                                       int32_t (&countFirstNode)[NODE_SIZE])
+static void LoadEffectConfigPreProcessCfg(OriginalEffectConfig &result,
+    const xmlNode *currNode, int32_t (&countFirstNode)[NODE_SIZE])
 {
     if (countFirstNode[INDEX_PREPROCESS] >= AUDIO_EFFECT_COUNT_FIRST_NODE_UPPER_LIMIT) {
         if (countFirstNode[INDEX_PREPROCESS] == AUDIO_EFFECT_COUNT_FIRST_NODE_UPPER_LIMIT) {
@@ -756,7 +756,8 @@ static void LoadPostProcessCfg(OriginalEffectConfig &result, xmlNode *secondNode
         } else if (!xmlStrcmp(currNode->name, reinterpret_cast<const xmlChar*>("normalScene"))) {
             int32_t maxExtraNum = 0;
             if (xmlHasProp(currNode, reinterpret_cast<const xmlChar*>("maxExtSceneNumber"))) {
-                maxExtraNum = atoi(reinterpret_cast<char*>(xmlGetProp(currNode, reinterpret_cast<const xmlChar*>("maxExtSceneNumber"))));
+                maxExtraNum = atoi(reinterpret_cast<char*>(xmlGetProp(currNode,
+                    reinterpret_cast<const xmlChar*>("maxExtSceneNumber"))));
             }
             result.postProcess.maxExtSceneNum = maxExtraNum;
             LoadPostStreamScenesCheck(result.postProcess.normalScenes, currNode,
