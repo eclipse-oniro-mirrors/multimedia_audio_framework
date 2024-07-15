@@ -129,6 +129,7 @@ static void UpdateUnsupportedModePost(PostStreamScene &ess, Stream &stream, std:
 
 static int32_t UpdateAvailableStreamPre(ProcessNew &preProcessNew, PreStreamScene &pp, ScenePriority priority)
 {
+    bool isDuplicate = false;
     bool isSupported = false;
     for (auto& [scene, stream] : AUDIO_ENHANCE_SUPPORTED_SCENE_TYPES) {
         if (pp.stream == stream) {
