@@ -131,7 +131,7 @@ struct OriginalEffectConfig {
 };
 
 struct EffectChainManagerParam {
-    uint32_t maxExtraNum;
+    uint32_t maxExtraNum = 0;
     std::string defaultSceneName;
     std::vector<std::string> priorSceneList;
     std::unordered_map<std::string, std::string> sceneTypeToChainNameMap;

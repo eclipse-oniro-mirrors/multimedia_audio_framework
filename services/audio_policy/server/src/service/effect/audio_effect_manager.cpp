@@ -240,33 +240,23 @@ void AudioEffectManager::UpdateAvailableAEConfig(OriginalEffectConfig &aeConfig)
     for (PreStreamScene &pp: aeConfig.preProcess.defaultScenes) {
         ret += UpdateAvailableStreamPre(preProcessNew, pp, DEFAULT_SCENE);
     }
-    AUDIO_FATAL_LOG("after[DEFAULT] preProcessNew size = %{public}d", (int32_t)preProcessNew.stream.size());
-
     for (PreStreamScene &pp: aeConfig.preProcess.priorScenes) {
         ret += UpdateAvailableStreamPre(preProcessNew, pp, PRIOR_SCENE);
     }
-    AUDIO_FATAL_LOG("after[PRIOR] preProcessNew size = %{public}d", (int32_t)preProcessNew.stream.size());
-
     for (PreStreamScene &pp: aeConfig.preProcess.normalScenes) {
         ret += UpdateAvailableStreamPre(preProcessNew, pp, NORMAL_SCENE);
     }
-    AUDIO_FATAL_LOG("after[NORMAL] preProcessNew size = %{public}d", (int32_t)preProcessNew.stream.size());
 
     ProcessNew postProcessNew;
     for (PostStreamScene &ess: aeConfig.postProcess.defaultScenes) {
         ret += UpdateAvailableStreamPost(postProcessNew, ess, DEFAULT_SCENE);
     }
-    AUDIO_FATAL_LOG("after[DEFAULT] postProcessNew size = %{public}d", (int32_t)postProcessNew.stream.size());
-
     for (PostStreamScene &ess: aeConfig.postProcess.priorScenes) {
         ret += UpdateAvailableStreamPost(postProcessNew, ess, PRIOR_SCENE);
     }
-    AUDIO_FATAL_LOG("after[PRIOR] postProcessNew size = %{public}d", (int32_t)postProcessNew.stream.size());
-
     for (PostStreamScene &ess: aeConfig.postProcess.normalScenes) {
         ret += UpdateAvailableStreamPost(postProcessNew, ess, NORMAL_SCENE);
     }
-    AUDIO_FATAL_LOG("after[NORMAL] postProcessNew size = %{public}d", (int32_t)postProcessNew.stream.size());
 
     if (ret > 0) {
         AUDIO_INFO_LOG("[supportedEffectConfig LOG2]:stream-> duplicate streams has been deleted");
@@ -520,43 +510,27 @@ void AudioEffectManager::BuildAvailableAEConfig()
 
     ProcessNew preProcessNew = supportedEffectConfig_.preProcessNew;
     ProcessNew postProcessNew = supportedEffectConfig_.postProcessNew;
-    AUDIO_FATAL_LOG("after[0] preNew size = %{public}d", (int32_t)preProcessNew.stream.size());
-    AUDIO_FATAL_LOG("after[0] postNew size = %{public}d", (int32_t)postProcessNew.stream.size());
 
     UpdateEffectChains(availableLayout);
-    AUDIO_FATAL_LOG("after[1] preNew size = %{public}d", (int32_t)preProcessNew.stream.size());
-    AUDIO_FATAL_LOG("after[1] postNew size = %{public}d", (int32_t)postProcessNew.stream.size());
-
     UpdateDuplicateBypassMode(supportedEffectConfig_.preProcessNew);
-    AUDIO_FATAL_LOG("after[2] preNew size = %{public}d", (int32_t)preProcessNew.stream.size());
-
     UpdateDuplicateMode(supportedEffectConfig_.preProcessNew);
     UpdateDuplicateDevice(supportedEffectConfig_.preProcessNew);
-    AUDIO_FATAL_LOG("after[3] preNew size = %{public}d", (int32_t)preProcessNew.stream.size());
     UpdateDuplicateDefaultScene(supportedEffectConfig_.preProcessNew);
-    AUDIO_FATAL_LOG("after[4] preNew size = %{public}d", (int32_t)preProcessNew.stream.size());
     UpdateDuplicateScene(supportedEffectConfig_.preProcessNew);
-    AUDIO_FATAL_LOG("after[5] preNew size = %{public}d", (int32_t)preProcessNew.stream.size());
     ret = UpdateUnavailableEffectChains(availableLayout, supportedEffectConfig_.preProcessNew);
     if (ret != 0) {
         existDefault_ = -1;
     }
-    AUDIO_FATAL_LOG("after[6] preNew size = %{public}d", (int32_t)preProcessNew.stream.size());
 
     UpdateDuplicateBypassMode(supportedEffectConfig_.postProcessNew);
-    AUDIO_FATAL_LOG("after[2] postNew size = %{public}d", (int32_t)postProcessNew.stream.size());
     UpdateDuplicateMode(supportedEffectConfig_.postProcessNew);
     UpdateDuplicateDevice(supportedEffectConfig_.postProcessNew);
-    AUDIO_FATAL_LOG("after[3] postNew size = %{public}d", (int32_t)postProcessNew.stream.size());
     UpdateDuplicateDefaultScene(supportedEffectConfig_.postProcessNew);
-    AUDIO_FATAL_LOG("after[4] postNew size = %{public}d", (int32_t)postProcessNew.stream.size());
     UpdateDuplicateScene(supportedEffectConfig_.postProcessNew);
-    AUDIO_FATAL_LOG("after[5] postNew size = %{public}d", (int32_t)postProcessNew.stream.size());
     ret = UpdateUnavailableEffectChains(availableLayout, supportedEffectConfig_.postProcessNew);
     if (ret != 0) {
         existDefault_ = -1;
     }
-    AUDIO_FATAL_LOG("after[6] postNew size = %{public}d", (int32_t)postProcessNew.stream.size());
 }
 
 void AudioEffectManager::SetMasterSinkAvailable()
@@ -593,7 +567,6 @@ void AudioEffectManager::ConstructEffectChainManagerParam(EffectChainManagerPara
     std::string key;
     for (auto &scene: supportedEffectConfig_.postProcessNew.stream) {
         sceneType = scene.scene;
-        AUDIO_FATAL_LOG("ggggg1 %{public}s %{public}d %{public}d", sceneType.c_str(), (int32_t) scene.priority, effectChainMgrParam.maxExtraNum);
         if (scene.priority == PRIOR_SCENE) {
             effectChainMgrParam.priorSceneList.push_back(sceneType);
         }
@@ -623,7 +596,6 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
 
     for (auto &scene: supportedEffectConfig_.preProcessNew.stream) {
         sceneType = scene.scene;
-        AUDIO_FATAL_LOG("ggggg2 %{public}s %{public}d %{public}d", sceneType.c_str(), (int32_t) scene.priority, enhanceChainMgrParam.maxExtraNum);
         if (scene.priority == PRIOR_SCENE) {
             enhanceChainMgrParam.priorSceneList.push_back(sceneType);
         }
