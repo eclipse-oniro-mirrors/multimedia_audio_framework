@@ -227,7 +227,7 @@ static void LoadEffect(OriginalEffectConfig &result, xmlNode *secondNode)
                               (xmlGetProp(currNode, reinterpret_cast<const xmlChar*>("name")));
                 std::string pEffectLib = reinterpret_cast<char*>
                              (xmlGetProp(currNode, reinterpret_cast<const xmlChar*>("library")));
-                 Effect tmp = {pEffectName, pEffectLib, effectProperty};
+                Effect tmp = {pEffectName, pEffectLib, effectProperty};
                 result.effects.push_back(tmp);
                 LoadEffectProperty(result, currNode, effectIdx);
                 effectIdx++;

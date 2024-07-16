@@ -131,13 +131,13 @@ static int32_t UpdateAvailableStreamPre(ProcessNew &preProcessNew, PreStreamScen
 {
     bool isDuplicate = false;
     bool isSupported = false;
-    for (auto& [scene, stream] : AUDIO_ENHANCE_SUPPORTED_SCENE_TYPES) {
+    for (auto &[scene, stream] : AUDIO_ENHANCE_SUPPORTED_SCENE_TYPES) {
         if (pp.stream == stream) {
             isSupported = true;
             break;
         }
     }
-    auto it = std::find_if(preProcessNew.stream.begin(), preProcessNew.stream.end(), [&](const Stream& x) {
+    auto it = std::find_if(preProcessNew.stream.begin(), preProcessNew.stream.end(), [&](const Stream &x) {
         return ((x.scene == pp.stream) && (x.priority == priority));
     });
     if ((it == preProcessNew.stream.end()) && isSupported) {
@@ -159,13 +159,13 @@ static int32_t UpdateAvailableStreamPost(ProcessNew &postProcessNew, PostStreamS
 {
     bool isDuplicate = false;
     bool isSupported = false;
-    for (auto& [scene, stream] : AUDIO_SUPPORTED_SCENE_TYPES) {
+    for (auto &[scene, stream] : AUDIO_SUPPORTED_SCENE_TYPES) {
         if (ess.stream == stream) {
             isSupported = true;
             break;
         }
     }
-    auto it = std::find_if(postProcessNew.stream.begin(), postProcessNew.stream.end(), [&](const Stream& x) {
+    auto it = std::find_if(postProcessNew.stream.begin(), postProcessNew.stream.end(), [&](const Stream &x) {
         return ((x.scene == ess.stream) && (x.priority == priority));
     });
     if ((it == postProcessNew.stream.end()) && isSupported) {
@@ -187,7 +187,7 @@ static int32_t UpdateAvailableSceneMapPost(SceneMappingItem &item, std::vector<S
 {
     bool isDuplicate = false;
     auto it = std::find_if(postProcessSceneMap.begin(), postProcessSceneMap.end(),
-        [&item](const SceneMappingItem& x) {
+        [&item](const SceneMappingItem &x) {
         return x.name == item.name;
     });
     if ((it == postProcessSceneMap.end())) {
@@ -211,7 +211,7 @@ void AudioEffectManager::UpdateEffectChains(std::vector<std::string> &availableL
     for (const auto &ec: supportedEffectConfig_.effectChains) {
         for (auto &effectName: ec.apply) {
             auto it = std::find_if(availableEffects_.begin(), availableEffects_.end(),
-                [&effectName](const Effect& effect) {
+                [&effectName](const Effect &effect) {
                 return effect.name == effectName;
             });
             if (it == availableEffects_.end()) {
@@ -365,7 +365,7 @@ void AudioEffectManager::UpdateDuplicateScene(ProcessNew &processNew)
     // erase duplicate scene
     std::unordered_set<std::string> scenes;
     for (auto it = processNew.stream.begin(); it != processNew.stream.end();) {
-        auto& stream = *it;
+        auto &stream = *it;
         auto its = scenes.find(stream.scene);
         if (its == scenes.end()) {
             scenes.insert(stream.scene);
@@ -384,7 +384,7 @@ void AudioEffectManager::UpdateDuplicateDefaultScene(ProcessNew &processNew)
     // erase duplicate default scene
     bool flag = false;
     for (auto it = processNew.stream.begin(); it != processNew.stream.end();) {
-        auto& stream = *it;
+        auto &stream = *it;
         if (stream.priority == DEFAULT_SCENE) {
             if (flag) {
                 it = processNew.stream.erase(it);
@@ -398,12 +398,12 @@ void AudioEffectManager::UpdateDuplicateDefaultScene(ProcessNew &processNew)
     // add default scene if no default
     if (!flag) {
         for (auto it = processNew.stream.begin(); it != processNew.stream.end(); ++it) {
-            auto& stream = *it;
+            auto &stream = *it;
             if (stream.priority == NORMAL_SCENE) {
                 stream.priority = DEFAULT_SCENE;
                 break;
             }
-    }
+        }
     }
 }
 
