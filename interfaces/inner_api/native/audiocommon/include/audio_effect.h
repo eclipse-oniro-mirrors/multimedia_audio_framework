@@ -342,11 +342,6 @@ struct AudioEnhanceParam {
     const char *downDeivce;
 };
 
-struct EffectChainManagerParam {
-    std::unordered_map<std::string, std::string> sceneTypeToChainNameMap;
-    std::unordered_map<std::string, std::string> effectDefaultProperty;
-};
-
 struct AudioBuffer {
     size_t frameLength;
     union {
