@@ -364,14 +364,18 @@ void AudioEffectManager::UpdateDuplicateScene(ProcessNew &processNew)
 {
     // erase duplicate scene
     std::unordered_set<std::string> scenes;
-    for (auto it = processNew.stream.begin(); it != processNew.stream.end(); it++) {
+    for (auto it = processNew.stream.begin(); it != processNew.stream.end();) {
         auto& stream = *it;
         auto its = scenes.find(stream.scene);
         if (its == scenes.end()) {
             scenes.insert(stream.scene);
         } else {
-            processNew.stream.erase(it);
+            if (stream.priority == NORMAL_SCENE) {
+                it = processNew.stream.erase(it);
+                continue;
+            }
         }
+        ++it;
     }
 }
 
@@ -379,20 +383,21 @@ void AudioEffectManager::UpdateDuplicateDefaultScene(ProcessNew &processNew)
 {
     // erase duplicate default scene
     bool flag = false;
-    for (auto it = processNew.stream.begin(); it != processNew.stream.end(); it++) {
+    for (auto it = processNew.stream.begin(); it != processNew.stream.end();) {
         auto& stream = *it;
         if (stream.priority == DEFAULT_SCENE) {
             if (flag) {
-                processNew.stream.erase(it);
+                it = processNew.stream.erase(it);
                 continue;
             }
             flag = true;
         }
+        ++it;
     }
 
     // add default scene if no default
     if (!flag) {
-        for (auto it = processNew.stream.begin(); it != processNew.stream.end(); it++) {
+        for (auto it = processNew.stream.begin(); it != processNew.stream.end(); ++it) {
             auto& stream = *it;
             if (stream.priority == NORMAL_SCENE) {
                 stream.priority = DEFAULT_SCENE;
@@ -559,7 +564,7 @@ void AddKeyValueIntoMap(std::unordered_map<T, std::string> &map, std::string &ke
 
 void AudioEffectManager::ConstructEffectChainManagerParam(EffectChainManagerParam &effectChainMgrParam)
 {
-    std::unordered_map<std::string, std::string> *map = &(effectChainMgrParam.sceneTypeToChainNameMap);
+    std::unordered_map<std::string, std::string> &map = effectChainMgrParam.sceneTypeToChainNameMap;
     effectChainMgrParam.maxExtraNum = oriEffectConfig_.postProcess.maxExtSceneNum;
 
     std::string sceneType;
@@ -577,17 +582,17 @@ void AudioEffectManager::ConstructEffectChainManagerParam(EffectChainManagerPara
             sceneMode = mode.mode;
             for (auto &device: mode.devicePort) {
                 key = sceneType + "_&_" + sceneMode + "_&_" + device.type;
-                AddKeyValueIntoMap(*map, key, device.chain);
+                AddKeyValueIntoMap(map, key, device.chain);
             }
         }
     }
     AUDIO_INFO_LOG("Constructed SceneTypeAndModeToEffectChainNameMap at policy, size is %{public}d",
-        (int32_t)map->size());
+        (int32_t)map.size());
 }
 
 void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerParam &enhanceChainMgrParam)
 {
-    std::unordered_map<std::string, std::string> *map = &(enhanceChainMgrParam.sceneTypeToChainNameMap);
+    std::unordered_map<std::string, std::string> &map = enhanceChainMgrParam.sceneTypeToChainNameMap;
     enhanceChainMgrParam.maxExtraNum = oriEffectConfig_.preProcess.maxExtSceneNum;
 
     std::string sceneType;
@@ -607,12 +612,12 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
             sceneMode = mode.mode;
             for (auto &device: mode.devicePort) {
                 key = sceneType + "_&_" + sceneMode;
-                AddKeyValueIntoMap(*map, key, device.chain);
+                AddKeyValueIntoMap(map, key, device.chain);
             }
         }
     }
     AUDIO_INFO_LOG("Constructed SceneTypeAndModeToEnhanceChainNameMap at policy, size is %{public}d",
-        (int32_t)map->size());
+        (int32_t)map.size());
 }
 
 } // namespce AudioStandard
