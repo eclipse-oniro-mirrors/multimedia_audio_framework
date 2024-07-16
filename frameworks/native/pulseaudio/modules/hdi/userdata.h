@@ -44,6 +44,7 @@ struct Userdata {
     struct CapturerSourceAdapter *sourceAdapter;
     pa_usec_t delayTime;
     pa_hashmap *sceneToCountMap;
+    pa_hashmap *sceneToResamplerMap;
 };
 
 #endif

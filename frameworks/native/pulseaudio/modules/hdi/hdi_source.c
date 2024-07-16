@@ -121,6 +121,9 @@ static void UserdataFree(struct Userdata *u)
     if (u->sceneToCountMap) {
         pa_hashmap_free(u->sceneToCountMap);
     }
+    if (u->sceneToResamplerMap) {
+        pa_hashmap_free(u->sceneToResamplerMap);
+    }
     pa_xfree(u);
 }
 
@@ -330,6 +333,21 @@ static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
     return 0;
 }
 
+static void sampleAlignment(const char *sceneKey, pa_memchunk *enhanceChunk, pa_memchunk *rChunk, struct Userdata *u)
+{
+    pa_assert(sceneKey);
+    pa_assert(enhanceChunk);
+    pa_assert(u);
+
+    pa_resampler *resampler = (pa_resampler *)pa_hashmap_get(u->sceneToResamplerMap, sceneKey);
+    if (resampler != NULL) {
+        pa_resampler_run(resampler, enhanceChunk, rChunk);
+    } else {
+        *rChunk = *enhanceChunk;
+        pa_memblock_ref(rChunk->memblock);
+    }
+}
+
 static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct Userdata *u)
 {
     if (GetCapturerFrameFromHdi(chunk, u) != 0) {
@@ -353,12 +371,16 @@ static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct User
         char *sceneKey = (char *)scene;
         AUDIO_DEBUG_LOG("Now sceneKey is : %{public}s", sceneKey);
 
-        pa_memchunk enhanceChunk;
+        pa_memchunk enhanceChunk, rChunk;
         enhanceChunk.length = chunk->length;
         enhanceChunk.memblock = pa_memblock_new(u->core->mempool, enhanceChunk.length);
         pa_memchunk_memcpy(&enhanceChunk, chunk);
-        EnhanceProcessAndPost(u->source, sceneKey, &enhanceChunk);
+        sampleAlignment(sceneKey, &enhanceChunk, &rChunk, u);
+        EnhanceProcessAndPost(u->source, sceneKey, &rChunk);
         pa_memblock_unref(enhanceChunk.memblock);
+        if (rChunk.memblock) {
+            pa_memblock_unref(rChunk.memblock);
+        }
     }
     pa_memblock_unref(chunk->memblock);
     
@@ -629,6 +651,9 @@ static void InitUserdataAttrs(pa_modargs *ma, struct Userdata *u, const pa_sampl
 
     u->sceneToCountMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,
         pa_xfree, pa_xfree);
+
+    u->sceneToResamplerMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,
+        NULL, (pa_free_cb_t) pa_resampler_free);
 }
 
 pa_source *PaHdiSourceNew(pa_module *m, pa_modargs *ma, const char *driver)

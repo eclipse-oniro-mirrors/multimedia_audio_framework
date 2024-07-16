@@ -95,8 +95,8 @@ static bool DecreaseScenekeyCount(pa_hashmap *sceneMap, const char *key)
         (*num)--;
         if (*num == 0) {
             pa_hashmap_remove_and_free(sceneMap, key);
+            return true;
         }
-        return true;
     }
     return false;
 }
@@ -113,8 +113,26 @@ static pa_hook_result_t SourceOutputProplistChangedCb(pa_core *c, pa_source_outp
     return PA_HOOK_OK;
 }
 
+static void SetResampler(pa_source_output *so, const pa_sample_spec *algoConfig,
+    const char *sceneKey, pa_hashmap *resamplerMap)
+{
+    AUDIO_INFO_LOG("SOURCE rate = %{public}d ALGO rate = %{public}d ",
+        so->source->sample_spec.rate, algoConfig->rate);
+    if (!pa_sample_spec_equal(&so->source->sample_spec, algoConfig)) {
+        pa_resampler *preResampler = pa_resampler_new(so->source->core->mempool,
+            &so->source->sample_spec, &so->source->channel_map,
+            algoConfig, &so->source->channel_map,
+            so->source->core->lfe_crossover_freq,
+            PA_RESAMPLER_AUTO,
+            PA_RESAMPLER_VARIABLE_RATE);
+        pa_hashmap_put(resamplerMap, pa_xstrdup(sceneKey), preResampler);
+        pa_resampler_set_input_rate(so->thread_info.resampler, algoConfig->rate);
+    }
+}
+
 static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
 {
+    struct Userdata *u = (struct Userdata *)so->source->userdata;
     AUDIO_INFO_LOG("Trigger SourceOutputPutCb");
     pa_assert(c);
     const char *sceneType = pa_proplist_gets(so->proplist, "scene.type");
@@ -128,7 +146,6 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
         return PA_HOOK_OK;
     }
     EnhanceChainManagerInitEnhanceBuffer();
-    struct Userdata *u = (struct Userdata *)so->source->userdata;
     char sceneKey[MAX_SCENE_NAME_LEN];
     ret = ConcatStr(sceneType, upDevice, downDevice, sceneKey, MAX_SCENE_NAME_LEN);
     if (ret != 0) {
@@ -136,6 +153,14 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
         return PA_HOOK_OK;
     }
     IncreaseScenekeyCount(u->sceneToCountMap, sceneKey);
+    pa_sample_spec algoConfig;
+    pa_sample_spec_init(&algoConfig);
+    ret = EnhanceChainManagerGetAlgoConfig(sceneKey, &algoConfig);
+    if (ret != 0) {
+        AUDIO_ERR_LOG("Get algo config failed");
+        return PA_HOOK_OK;
+    }
+    SetResampler(so, &algoConfig, sceneKey, u->sceneToResamplerMap);
     return PA_HOOK_OK;
 }
 
@@ -155,6 +180,9 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
         return PA_HOOK_OK;
     }
     DecreaseScenekeyCount(u->sceneToCountMap, sceneKey);
+    if (DecreaseScenekeyCount(u->sceneToCountMap, sceneKey)) {
+        pa_hashmap_remove_and_free(u->sceneToResamplerMap, sceneKey);
+    }
     return PA_HOOK_OK;
 }
 
