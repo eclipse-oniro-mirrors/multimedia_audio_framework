@@ -95,7 +95,7 @@ public:
     ~AudioEffectChainManager();
     static AudioEffectChainManager *GetInstance();
     void InitAudioEffectChainManager(std::vector<EffectChain> &effectChains,
-        std::unordered_map<std::string, std::string> &map,
+        const EffectChainManagerParam &effectChainManagerParam,
         std::vector<std::shared_ptr<AudioEffectLibEntry>> &effectLibraryList);
     bool CheckAndAddSessionID(const std::string &sessionID);
     int32_t CreateAudioEffectChainDynamic(const std::string &sceneType);
@@ -133,6 +133,8 @@ public:
     void UpdateSpkOffloadEnabled(); // Used for AISS scene temporarily
     void InitHdiState();
 
+    int32_t SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray);
+    int32_t GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray);
 private:
     int32_t SetAudioEffectChainDynamic(const std::string &sceneType, const std::string &effectMode);
     void UpdateSensorState();
@@ -169,6 +171,7 @@ private:
     std::map<std::string, SessionEffectInfo> SessionIDToEffectInfoMap_;
     std::map<std::string, int32_t> SceneTypeToEffectChainCountBackupMap_;
     std::set<std::string> SceneTypeToSpecialEffectSet_;
+    std::unordered_map<std::string, std::string> effectPropertyMap_;
     DeviceType deviceType_ = DEVICE_TYPE_SPEAKER;
     std::string deviceSink_ = DEFAULT_DEVICE_SINK;
     std::string deviceClass_ = "";

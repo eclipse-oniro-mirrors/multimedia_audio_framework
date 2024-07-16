@@ -150,6 +150,12 @@ const char *g_audioPolicyCodeStrs[] = {
     "SET_RINGER_MODE_MUTE",
     "SET_MICROPHONE_MUTE_PERSISTENT",
     "GET_MICROPHONE_MUTE_PERSISTENT",
+    "GET_SUPPORT_AUDIO_ENHANCE_PROPERTY",
+    "GET_SUPPORT_AUDIO_EFFECT_PROPERTY",
+    "GET_AUDIO_ENHANCE_PROPERTY",
+    "GET_AUDIO_EFFECT_PROPERTY",
+    "SET_AUDIO_ENHANCE_PROPERTY",
+    "SET_AUDIO_EFFECT_PROPERTY",
 };
 constexpr size_t codeNums = sizeof(g_audioPolicyCodeStrs) / sizeof(const char *);
 static_assert(codeNums == (static_cast<size_t> (AudioPolicyInterfaceCode::AUDIO_POLICY_MANAGER_CODE_MAX) + 1),
@@ -1340,5 +1346,84 @@ void AudioPolicyManagerStub::GetMicrophoneMutePersistentInternal(MessageParcel &
     bool result = GetPersistentMicMuteState();
     reply.WriteBool(result);
 }
+
+void AudioPolicyManagerStub::GetSupportedAudioEnhancePropertyInternal(MessageParcel &data, MessageParcel &reply)
+{
+    AudioEnhancePropertyArray propertyArray = {};
+    int32_t result = GetSupportedAudioEnhanceProperty(propertyArray);
+    int32_t size = propertyArray.property.size();
+    reply.WriteInt32(size);
+    for (int i = 0; i < size; i++) {
+        propertyArray.property[i].Marshalling(reply);
+    }
+    reply.WriteInt32(result);
+    return;
+}
+
+void AudioPolicyManagerStub::GetSupportedAudioEffectPropertyInternal(MessageParcel &data, MessageParcel &reply)
+{
+    AudioEffectPropertyArray propertyArray = {};
+    int32_t result = GetSupportedAudioEffectProperty(propertyArray);
+    int32_t size = propertyArray.property.size();
+    reply.WriteInt32(size);
+    for (int i = 0; i < size; i++) {
+        propertyArray.property[i].Marshalling(reply);
+    }
+    reply.WriteInt32(result);
+    return;
+}
+
+void AudioPolicyManagerStub::SetAudioEffectPropertyInternal(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t size = data.ReadInt32();
+    AudioEffectPropertyArray propertyArray = {};
+    for (int i = 0; i < size; i++) {
+        AudioEffectProperty prop = {};
+        prop.Unmarshalling(data);
+        propertyArray.property.push_back(prop);
+    }
+    int32_t result = SetAudioEffectProperty(propertyArray);
+    reply.WriteInt32(result);
+}
+
+void AudioPolicyManagerStub::GetAudioEffectPropertyInternal(MessageParcel &data, MessageParcel &reply)
+{
+    AudioEffectPropertyArray propertyArray = {};
+    int32_t result = GetAudioEffectProperty(propertyArray);
+    int32_t size = propertyArray.property.size();
+    reply.WriteInt32(size);
+    for (int i = 0; i < size; i++)    {
+        propertyArray.property[i].Marshalling(reply);
+    }
+    reply.WriteInt32(result);
+    return;
+}
+
+void AudioPolicyManagerStub::SetAudioEnhancePropertyInternal(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t size = data.ReadInt32();
+    AudioEnhancePropertyArray propertyArray = {};
+    for (int i = 0; i < size; i++) {
+        AudioEnhanceProperty prop = {};
+        prop.Unmarshalling(data);
+        propertyArray.property.push_back(prop);
+    }
+    int32_t result = SetAudioEnhanceProperty(propertyArray);
+    reply.WriteInt32(result);
+}
+
+void AudioPolicyManagerStub::GetAudioEnhancePropertyInternal(MessageParcel &data, MessageParcel &reply)
+{
+    AudioEnhancePropertyArray propertyArray = {};
+    int32_t result = GetAudioEnhanceProperty(propertyArray);
+    int32_t size = propertyArray.property.size();
+    reply.WriteInt32(size);
+    for (int i = 0; i < size; i++) {
+        propertyArray.property[i].Marshalling(reply);
+    }
+    reply.WriteInt32(result);
+    return;
+}
+
 } // namespace audio_policy
 } // namespace OHOS

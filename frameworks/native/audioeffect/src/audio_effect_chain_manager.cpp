@@ -88,6 +88,7 @@ AudioEffectChainManager::AudioEffectChainManager()
     SceneTypeToSessionIDMap_.clear();
     SessionIDToEffectInfoMap_.clear();
     SceneTypeToEffectChainCountBackupMap_.clear();
+    effectPropertyMap_.clear();
     deviceType_ = DEVICE_TYPE_SPEAKER;
     deviceSink_ = DEFAULT_DEVICE_SINK;
     isInitialized_ = false;
@@ -250,9 +251,10 @@ void AudioEffectChainManager::InitHdiState()
 
 // Boot initialize
 void AudioEffectChainManager::InitAudioEffectChainManager(std::vector<EffectChain> &effectChains,
-    std::unordered_map<std::string, std::string> &map,
+    const EffectChainManagerParam &effectChainManagerParam,
     std::vector<std::shared_ptr<AudioEffectLibEntry>> &effectLibraryList)
 {
+    const std::unordered_map<std::string, std::string> &map = effectChainManagerParam.sceneTypeToChainNameMap;
     std::set<std::string> effectSet;
     for (EffectChain efc: effectChains) {
         for (std::string effect: efc.apply) {
@@ -285,6 +287,8 @@ void AudioEffectChainManager::InitAudioEffectChainManager(std::vector<EffectChai
     for (auto item = map.begin(); item != map.end(); ++item) {
         SceneTypeAndModeToEffectChainNameMap_[item->first] = item->second;
     }
+    // Construct effectPropertyMap_ that stores effect's property
+    effectPropertyMap_ = effectChainManagerParam.effectDefaultProperty;
 
     AUDIO_INFO_LOG("EffectToLibraryEntryMap size %{public}zu", EffectToLibraryEntryMap_.size());
     AUDIO_DEBUG_LOG("EffectChainToEffectsMap size %{public}zu", EffectChainToEffectsMap_.size());
@@ -385,7 +389,7 @@ int32_t AudioEffectChainManager::SetAudioEffectChainDynamic(const std::string &s
                 GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, sceneType)));
         }
         audioEffectChain->AddEffectHandle(handle, EffectToLibraryEntryMap_[effect]->audioEffectLibHandle,
-            currSceneType);
+            currSceneType, effect, "");
     }
     audioEffectChain->ResetIoBufferConfig();
 
@@ -1343,6 +1347,40 @@ bool AudioEffectChainManager::CheckIfSpkDsp()
         }
     }
     return true;
+}
+
+int32_t AudioEffectChainManager::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
+{
+    for (const auto &property : propertyArray.property) {
+        auto item = effectPropertyMap_.find(property.effectClass);
+        if (item == effectPropertyMap_.end()) {
+            effectPropertyMap_[property.effectClass] = property.effectProp;
+        } else {
+            if (item->second == property.effectProp) {
+                AUDIO_INFO_LOG("No need to update effect %{public}s with mode %{public}s",
+                    property.effectClass.c_str(), property.effectProp.c_str());
+                continue;
+            }
+            item->second = property.effectProp;
+        }
+        for (const auto &[sceneType, effectChain] : SceneTypeToEffectChainMap_) {
+            if (effectChain) {
+                effectChain->SetEffectProperty(property.effectClass, property.effectProp);
+            }
+        }
+    }
+    return AUDIO_OK;
+}
+
+int32_t AudioEffectChainManager::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    propertyArray.property.clear();
+    for (const auto &[effect, prop] : effectPropertyMap_) {
+        if (!prop.empty()) {
+            propertyArray.property.emplace_back(AudioEffectProperty{effect, prop});
+        }
+    }
+    return AUDIO_OK;
 }
 } // namespace AudioStandard
 } // namespace OHOS

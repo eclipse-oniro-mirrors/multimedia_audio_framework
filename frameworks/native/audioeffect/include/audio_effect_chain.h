@@ -45,7 +45,8 @@ public:
     ~AudioEffectChain();
     std::string GetEffectMode();
     void SetEffectMode(const std::string &mode);
-    void AddEffectHandle(AudioEffectHandle effectHandle, AudioEffectLibrary *libHandle, AudioEffectScene currSceneType);
+    void AddEffectHandle(AudioEffectHandle effectHandle, AudioEffectLibrary *libHandle, AudioEffectScene currSceneType,
+        const std::string &effectName, const std::string &property);
     void ApplyEffectChain(float *bufIn, float *bufOut, uint32_t frameLen, AudioEffectProcInfo procInfo);
     bool IsEmptyEffectHandles();
     void Dump();
@@ -58,6 +59,7 @@ public:
     void ResetIoBufferConfig();
     void SetFinalVolume(float volume);
     float GetFinalVolume();
+    int32_t SetEffectProperty(const std::string &effect, const std::string &property);
 
 private:
     AudioEffectConfig GetIoBufferConfig();
@@ -69,6 +71,7 @@ private:
     std::string effectMode_ = "";
     uint32_t latency_ = 0;
     std::vector<AudioEffectHandle> standByEffectHandles_;
+    std::vector<std::string> effectNames_;
     std::vector<AudioEffectLibrary *> libHandles_;
     AudioEffectConfig ioBufferConfig_ = {};
     AudioBuffer audioBufIn_ = {};

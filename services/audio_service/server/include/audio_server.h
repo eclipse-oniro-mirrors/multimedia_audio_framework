@@ -55,8 +55,7 @@ public:
         std::vector<Effect>& successEffectList) override;
     bool CreatePlaybackCapturerManager() override;
     bool CreateEffectChainManager(std::vector<EffectChain> &effectChains,
-        std::unordered_map<std::string, std::string> &effectMap,
-        std::unordered_map<std::string, std::string> &enhanceMap) override;
+        const EffectChainManagerParam &effectParam, const EffectChainManagerParam &enhanceParam) override;
     void SetOutputDeviceSink(int32_t deviceType, std::string &sinkName) override;
     int32_t SetMicrophoneMute(bool isMute) override;
     int32_t SetVoiceVolume(float volume) override;
@@ -92,6 +91,13 @@ public:
     int32_t SetAsrVoiceControlMode(AsrVoiceControlMode asrVoiceControlMode, bool on) override;
     int32_t SetAsrVoiceMuteMode(AsrVoiceMuteMode asrVoiceMuteMode, bool on) override;
     int32_t IsWhispering() override;
+
+    // for effect
+    int32_t SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray) override;
+    int32_t GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray) override;
+    // for enhance
+    int32_t SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray) override;
+    int32_t GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray) override;
 
     void NotifyDeviceInfo(std::string networkId, bool connected) override;
 

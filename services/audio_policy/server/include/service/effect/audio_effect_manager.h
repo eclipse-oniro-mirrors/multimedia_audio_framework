@@ -43,6 +43,11 @@ public:
     void ConstructEffectChainManagerParam(EffectChainManagerParam &effectChainMgrParam);
     void ConstructEnhanceChainManagerParam(EffectChainManagerParam &enhanceChainMgrParam);
     int32_t QueryEffectManagerSceneMode(SupportedEffectConfig &supportedEffectConfig);
+    int32_t GetSupportedAudioEffectProperty(const DeviceType& deviceType,
+        std::set<std::pair<std::string, std::string>> &mergedSet);
+    int32_t GetSupportedAudioEnhanceProperty(const DeviceType& deviceType,
+        std::set<std::pair<std::string, std::string>> &mergedSet);
+
 private:
     OriginalEffectConfig oriEffectConfig_;
     std::vector<Effect> availableEffects_;
@@ -51,6 +56,10 @@ private:
     bool isMasterSinkAvailable_ = false;
     bool isEffectChainManagerAvailable_ = false;
     std::vector<std::string> postSceneTypeSet_;
+    std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> device2EffectPropertySet_;
+    std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> device2EnhancePropertySet_;
+    std::unordered_map<std::string, std::string> effectDefaultProperty_;
+    std::unordered_map<std::string, std::string> enhanceDefaultProperty_;
 
     void UpdateAvailableAEConfig(OriginalEffectConfig &aeConfig);
     void UpdateEffectChains(std::vector<std::string> &availableLayout);
@@ -61,6 +70,8 @@ private:
     void UpdateDuplicateDevice(ProcessNew &processNew);
     int32_t UpdateUnavailableEffectChains(std::vector<std::string> &availableLayout, ProcessNew &processNew);
     bool VerifySceneMappingItem(const SceneMappingItem &item);
+    void UpdateSupportedEffectProperty(ProcessNew &processnew,
+        std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &device2PropertySet);
 };
 } // namespce AudioStandard
 } // namespace OHOS

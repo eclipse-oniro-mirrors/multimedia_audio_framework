@@ -35,7 +35,7 @@ public:
     ~AudioEnhanceChainManager();
     static AudioEnhanceChainManager* GetInstance();
     void InitAudioEnhanceChainManager(std::vector<EffectChain> &enhanceChains,
-        std::unordered_map<std::string, std::string> &enhanceChainNameMap,
+        const EffectChainManagerParam &managerParam,
         std::vector<std::shared_ptr<AudioEffectLibEntry>> &enhanceLibraryList);
     int32_t CreateAudioEnhanceChainDynamic(const std::string &scene, const std::string &mode, const std::string &up,
         const std::string &down);
@@ -54,7 +54,9 @@ public:
     int32_t SetVolumeInfo(const AudioVolumeType &volumeType, const float &systemVol);
     int32_t SetMicrophoneMuteInfo(const bool &isMute);
     int32_t SetStreamVolumeInfo(const uint32_t &sessionId, const float &streamVol);
-
+	
+    int32_t SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray);
+    int32_t GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray);
 private:
     int32_t SetAudioEnhanceChainDynamic(const std::string &sceneType, const std::string &sceneMode,
         const std::string &upDevice, const std::string &downDevice);
@@ -67,6 +69,7 @@ private:
     std::map<std::string, std::vector<std::string>> enhanceChainToEnhancesMap_;
     std::map<std::string, std::shared_ptr<AudioEffectLibEntry>> enhanceToLibraryEntryMap_;
     std::map<std::string, std::string> enhanceToLibraryNameMap_;
+    std::unordered_map<std::string, std::string> effectPropertyMap_;
     std::unique_ptr<EnhanceBuffer> enhanceBuffer_ = nullptr;
     std::mutex chainManagerMutex_;
     bool isInitialized_;

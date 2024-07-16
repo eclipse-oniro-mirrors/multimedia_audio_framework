@@ -4456,14 +4456,14 @@ void AudioPolicyService::LoadEffectLibrary()
     // Initialize EffectChainManager in audio service through IPC
     SupportedEffectConfig supportedEffectConfig;
     audioEffectManager_.GetSupportedEffectConfig(supportedEffectConfig);
-    std::unique_ptr<EffectChainManagerParam> effectChainMgrParam = std::make_unique<EffectChainManagerParam>();
-    std::unique_ptr<EffectChainManagerParam> enhanceChainMgrParam = std::make_unique<EffectChainManagerParam>();
-    audioEffectManager_.ConstructEffectChainManagerParam(*effectChainMgrParam);
-    audioEffectManager_.ConstructEnhanceChainManagerParam(*enhanceChainMgrParam);
+    EffectChainManagerParam effectChainManagerParam;
+    EffectChainManagerParam enhanceChainManagerParam;
+    audioEffectManager_.ConstructEffectChainManagerParam(effectChainManagerParam);
+    audioEffectManager_.ConstructEnhanceChainManagerParam(enhanceChainManagerParam);
 
     identity = IPCSkeleton::ResetCallingIdentity();
     bool ret = gsp->CreateEffectChainManager(supportedEffectConfig.effectChains,
-        effectChainMgrParam->sceneTypeToChainNameMap, enhanceChainMgrParam->sceneTypeToChainNameMap);
+        effectChainManagerParam, enhanceChainManagerParam);
     IPCSkeleton::SetCallingIdentity(identity);
 
     CHECK_AND_RETURN_LOG(ret, "EffectChainManager create failed");
@@ -8422,6 +8422,78 @@ void AudioPolicyService::LoadHdiEffectModel()
     std::string identity = IPCSkeleton::ResetCallingIdentity();
     gsp->LoadHdiEffectModel();
     IPCSkeleton::SetCallingIdentity(identity);
+}
+
+int32_t AudioPolicyService::GetSupportedAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    std::set<std::pair<std::string, std::string>> mergedSet = {};
+    // Get supported property for all device
+    audioEffectManager_.GetSupportedAudioEnhanceProperty(DEVICE_TYPE_INVALID, mergedSet);
+    std::vector<sptr<AudioDeviceDescriptor>> descriptor = GetDevices(OUTPUT_DEVICES_FLAG);
+    for (auto &item : descriptor) {
+        audioEffectManager_.GetSupportedAudioEffectProperty(item->getType(), mergedSet);
+    }
+    std::transform(mergedSet.begin(), mergedSet.end(), std::back_inserter(propertyArray.property),
+        [](const std::pair<std::string, std::string>& p) {
+            return AudioEffectProperty{p.first, p.second};
+        });
+    return AUDIO_OK;
+}
+
+int32_t AudioPolicyService::GetSupportedAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    std::set<std::pair<std::string, std::string>> mergedSet = {};
+    // Get supported property for all device
+    audioEffectManager_.GetSupportedAudioEnhanceProperty(DEVICE_TYPE_INVALID, mergedSet);
+    std::vector<sptr<AudioDeviceDescriptor>> descriptor = GetDevices(INPUT_DEVICES_FLAG);
+    for (auto &item : descriptor) {
+        audioEffectManager_.GetSupportedAudioEnhanceProperty(item->getType(), mergedSet);
+    }
+    std::transform(mergedSet.begin(), mergedSet.end(), std::back_inserter(propertyArray.property),
+        [](const std::pair<std::string, std::string>& p) {
+            return AudioEnhanceProperty{p.first, p.second};
+        });
+    return AUDIO_OK;
+}
+
+int32_t AudioPolicyService::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
+{
+    const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "Set Audio Effect Property: gsp null");
+    std::string identity = IPCSkeleton::ResetCallingIdentity();
+    int32_t ret = gsp->SetAudioEffectProperty(propertyArray);
+    IPCSkeleton::SetCallingIdentity(identity);
+    return ret;
+}
+
+int32_t AudioPolicyService::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "Get Audio Effect Property: gsp null");
+    std::string identity = IPCSkeleton::ResetCallingIdentity();
+    int32_t ret = gsp->GetAudioEffectProperty(propertyArray);
+    IPCSkeleton::SetCallingIdentity(identity);
+    return ret;
+}
+
+int32_t AudioPolicyService::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
+{
+    const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "Set Audio Enhance Property: gsp null");
+    std::string identity = IPCSkeleton::ResetCallingIdentity();
+    int32_t ret = gsp->SetAudioEnhanceProperty(propertyArray);
+    IPCSkeleton::SetCallingIdentity(identity);
+    return ret;
+}
+
+int32_t AudioPolicyService::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "Get Audio Enhance Property: gsp null");
+    std::string identity = IPCSkeleton::ResetCallingIdentity();
+    int32_t ret = gsp->GetAudioEnhanceProperty(propertyArray);
+    IPCSkeleton::SetCallingIdentity(identity);
+    return ret;
 }
 } // namespace AudioStandard
 } // namespace OHOS

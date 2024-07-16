@@ -818,8 +818,7 @@ void AudioManagerProxy::RequestThreadPriority(uint32_t tid, string bundleName)
 }
 
 bool AudioManagerProxy::CreateEffectChainManager(std::vector<EffectChain> &effectChains,
-    std::unordered_map<std::string, std::string> &effectMap,
-    std::unordered_map<std::string, std::string> &enhanceMap)
+    const EffectChainManagerParam &effectParam, const EffectChainManagerParam &enhanceParam)
 {
     int32_t error;
 
@@ -849,15 +848,25 @@ bool AudioManagerProxy::CreateEffectChainManager(std::vector<EffectChain> &effec
         }
     }
 
-    dataParcel.WriteInt32(effectMap.size());
-    for (auto item = effectMap.begin(); item != effectMap.end(); ++item) {
-        dataParcel.WriteString(item->first);
-        dataParcel.WriteString(item->second);
+    dataParcel.WriteInt32(effectParam.sceneTypeToChainNameMap.size());
+    for (auto &[sceneType, effectChain] : effectParam.sceneTypeToChainNameMap) {
+        dataParcel.WriteString(sceneType);
+        dataParcel.WriteString(effectChain);
     }
-    dataParcel.WriteInt32(enhanceMap.size());
-    for (auto item = enhanceMap.begin(); item != enhanceMap.end(); ++item) {
-        dataParcel.WriteString(item->first);
-        dataParcel.WriteString(item->second);
+    dataParcel.WriteInt32(enhanceParam.sceneTypeToChainNameMap.size());
+    for (auto &[sceneType, effectChain] : enhanceParam.sceneTypeToChainNameMap) {
+        dataParcel.WriteString(sceneType);
+        dataParcel.WriteString(effectChain);
+    }
+    dataParcel.WriteInt32(effectParam.effectDefaultProperty.size());
+    for (auto &[effect, property] : effectParam.effectDefaultProperty) {
+        dataParcel.WriteString(effect);
+        dataParcel.WriteString(property);
+    }
+    dataParcel.WriteInt32(enhanceParam.effectDefaultProperty.size());
+    for (auto &[effect, property] : enhanceParam.effectDefaultProperty) {
+        dataParcel.WriteString(effect);
+        dataParcel.WriteString(property);
     }
 
     error = Remote()->SendRequest(
@@ -1130,6 +1139,93 @@ void AudioManagerProxy::UpdateLatencyTimestamp(std::string &timestamp, bool isRe
         "LatencyMeas UpdateLatencyTimestamp failed, error:%{public}d", error);
 }
 
+int32_t AudioManagerProxy::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool res = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(res, ERR_INVALID_OPERATION, "WriteInterfaceToken failed");
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioServerInterfaceCode::GET_AUDIO_ENHANCE_PROPERTY), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "Get Audio Enhance Property, error: %d", error);
+
+    int32_t size = reply.ReadInt32();
+    for (int32_t i = 0; i < size; i++) {
+        // write and read must keep same order
+        AudioEnhanceProperty prop = {};
+        prop.Unmarshalling(reply);
+        propertyArray.property.push_back(prop);
+    }
+    return AUDIO_OK;
+}
+
+int32_t AudioManagerProxy::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool res = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(res, ERR_INVALID_OPERATION, "WriteInterfaceToken failed");
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioServerInterfaceCode::GET_AUDIO_EFFECT_PROPERTY), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "Get Audio Effect Property, error: %d", error);
+
+    int32_t size = reply.ReadInt32();
+    for (int32_t i = 0; i < size; i++) {
+        AudioEffectProperty prop = {};
+        prop.Unmarshalling(reply);
+        // write and read must keep same order
+        propertyArray.property.push_back(prop);
+    }
+    return AUDIO_OK;
+}
+
+int32_t AudioManagerProxy::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, ERR_INVALID_OPERATION, "WriteInterfaceToken failed");
+
+    int32_t size = static_cast<int32_t>(propertyArray.property.size());
+    data.WriteInt32(size);
+    for (int32_t i = 0; i < size; i++) {
+        // write and read must keep same order
+        propertyArray.property[i].Marshalling(data);
+    }
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioServerInterfaceCode::SET_AUDIO_ENHANCE_PROPERTY), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "SendRequest failed, error: %{public}d", error);
+    return reply.ReadInt32();
+}
+
+int32_t AudioManagerProxy::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, ERR_INVALID_OPERATION, "WriteInterfaceToken failed");
+
+    int32_t size = static_cast<int32_t>(propertyArray.property.size());
+    data.WriteInt32(size);
+    for (int32_t i = 0; i < size; i++) {
+        propertyArray.property[i].Marshalling(data);
+    }
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioServerInterfaceCode::SET_AUDIO_EFFECT_PROPERTY), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "SendRequest failed, error: %{public}d", error);
+    return reply.ReadInt32();
+}
+
 void AudioManagerProxy::LoadHdiEffectModel()
 {
     MessageParcel data;
@@ -1143,5 +1239,6 @@ void AudioManagerProxy::LoadHdiEffectModel()
         static_cast<uint32_t>(AudioServerInterfaceCode::LOAD_HDI_EFFECT_MODEL), data, reply, option);
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "failed,error:%d", error);
 }
+
 } // namespace AudioStandard
 } // namespace OHOS

@@ -485,6 +485,45 @@ int32_t AudioEffectManager::UpdateUnavailableEffectChains(std::vector<std::strin
     return ret;
 }
 
+void AudioEffectManager::UpdateSupportedEffectProperty(ProcessNew &processnew,
+    std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &device2PropertySet)
+{
+    for (auto &stream : processnew.stream) {
+        for (auto &streamMode : stream.streamEffectMode) {
+            for (auto &device : streamMode.devicePort) {
+                auto chainName = device.chain;
+                auto effectChain = std::find_if(supportedEffectConfig_.effectChains.begin(),
+                    supportedEffectConfig_.effectChains.end(),
+                    [&chainName](const EffectChain& x) {
+                        return x.name == chainName;
+                    });
+                if (effectChain == supportedEffectConfig_.effectChains.end()) {
+                    continue;
+                }
+                for (auto &effectName : effectChain->apply) {
+                    auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
+                        [&effectName](const Effect& effect) {
+                        return effect.name == effectName;
+                    });
+                    if (effectIter == availableEffects_.end()) {
+                        continue;
+                    }
+                    for (auto &property : effectIter->effectProperty) {
+                        auto deviceIter = device2PropertySet.find(device.type);
+                        if (deviceIter == device2PropertySet.end()) {
+                            device2PropertySet[device.type].insert({effectIter->name, property});
+                        } else {
+                            deviceIter->second.insert({effectIter->name, property});
+                        }
+                        AUDIO_INFO_LOG("device %{public}s support effect [%{public}s, %{public}s]",
+                            device.type.c_str(), effectIter->name.c_str(), property.c_str());
+                    }
+                }
+            }
+        }
+    }
+}
+
 void AudioEffectManager::BuildAvailableAEConfig()
 {
     int32_t ret = 0 ;
@@ -536,6 +575,8 @@ void AudioEffectManager::BuildAvailableAEConfig()
     if (ret != 0) {
         existDefault_ = -1;
     }
+    UpdateSupportedEffectProperty(supportedEffectConfig_.preProcessNew, device2EnhancePropertySet_);
+    UpdateSupportedEffectProperty(supportedEffectConfig_.postProcessNew, device2EffectPropertySet_);
 }
 
 void AudioEffectManager::SetMasterSinkAvailable()
@@ -570,6 +611,8 @@ void AudioEffectManager::ConstructEffectChainManagerParam(EffectChainManagerPara
     std::string sceneType;
     std::string sceneMode;
     std::string key;
+    std::unordered_map<std::string, std::string> &effectDefaultProperty = effectChainMgrParam.effectDefaultProperty;
+
     for (auto &scene: supportedEffectConfig_.postProcessNew.stream) {
         sceneType = scene.scene;
         if (scene.priority == PRIOR_SCENE) {
@@ -583,6 +626,36 @@ void AudioEffectManager::ConstructEffectChainManagerParam(EffectChainManagerPara
             for (auto &device: mode.devicePort) {
                 key = sceneType + "_&_" + sceneMode + "_&_" + device.type;
                 AddKeyValueIntoMap(map, key, device.chain);
+                auto chainName = device.chain;
+                auto effectChain = std::find_if(supportedEffectConfig_.effectChains.begin(),
+                    supportedEffectConfig_.effectChains.end(),
+                    [&chainName](const EffectChain& x) {
+                        return x.name == chainName;
+                    });
+                if (effectChain == supportedEffectConfig_.effectChains.end()) {
+                    continue;
+                }
+                for (auto &effectName : effectChain->apply) {
+                    auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
+                        [&effectName](const Effect& effect) {
+                        return effect.name == effectName;
+                    });
+                    if (effectIter == availableEffects_.end()) {
+                        continue;
+                    }
+                    // if 0 property, no need to set default
+                    for (auto &property : effectIter->effectProperty) {
+                        auto it = effectDefaultProperty.find(effectIter->name);
+                        // first assign, and no need to assign twice
+                        if (it == effectDefaultProperty.end()) {
+                            effectDefaultProperty[effectIter->name] = property;
+                            AUDIO_INFO_LOG("effect %{public}s defaultProperty is %{public}s",
+                                effectIter->name.c_str(), property.c_str());
+                        }
+                        // only first property is default set
+                        break;
+                    }
+                }
             }
         }
     }
@@ -598,6 +671,8 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
     std::string sceneType;
     std::string sceneMode;
     std::string key;
+    std::unordered_map<std::string, std::string> &enhanceDefaultProperty = enhanceChainMgrParam.effectDefaultProperty;
+
 
     for (auto &scene: supportedEffectConfig_.preProcessNew.stream) {
         sceneType = scene.scene;
@@ -613,6 +688,36 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
             for (auto &device: mode.devicePort) {
                 key = sceneType + "_&_" + sceneMode;
                 AddKeyValueIntoMap(map, key, device.chain);
+                auto chainName = device.chain;
+                auto effectChain = std::find_if(supportedEffectConfig_.effectChains.begin(),
+                    supportedEffectConfig_.effectChains.end(),
+                    [&chainName](const EffectChain& x) {
+                        return x.name == chainName;
+                    });
+                if (effectChain == supportedEffectConfig_.effectChains.end()) {
+                    continue;
+                }
+                for (auto &effectName : effectChain->apply) {
+                    auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
+                        [&effectName](const Effect& effect) {
+                        return effect.name == effectName;
+                    });
+                    if (effectIter == availableEffects_.end()) {
+                        continue;
+                    }
+                    // if 0 property, no need to set default
+                    for (auto &property : effectIter->effectProperty) {
+                        auto it = enhanceDefaultProperty.find(effectIter->name);
+                        // first assign, and no need to assign twice
+                        if (it == enhanceDefaultProperty.end()) {
+                            enhanceDefaultProperty[effectIter->name] = property;
+                            AUDIO_INFO_LOG("effect %{public}s defaultProperty is %{public}s",
+                                effectIter->name.c_str(), property.c_str());
+                        }
+                        // only first property is default set
+                        break;
+                    }
+                }
             }
         }
     }
@@ -620,5 +725,50 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
         (int32_t)map.size());
 }
 
+int32_t AudioEffectManager::GetSupportedAudioEffectProperty(const DeviceType &deviceType,
+    std::set<std::pair<std::string, std::string>> &mergedSet)
+{
+    auto deviceIter = SUPPORTED_DEVICE_TYPE.find(deviceType);
+    if (deviceIter == SUPPORTED_DEVICE_TYPE.end()) {
+        AUDIO_ERR_LOG("device not supported.");
+        return -1;
+    }
+    auto propertySetIter = device2EffectPropertySet_.find(deviceIter->second);
+    if (propertySetIter != device2EffectPropertySet_.end()) {
+        mergedSet.insert(propertySetIter->second.begin(), propertySetIter->second.end());
+    } else {
+        AUDIO_INFO_LOG("property is empty");
+    }
+    if (deviceType == DEVICE_TYPE_INVALID) {
+        propertySetIter = device2EffectPropertySet_.find("");
+        if (propertySetIter != device2EffectPropertySet_.end()) {
+            mergedSet.insert(propertySetIter->second.begin(), propertySetIter->second.end());
+        }
+    }
+    return AUDIO_OK;
+}
+
+int32_t AudioEffectManager::GetSupportedAudioEnhanceProperty(const DeviceType &deviceType,
+    std::set<std::pair<std::string, std::string>> &mergedSet)
+{
+    auto deviceIter = SUPPORTED_DEVICE_TYPE.find(deviceType);
+    if (deviceIter == SUPPORTED_DEVICE_TYPE.end()) {
+        AUDIO_ERR_LOG("device not supported.");
+        return -1;
+    }
+    auto propertySetIter = device2EnhancePropertySet_.find(deviceIter->second);
+    if (propertySetIter != device2EnhancePropertySet_.end()) {
+        mergedSet.insert(propertySetIter->second.begin(), propertySetIter->second.end());
+    } else {
+        AUDIO_INFO_LOG("property is empty");
+    }
+    if (deviceType == DEVICE_TYPE_INVALID) {
+        propertySetIter = device2EnhancePropertySet_.find("");
+        if (propertySetIter != device2EnhancePropertySet_.end()) {
+            mergedSet.insert(propertySetIter->second.begin(), propertySetIter->second.end());
+        }
+    }
+    return AUDIO_OK;
+}
 } // namespce AudioStandard
 } // namespace OHOS

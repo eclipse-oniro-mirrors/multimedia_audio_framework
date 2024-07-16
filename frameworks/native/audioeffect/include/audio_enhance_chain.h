@@ -69,6 +69,7 @@ public:
     uint32_t GetAlgoBufferSize();
     uint32_t GetAlgoBufferSizeEc();
     int32_t ApplyEnhanceChain(std::unique_ptr<EnhanceBuffer> &enhanceBuffer, uint32_t length);
+    int32_t SetAudioEnhanceProperty(const std::string &effect, const std::string &property);
 
 private:
     void InitAudioEnhanceChain();
@@ -87,6 +88,7 @@ private:
     FILE *dumpFileOut_ = nullptr;
     bool needEcFlag_;
     std::vector<AudioEffectHandle> standByEnhanceHandles_;
+    std::vector<std::string> effectNames_;
     std::vector<AudioEffectLibrary*> enhanceLibHandles_;
 };
 

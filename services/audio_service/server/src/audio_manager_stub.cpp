@@ -85,6 +85,10 @@ const char *g_audioServerCodeStrs[] = {
     "SUSPEND_RENDERSINK",
     "RESTORE_RENDERSINK",
     "LOAD_HDI_EFFECT_MODEL",
+    "GET_AUDIO_ENHANCE_PROPERTY",
+    "GET_AUDIO_EFFECT_PROPERTY",
+    "SET_AUDIO_ENHANCE_PROPERTY",
+    "SET_AUDIO_EFFECT_PROPERTY",
 };
 constexpr size_t codeNums = sizeof(g_audioServerCodeStrs) / sizeof(const char *);
 static_assert(codeNums == (static_cast<size_t> (AudioServerInterfaceCode::AUDIO_SERVER_CODE_MAX) + 1),
@@ -475,8 +479,29 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
         sceneTypeToEnhanceChainNameMap[key] = value;
     }
 
-    bool createSuccess = CreateEffectChainManager(effectChains, sceneTypeToEffectChainNameMap,
-        sceneTypeToEnhanceChainNameMap);
+    unordered_map<string, string> effectDefaultProperty;
+    mapSize = data.ReadInt32();
+    CHECK_AND_RETURN_RET_LOG(mapSize >= 0 && mapSize <= AUDIO_EFFECT_COUNT_PROPERTY_UPPER_LIMIT,
+        AUDIO_ERR, "Create audio effect chain manager failed, please check log");
+    for (i = 0; i < mapSize; i++) {
+        string key = data.ReadString();
+        string value = data.ReadString();
+        effectDefaultProperty[key] = value;
+    }
+
+    unordered_map<string, string> enhanceDefaultProperty;
+    mapSize = data.ReadInt32();
+    CHECK_AND_RETURN_RET_LOG(mapSize >= 0 && mapSize <= AUDIO_EFFECT_COUNT_PROPERTY_UPPER_LIMIT,
+        AUDIO_ERR, "Create audio enhance chain manager failed, please check log");
+    for (i = 0; i < mapSize; i++) {
+        string key = data.ReadString();
+        string value = data.ReadString();
+        enhanceDefaultProperty[key] = value;
+    }
+
+    bool createSuccess = CreateEffectChainManager(effectChains,
+    { sceneTypeToEffectChainNameMap, effectDefaultProperty },
+    { sceneTypeToEnhanceChainNameMap, enhanceDefaultProperty });
     CHECK_AND_RETURN_RET_LOG(createSuccess, AUDIO_ERR,
         "Create audio effect chain manager failed, please check log");
     return AUDIO_OK;
@@ -715,5 +740,68 @@ int AudioManagerStub::HandleLoadHdiEffectModel(MessageParcel &data, MessageParce
     LoadHdiEffectModel();
     return AUDIO_OK;
 }
+
+int AudioManagerStub::HandleSetAudioEffectProperty(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t size = data.ReadInt32();
+    CHECK_AND_RETURN_RET_LOG(size > 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+        ERROR_INVALID_PARAM, "Audio enhance property array size invalid");
+    AudioEffectPropertyArray propertyArray = {};
+    for (int i = 0; i < size; i++) {
+        AudioEffectProperty prop = {};
+        prop.Unmarshalling(data);
+        propertyArray.property.push_back(prop);
+    }
+    int32_t result = SetAudioEffectProperty(propertyArray);
+    reply.WriteInt32(result);
+    return AUDIO_OK;
+}
+
+int AudioManagerStub::HandleGetAudioEffectProperty(MessageParcel &data, MessageParcel &reply)
+{
+    AudioEffectPropertyArray propertyArray = {};
+    int32_t result = GetAudioEffectProperty(propertyArray);
+    int32_t size = propertyArray.property.size();
+    CHECK_AND_RETURN_RET_LOG(size >= 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+        ERROR_INVALID_PARAM, "Audio enhance property array size invalid");
+    reply.WriteInt32(size);
+    for (int i = 0; i < size; i++)    {
+        propertyArray.property[i].Marshalling(reply);
+    }
+    reply.WriteInt32(result);
+    return AUDIO_OK;
+}
+
+int AudioManagerStub::HandleSetAudioEnhanceProperty(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t size = data.ReadInt32();
+    CHECK_AND_RETURN_RET_LOG(size > 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+        ERROR_INVALID_PARAM, "Audio enhance property array size invalid");
+    AudioEnhancePropertyArray propertyArray = {};
+    for (int i = 0; i < size; i++) {
+        AudioEnhanceProperty prop = {};
+        prop.Unmarshalling(data);
+        propertyArray.property.push_back(prop);
+    }
+    int32_t result = SetAudioEnhanceProperty(propertyArray);
+    reply.WriteInt32(result);
+    return AUDIO_OK;
+}
+
+int AudioManagerStub::HandleGetAudioEnhanceProperty(MessageParcel &data, MessageParcel &reply)
+{
+    AudioEnhancePropertyArray propertyArray = {};
+    int32_t result = GetAudioEnhanceProperty(propertyArray);
+    int32_t size = propertyArray.property.size();
+    CHECK_AND_RETURN_RET_LOG(size >= 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+        ERROR_INVALID_PARAM, "Audio enhance property array size invalid");
+    reply.WriteInt32(size);
+    for (int i = 0; i < size; i++) {
+        propertyArray.property[i].Marshalling(reply);
+    }
+    reply.WriteInt32(result);
+    return AUDIO_OK;
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

@@ -85,9 +85,9 @@ AudioEnhanceChainManager *AudioEnhanceChainManager::GetInstance()
 }
 
 void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectChain> &enhanceChains,
-    std::unordered_map<std::string, std::string> &enhanceChainNameMap,
-    std::vector<std::shared_ptr<AudioEffectLibEntry>> &enhanceLibraryList)
+    const EffectChainManagerParam &managerParam, std::vector<std::shared_ptr<AudioEffectLibEntry>> &enhanceLibraryList)
 {
+    const std::unordered_map<std::string, std::string> &enhanceChainNameMap = managerParam.sceneTypeToChainNameMap;
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     std::set<std::string> enhanceSet;
     for (EffectChain enhanceChain : enhanceChains) {
@@ -118,6 +118,9 @@ void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectCh
     for (auto item = enhanceChainNameMap.begin(); item != enhanceChainNameMap.end(); item++) {
         sceneTypeAndModeToEnhanceChainNameMap_[item->first] = item->second;
     }
+    // Construct effectPropertyMap_ that stores effect's property
+    effectPropertyMap_ = managerParam.effectDefaultProperty;
+
     AUDIO_INFO_LOG("enhanceToLibraryEntryMap_ size %{public}zu \
         enhanceToLibraryNameMap_ size %{public}zu \
         sceneTypeAndModeToEnhanceChainNameMap_ size %{public}zu",
@@ -428,6 +431,43 @@ int32_t AudioEnhanceChainManager::SetStreamVolumeInfo(const uint32_t &sessionId,
     streamVol_ = streamVol;
     AUDIO_INFO_LOG("success, sessionId: %{public}d, streamVol: %{public}f", sessionId_, streamVol_);
     return SUCCESS;
+}
+
+int32_t AudioEnhanceChainManager::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+    int32_t ret = 0;
+    for (const auto &property : propertyArray.property) {
+        auto item = effectPropertyMap_.find(property.enhanceClass);
+        if (item == effectPropertyMap_.end()) {
+            effectPropertyMap_[property.enhanceClass] = property.enhanceProp;
+        } else {
+            if (item->second == property.enhanceProp) {
+                AUDIO_INFO_LOG("No need to update effect %{public}s with mode %{public}s",
+                    property.enhanceClass.c_str(), property.enhanceProp.c_str());
+                continue;
+            }
+            item->second = property.enhanceProp;
+        }
+        for (const auto &[sceneType, enhanceChain] : sceneTypeToEnhanceChainMap_) {
+            if (enhanceChain) {
+                ret = enhanceChain->SetAudioEnhanceProperty(property.enhanceClass, property.enhanceProp);
+                CHECK_AND_RETURN_RET_LOG(ret == 0, ERR_OPERATION_FAILED, "set property failed");
+            }
+        }
+    }
+    return ret;
+}
+
+int32_t AudioEnhanceChainManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    propertyArray.property.clear();
+    for (const auto &[effect, prop] : effectPropertyMap_) {
+        if (!prop.empty()) {
+            propertyArray.property.emplace_back(AudioEnhanceProperty{effect, prop});
+        }
+    }
+    return AUDIO_OK;
 }
 } // namespace AudioStandard
 } // namespace OHOS

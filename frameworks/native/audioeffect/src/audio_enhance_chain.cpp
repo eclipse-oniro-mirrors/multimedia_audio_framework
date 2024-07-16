@@ -19,6 +19,7 @@
 #include "audio_enhance_chain.h"
 
 #include <chrono>
+#include <ranges>
 
 #include "securec.h"
 #include "audio_log.h"
@@ -220,6 +221,28 @@ int32_t AudioEnhanceChain::ApplyEnhanceChain(std::unique_ptr<EnhanceBuffer> &enh
         ERROR, "memcpy error in audioBufOut_ to enhanceBuffer->output");
     DumpFileUtil::WriteDumpFile(dumpFileOut_, enhanceBuffer->micBufferOut.data(), (uint64_t)length);
     return SUCCESS;
+}
+
+int32_t AudioEnhanceChain::SetAudioEnhanceProperty(const std::string &effect, const std::string &property)
+{
+    std::lock_guard<std::mutex> lock(chainMutex_);
+    int32_t ret = 0;
+    int32_t size = standByEnhanceHandles_.size();
+    for (int32_t index = 0; index < size; index++) {
+        auto &handle = standByEnhanceHandles_[index];
+        auto const &effectName = effectNames_[index];
+        if (effect == effectName) {
+            int32_t replyData = 0;
+            const char *propCstr = property.c_str();
+            AudioEffectTransInfo cmdInfo = {sizeof(const char *), reinterpret_cast<void*>(&propCstr)};
+            AudioEffectTransInfo replyInfo = {sizeof(int32_t), &replyData};
+            ret = (*handle)->command(handle, EFFECT_CMD_SET_PROPERTY, &cmdInfo, &replyInfo);
+            CHECK_AND_RETURN_RET_LOG(ret == 0, ret,
+                "[%{public}s] %{public}s effect EFFECT_CMD_SET_PROPERTY fail",
+                sceneType_.c_str(), effectName.c_str());
+        }
+    }
+    return ret;
 }
 
 } // namespace AudioStandard

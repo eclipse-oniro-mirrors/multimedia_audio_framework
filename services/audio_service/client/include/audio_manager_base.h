@@ -310,8 +310,7 @@ public:
      * @return true/false.
      */
     virtual bool CreateEffectChainManager(std::vector<EffectChain> &effectChains,
-        std::unordered_map<std::string, std::string> &effectMap,
-        std::unordered_map<std::string, std::string> &enhanceMap) = 0;
+        const EffectChainManagerParam &effectParam, const EffectChainManagerParam &enhanceParam) = 0;
 
     /**
      * Set output device sink for effect chain manager.
@@ -415,6 +414,12 @@ public:
 
     // Check if the multi-channel sound effect is working on the DSP
     virtual bool GetEffectOffloadEnabled() = 0;
+    // for effect
+    virtual int32_t SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray) = 0;
+    virtual int32_t GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray) = 0;
+    // for enhance
+    virtual int32_t SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray) = 0;
+    virtual int32_t GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray) = 0;
 
     /**
      * Load effect hdi model when audio_host online.
@@ -482,6 +487,10 @@ private:
     int HandleSetAsrVoiceMuteMode(MessageParcel &data, MessageParcel &reply);
     int HandleIsWhispering(MessageParcel &data, MessageParcel &reply);
     int HandleGetEffectOffloadEnabled(MessageParcel &data, MessageParcel &reply);
+    int HandleSetAudioEffectProperty(MessageParcel &data, MessageParcel &reply);
+    int HandleGetAudioEffectProperty(MessageParcel &data, MessageParcel &reply);
+    int HandleSetAudioEnhanceProperty(MessageParcel &data, MessageParcel &reply);
+    int HandleGetAudioEnhanceProperty(MessageParcel &data, MessageParcel &reply);
     int HandleSuspendRenderSink(MessageParcel &data, MessageParcel &reply);
     int HandleRestoreRenderSink(MessageParcel &data, MessageParcel &reply);
     int HandleLoadHdiEffectModel(MessageParcel &data, MessageParcel &reply);
@@ -540,6 +549,10 @@ private:
         &AudioManagerStub::HandleSetAsrVoiceMuteMode,
         &AudioManagerStub::HandleIsWhispering,
         &AudioManagerStub::HandleGetEffectOffloadEnabled,
+        &AudioManagerStub::HandleGetAudioEnhanceProperty,
+        &AudioManagerStub::HandleGetAudioEffectProperty,
+        &AudioManagerStub::HandleSetAudioEnhanceProperty,
+        &AudioManagerStub::HandleSetAudioEffectProperty,
         &AudioManagerStub::HandleSuspendRenderSink,
         &AudioManagerStub::HandleRestoreRenderSink,
         &AudioManagerStub::HandleLoadHdiEffectModel,

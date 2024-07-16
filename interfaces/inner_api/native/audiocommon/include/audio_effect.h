@@ -39,6 +39,9 @@ constexpr int32_t AUDIO_EFFECT_COUNT_PRE_SECOND_NODE_UPPER_LIMIT = 1;
 constexpr int32_t AUDIO_EFFECT_CHAIN_CONFIG_UPPER_LIMIT = 64; // max conf for sceneType + effectMode + deviceType
 constexpr int32_t AUDIO_EFFECT_CHAIN_COUNT_UPPER_LIMIT = 32; // max num of effectChain
 constexpr int32_t AUDIO_EFFECT_COUNT_PER_CHAIN_UPPER_LIMIT = 16; // max num of effect per effectChain
+constexpr int32_t AUDIO_EFFECT_COUNT_PROPERTY_UPPER_LIMIT = 20; // max num of property
+
+constexpr int32_t MAX_PARA_LEN = 20;
 
 constexpr int32_t HDI_EFFECT_NUM = 2;
 constexpr int32_t HDI_SET_PATAM = 6;
@@ -255,6 +258,52 @@ const std::unordered_map<DeviceType, std::string> SUPPORTED_DEVICE_TYPE {
     {DEVICE_TYPE_DEFAULT, "DEVICE_TYPE_DEFAULT"},
 };
 
+struct AudioEnhanceProperty {
+    std::string enhanceClass;
+    std::string enhanceProp;
+    friend bool operator==(const AudioEnhanceProperty &lhs, const AudioEnhanceProperty &rhs)
+    {
+        return lhs.enhanceClass == rhs.enhanceClass && lhs.enhanceProp == rhs.enhanceProp;
+    }
+    bool Marshalling(Parcel &parcel) const
+    {
+        return parcel.WriteString(enhanceClass)&&
+            parcel.WriteString(enhanceProp);
+    }
+    void Unmarshalling(Parcel &parcel)
+    {
+        enhanceClass = parcel.ReadString();
+        enhanceProp = parcel.ReadString();
+    }
+};
+
+struct AudioEnhancePropertyArray {
+    std::vector<AudioEnhanceProperty> property;
+};
+
+struct AudioEffectProperty {
+    std::string effectClass;
+    std::string effectProp;
+    friend bool operator==(const AudioEffectProperty &lhs, const AudioEffectProperty &rhs)
+    {
+        return lhs.effectClass == rhs.effectClass && lhs.effectProp == rhs.effectProp;
+    }
+    bool Marshalling(Parcel &parcel) const
+    {
+        return parcel.WriteString(effectClass)&&
+            parcel.WriteString(effectProp);
+    }
+    void Unmarshalling(Parcel &parcel)
+    {
+        effectClass = parcel.ReadString();
+        effectProp = parcel.ReadString();
+    }
+};
+
+struct AudioEffectPropertyArray {
+    std::vector<AudioEffectProperty> property;
+};
+
 enum AudioEffectCommandCode {
     EFFECT_CMD_INIT = 0,
     EFFECT_CMD_SET_CONFIG = 1,
@@ -263,7 +312,8 @@ enum AudioEffectCommandCode {
     EFFECT_CMD_SET_PARAM = 4,
     EFFECT_CMD_GET_PARAM = 5,
     EFFECT_CMD_GET_CONFIG = 6,
-    EFFECT_CMD_SET_IMU = 7
+    EFFECT_CMD_SET_IMU = 7,
+    EFFECT_CMD_SET_PROPERTY = 8
 };
 
 enum AudioEffectParamSetCode {
@@ -283,6 +333,18 @@ struct AudioEffectParam {
     uint32_t paramSize;
     uint32_t valueSize;
     int32_t data[];
+};
+
+struct AudioEnhanceParam {
+    uint32_t volumeInfo;
+    uint32_t isMute;
+    const char *upDeivce;
+    const char *downDeivce;
+};
+
+struct EffectChainManagerParam {
+    std::unordered_map<std::string, std::string> sceneTypeToChainNameMap;
+    std::unordered_map<std::string, std::string> effectDefaultProperty;
 };
 
 struct AudioBuffer {
