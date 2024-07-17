@@ -16,7 +16,7 @@
 #ifndef HDI_ADAPTER_MANAGER_API_H
 #define HDI_ADAPTER_MANAGER_API_H
 
-#include <stdint.h>
+#include <inttypes.h>
 #include "audio_hdiadapter_info.h"
 
 #ifdef __cplusplus
@@ -32,8 +32,8 @@ typedef struct HdiCaptureHandle {
     int32_t (*CaptureFrame)(void *capture,
         char *frame, uint64_t requestBytes, uint64_t *replyBytes);
     int32_t (*CaptureFrameWithEc)(void *capture,
-        char *frame, uint64_t requestBytes, uint64_t *replyBytes,
-        char *frameEc, uint64_t requestBytesEc, uint64_t *replyBytesEc);
+        FrameDesc *fdesc, uint64_t *replyBytes,
+        FrameDesc *fdescEc, uint64_t *replyBytesEc);
 } HdiCaptureHandle;
 
 int32_t CreateCaptureHandle(HdiCaptureHandle **handle, CaptureAttr *attr);

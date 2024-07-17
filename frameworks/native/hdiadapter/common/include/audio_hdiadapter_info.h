@@ -19,7 +19,7 @@
 #define MAX_MIX_CHANNELS 128
 #define PA_MAX_OUTPUTS_PER_SOURCE 256
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 
 // should be same with AudioSampleFormat in audio_info.h
@@ -54,6 +54,11 @@ typedef enum MicRefSwitch {
     REF_OFF = 0,
     REF_ON
 } MicRefSwitch;
+
+typedef struct FrameDesc {
+    char *frame;
+    uint64_t frameLen;
+} FrameDesc;
 
 typedef struct CaptureAttr {
     // usage attrs

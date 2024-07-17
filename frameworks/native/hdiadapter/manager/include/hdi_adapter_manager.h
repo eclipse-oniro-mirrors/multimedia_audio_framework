@@ -30,12 +30,11 @@ public:
 
     IAudioCapturerSource *CreateCapture(CaptureAttr *attr);
 
-    int32_t ReleaseCapture(IAudioCapturerSource *capture);
+    void ReleaseCapture(IAudioCapturerSource *capture);
 
 private:
     HdiAdapterManager();
     virtual ~HdiAdapterManager();
-
 };
 
 } // namespace AudioStandard

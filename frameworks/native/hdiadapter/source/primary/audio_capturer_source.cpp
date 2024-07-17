@@ -46,6 +46,10 @@ namespace {
 const int64_t SECOND_TO_NANOSECOND = 1000000000;
 const unsigned int DEINIT_TIME_OUT_SECONDS = 5;
 const uint16_t GET_MAX_AMPLITUDE_FRAMES_THRESHOLD = 10;
+const int32_t BYTE_SIZE_SAMPLE_U8 = 1;
+const int32_t BYTE_SIZE_SAMPLE_S16 = 2;
+const int32_t BYTE_SIZE_SAMPLE_S24 = 3;
+const int32_t BYTE_SIZE_SAMPLE_S32 = 4;
 } // namespace
 
 static int32_t GetByteSizeByFormat(HdiAdapterFormat format)
@@ -53,19 +57,19 @@ static int32_t GetByteSizeByFormat(HdiAdapterFormat format)
     int32_t byteSize = 0;
     switch (format) {
         case SAMPLE_U8:
-            byteSize = 1;
+            byteSize = BYTE_SIZE_SAMPLE_U8;
             break;
         case SAMPLE_S16:
-            byteSize = 2;
+            byteSize = BYTE_SIZE_SAMPLE_S16;
             break;
         case SAMPLE_S24:
-            byteSize = 3;
+            byteSize = BYTE_SIZE_SAMPLE_S24;
             break;
         case SAMPLE_S32:
-            byteSize = 4;
+            byteSize = BYTE_SIZE_SAMPLE_S32;
             break;
         default:
-            byteSize = 2;
+            byteSize = BYTE_SIZE_SAMPLE_S16;
             break;
     }
 
@@ -133,8 +137,8 @@ public:
     int32_t Resume(void) override;
     int32_t CaptureFrame(char *frame, uint64_t requestBytes, uint64_t &replyBytes) override;
     int32_t CaptureFrameWithEc(
-        char *frame, uint64_t requestBytes, uint64_t &replyBytes,
-        char *frameEc, uint64_t requestBytesEc, uint64_t &replyBytesEc) override;
+        FrameDesc *fdesc, , uint64_t &replyBytes,
+        FrameDesc *fdescEc, , uint64_t &replyBytesEc) override;
     int32_t SetVolume(float left, float right) override;
     int32_t GetVolume(float &left, float &right) override;
     int32_t SetMute(bool isMute) override;
@@ -188,6 +192,8 @@ private:
     void CheckUpdateState(char *frame, uint64_t replyBytes);
     int32_t SetAudioRouteInfoForEnhanceChain(const DeviceType &inputDevice);
     void CaptureThreadLoop();
+    int32_t StartNonblockingCapture();
+    int32_t StopNonblockingCapture();
 
     CaptureAttr *hdiAttr_;
     IAudioSourceAttr attr_ = {};
@@ -254,8 +260,8 @@ public:
     int32_t Resume(void) override;
     int32_t CaptureFrame(char *frame, uint64_t requestBytes, uint64_t &replyBytes) override;
     int32_t CaptureFrameWithEc(
-        char *frame, uint64_t requestBytes, uint64_t &replyBytes,
-        char *frameEc, uint64_t requestBytesEc, uint64_t &replyBytesEc) override;
+        FrameDesc *fdesc, uint64_t &replyBytes,
+        FrameDesc *fdescEc, uint64_t &replyBytesEc) override;
     int32_t SetVolume(float left, float right) override;
     int32_t GetVolume(float &left, float &right) override;
     int32_t SetMute(bool isMute) override;
@@ -429,7 +435,11 @@ AudioCapturerSourceInner::AudioCapturerSourceInner(CaptureAttr *attr)
 AudioCapturerSourceInner::~AudioCapturerSourceInner()
 {
     AUDIO_WARNING_LOG("~AudioCapturerSourceInner");
+
     threadRunning_ = false;
+    if (hdiAttr_ != nullptr) {
+        free(hdiAttr_);
+    }
 }
 
 AudioCapturerSource *AudioCapturerSource::Create(CaptureAttr *attr)
@@ -728,7 +738,7 @@ int32_t AudioCapturerSourceInner::InitWithoutAttr()
     attr.isBigEndian = hdiAttr_->isBigEndian;
     attr.filePath = "";
     attr.deviceNetworkId = "LocalDevice";
-    attr.deviceType = hdiAttr_->deviceType;;
+    attr.deviceType = hdiAttr_->deviceType;
     attr.sourceType = hdiAttr_->sourceType;
 
     Init(attr);
@@ -780,30 +790,41 @@ int32_t AudioCapturerSourceInner::CaptureFrame(char *frame, uint64_t requestByte
 }
 
 int32_t AudioCapturerSourceInner::CaptureFrameWithEc(
-    char *frame, uint64_t requestBytes, uint64_t &replyBytes,
-    char *frameEc, uint64_t requestBytesEc, uint64_t &replyBytesEc)
+    FrameDesc *fdesc, uint64_t &replyBytes,
+    FrameDesc *fdescEc, uint64_t &replyBytesEc)
 {
     CHECK_AND_RETURN_RET_LOG(audioCapture_ != nullptr, ERR_INVALID_HANDLE, "Audio capture Handle is nullptr!");
 
+    // ec different adapter only check ec frame
+    if (attr_.sourceType != SOURCE_TYPE_EC) {
+        CHECK_AND_RETURN_RET_LOG(fdesc != nullptr && fdesc->frame != nullptr &&
+            fdescEc != nullptr && fdescEc->frame != nullptr, ERR_INVALID_PARAM, "frame desc error");
+    } else {
+        CHECK_AND_RETURN_RET_LOG(fdescEc != nullptr && fdescEc->frame != nullptr,
+            ERR_INVALID_PARAM, "frame desc error");
+    }
+
     struct AudioFrameLen frameLen = {};
-    frameLen.frameLen = requestBytes;
-    frameLen.frameEcLen = requestBytesEc;
+    frameLen.frameLen = fdesc->frameLen;
+    frameLen.frameEcLen = fdescEc->frameLen;
     struct AudioCaptureFrameInfo frameInfo = {};
-    frameInfo.frame = reinterpret_cast<int8_t*>(frame);
-    frameInfo.frameEc = reinterpret_cast<int8_t*>(frame);
 
     int32_t ret = audioCapture_->CaptureFrameEc(audioCapture_, &frameLen, &frameInfo);
     CHECK_AND_RETURN_RET_LOG(ret >= 0, ERR_READ_FAILED, "Capture Frame with ec fail");
 
-    // same adapter reply length is mic + ec, different adapter is only ec
-    if (frame != nullptr && frameInfo.frame != nullptr) {
-        if (memcpy_s(frame, requestBytes, frameInfo.frame, requestBytes) != EOK) {
+    // same adapter reply length is mic + ec, different adapter is only ec, so we can't use reply bytes to copy
+    if (attr_.sourceType != SOURCE_TYPE_EC && frameInfo.frame != nullptr) {
+        if (memcpy_s(fdesc->frame, fdesc->frameLen, frameInfo.frame, fdesc->frameLen) != EOK) {
             AUDIO_ERR_LOG("memcpy error");
+        } else {
+            replyBytes = frameInfo.replyBytes;
         }
     }
-    if (frameEc != nullptr && frameInfo.frameEc != nullptr) {
-        if (memcpy_s(frameEc, requestBytesEc, frameInfo.frameEc, requestBytesEc) != EOK) {
+    if (frameInfo.frameEc != nullptr) {
+        if (memcpy_s(fdescEc->frame, fdescEc->frameLen, frameInfo.frameEc, fdescEc->frameLen) != EOK) {
             AUDIO_ERR_LOG("memcpy ec error");
+        } else {
+            replyBytesEc = frameInfo.replyBytesEc;
         }
     }
     AudioCaptureFrameInfoFree(&frameInfo, false);
@@ -814,35 +835,39 @@ int32_t AudioCapturerSourceInner::CaptureFrameWithEc(
 void AudioCapturerSourceInner::CaptureThreadLoop()
 {
     AUDIO_INFO_LOG("non blocking capture thread start");
+
+    if (ringBuffer_ == nullptr) {
+        AUDIO_ERR_LOG("ring buffer not init");
+        return;
+    }
+
     while (threadRunning_) {
-        if (ringBuffer_ != nullptr) {
-            Trace trace("CaptureRefInput");
-            RingBuffer buffer = ringBuffer_->DequeueInputBuffer();
-            uint64_t replyBytes;
-            uint32_t requestBytes = buffer.length;
-            int32_t ret = 0;
-            if (attr_.sourceType == SOURCE_TYPE_MIC_REF) {
-                ret = audioCapture_->CaptureFrame(
-                    audioCapture_, reinterpret_cast<int8_t *>(buffer.data), &requestBytes, &replyBytes);
-            } else {
-                // mic frame just used for check, ec frame must be right
-                struct AudioFrameLen frameLen = {};
-                frameLen.frameLen = buffer.length;
-                frameLen.frameEcLen = buffer.length;
-                struct AudioCaptureFrameInfo frameInfo = {};
-                ret = audioCapture_->CaptureFrameEc(audioCapture_, &frameLen, &frameInfo);
-                if (frameInfo.replyBytesEc == buffer.length) {
-                    if (memcpy_s(buffer.data, buffer.length, frameInfo.frameEc, frameInfo.replyBytesEc) != EOK) {
-                        AUDIO_ERR_LOG("memcpy ec error");
-                    }
+        Trace trace("CaptureRefInput");
+        RingBuffer buffer = ringBuffer_->DequeueInputBuffer();
+        uint64_t replyBytes;
+        uint32_t requestBytes = buffer.length;
+        int32_t ret = 0;
+        if (attr_.sourceType == SOURCE_TYPE_MIC_REF) {
+            ret = audioCapture_->CaptureFrame(
+                audioCapture_, reinterpret_cast<int8_t *>(buffer.data), &requestBytes, &replyBytes);
+        } else {
+            // mic frame just used for check, ec frame must be right
+            struct AudioFrameLen frameLen = {};
+            frameLen.frameLen = buffer.length;
+            frameLen.frameEcLen = buffer.length;
+            struct AudioCaptureFrameInfo frameInfo = {};
+            ret = audioCapture_->CaptureFrameEc(audioCapture_, &frameLen, &frameInfo);
+            if (frameInfo.frameEc != nullptr) {
+                if (memcpy_s(buffer.data, buffer.length, frameInfo.frameEc, frameInfo.replyBytesEc) != EOK) {
+                    AUDIO_ERR_LOG("memcpy ec error");
                 }
-                AudioCaptureFrameInfoFree(&frameInfo, false);
             }
-            if (ret != SUCCESS) {
-                AUDIO_ERR_LOG("Capture frame failed");
-            }
-            ringBuffer_->EnqueueInputBuffer(buffer);
+            AudioCaptureFrameInfoFree(&frameInfo, false);
         }
+        if (ret != SUCCESS) {
+            AUDIO_ERR_LOG("Capture frame failed");
+        }
+        ringBuffer_->EnqueueInputBuffer(buffer);
     }
 }
 
@@ -871,27 +896,34 @@ float AudioCapturerSourceInner::GetMaxAmplitude()
     return maxAmplitude_;
 }
 
+int32_t AudioCapturerSourceInner::StartNonblockingCapture()
+{
+    if (!started_) {
+        int32_t ret = audioCapture_->Start(audioCapture_);
+        if (ret < 0) {
+            return ERR_NOT_STARTED;
+        }
+        started_ = true;
+
+        // start non-blocking capture frame thread
+        threadRunning_ = true;
+        captureThread_ = std::make_unique<std::thread>(&AudioCapturerSourceInner::CaptureThreadLoop, this);
+
+        std::string threadName = "OS_Capture";
+        threadName += (attr_.sourceType == SOURCE_TYPE_EC) ? "Ec" : "MicRef";
+        pthread_setname_np(captureThread_->native_handle(), threadName.c_str());
+    }
+
+    return SUCCESS;
+}
+
 int32_t AudioCapturerSourceInner::Start(void)
 {
     Trace trace("AudioCapturerSourceInner::Start");
     AUDIO_INFO_LOG("Enter");
 
     if (IsNonblockingSource(attr_.sourceType, adapterNameCase_)) {
-        if (!started_) {
-            int32_t ret = audioCapture_->Start(audioCapture_);
-            if (ret < 0) {
-                return ERR_NOT_STARTED;
-            }
-            started_ = true;
-
-            // start self capture frame thread
-            threadRunning_ = true;
-            captureThread_ = std::make_unique<std::thread>(&AudioCapturerSourceInner::CaptureThreadLoop, this);
-            std::string threadName = "OS_Capture";
-            threadName += (attr_.sourceType == SOURCE_TYPE_EC) ? "Ec" : "MicRef";
-            pthread_setname_np(captureThread_->native_handle(), threadName.c_str());
-        }
-        return SUCCESS;
+        return StartNonblockingCapture();
     }
 
     InitLatencyMeasurement();
@@ -1204,26 +1236,31 @@ int32_t AudioCapturerSourceInner::GetPresentationPosition(uint64_t& frames, int6
     return ret;
 }
 
+int32_t AudioCapturerSourceInner::StopNonblockingCapture()
+{
+    threadRunning_ = false;
+    if (captureThread_ && captureThread_->joinable()) {
+        captureThread_->join();
+    }
+
+    if (started_ && audioCapture_ != nullptr) {
+        int32_t ret = audioCapture_->Stop(audioCapture_);
+        if (ret != SUCCESS) {
+            AUDIO_ERR_LOG("hdi stop capture failed");
+        }
+    }
+    started_ = false;
+
+    return SUCCESS;
+}
+
 int32_t AudioCapturerSourceInner::Stop(void)
 {
     Trace trace("AudioCapturerSourceInner::Stop");
     AUDIO_INFO_LOG("Enter");
 
     if (IsNonblockingSource(attr_.sourceType, adapterNameCase_)) {
-        threadRunning_ = false;
-        if (captureThread_ && captureThread_->joinable()) {
-            captureThread_->join();
-        }
-
-        if (started_ && audioCapture_ != nullptr) {
-            int32_t ret = audioCapture_->Stop(audioCapture_);
-            if (ret != SUCCESS) {
-                AUDIO_ERR_LOG("hdi stop capture failed");
-            }
-        }
-        started_ = false;
-
-        return SUCCESS;
+        return StopNonblockingCapture();
     }
 
     DeinitLatencyMeasurement();
@@ -1641,8 +1678,8 @@ int32_t AudioCapturerSourceWakeup::CaptureFrame(char *frame, uint64_t requestByt
 }
 
 int32_t AudioCapturerSourceWakeup::CaptureFrameWithEc(
-    char *frame, uint64_t requestBytes, uint64_t &replyBytes,
-    char *frameEc, uint64_t requestBytesEc, uint64_t &replyBytesEc)
+    FrameDesc *fdesc, uint64_t &replyBytes,
+    FrameDesc *fdescEc, uint64_t &replyBytesEc)
 {
     AUDIO_ERR_LOG("not supported!");
     return ERR_DEVICE_NOT_SUPPORTED;

@@ -17,7 +17,6 @@
 #define LOG_TAG "HdiAdapterManager"
 #endif
 
-
 #include "hdi_adapter_manager.h"
 
 #include "audio_log.h"
@@ -72,15 +71,15 @@ int32_t CaptureHandleCaptureFrame(void *capture,
 }
 
 int32_t CaptureHandleCaptureFrameWithEc(void *capture,
-    char *frame, uint64_t requestBytes, uint64_t *replyBytes,
-    char *frameEc, uint64_t requestBytesEc, uint64_t *replyBytesEc)
+    FrameDesc *fdesc, uint64_t *replyBytes,
+    FrameDesc *fdescEc, uint64_t *replyBytesEc)
 {
     IAudioCapturerSource *captureSource = static_cast<IAudioCapturerSource *>(capture);
     CHECK_AND_RETURN_RET_LOG(captureSource != nullptr, ERR_INVALID_HANDLE, "wrong capture");
 
     return captureSource->CaptureFrameWithEc(
-        frame, requestBytes, *replyBytes,
-        frameEc, requestBytesEc, *replyBytesEc);
+        fdesc, *replyBytes,
+        fdescEc, *replyBytesEc);
 }
 
 // public api impl
@@ -89,7 +88,8 @@ int32_t CreateCaptureHandle(HdiCaptureHandle **handle, CaptureAttr *attr)
     OHOS::AudioStandard::HdiAdapterManager *manager = OHOS::AudioStandard::HdiAdapterManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(manager != nullptr, ERR_INVALID_HANDLE, "hdi adapter manager is null");
 
-    struct HdiCaptureHandle *captureHandle = (struct HdiCaptureHandle *)calloc(1, sizeof(*captureHandle));
+    struct HdiCaptureHandle *captureHandle =
+        reinterpret_cast<struct HdiCaptureHandle *>(calloc(1, sizeof(*captureHandle)));
     if (captureHandle == nullptr) {
         AUDIO_ERR_LOG("allocate handle failed");
         return ERR_INVALID_HANDLE;
@@ -110,17 +110,18 @@ int32_t CreateCaptureHandle(HdiCaptureHandle **handle, CaptureAttr *attr)
     return SUCCESS;
 }
 
-int32_t ReleaseCaptureHandle(HdiCaptureHandle *handle)
+void ReleaseCaptureHandle(HdiCaptureHandle *handle)
 {
     if (handle != nullptr) {
+        OHOS::AudioStandard::HdiAdapterManager *manager = OHOS::AudioStandard::HdiAdapterManager::GetInstance();
+        CHECK_AND_RETURN_LOG(manager != nullptr, "hdi adapter manager is null");
+
         // delete instance saved in handle
         IAudioCapturerSource *capture = reinterpret_cast<IAudioCapturerSource *>(handle->capture);
-        delete capture;
+        manager->ReleaseCapture(capture);
 
         free(handle);
     }
-
-    return SUCCESS;
 }
 
 namespace OHOS {
@@ -142,12 +143,11 @@ IAudioCapturerSource *HdiAdapterManager::CreateCapture(CaptureAttr *attr)
     return capture;
 }
 
-int32_t HdiAdapterManager::ReleaseCapture(IAudioCapturerSource *capture)
+void HdiAdapterManager::ReleaseCapture(IAudioCapturerSource *capture)
 {
     if (capture != nullptr) {
         delete capture;
     }
-    return SUCCESS;
 }
 
 HdiAdapterManager *HdiAdapterManager::GetInstance()

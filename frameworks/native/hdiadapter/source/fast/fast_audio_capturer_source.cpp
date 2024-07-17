@@ -48,8 +48,8 @@ public:
     int32_t Resume(void) override;
     int32_t CaptureFrame(char *frame, uint64_t requestBytes, uint64_t &replyBytes) override;
     int32_t CaptureFrameWithEc(
-        char *frame, uint64_t requestBytes, uint64_t &replyBytes,
-        char *frameEc, uint64_t requestBytesEc, uint64_t &replyBytesEc) override;
+        FrameDesc *fdesc, uint64_t &replyBytes,
+        FrameDesc *fdescEc, uint64_t &replyBytesEc) override;
     int32_t SetVolume(float left, float right) override;
     int32_t GetVolume(float &left, float &right) override;
     int32_t SetMute(bool isMute) override;
@@ -459,8 +459,8 @@ int32_t FastAudioCapturerSourceInner::CaptureFrame(char *frame, uint64_t request
 }
 
 int32_t FastAudioCapturerSourceInner::CaptureFrameWithEc(
-    char *frame, uint64_t requestBytes, uint64_t &replyBytes,
-    char *frameEc, uint64_t requestBytesEc, uint64_t &replyBytesEc)
+    FrameDesc *fdesc, uint64_t &replyBytes,
+    FrameDesc *fdescEc, uint64_t &replyBytesEc)
 {
     AUDIO_ERR_LOG("not supported!");
     return ERR_DEVICE_NOT_SUPPORTED;
