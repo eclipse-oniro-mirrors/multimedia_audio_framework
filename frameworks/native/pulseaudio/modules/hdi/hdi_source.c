@@ -65,7 +65,7 @@
 #define AUDIO_FRAME_NUM_IN_BUF 30
 #define HDI_WAKEUP_BUFFER_TIME (PA_USEC_PER_SEC * 2)
 #define MAX_SCENE_NUM 5
-#define EC_BUFFER_MS 20
+#define DEVICE_TYPE_MIC 15
 
 const char *DEVICE_CLASS_REMOTE = "remote";
 const int32_t SUCCESS = 0;
@@ -196,12 +196,12 @@ static int SourceSetStateInIoThreadCb(pa_source *s, pa_source_state_t newState,
                 u->sourceAdapter->CapturerSourceStop(u->sourceAdapter->wapper);
                 u->isCapturerStarted = false;
                 AUDIO_DEBUG_LOG("Stopped HDI capturer");
-            }
-            if (u->captureHandleEc != NULL) {
-                u->captureHandleEc->Stop(u->captureHandleEc->capture);
-            }
-            if (u->captureHandleMicRef != NULL) {
-                u->captureHandleMicRef->Stop(u->captureHandleMicRef->capture);
+                if (u->captureHandleEc != NULL) {
+                    u->captureHandleEc->Stop(u->captureHandleEc->capture);
+                }
+                if (u->captureHandleMicRef != NULL) {
+                    u->captureHandleMicRef->Stop(u->captureHandleMicRef->capture);
+                }
             }
         } else if (newState == PA_SOURCE_RUNNING && !u->isCapturerStarted) {
             AUDIO_DEBUG_LOG("Idle to Running starting HDI capturing device");
@@ -367,7 +367,7 @@ static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
         if (u->micRef == REF_ON) {
             u->captureHandleMicRef->CaptureFrame(
                 u->captureHandleMicRef->capture,
-                (char *)(u->bufferMicRef, (uint64_t)(u->requestBytesMicRef), &replyBytesMicRef);
+                (char *)(u->bufferMicRef), (uint64_t)(u->requestBytesMicRef), &replyBytesMicRef);
         }
     }
 

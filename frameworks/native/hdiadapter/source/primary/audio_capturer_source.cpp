@@ -667,7 +667,7 @@ int32_t AudioCapturerSourceInner::CreateCapture(struct AudioPort &capturePort)
 
     if (attr_.hasEcConfig || attr_.sourceType == SOURCE_TYPE_EC) {
         param.ecSampleAttributes.ecInterleaved = true;
-        param.ecSampleAttributes.ecFormat = attr_.formatEc;
+        param.ecSampleAttributes.ecFormat = ConvertToHdiFormat(attr_.formatEc);
         param.ecSampleAttributes.ecSampleRate = attr_.sampleRateEc;
         param.ecSampleAttributes.ecChannelCount = attr_.channelEc;
         param.ecSampleAttributes.ecChannelLayout = GetChannelLayoutByCount(attr_.channelEc);
