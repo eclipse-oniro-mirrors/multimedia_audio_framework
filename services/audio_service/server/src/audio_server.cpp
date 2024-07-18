@@ -1915,8 +1915,8 @@ void AudioServer::LoadHdiEffectModel()
 int32_t AudioServer::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
-    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_ || callingUid == ROOT_UID,
-                             ERR_PERMISSION_DENIED, "SetA udio Effect Property refused for %{public}d", callingUid);
+    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_, ERR_PERMISSION_DENIED,
+        "SetA udio Effect Property refused for %{public}d", callingUid);
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectChainManager != nullptr, ERROR, "audioEffectChainManager is nullptr");
     return audioEffectChainManager->SetAudioEffectProperty(propertyArray);
@@ -1925,8 +1925,8 @@ int32_t AudioServer::SetAudioEffectProperty(const AudioEffectPropertyArray &prop
 int32_t AudioServer::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
-    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_ || callingUid == ROOT_UID,
-                             ERR_PERMISSION_DENIED, "Get Audio Effect Property refused for %{public}d", callingUid);
+    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_, ERR_PERMISSION_DENIED,
+        "Get Audio Effect Property refused for %{public}d", callingUid);
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectChainManager != nullptr, ERROR, "audioEffectChainManager is nullptr");
     return audioEffectChainManager->GetAudioEffectProperty(propertyArray);
@@ -1935,8 +1935,8 @@ int32_t AudioServer::GetAudioEffectProperty(AudioEffectPropertyArray &propertyAr
 int32_t AudioServer::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
-    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_ || callingUid == ROOT_UID,
-                             ERR_PERMISSION_DENIED, "Set Audio Enhance Property refused for %{public}d", callingUid);
+    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_, ERR_PERMISSION_DENIED,
+        "Set Audio Enhance Property refused for %{public}d", callingUid);
     AudioEnhanceChainManager *audioEnhanceChainManager = AudioEnhanceChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChainManager != nullptr, ERROR, "audioEnhanceChainManager is nullptr");
     return audioEnhanceChainManager->SetAudioEnhanceProperty(propertyArray);
@@ -1945,8 +1945,8 @@ int32_t AudioServer::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &pr
 int32_t AudioServer::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
-    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_ || callingUid == ROOT_UID,
-                             ERR_PERMISSION_DENIED, "Get Audio Enhance Property refused for %{public}d", callingUid);
+    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_, ERR_PERMISSION_DENIED,
+        "Get Audio Enhance Property refused for %{public}d", callingUid);
     AudioEnhanceChainManager *audioEnhanceChainManager = AudioEnhanceChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChainManager != nullptr, ERROR, "audioEnhanceChainManager is nullptr");
     return audioEnhanceChainManager->GetAudioEnhanceProperty(propertyArray);

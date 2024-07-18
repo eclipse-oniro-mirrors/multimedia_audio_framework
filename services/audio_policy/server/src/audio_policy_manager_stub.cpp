@@ -1346,6 +1346,7 @@ void AudioPolicyManagerStub::GetMicrophoneMutePersistentInternal(MessageParcel &
     bool result = GetPersistentMicMuteState();
     reply.WriteBool(result);
 }
+
 void AudioPolicyManagerStub::GetSupportedAudioEnhancePropertyInternal(MessageParcel &data, MessageParcel &reply)
 {
     AudioEnhancePropertyArray propertyArray = {};
@@ -1358,6 +1359,7 @@ void AudioPolicyManagerStub::GetSupportedAudioEnhancePropertyInternal(MessagePar
     reply.WriteInt32(result);
     return;
 }
+
 void AudioPolicyManagerStub::GetSupportedAudioEffectPropertyInternal(MessageParcel &data, MessageParcel &reply)
 {
     AudioEffectPropertyArray propertyArray = {};
@@ -1370,6 +1372,7 @@ void AudioPolicyManagerStub::GetSupportedAudioEffectPropertyInternal(MessageParc
     reply.WriteInt32(result);
     return;
 }
+
 void AudioPolicyManagerStub::SetAudioEffectPropertyInternal(MessageParcel &data, MessageParcel &reply)
 {
     int32_t size = data.ReadInt32();
@@ -1382,6 +1385,7 @@ void AudioPolicyManagerStub::SetAudioEffectPropertyInternal(MessageParcel &data,
     int32_t result = SetAudioEffectProperty(propertyArray);
     reply.WriteInt32(result);
 }
+
 void AudioPolicyManagerStub::GetAudioEffectPropertyInternal(MessageParcel &data, MessageParcel &reply)
 {
     AudioEffectPropertyArray propertyArray = {};
@@ -1394,6 +1398,7 @@ void AudioPolicyManagerStub::GetAudioEffectPropertyInternal(MessageParcel &data,
     reply.WriteInt32(result);
     return;
 }
+
 void AudioPolicyManagerStub::SetAudioEnhancePropertyInternal(MessageParcel &data, MessageParcel &reply)
 {
     int32_t size = data.ReadInt32();
@@ -1406,6 +1411,7 @@ void AudioPolicyManagerStub::SetAudioEnhancePropertyInternal(MessageParcel &data
     int32_t result = SetAudioEnhanceProperty(propertyArray);
     reply.WriteInt32(result);
 }
+
 void AudioPolicyManagerStub::GetAudioEnhancePropertyInternal(MessageParcel &data, MessageParcel &reply)
 {
     AudioEnhancePropertyArray propertyArray = {};

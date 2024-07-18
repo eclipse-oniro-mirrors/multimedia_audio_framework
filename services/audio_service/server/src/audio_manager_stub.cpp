@@ -719,9 +719,12 @@ int AudioManagerStub::HandleLoadHdiEffectModel(MessageParcel &data, MessageParce
     LoadHdiEffectModel();
     return AUDIO_OK;
 }
+
 int AudioManagerStub::HandleSetAudioEffectProperty(MessageParcel &data, MessageParcel &reply)
 {
     int32_t size = data.ReadInt32();
+    CHECK_AND_RETURN_RET_LOG(size > 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+        ERROR_INVALID_PARAM, "Audio enhance property array size invalid");
     AudioEffectPropertyArray propertyArray = {};
     for (int i = 0; i < size; i++) {
         AudioEffectProperty prop = {};
@@ -738,6 +741,8 @@ int AudioManagerStub::HandleGetAudioEffectProperty(MessageParcel &data, MessageP
     AudioEffectPropertyArray propertyArray = {};
     int32_t result = GetAudioEffectProperty(propertyArray);
     int32_t size = propertyArray.property.size();
+    CHECK_AND_RETURN_RET_LOG(size >= 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+        ERROR_INVALID_PARAM, "Audio enhance property array size invalid");
     reply.WriteInt32(size);
     for (int i = 0; i < size; i++)    {
         propertyArray.property[i].Marshalling(reply);
@@ -749,6 +754,8 @@ int AudioManagerStub::HandleGetAudioEffectProperty(MessageParcel &data, MessageP
 int AudioManagerStub::HandleSetAudioEnhanceProperty(MessageParcel &data, MessageParcel &reply)
 {
     int32_t size = data.ReadInt32();
+    CHECK_AND_RETURN_RET_LOG(size > 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+        ERROR_INVALID_PARAM, "Audio enhance property array size invalid");
     AudioEnhancePropertyArray propertyArray = {};
     for (int i = 0; i < size; i++) {
         AudioEnhanceProperty prop = {};
@@ -765,6 +772,8 @@ int AudioManagerStub::HandleGetAudioEnhanceProperty(MessageParcel &data, Message
     AudioEnhancePropertyArray propertyArray = {};
     int32_t result = GetAudioEnhanceProperty(propertyArray);
     int32_t size = propertyArray.property.size();
+    CHECK_AND_RETURN_RET_LOG(size >= 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+        ERROR_INVALID_PARAM, "Audio enhance property array size invalid");
     reply.WriteInt32(size);
     for (int i = 0; i < size; i++) {
         propertyArray.property[i].Marshalling(reply);
@@ -772,5 +781,6 @@ int AudioManagerStub::HandleGetAudioEnhanceProperty(MessageParcel &data, Message
     reply.WriteInt32(result);
     return AUDIO_OK;
 }
+
 } // namespace AudioStandard
 } // namespace OHOS

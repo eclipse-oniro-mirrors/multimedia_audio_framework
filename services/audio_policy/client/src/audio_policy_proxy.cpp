@@ -2299,6 +2299,7 @@ int32_t AudioPolicyProxy::GetSupportedAudioEffectProperty(AudioEffectPropertyArr
     }
     return AUDIO_OK;
 }
+
 int32_t AudioPolicyProxy::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
 {
     MessageParcel data;
@@ -2344,6 +2345,7 @@ int32_t AudioPolicyProxy::GetAudioEffectProperty(AudioEffectPropertyArray &prope
     }
     return AUDIO_OK;
 }
+
 int32_t AudioPolicyProxy::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
 {
     MessageParcel data;
@@ -2364,6 +2366,7 @@ int32_t AudioPolicyProxy::SetAudioEnhanceProperty(const AudioEnhancePropertyArra
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, ERROR, "SendRequest failed, error: %{public}d", error);
     return reply.ReadInt32();
 }
+
 int32_t AudioPolicyProxy::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
 {
     MessageParcel data;
@@ -2383,5 +2386,6 @@ int32_t AudioPolicyProxy::SetAudioEffectProperty(const AudioEffectPropertyArray 
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, ERROR, "SendRequest failed, error: %{public}d", error);
     return reply.ReadInt32();
 }
+
 } // namespace AudioStandard
 } // namespace OHOS

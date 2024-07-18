@@ -1051,7 +1051,7 @@ napi_status NapiParamUtils::SetExtraAudioParametersInfo(const napi_env &env,
 }
 
 napi_status NapiParamUtils::GetEffectPropertyArray(napi_env env, AudioEffectPropertyArray &effectArray,
-                                                   napi_value in)
+    napi_value in)
 {
     uint32_t arrayLen = 0;
     napi_status status = napi_get_array_length(env, in, &arrayLen);
@@ -1074,11 +1074,25 @@ napi_status NapiParamUtils::GetEffectPropertyArray(napi_env env, AudioEffectProp
 
         effectArray.property.push_back(prop);
     }
+    
+    int32_t size = effectArray.property.size();
+    CHECK_AND_RETURN_RET_LOG(size > 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+                             napi_invalid_arg, "Audio effect property array size invalid");
+
+    std::set<std::string> classSet;
+    for (int32_t i = 0; i < size; i++) {
+        if (effectArray.property[i].effectClass != "" && effectArray.property[i].effectProp != "") {
+            classSet.insert(effectArray.property[i].effectClass);
+        }
+    }
+    CHECK_AND_RETURN_RET_LOG(size == static_cast<int32_t>(classSet.size()), napi_invalid_arg,
+        "Audio enhance property array exist duplicate data");
+
     return napi_ok;
 }
 
 napi_status NapiParamUtils::GetEnhancePropertyArray(napi_env env, AudioEnhancePropertyArray &enhanceArray,
-                                                    napi_value in)
+    napi_value in)
 {
     uint32_t arrayLen = 0;
     napi_status status = napi_get_array_length(env, in, &arrayLen);
@@ -1101,17 +1115,30 @@ napi_status NapiParamUtils::GetEnhancePropertyArray(napi_env env, AudioEnhancePr
 
         enhanceArray.property.push_back(prop);
     }
+    
+    int32_t size = enhanceArray.property.size();
+    CHECK_AND_RETURN_RET_LOG(size > 0 && size <= AUDIO_EFFECT_COUNT_UPPER_LIMIT,
+                             napi_invalid_arg, "Audio enhance property array size invalid");
+
+    std::set<std::string> classSet;
+    for (int32_t i = 0; i < size; i++) {
+        if (enhanceArray.property[i].enhanceClass != "" && enhanceArray.property[i].enhanceProp != "") {
+            classSet.insert(enhanceArray.property[i].enhanceClass);
+        }
+    }
+    CHECK_AND_RETURN_RET_LOG(size == static_cast<int32_t>(classSet.size()), napi_invalid_arg,
+        "Audio enhance property array exist duplicate data");
+
     return napi_ok;
 }
 
 napi_status NapiParamUtils::SetEnhanceProperty(const napi_env &env, const AudioEnhancePropertyArray &enhanceArray,
-                                               napi_value &result)
+    napi_value &result)
 {
     int32_t position = 0;
     napi_value jsEnhanceInfoObj = nullptr;
     napi_status status = napi_create_array_with_length(env, enhanceArray.property.size(), &result);
     CHECK_AND_RETURN_RET_LOG(status == napi_ok, status, "get create array failed");
-
     for (const auto &property : enhanceArray.property) {
         napi_create_object(env, &jsEnhanceInfoObj);
         status = SetValueString(env, "enhanceClass", property.enhanceClass, jsEnhanceInfoObj);
@@ -1125,7 +1152,7 @@ napi_status NapiParamUtils::SetEnhanceProperty(const napi_env &env, const AudioE
 }
 
 napi_status NapiParamUtils::SetEffectProperty(const napi_env &env, const AudioEffectPropertyArray &effectArray,
-                                              napi_value &result)
+    napi_value &result)
 {
     int32_t position = 0;
     napi_value jsEffectInfoObj = nullptr;

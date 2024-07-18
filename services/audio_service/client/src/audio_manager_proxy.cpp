@@ -1129,6 +1129,7 @@ void AudioManagerProxy::UpdateLatencyTimestamp(std::string &timestamp, bool isRe
     CHECK_AND_RETURN_LOG(error == ERR_NONE,
         "LatencyMeas UpdateLatencyTimestamp failed, error:%{public}d", error);
 }
+
 int32_t AudioManagerProxy::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
 {
     MessageParcel data;
@@ -1174,6 +1175,7 @@ int32_t AudioManagerProxy::GetAudioEffectProperty(AudioEffectPropertyArray &prop
     }
     return AUDIO_OK;
 }
+
 int32_t AudioManagerProxy::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
 {
     MessageParcel data;
@@ -1194,6 +1196,7 @@ int32_t AudioManagerProxy::SetAudioEnhanceProperty(const AudioEnhancePropertyArr
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "SendRequest failed, error: %{public}d", error);
     return reply.ReadInt32();
 }
+
 int32_t AudioManagerProxy::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
 {
     MessageParcel data;
@@ -1227,5 +1230,6 @@ void AudioManagerProxy::LoadHdiEffectModel()
         static_cast<uint32_t>(AudioServerInterfaceCode::LOAD_HDI_EFFECT_MODEL), data, reply, option);
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "failed,error:%d", error);
 }
+
 } // namespace AudioStandard
 } // namespace OHOS
