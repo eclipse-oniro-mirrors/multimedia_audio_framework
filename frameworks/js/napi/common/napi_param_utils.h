@@ -201,7 +201,13 @@ public:
     static napi_status GetSpatialDeviceState(napi_env env, AudioSpatialDeviceState *spatialDeviceState,
         napi_value in);
     static napi_status GetExtraParametersSubKV(napi_env env, std::vector<std::pair<std::string, std::string>> &subKV,
-        napi_value in);
+                                               napi_value in);
+    static napi_status SetEffectProperty(const napi_env &env,
+                                         const AudioEffectPropertyArray &effectArray, napi_value &result);
+    static napi_status SetEnhanceProperty(const napi_env &env,
+                                          const AudioEnhancePropertyArray &enhanceArray, napi_value &result);
+    static napi_status GetEffectPropertyArray(napi_env env, AudioEffectPropertyArray &effectArray, napi_value in);
+    static napi_status GetEnhancePropertyArray(napi_env env, AudioEnhancePropertyArray &enhanceArray, napi_value in);
     static napi_status GetExtraParametersVector(const napi_env &env, std::vector<std::string> &subKeys, napi_value in);
     static napi_status SetExtraAudioParametersInfo(const napi_env &env,
         const std::vector<std::pair<std::string, std::string>> &extraParameters, napi_value &result);

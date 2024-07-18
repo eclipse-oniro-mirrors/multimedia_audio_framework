@@ -43,6 +43,8 @@ public:
     void ConstructEffectChainManagerParam(EffectChainManagerParam &effectChainMgrParam);
     void ConstructEnhanceChainManagerParam(EffectChainManagerParam &enhanceChainMgrParam);
     int32_t QueryEffectManagerSceneMode(SupportedEffectConfig &supportedEffectConfig);
+    int32_t GetSupportedAudioEffectProperty(const DeviceType& deviceType, AudioEffectPropertyArray &propertyArray);
+    int32_t GetSupportedAudioEnhanceProperty(const DeviceType& deviceType, AudioEnhancePropertyArray &propertyArray);
 private:
     OriginalEffectConfig oriEffectConfig_;
     std::vector<Effect> availableEffects_;

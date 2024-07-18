@@ -1344,5 +1344,16 @@ bool AudioEffectChainManager::CheckIfSpkDsp()
     }
     return true;
 }
+
+int32_t AudioEffectChainManager::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
+
+int32_t AudioEffectChainManager::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

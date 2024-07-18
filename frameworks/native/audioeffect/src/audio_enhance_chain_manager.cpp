@@ -346,6 +346,15 @@ bool AudioEnhanceChainManager::IsEmptyEnhanceChain()
     return ret;
 }
 
+int32_t AudioEnhanceChainManager::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
+int32_t AudioEnhanceChainManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
+
 int32_t AudioEnhanceChainManager::CopyToEnhanceBuffer(void *data, uint32_t length)
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);

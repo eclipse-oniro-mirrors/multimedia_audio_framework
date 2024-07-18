@@ -619,6 +619,15 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
     AUDIO_INFO_LOG("Constructed SceneTypeAndModeToEnhanceChainNameMap at policy, size is %{public}d",
         (int32_t)map.size());
 }
-
+int32_t AudioEffectManager::GetSupportedAudioEffectProperty(const DeviceType &deviceType,
+                                                            AudioEffectPropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
+int32_t AudioEffectManager::GetSupportedAudioEnhanceProperty(const DeviceType &deviceType,
+                                                             AudioEnhancePropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
 } // namespce AudioStandard
 } // namespace OHOS

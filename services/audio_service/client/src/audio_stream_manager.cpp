@@ -203,5 +203,36 @@ int32_t AudioStreamManager::GetHardwareOutputSamplingRate(sptr<AudioDeviceDescri
     result = AudioPolicyManager::GetInstance().GetHardwareOutputSamplingRate(desc);
     return result;
 }
+
+int32_t AudioStreamManager::GetSupportedAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    return AudioPolicyManager::GetInstance().GetSupportedAudioEffectProperty(propertyArray);
+}
+
+int32_t AudioStreamManager::GetSupportedAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    return AudioPolicyManager::GetInstance().GetSupportedAudioEnhanceProperty(propertyArray);
+}
+
+int32_t AudioStreamManager::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
+{
+    return AudioPolicyManager::GetInstance().SetAudioEffectProperty(propertyArray);
+}
+
+int32_t AudioStreamManager::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    return AudioPolicyManager::GetInstance().GetAudioEffectProperty(propertyArray);
+}
+
+int32_t AudioStreamManager::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
+{
+    return AudioPolicyManager::GetInstance().SetAudioEnhanceProperty(propertyArray);
+}
+
+int32_t AudioStreamManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    return AudioPolicyManager::GetInstance().GetAudioEnhanceProperty(propertyArray);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS
