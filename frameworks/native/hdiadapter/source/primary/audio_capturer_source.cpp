@@ -137,8 +137,8 @@ public:
     int32_t Resume(void) override;
     int32_t CaptureFrame(char *frame, uint64_t requestBytes, uint64_t &replyBytes) override;
     int32_t CaptureFrameWithEc(
-        FrameDesc *fdesc, , uint64_t &replyBytes,
-        FrameDesc *fdescEc, , uint64_t &replyBytesEc) override;
+        FrameDesc *fdesc, uint64_t &replyBytes,
+        FrameDesc *fdescEc, uint64_t &replyBytesEc) override;
     int32_t SetVolume(float left, float right) override;
     int32_t GetVolume(float &left, float &right) override;
     int32_t SetMute(bool isMute) override;
@@ -192,6 +192,7 @@ private:
     void CheckUpdateState(char *frame, uint64_t replyBytes);
     int32_t SetAudioRouteInfoForEnhanceChain(const DeviceType &inputDevice);
     void CaptureThreadLoop();
+    void CaptureFrameEcInternal(RingBuffer &ringBuf);
     int32_t StartNonblockingCapture();
     int32_t StopNonblockingCapture();
 
@@ -832,6 +833,22 @@ int32_t AudioCapturerSourceInner::CaptureFrameWithEc(
     return SUCCESS;
 }
 
+void AudioCapturerSourceInner::CaptureFrameEcInternal(RingBuffer &ringBuf)
+{
+    // mic frame just used for check, ec frame must be right
+    struct AudioFrameLen frameLen = {};
+    frameLen.frameLen = ringBuf.length;
+    frameLen.frameEcLen = ringBuf.length;
+    struct AudioCaptureFrameInfo frameInfo = {};
+    int32_t ret = audioCapture_->CaptureFrameEc(audioCapture_, &frameLen, &frameInfo);
+    if (ret >= 0 && frameInfo.frameEc != nullptr) {
+        if (memcpy_s(ringBuf.data, ringBuf.length, frameInfo.frameEc, frameInfo.replyBytesEc) != EOK) {
+            AUDIO_ERR_LOG("memcpy ec error");
+        }
+    }
+    AudioCaptureFrameInfoFree(&frameInfo, false);
+}
+
 void AudioCapturerSourceInner::CaptureThreadLoop()
 {
     AUDIO_INFO_LOG("non blocking capture thread start");
@@ -851,18 +868,7 @@ void AudioCapturerSourceInner::CaptureThreadLoop()
             ret = audioCapture_->CaptureFrame(
                 audioCapture_, reinterpret_cast<int8_t *>(buffer.data), &requestBytes, &replyBytes);
         } else {
-            // mic frame just used for check, ec frame must be right
-            struct AudioFrameLen frameLen = {};
-            frameLen.frameLen = buffer.length;
-            frameLen.frameEcLen = buffer.length;
-            struct AudioCaptureFrameInfo frameInfo = {};
-            ret = audioCapture_->CaptureFrameEc(audioCapture_, &frameLen, &frameInfo);
-            if (frameInfo.frameEc != nullptr) {
-                if (memcpy_s(buffer.data, buffer.length, frameInfo.frameEc, frameInfo.replyBytesEc) != EOK) {
-                    AUDIO_ERR_LOG("memcpy ec error");
-                }
-            }
-            AudioCaptureFrameInfoFree(&frameInfo, false);
+            CaptureFrameEcInternal(buffer);
         }
         if (ret != SUCCESS) {
             AUDIO_ERR_LOG("Capture frame failed");

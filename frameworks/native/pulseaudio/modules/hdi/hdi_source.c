@@ -99,10 +99,10 @@ static FrameDesc *AllocateFrameDesc(char *frame, uint64_t frameLen)
     FrameDesc *fdesc = (struct FrameDesc *)calloc(1, sizeof(FrameDesc));
     if (fdesc != NULL) {
         fdesc->frame = frame;
-        fdsec->frameLen = frameLen;
+        fdesc->frameLen = frameLen;
     }
 
-    return fdsec;
+    return fdesc;
 }
 
 static void FreeFrameDesc(FrameDesc *fdesc)
@@ -114,6 +114,7 @@ static void FreeFrameDesc(FrameDesc *fdesc)
 }
 
 static void InitAuxCapture(struct Userdata *u)
+{
     if (u->captureHandleEc != NULL) {
         u->captureHandleEc->Init(u->captureHandleEc->capture);
     }
@@ -367,7 +368,7 @@ static void PostDataBypass(pa_source *source, pa_memchunk *chunk)
 }
 
 static int32_t HandleCaptureFrame(const struct Userdata *u,
-    char *buffer, uint64_t requestBytes, uint32_t *replyBytes)
+    char *buffer, uint64_t requestBytes, uint64_t *replyBytes)
 {
     uint64_t replyBytesEc = 0;
     if (u->ecType == EC_NONE) {
@@ -407,6 +408,8 @@ static int32_t HandleCaptureFrame(const struct Userdata *u,
     }
 
     // handle ec & mic ref buffer and reply here
+
+    return 0;
 }
 
 static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
@@ -838,51 +841,67 @@ static void InitEcAndMicRefAttrs(pa_modargs *ma, struct Userdata *u)
     }
 }
 
-static void InitEcAndMicRef(struct Userdata *u)
+static void CreateEcCapture(struct Userdata *u)
 {
-    // decide whether to create ec or mic ref source
+    // decide whether to create ec source
     u->ecType = EC_NONE;
-    u->micRef = REF_OFF;
-    if (u->ecType != EC_NONE) {
-        // allocate ec buffer and decide request length, both same and different adapter needed
-        u->bufferEc = NULL;
-        u->requestBytesEc = 0;
 
-        if (u->ecType == EC_DIFFERENT_ADAPTER) {
-            CaptureAttr *attr = (struct CaptureAttr *)calloc(1, sizeof(CaptureAttr));
-            if (attr != NULL) {
-                InitEcAttr(u, attr);
-                int32_t res = CreateCaptureHandle(&u->captureHandleEc, attr);
-                if (res) {
-                    AUDIO_ERR_LOG("create ec handle failed");
-                    free(attr);
-                }
-            }
-        }
-    } else {
+    if (u->ecType == EC_NONE) {
         u->captureHandleEc = NULL;
         u->bufferEc = NULL;
         u->requestBytesEc = 0;
+        return;
     }
 
-    if (u->micRef == REF_ON) {
-        // allocate mic ref buffer and decide request length
-        u->bufferMicRef = NULL;
-        u->requestBytesMicRef = 0;
+    // allocate ec buffer and decide request length, both same and different adapter needed
+    u->bufferEc = NULL;
+    u->requestBytesEc = 0;
 
+    // only ec different adapter need create aux capture
+    if (u->ecType == EC_DIFFERENT_ADAPTER) {
         CaptureAttr *attr = (struct CaptureAttr *)calloc(1, sizeof(CaptureAttr));
-        if (attr != NULL) {
-            InitMicRefAttr(u, attr);
-            int32_t res = CreateCaptureHandle(&u->captureHandleMicRef, attr);
-            if (res) {
-                AUDIO_ERR_LOG("create mic ref handle failed");
-                free(attr);
-            }
+        if (attr == NULL) {
+            AUDIO_ERR_LOG("capture attr allocate failed");
+            return;
         }
-    } else {
+        InitEcAttr(u, attr);
+        int32_t res = CreateCaptureHandle(&u->captureHandleEc, attr);
+        if (res) {
+            AUDIO_ERR_LOG("create ec handle failed");
+            free(attr);
+            return;
+        }
+    }
+}
+
+static void CreateMicRefCapture(struct Userdata *u)
+{
+    // decide whether to create mic ref source
+    u->micRef = REF_OFF;
+
+    if (u->micRef != REF_ON) {
         u->captureHandleMicRef = NULL;
         u->bufferMicRef = NULL;
         u->requestBytesMicRef = 0;
+        return;
+    }
+
+    // allocate mic ref buffer and decide request length
+    u->bufferMicRef = NULL;
+    u->requestBytesMicRef = 0;
+
+    CaptureAttr *attr = (struct CaptureAttr *)calloc(1, sizeof(CaptureAttr));
+    if (attr == NULL) {
+        AUDIO_ERR_LOG("capture attr allocate failed");
+        return;
+    }
+
+    InitMicRefAttr(u, attr);
+    int32_t res = CreateCaptureHandle(&u->captureHandleMicRef, attr);
+    if (res) {
+        AUDIO_ERR_LOG("create mic ref handle failed");
+        free(attr);
+        return;
     }
 }
 
@@ -925,7 +944,8 @@ pa_source *PaHdiSourceNew(pa_module *m, pa_modargs *ma, const char *driver)
         goto fail;
     }
 
-    InitEcAndMicRef(u);
+    CreateEcCapture(u);
+    CreateMicRefCapture(u);
 
     if (PaSetSourceProperties(m, ma, &ss, &map, u) != 0) {
         AUDIO_ERR_LOG("Failed to PaSetSourceProperties");

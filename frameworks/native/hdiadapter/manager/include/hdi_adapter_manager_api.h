@@ -38,7 +38,7 @@ typedef struct HdiCaptureHandle {
 
 int32_t CreateCaptureHandle(HdiCaptureHandle **handle, CaptureAttr *attr);
 
-int32_t ReleaseCaptureHandle(HdiCaptureHandle *handle);
+void ReleaseCaptureHandle(HdiCaptureHandle *handle);
 
 #ifdef __cplusplus
 }
