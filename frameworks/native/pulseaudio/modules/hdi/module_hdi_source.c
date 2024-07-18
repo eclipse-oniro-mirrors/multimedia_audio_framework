@@ -202,7 +202,6 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
         AUDIO_ERR_LOG("Get sceneKey of sourceOutput to unlink failed");
         return PA_HOOK_OK;
     }
-    DecreaseScenekeyCount(u->sceneToCountMap, sceneKey);
     if (DecreaseScenekeyCount(u->sceneToCountMap, sceneKey)) {
         pa_hashmap_remove_and_free(u->sceneToResamplerMap, sceneKey);
     }
