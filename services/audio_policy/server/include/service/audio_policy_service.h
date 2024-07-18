@@ -55,6 +55,8 @@
 #include "audio_pnp_server.h"
 #include "audio_policy_server_handler.h"
 
+#include "audio_ec_info.h"
+
 #ifdef BLUETOOTH_ENABLE
 #include "audio_server_death_recipient.h"
 #include "audio_bluetooth_manager.h"
@@ -919,6 +921,24 @@ private:
     void UpdateRoute(unique_ptr<AudioRendererChangeInfo> &rendererChangeInfo,
         vector<std::unique_ptr<AudioDeviceDescriptor>> &outputDevices);
 
+    int32_t GetAudioModuleInfoByName(const std::string &halName, const std::string &moduleName,
+        AudioModuleInfo &moudleInfo);
+    int32_t GetSourceModuleInfo(AudioModuleInfo &moudleInfo);
+    std::string GetHalNameForDevice(const std::string &role, const DeviceType deviceType);
+    std::string GetPipeNameByDeviceForEc(const std::string &role, const DeviceType deviceType);
+    int32_t GetPipeInfoByDeviceTypeForEc(const std::string &role, const DeviceType deviceType, PipeInfo &pipeInfo);
+    EcType GetEcType(const DeviceType inputDevice, const DeviceType outputDevice);
+    std::string GetEcSamplingRate(const std::string &halName, StreamPropInfo &streamPropInfo);
+    std::string GetEcFormat(const std::string &halName, StreamPropInfo &streamPropInfo);
+    std::string GetEcChannels(const std::string &halName, StreamPropInfo &streamPropInfo);
+    std::string ShouldOpenMicRef(const DeviceType deviceType);
+    void UpdateEcAndQcFeatureState();
+    void UpdateModuleInfoForEcAndMicRef(AudioModuleInfo &moduleInfo);
+    void UpdateAudioEcInfo(const DeviceType inputDevice, const DeviceType outputDevice);
+    void UpdateModuleInfoForEc(AudioModuleInfo &moduleInfo);
+    void UpdateModuleInfoForMicRef(AudioModuleInfo &moduleInfo);
+    void ReloadSourceModuleForEc(const DeviceType inputDevice);
+
     bool IsRingerOrAlarmerStreamUsage(const StreamUsage &usage);
 
     bool IsRingerOrAlarmerDualDevicesRange(const InternalDeviceType &deviceType);
@@ -1060,7 +1080,7 @@ private:
         SOURCE_TYPE_REMOTE_CAST
     };
 
-    static std::map<std::string, uint32_t> formatStrToEnum;
+    static std::map<std::string, AudioSampleFormat> formatStrToEnum;
     static std::map<std::string, ClassType> classStrToEnum;
     static std::map<std::string, ClassType> portStrToEnum;
 
@@ -1082,6 +1102,16 @@ private:
     bool safeVolumeExit_ = false;
     bool isAbsBtFirstBoot_ = true;
     bool normalVoipFlag_ = false;
+
+    static std::map<DeviceType, std::string> ecDeviceToPipeName;
+    bool isEcFeatureEnable_ = false;
+    bool isQcFeatureEnable_ = false;
+    bool isQcSwitchOn_ = false;
+    std::mutex audioEcInfoMutex_;
+    AudioEcInfo audioEcInfo_;
+    AudioModuleInfo usbSinkModuleInfo_ = {};
+    AudioModuleInfo usbSourceModuleInfo_ = {};
+    AudioModuleInfo dpSinkModuleInfo_ = {};
 
     std::mutex dialogMutex_;
     std::atomic<bool> isDialogSelectDestroy_ = false;

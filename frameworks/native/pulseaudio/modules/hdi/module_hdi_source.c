@@ -70,11 +70,23 @@ static const char * const VALID_MODARGS[] = {
     "network_id",
     "device_type",
     "source_type",
+    "ec_type",
+    "ec_adapter",
+    "ec_sampling_rate",
+    "ec_format",
+    "ec_channels",
+    "open_mic_ref",
+    "mic_ref_rate",
+    "mic_ref_format",
+    "mic_ref_channels",
     NULL
 };
 
 static void IncreaseScenekeyCount(pa_hashmap *sceneMap, const char *key)
 {
+    if (sceneMap == NULL) {
+        return;
+    }
     char *sceneKey;
     uint32_t *num = NULL;
     if ((num = (uint32_t *)pa_hashmap_get(sceneMap, key)) != NULL) {
@@ -90,6 +102,9 @@ static void IncreaseScenekeyCount(pa_hashmap *sceneMap, const char *key)
 
 static bool DecreaseScenekeyCount(pa_hashmap *sceneMap, const char *key)
 {
+    if (sceneMap == NULL) {
+        return false;
+    }
     uint32_t *num = NULL;
     if ((num = (uint32_t *)pa_hashmap_get(sceneMap, key)) != NULL) {
         (*num)--;
@@ -133,6 +148,10 @@ static void SetResampler(pa_source_output *so, const pa_sample_spec *algoConfig,
 static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
 {
     struct Userdata *u = (struct Userdata *)so->source->userdata;
+    if (u == NULL) {
+        AUDIO_ERR_LOG("Get Userdata failed! userdata is NULL");
+        return PA_HOOK_OK;
+    }
     AUDIO_INFO_LOG("Trigger SourceOutputPutCb");
     pa_assert(c);
     const char *sceneType = pa_proplist_gets(so->proplist, "scene.type");
@@ -173,6 +192,10 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
     const char *downDevice = pa_proplist_gets(so->proplist, "device.down");
     EnhanceChainManagerReleaseCb(sceneType, upDevice, downDevice);
     struct Userdata *u = (struct Userdata *)so->source->userdata;
+    if (u == NULL) {
+        AUDIO_ERR_LOG("Get Userdata failed! userdata is NULL");
+        return PA_HOOK_OK;
+    }
     char sceneKey[MAX_SCENE_NAME_LEN];
     int32_t ret = ConcatStr(sceneType, upDevice, downDevice, sceneKey, MAX_SCENE_NAME_LEN);
     if (ret != 0) {

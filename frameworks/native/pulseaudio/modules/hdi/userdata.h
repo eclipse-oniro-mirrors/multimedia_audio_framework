@@ -41,6 +41,15 @@ struct Userdata {
     pa_usec_t timestamp;
     SourceAttr attrs;
     bool isCapturerStarted;
+    uint32_t ecType;
+    const char *ecAdapaterName;
+    uint32_t ecSamplingRate;
+    int32_t ecFormat;
+    uint32_t ecChannels;
+    uint32_t micRef;
+    uint32_t micRefRate;
+    int32_t micRefFormat;
+    uint32_t micRefChannels;
     struct CapturerSourceAdapter *sourceAdapter;
     pa_usec_t delayTime;
     pa_hashmap *sceneToCountMap;
