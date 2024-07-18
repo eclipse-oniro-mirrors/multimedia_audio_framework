@@ -51,13 +51,14 @@ float AudioEffectVolume::GetSystemVolume()
 
 void AudioEffectVolume::SetStreamVolume(const std::string sessionID, const float streamVolume)
 {
-    std::lock_guard<std::recursive_mutex> lock(volumeMutex_);
+    std::lock_guard<std::mutex> lock(volumeMutex_);
     AUDIO_DEBUG_LOG("SetStreamVolume: %{public}f", streamVolume);
     SessionIDToVolumeMap_[sessionID] = streamVolume;
 }
 
 float AudioEffectVolume::GetStreamVolume(const std::string sessionID)
 {
+    std::lock_guard<std::mutex> lock(volumeMutex_);
     if (!SessionIDToVolumeMap_.count(sessionID)) {
         return 1.0;
     } else {
@@ -67,6 +68,7 @@ float AudioEffectVolume::GetStreamVolume(const std::string sessionID)
 
 int32_t AudioEffectVolume::StreamVolumeDelete(const std::string sessionID)
 {
+    std::lock_guard<std::mutex> lock(volumeMutex_);
     if (!SessionIDToVolumeMap_.count(sessionID)) {
         return 0;
     } else {
