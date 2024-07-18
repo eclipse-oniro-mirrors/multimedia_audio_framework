@@ -842,9 +842,6 @@ const std::string PaAdapterManager::GetEnhanceSceneName(SourceType sourceType)
         case SOURCE_TYPE_VOICE_TRANSCRIPTION:
             name = "SCENE_PRE_ENHANCE";
             break;
-        case SOURCE_TYPE_VOICE_MESSAGE:
-            name = "SCENE_ASR";
-            break;
         default:
             name = "SCENE_OTHERS";
     }
