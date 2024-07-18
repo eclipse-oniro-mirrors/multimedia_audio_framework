@@ -70,6 +70,15 @@ static const char * const VALID_MODARGS[] = {
     "network_id",
     "device_type",
     "source_type",
+    "ec_type",
+    "ec_adapter",
+    "ec_sampling_rate",
+    "ec_format",
+    "ec_channels",
+    "open_mic_ref",
+    "mic_ref_rate",
+    "mic_ref_format",
+    "mic_ref_channels",
     NULL
 };
 

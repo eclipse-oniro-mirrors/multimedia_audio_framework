@@ -631,6 +631,33 @@ static void InitUserdataAttrs(pa_modargs *ma, struct Userdata *u, const pa_sampl
         pa_xfree, pa_xfree);
 }
 
+static void InitEcAndMicRefAttrs(pa_modargs *ma, struct Userdata *u)
+{
+    if (pa_modargs_get_value_u32(ma, "ec_type", &u->ecType) < 0) {
+        u->ecType = 0;
+    }
+    u->ecAdapaterName = pa_modargs_get_value(ma, "ec_adapter", "");
+    if (pa_modargs_get_value_u32(ma, "ec_sampling_rate", &u->ecSamplingRate) < 0) {
+        u->ecSamplingRate = 0;
+    }
+    const char *ecFormatStr = pa_modargs_get_value(ma, "ec_format", "");
+    u->ecFormat = pa_parse_sample_format(ecFormatStr);
+    if (pa_modargs_get_value_u32(ma, "ec_channels", &u->ecChannels) < 0) {
+        u->ecChannels = 0;
+    }
+    if (pa_modargs_get_value_u32(ma, "open_mic_ref", &u->micRef) < 0) {
+        u->micRef = 0;
+    }
+    if (pa_modargs_get_value_u32(ma, "mic_ref_rate", &u->micRefRate) < 0) {
+        u->micRefRate = 0;
+    }
+    const char *micRefFormatStr = pa_modargs_get_value(ma, "mic_ref_format", "");
+    u->micRefFormat = pa_parse_sample_format(micRefFormatStr);
+    if (pa_modargs_get_value_u32(ma, "mic_ref_channels", &u->micRefChannels) < 0) {
+        u->micRefChannels = 0;
+    }
+}
+
 pa_source *PaHdiSourceNew(pa_module *m, pa_modargs *ma, const char *driver)
 {
     int ret;
@@ -659,6 +686,8 @@ pa_source *PaHdiSourceNew(pa_module *m, pa_modargs *ma, const char *driver)
     }
 
     InitUserdataAttrs(ma, u, &ss);
+
+    InitEcAndMicRefAttrs(ma, u);
 
     ret = LoadSourceAdapter(pa_modargs_get_value(ma, "device_class", DEFAULT_DEVICE_CLASS),
         pa_modargs_get_value(ma, "network_id", DEFAULT_DEVICE_NETWORKID), u->attrs.sourceType,
