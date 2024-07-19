@@ -122,8 +122,8 @@ void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectCh
     for (auto item = enhanceChainNameMap.begin(); item != enhanceChainNameMap.end(); item++) {
         sceneTypeAndModeToEnhanceChainNameMap_[item->first] = item->second;
     }
-    // Construct effectPropertyMap_ that stores effect's property
-    effectPropertyMap_ = managerParam.effectDefaultProperty;
+    // Construct enhancePropertyMap_ that stores effect's property
+    enhancePropertyMap_ = managerParam.effectDefaultProperty;
 
     AUDIO_INFO_LOG("enhanceToLibraryEntryMap_ size %{public}zu \
         enhanceToLibraryNameMap_ size %{public}zu \
@@ -255,7 +255,9 @@ int32_t AudioEnhanceChainManager::SetAudioEnhanceChainDynamic(const std::string 
         int32_t ret = enhanceToLibraryEntryMap_[enhance]->audioEffectLibHandle->createEffect(descriptor, &handle);
         CHECK_AND_CONTINUE_LOG(ret == 0, "EnhanceToLibraryEntryMap[%{public}s] createEffect fail",
             enhance.c_str());
-        audioEnhanceChain->AddEnhanceHandle(handle, enhanceToLibraryEntryMap_[enhance]->audioEffectLibHandle);
+        auto propIter = enhancePropertyMap_.find(enhance);
+        audioEnhanceChain->AddEnhanceHandle(handle, enhanceToLibraryEntryMap_[enhance]->audioEffectLibHandle,
+            enhance, propIter == enhancePropertyMap_.end() ? "" : propIter->second);
     }
 
     if (audioEnhanceChain->IsEmptyEnhanceHandles()) {
@@ -439,9 +441,9 @@ int32_t AudioEnhanceChainManager::SetAudioEnhanceProperty(const AudioEnhanceProp
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     int32_t ret = 0;
     for (const auto &property : propertyArray.property) {
-        auto item = effectPropertyMap_.find(property.enhanceClass);
-        if (item == effectPropertyMap_.end()) {
-            effectPropertyMap_[property.enhanceClass] = property.enhanceProp;
+        auto item = enhancePropertyMap_.find(property.enhanceClass);
+        if (item == enhancePropertyMap_.end()) {
+            enhancePropertyMap_[property.enhanceClass] = property.enhanceProp;
         } else {
             if (item->second == property.enhanceProp) {
                 AUDIO_INFO_LOG("No need to update effect %{public}s with mode %{public}s",
@@ -464,7 +466,7 @@ int32_t AudioEnhanceChainManager::GetAudioEnhanceProperty(AudioEnhancePropertyAr
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     propertyArray.property.clear();
-    for (const auto &[effect, prop] : effectPropertyMap_) {
+    for (const auto &[effect, prop] : enhancePropertyMap_) {
         if (!prop.empty()) {
             propertyArray.property.emplace_back(AudioEnhanceProperty{effect, prop});
             AUDIO_INFO_LOG("effect %{public}s is now %{public}s mode",
