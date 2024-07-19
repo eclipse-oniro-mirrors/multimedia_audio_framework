@@ -41,6 +41,7 @@ public:
         const char *sourceName = "Built_in_wakeup");
     static AudioCapturerSource *GetMicInstance(void);
     static AudioCapturerSource *GetWakeupInstance(bool isMirror = false);
+    static AudioCapturerSource *Create(CaptureAttr *attr);
 
 protected:
     AudioCapturerSource() = default;

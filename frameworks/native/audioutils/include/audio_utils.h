@@ -399,6 +399,8 @@ enum HdiCaptureOffset : uint32_t {
     HDI_CAPTURE_OFFSET_REMOTE = 3,
     HDI_CAPTURE_OFFSET_REMOTE_FAST = 4,
     HDI_CAPTURE_OFFSET_USB = 5,
+    HDI_CAPTURE_OFFSET_EC = 6,
+    HDI_CAPTURE_OFFSET_MIC_REF = 7,
 };
 
 enum HdiRenderOffset : uint32_t {
