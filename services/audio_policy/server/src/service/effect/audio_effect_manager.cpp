@@ -533,7 +533,6 @@ void AudioEffectManager::UpdateDuplicateProcessNew(std::vector<std::string> &ava
 
 void AudioEffectManager::BuildAvailableAEConfig()
 {
-    int32_t ret = 0 ;
     std::vector<std::string> availableLayout;
     existDefault_ = 1;
     if (oriEffectConfig_.effectChains.size() == 0) {
@@ -628,7 +627,7 @@ void AudioEffectManager::ConstructDefaultEffectProperty(const std::string &chain
                 // only first property is default set
                 effectDefaultProperty[effectIter->name] = effectIter->effectProperty[0];
                 AUDIO_INFO_LOG("effect %{public}s defaultProperty is %{public}s",
-                    effectIter->name.c_str(), property.c_str());
+                    effectIter->name.c_str(), effectIter->effectProperty[0].c_str());
             }
         }
     }
@@ -698,50 +697,33 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
         (int32_t)map.size());
 }
 
-int32_t AudioEffectManager::GetSupportedAudioEffectProperty(const DeviceType &deviceType,
-    std::set<std::pair<std::string, std::string>> &mergedSet)
+int32_t AudioEffectManager::GetSupportedPropertyInner(const DeviceType& deviceType,
+    std::set<std::pair<std::string, std::string>> &mergedSet,
+    const std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &device2PropertySet)
 {
     auto deviceIter = SUPPORTED_DEVICE_TYPE.find(deviceType);
     if (deviceIter == SUPPORTED_DEVICE_TYPE.end()) {
         AUDIO_ERR_LOG("device not supported.");
         return -1;
     }
-    auto propertySetIter = device2EffectPropertySet_.find(deviceIter->second);
-    if (propertySetIter != device2EffectPropertySet_.end()) {
+    auto deviceStr = deviceType == DEVICE_TYPE_INVALID ? "" : deviceIter->second;
+    auto propertySetIter = device2PropertySet.find(deviceStr);
+    if (propertySetIter != device2PropertySet.end()) {
         mergedSet.insert(propertySetIter->second.begin(), propertySetIter->second.end());
-    } else {
-        AUDIO_INFO_LOG("property is empty");
-    }
-    if (deviceType == DEVICE_TYPE_INVALID) {
-        propertySetIter = device2EffectPropertySet_.find("");
-        if (propertySetIter != device2EffectPropertySet_.end()) {
-            mergedSet.insert(propertySetIter->second.begin(), propertySetIter->second.end());
-        }
     }
     return AUDIO_OK;
+}
+
+int32_t AudioEffectManager::GetSupportedAudioEffectProperty(const DeviceType &deviceType,
+    std::set<std::pair<std::string, std::string>> &mergedSet)
+{
+    return GetSupportedPropertyInner(deviceType, mergedSet, device2EffectPropertySet_);
 }
 
 int32_t AudioEffectManager::GetSupportedAudioEnhanceProperty(const DeviceType &deviceType,
     std::set<std::pair<std::string, std::string>> &mergedSet)
 {
-    auto deviceIter = SUPPORTED_DEVICE_TYPE.find(deviceType);
-    if (deviceIter == SUPPORTED_DEVICE_TYPE.end()) {
-        AUDIO_ERR_LOG("device not supported.");
-        return -1;
-    }
-    auto propertySetIter = device2EnhancePropertySet_.find(deviceIter->second);
-    if (propertySetIter != device2EnhancePropertySet_.end()) {
-        mergedSet.insert(propertySetIter->second.begin(), propertySetIter->second.end());
-    } else {
-        AUDIO_INFO_LOG("property is empty");
-    }
-    if (deviceType == DEVICE_TYPE_INVALID) {
-        propertySetIter = device2EnhancePropertySet_.find("");
-        if (propertySetIter != device2EnhancePropertySet_.end()) {
-            mergedSet.insert(propertySetIter->second.begin(), propertySetIter->second.end());
-        }
-    }
-    return AUDIO_OK;
+    return GetSupportedPropertyInner(deviceType, mergedSet, device2EnhancePropertySet_);
 }
 } // namespce AudioStandard
 } // namespace OHOS

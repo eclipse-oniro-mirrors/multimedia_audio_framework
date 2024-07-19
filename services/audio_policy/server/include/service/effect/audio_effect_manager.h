@@ -75,6 +75,9 @@ private:
     void UpdateDuplicateProcessNew(std::vector<std::string> &availableLayout, ProcessNew &processNew);
     void ConstructDefaultEffectProperty(const std::string &chainName,
         std::unordered_map<std::string, std::string> &defaultProperty);
+    int32_t GetSupportedPropertyInner(const DeviceType& deviceType,
+        std::set<std::pair<std::string, std::string>> &mergedSet,
+        const std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &device2PropertySet);
 };
 } // namespce AudioStandard
 } // namespace OHOS

@@ -49,10 +49,12 @@ static int32_t FindEffectLib(const std::string &effect,
     std::shared_ptr<AudioEffectLibEntry> &libEntry, std::string &libName)
 {
     for (const std::shared_ptr<AudioEffectLibEntry> &lib : effectLibraryList) {
-        if (lib->libraryName == effect) {
-            libName = lib->libraryName;
-            libEntry = lib;
-            return SUCCESS;
+        for (const auto &effectName : lib->effectName) {
+            if (effectName == effect) {
+                libName = lib->libraryName;
+                libEntry = lib;
+                return SUCCESS;
+            }
         }
     }
     return ERROR;
@@ -280,7 +282,9 @@ void AudioEffectChainManager::InitAudioEffectChainManager(std::vector<EffectChai
         std::string key = efc.name;
         std::vector <std::string> effects;
         for (std::string effectName: efc.apply) {
-            effects.emplace_back(effectName);
+            if (EffectToLibraryEntryMap_.count(effectName)) {
+                effects.emplace_back(effectName);
+            }
         }
         EffectChainToEffectsMap_[key] = effects;
     }

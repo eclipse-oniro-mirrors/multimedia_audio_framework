@@ -35,10 +35,12 @@ static int32_t FindEnhanceLib(const std::string &enhance,
     std::shared_ptr<AudioEffectLibEntry> &libEntry, std::string &libName)
 {
     for (const std::shared_ptr<AudioEffectLibEntry> &lib : enhanceLibraryList) {
-        if (lib->libraryName == enhance) {
-            libName = lib->libraryName;
-            libEntry = lib;
-            return SUCCESS;
+        for (const auto &effectName : lib->effectName) {
+            if (effectName == enhance) {
+                libName = lib->libraryName;
+                libEntry = lib;
+                return SUCCESS;
+            }
         }
     }
     return ERROR;
@@ -110,7 +112,9 @@ void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectCh
         std::string key = enhanceChain.name;
         std::vector<std::string> enhances;
         for (std::string enhanceName : enhanceChain.apply) {
-            enhances.emplace_back(enhanceName);
+            if (enhanceToLibraryEntryMap_.count(enhanceName)) {
+                enhances.emplace_back(enhanceName);
+            }
         }
         enhanceChainToEnhancesMap_[key] = enhances;
     }
