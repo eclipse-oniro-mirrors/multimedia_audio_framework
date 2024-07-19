@@ -48,7 +48,7 @@ struct Userdata {
     uint32_t ecSamplingRate;
     int32_t ecFormat;
     uint32_t ecChannels;
-    AuxiliaryRefSwitch auxiliaryRef;
+    MicRefSwitch micRef;
     uint32_t micRefRate;
     int32_t micRefFormat;
     uint32_t micRefChannels;
@@ -57,7 +57,11 @@ struct Userdata {
     pa_hashmap *sceneToCountMap;
     pa_hashmap *sceneToResamplerMap;
     HdiCaptureHandle *captureHandleEc;
-    HdiCaptureHandle *captureHandleRef;
+    HdiCaptureHandle *captureHandleMicRef;
+    uint64_t requestBytesEc;
+    uint64_t requestBytesMicRef;
+    void *bufferEc;
+    void *bufferMicRef;
 };
 
 #endif

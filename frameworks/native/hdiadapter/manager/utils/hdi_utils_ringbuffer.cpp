@@ -164,10 +164,9 @@ int32_t HdiRingBuffer::ReleaseOutputBuffer(RingBuffer &item)
     int32_t ret = 0;
     std::lock_guard<std::mutex> lock(mtx_);
     // Onlyfixed-length(perFrameLength_) data is processed。
-    if ((maxBufferSize_ - readIndex_) >= perFrameLength_ 
-         && GetRingBufferStatus() != RINGBUFFER_EMPTY) {
+    if ((maxBufferSize_ - readIndex_) >= perFrameLength_ && GetRingBufferStatus() != RINGBUFFER_EMPTY) {
         ret = memmove_s(item.data, sizeof(uint8_t) * perFrameLength_,
-                        ringBuffer_.data + readIndex_, sizeof(uint8_t) * perFrameLength_);
+            ringBuffer_.data + readIndex_, sizeof(uint8_t) * perFrameLength_);
         CHECK_AND_RETURN_RET_LOG(ret == 0, ERR_READ_BUFFER, "copy ringbuffer fail");
     } else {
         AUDIO_ERR_LOG("error: Not enough data to return.");

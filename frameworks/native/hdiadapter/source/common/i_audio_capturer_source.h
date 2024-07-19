@@ -38,6 +38,10 @@ typedef struct IAudioSourceAttr {
     int32_t sourceType = 0;
     uint64_t channelLayout = 0;
     int32_t audioStreamFlag = 0;
+    bool hasEcConfig = false;
+    HdiAdapterFormat formatEc = HdiAdapterFormat::INVALID_WIDTH;
+    uint32_t sampleRateEc = 0;
+    uint32_t channelEc = 0;
 } IAudioSourceAttr;
 
 class IAudioSourceCallback {
