@@ -506,7 +506,12 @@ void AudioEffectManager::UpdateSupportedEffectProperty(const Device &device,
             continue;
         }
         for (const auto &property : effectIter->effectProperty) {
-            device2PropertySet.insert_or_assign(device.type, {effectIter->name, property});
+            auto deviceIter = device2PropertySet.find(device.type);
+            if (deviceIter == device2PropertySet.end()) {
+                device2PropertySet[device.type].insert({effectIter->name, property});
+            } else {
+                deviceIter->second.insert({effectIter->name, property});
+            }
             AUDIO_INFO_LOG("device %{public}s support effect [%{public}s, %{public}s]",
                 device.type.c_str(), effectIter->name.c_str(), property.c_str());
         }
