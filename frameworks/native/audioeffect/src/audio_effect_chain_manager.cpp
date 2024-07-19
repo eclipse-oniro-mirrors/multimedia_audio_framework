@@ -1365,17 +1365,7 @@ int32_t AudioEffectChainManager::SetAudioEffectProperty(const AudioEffectPropert
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
     for (const auto &property : propertyArray.property) {
-        auto item = effectPropertyMap_.find(property.effectClass);
-        if (item == effectPropertyMap_.end()) {
-            effectPropertyMap_[property.effectClass] = property.effectProp;
-        } else {
-            if (item->second == property.effectProp) {
-                AUDIO_INFO_LOG("No need to update effect %{public}s with mode %{public}s",
-                    property.effectClass.c_str(), property.effectProp.c_str());
-                continue;
-            }
-            item->second = property.effectProp;
-        }
+        effectPropertyMap_.insert_or_assign(property.effectClass, property.effectProp);
         for (const auto &[sceneType, effectChain] : SceneTypeToEffectChainMap_) {
             if (effectChain) {
                 effectChain->SetEffectProperty(property.effectClass, property.effectProp);

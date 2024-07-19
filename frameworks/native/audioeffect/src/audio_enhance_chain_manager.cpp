@@ -441,17 +441,7 @@ int32_t AudioEnhanceChainManager::SetAudioEnhanceProperty(const AudioEnhanceProp
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     int32_t ret = 0;
     for (const auto &property : propertyArray.property) {
-        auto item = enhancePropertyMap_.find(property.enhanceClass);
-        if (item == enhancePropertyMap_.end()) {
-            enhancePropertyMap_[property.enhanceClass] = property.enhanceProp;
-        } else {
-            if (item->second == property.enhanceProp) {
-                AUDIO_INFO_LOG("No need to update effect %{public}s with mode %{public}s",
-                    property.enhanceClass.c_str(), property.enhanceProp.c_str());
-                continue;
-            }
-            item->second = property.enhanceProp;
-        }
+        enhancePropertyMap_.insert_or_assign(property.enhanceClass, property.enhanceProp);
         for (const auto &[sceneType, enhanceChain] : sceneTypeToEnhanceChainMap_) {
             if (enhanceChain) {
                 ret = enhanceChain->SetEnhanceProperty(property.enhanceClass, property.enhanceProp);
