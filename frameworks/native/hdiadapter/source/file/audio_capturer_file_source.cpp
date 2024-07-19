@@ -167,6 +167,14 @@ int32_t AudioCapturerFileSource::CaptureFrame(char *frame, uint64_t requestBytes
     return SUCCESS;
 }
 
+int32_t AudioCapturerFileSource::CaptureFrameWithEc(
+    char *frame, uint64_t requestBytes, uint64_t &replyBytes,
+    char *frameEc, uint64_t requestBytesEc, uint64_t &replyBytesEc)
+{
+    AUDIO_ERR_LOG("not supported!");
+    return ERR_DEVICE_NOT_SUPPORTED;
+}
+
 int32_t AudioCapturerFileSource::Start(void)
 {
     return SUCCESS;

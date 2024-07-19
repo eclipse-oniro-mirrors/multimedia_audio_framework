@@ -23,6 +23,8 @@
 #include <pulsecore/thread.h>
 #include <pulsecore/hashmap.h>
 
+#include "audio_hdiadapter_info.h"
+#include "hdi_adapter_manager_api.h"
 #include "capturer_source_adapter.h"
 
 #define DEFAULT_SCENE_BYPASS "scene.bypass"
@@ -41,12 +43,12 @@ struct Userdata {
     pa_usec_t timestamp;
     SourceAttr attrs;
     bool isCapturerStarted;
-    uint32_t ecType;
+    EcType ecType;
     const char *ecAdapaterName;
     uint32_t ecSamplingRate;
     int32_t ecFormat;
     uint32_t ecChannels;
-    uint32_t micRef;
+    AuxiliaryRefSwitch auxiliaryRef;
     uint32_t micRefRate;
     int32_t micRefFormat;
     uint32_t micRefChannels;
@@ -54,6 +56,8 @@ struct Userdata {
     pa_usec_t delayTime;
     pa_hashmap *sceneToCountMap;
     pa_hashmap *sceneToResamplerMap;
+    HdiCaptureHandle *captureHandleEc;
+    HdiCaptureHandle *captureHandleRef;
 };
 
 #endif

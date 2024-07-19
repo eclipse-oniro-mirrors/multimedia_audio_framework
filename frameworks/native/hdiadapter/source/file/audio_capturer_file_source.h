@@ -38,6 +38,9 @@ public:
     int32_t Pause(void) override;
     int32_t Resume(void) override;
     int32_t CaptureFrame(char *frame, uint64_t requestBytes, uint64_t &replyBytes) override;
+    int32_t CaptureFrameWithEc(
+        char *frame, uint64_t requestBytes, uint64_t &replyBytes,
+        char *frameEc, uint64_t requestBytesEc, uint64_t &replyBytesEc) override;
     int32_t SetVolume(float left, float right) override;
     int32_t GetVolume(float &left, float &right) override;
     int32_t SetMute(bool isMute) override;
