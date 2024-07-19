@@ -435,7 +435,7 @@ int32_t AudioEnhanceChainManager::SetStreamVolumeInfo(const uint32_t &sessionId,
 
 int32_t AudioEnhanceChainManager::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
 {
-    return AUDIO_OK;
+    std::lock_guard<std::mutex> lock(chainManagerMutex_);
     int32_t ret = 0;
     for (const auto &property : propertyArray.property) {
         auto item = effectPropertyMap_.find(property.enhanceClass);
@@ -456,15 +456,18 @@ int32_t AudioEnhanceChainManager::SetAudioEnhanceProperty(const AudioEnhanceProp
             }
         }
     }
-    return ret;
+    return 0;
 }
 
 int32_t AudioEnhanceChainManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
 {
+    std::lock_guard<std::mutex> lock(chainManagerMutex_);
     propertyArray.property.clear();
     for (const auto &[effect, prop] : effectPropertyMap_) {
         if (!prop.empty()) {
             propertyArray.property.emplace_back(AudioEnhanceProperty{effect, prop});
+            AUDIO_INFO_LOG("effect %{public}s is now %{public}s mode",
+                effect.c_str(), prop.c_str());
         }
     }
     return AUDIO_OK;

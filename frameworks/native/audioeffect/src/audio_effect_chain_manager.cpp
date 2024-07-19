@@ -389,12 +389,8 @@ int32_t AudioEffectChainManager::SetAudioEffectChainDynamic(const std::string &s
                 GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, sceneType)));
         }
         auto propIter = effectPropertyMap_.find(effect);
-        std::string property = "";
-        if (propIter != effectPropertyMap_.end()) {
-            property = propIter->second;
-        }
         audioEffectChain->AddEffectHandle(handle, EffectToLibraryEntryMap_[effect]->audioEffectLibHandle,
-            currSceneType, effect, property);
+            currSceneType, effect, propIter == effectPropertyMap_.end() ? "" : propIter->second);
     }
     audioEffectChain->ResetIoBufferConfig();
 
@@ -1356,6 +1352,7 @@ bool AudioEffectChainManager::CheckIfSpkDsp()
 
 int32_t AudioEffectChainManager::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
 {
+    std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
     for (const auto &property : propertyArray.property) {
         auto item = effectPropertyMap_.find(property.effectClass);
         if (item == effectPropertyMap_.end()) {
@@ -1379,6 +1376,7 @@ int32_t AudioEffectChainManager::SetAudioEffectProperty(const AudioEffectPropert
 
 int32_t AudioEffectChainManager::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
 {
+    std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
     propertyArray.property.clear();
     for (const auto &[effect, prop] : effectPropertyMap_) {
         if (!prop.empty()) {

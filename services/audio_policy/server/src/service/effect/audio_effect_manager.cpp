@@ -485,42 +485,49 @@ int32_t AudioEffectManager::UpdateUnavailableEffectChains(std::vector<std::strin
     return ret;
 }
 
-void AudioEffectManager::UpdateSupportedEffectProperty(ProcessNew &processnew,
+void AudioEffectManager::UpdateSupportedEffectProperty(const Device &device,
     std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &device2PropertySet)
 {
-    for (auto &stream : processnew.stream) {
-        for (auto &streamMode : stream.streamEffectMode) {
-            for (auto &device : streamMode.devicePort) {
-                auto chainName = device.chain;
-                auto effectChain = std::find_if(supportedEffectConfig_.effectChains.begin(),
-                    supportedEffectConfig_.effectChains.end(),
-                    [&chainName](const EffectChain& x) {
-                        return x.name == chainName;
-                    });
-                if (effectChain == supportedEffectConfig_.effectChains.end()) {
-                    continue;
-                }
-                for (auto &effectName : effectChain->apply) {
-                    auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
-                        [&effectName](const Effect& effect) {
-                        return effect.name == effectName;
-                    });
-                    if (effectIter == availableEffects_.end()) {
-                        continue;
-                    }
-                    for (auto &property : effectIter->effectProperty) {
-                        auto deviceIter = device2PropertySet.find(device.type);
-                        if (deviceIter == device2PropertySet.end()) {
-                            device2PropertySet[device.type].insert({effectIter->name, property});
-                        } else {
-                            deviceIter->second.insert({effectIter->name, property});
-                        }
-                        AUDIO_INFO_LOG("device %{public}s support effect [%{public}s, %{public}s]",
-                            device.type.c_str(), effectIter->name.c_str(), property.c_str());
-                    }
-                }
-            }
+    auto chainName = device.chain;
+    auto effectChain = std::find_if(supportedEffectConfig_.effectChains.begin(),
+        supportedEffectConfig_.effectChains.end(),
+        [&chainName](const EffectChain& x) {
+            return x.name == chainName;
+        });
+    if (effectChain == supportedEffectConfig_.effectChains.end()) {
+        return;
+    }
+    for (auto &effectName : effectChain->apply) {
+        auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
+            [&effectName](const Effect& effect) {
+            return effect.name == effectName;
+        });
+        if (effectIter == availableEffects_.end()) {
+            continue;
         }
+        for (auto &property : effectIter->effectProperty) {
+            auto deviceIter = device2PropertySet.find(device.type);
+            if (deviceIter == device2PropertySet.end()) {
+                device2PropertySet[device.type].insert({effectIter->name, property});
+            } else {
+                deviceIter->second.insert({effectIter->name, property});
+            }
+            AUDIO_INFO_LOG("device %{public}s support effect [%{public}s, %{public}s]",
+                device.type.c_str(), effectIter->name.c_str(), property.c_str());
+        }
+    }
+}
+
+void AudioEffectManager::UpdateDuplicateProcessNew(std::vector<std::string> &availableLayout, ProcessNew &processNew)
+{
+    UpdateEffectChains(availableLayout);
+    UpdateDuplicateBypassMode(processNew);
+    UpdateDuplicateMode(processNew);
+    UpdateDuplicateDevice(processNew);
+    UpdateDuplicateDefaultScene(processNew);
+    UpdateDuplicateScene(processNew);
+    if (UpdateUnavailableEffectChains(availableLayout, supportedEffectConfig_.preProcessNew) != 0) {
+        existDefault_ = -1;
     }
 }
 
@@ -552,31 +559,23 @@ void AudioEffectManager::BuildAvailableAEConfig()
     // Update duplicate defined modes, devices, and unsupported effect chain.
     UpdateAvailableAEConfig(oriEffectConfig_);
 
-    ProcessNew preProcessNew = supportedEffectConfig_.preProcessNew;
-    ProcessNew postProcessNew = supportedEffectConfig_.postProcessNew;
+    UpdateDuplicateProcessNew(availableLayout, supportedEffectConfig_.preProcessNew);
+    UpdateDuplicateProcessNew(availableLayout, supportedEffectConfig_.postProcessNew);
 
-    UpdateEffectChains(availableLayout);
-    UpdateDuplicateBypassMode(supportedEffectConfig_.preProcessNew);
-    UpdateDuplicateMode(supportedEffectConfig_.preProcessNew);
-    UpdateDuplicateDevice(supportedEffectConfig_.preProcessNew);
-    UpdateDuplicateDefaultScene(supportedEffectConfig_.preProcessNew);
-    UpdateDuplicateScene(supportedEffectConfig_.preProcessNew);
-    ret = UpdateUnavailableEffectChains(availableLayout, supportedEffectConfig_.preProcessNew);
-    if (ret != 0) {
-        existDefault_ = -1;
+    for (auto &stream : supportedEffectConfig_.preProcessNew.stream) {
+        for (auto &streamMode : stream.streamEffectMode) {
+            for (auto &device : streamMode.devicePort) {
+                UpdateSupportedEffectProperty(device, device2EnhancePropertySet_);
+            }
+        }
     }
-
-    UpdateDuplicateBypassMode(supportedEffectConfig_.postProcessNew);
-    UpdateDuplicateMode(supportedEffectConfig_.postProcessNew);
-    UpdateDuplicateDevice(supportedEffectConfig_.postProcessNew);
-    UpdateDuplicateDefaultScene(supportedEffectConfig_.postProcessNew);
-    UpdateDuplicateScene(supportedEffectConfig_.postProcessNew);
-    ret = UpdateUnavailableEffectChains(availableLayout, supportedEffectConfig_.postProcessNew);
-    if (ret != 0) {
-        existDefault_ = -1;
+    for (auto &stream : supportedEffectConfig_.postProcessNew.stream) {
+        for (auto &streamMode : stream.streamEffectMode) {
+            for (auto &device : streamMode.devicePort) {
+                UpdateSupportedEffectProperty(device, device2EffectPropertySet_);
+            }
+        }
     }
-    UpdateSupportedEffectProperty(supportedEffectConfig_.preProcessNew, device2EnhancePropertySet_);
-    UpdateSupportedEffectProperty(supportedEffectConfig_.postProcessNew, device2EffectPropertySet_);
 }
 
 void AudioEffectManager::SetMasterSinkAvailable()
@@ -623,16 +622,14 @@ void AudioEffectManager::ConstructDefaultEffectProperty(const std::string &chain
             continue;
         }
         // if 0 property, no need to set default
-        for (auto &property : effectIter->effectProperty) {
-            auto it = effectDefaultProperty.find(effectIter->name);
+        if (effectIter->effectProperty.size() > 0) {
             // first assign, and no need to assign twice
-            if (it == effectDefaultProperty.end()) {
-                effectDefaultProperty[effectIter->name] = property;
+            if (!effectDefaultProperty.count(effectIter->name)) {
+                // only first property is default set
+                effectDefaultProperty[effectIter->name] = effectIter->effectProperty[0];
                 AUDIO_INFO_LOG("effect %{public}s defaultProperty is %{public}s",
                     effectIter->name.c_str(), property.c_str());
             }
-            // only first property is default set
-            break;
         }
     }
 }

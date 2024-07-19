@@ -8433,6 +8433,7 @@ int32_t AudioPolicyService::GetSupportedAudioEffectProperty(AudioEffectPropertyA
     for (auto &item : descriptor) {
         audioEffectManager_.GetSupportedAudioEffectProperty(item->getType(), mergedSet);
     }
+    propertyArray.property.reserve(mergedSet.size());
     std::transform(mergedSet.begin(), mergedSet.end(), std::back_inserter(propertyArray.property),
         [](const std::pair<std::string, std::string>& p) {
             return AudioEffectProperty{p.first, p.second};
@@ -8449,6 +8450,7 @@ int32_t AudioPolicyService::GetSupportedAudioEnhanceProperty(AudioEnhancePropert
     for (auto &item : descriptor) {
         audioEffectManager_.GetSupportedAudioEnhanceProperty(item->getType(), mergedSet);
     }
+    propertyArray.property.reserve(mergedSet.size());
     std::transform(mergedSet.begin(), mergedSet.end(), std::back_inserter(propertyArray.property),
         [](const std::pair<std::string, std::string>& p) {
             return AudioEnhanceProperty{p.first, p.second};

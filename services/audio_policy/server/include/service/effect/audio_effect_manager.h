@@ -70,8 +70,11 @@ private:
     void UpdateDuplicateDevice(ProcessNew &processNew);
     int32_t UpdateUnavailableEffectChains(std::vector<std::string> &availableLayout, ProcessNew &processNew);
     bool VerifySceneMappingItem(const SceneMappingItem &item);
-    void UpdateSupportedEffectProperty(ProcessNew &processnew,
+    void UpdateSupportedEffectProperty(const Device &device,
         std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &device2PropertySet);
+    void UpdateDuplicateProcessNew(std::vector<std::string> &availableLayout, ProcessNew &processNew);
+    void ConstructDefaultEffectProperty(const std::string &chainName,
+        std::unordered_map<std::string, std::string> &defaultProperty);
 };
 } // namespce AudioStandard
 } // namespace OHOS

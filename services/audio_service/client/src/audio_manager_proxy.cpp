@@ -817,7 +817,7 @@ void AudioManagerProxy::RequestThreadPriority(uint32_t tid, string bundleName)
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "RequestThreadPriority failed, error: %{public}d", error);
 }
 
-static void MarshellEffectChainMgrParam(const EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
+static void MarshallEffectChainMgrParam(const EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
 {
     data.WriteInt32(effectChainMgrParam.maxExtraNum);
     data.WriteString(effectChainMgrParam.defaultSceneName);
@@ -870,8 +870,8 @@ bool AudioManagerProxy::CreateEffectChainManager(std::vector<EffectChain> &effec
         }
     }
 
-    MarshellEffectChainMgrParam(effectParam, dataParcel);
-    MarshellEffectChainMgrParam(enhanceParam, dataParcel);
+    MarshallEffectChainMgrParam(effectParam, dataParcel);
+    MarshallEffectChainMgrParam(enhanceParam, dataParcel);
 
     error = Remote()->SendRequest(
         static_cast<uint32_t>(AudioServerInterfaceCode::CREATE_AUDIO_EFFECT_CHAIN_MANAGER),

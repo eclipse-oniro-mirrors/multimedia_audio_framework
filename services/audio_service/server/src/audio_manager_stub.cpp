@@ -435,7 +435,7 @@ int AudioManagerStub::HandleRequestThreadPriority(MessageParcel &data, MessagePa
     return AUDIO_OK;
 }
 
-static bool UnmarshellEffectChainMgrParam(EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
+static bool UnmarshallEffectChainMgrParam(EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
 {
     effectChainMgrParam.maxExtraNum = data.ReadInt32();
     effectChainMgrParam.defaultSceneName = data.ReadString();
@@ -493,7 +493,7 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
 
     EffectChainManagerParam effectParam;
     EffectChainManagerParam enhanceParam;
-    if (!UnmarshellEffectChainMgrParam(effectParam, data) || !UnmarshellEffectChainMgrParam(enhanceParam, data)) {
+    if (!UnmarshallEffectChainMgrParam(effectParam, data) || !UnmarshallEffectChainMgrParam(enhanceParam, data)) {
         return AUDIO_ERR;
     }
 
