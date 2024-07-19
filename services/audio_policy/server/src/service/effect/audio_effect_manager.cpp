@@ -612,7 +612,7 @@ void AudioEffectManager::ConstructDefaultEffectProperty(const std::string &chain
             return x.name == chainName;
         });
     if (effectChain == supportedEffectConfig_.effectChains.end()) {
-        continue;
+        return;
     }
     for (auto &effectName : effectChain->apply) {
         auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),

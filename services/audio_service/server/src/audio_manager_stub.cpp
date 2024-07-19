@@ -493,7 +493,7 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
 
     EffectChainManagerParam effectParam;
     EffectChainManagerParam enhanceParam;
-    if (!UnmarshellEffectChainMgrParam(effectParam, data) || UnmarshellEffectChainMgrParam(enhanceParam, data)) {
+    if (!UnmarshellEffectChainMgrParam(effectParam, data) || !UnmarshellEffectChainMgrParam(enhanceParam, data)) {
         return AUDIO_ERR;
     }
 
