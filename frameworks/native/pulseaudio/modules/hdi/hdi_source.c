@@ -817,7 +817,7 @@ static void InitMicRefAttr(struct Userdata *u, CaptureAttr *attr)
 static void InitEcAndMicRefAttrs(pa_modargs *ma, struct Userdata *u)
 {
     if (pa_modargs_get_value_u32(ma, "ec_type", &u->ecType) < 0) {
-        u->ecType = 0;
+        u->ecType = EC_NONE;
     }
     u->ecAdapaterName = pa_modargs_get_value(ma, "ec_adapter", "");
     if (pa_modargs_get_value_u32(ma, "ec_sampling_rate", &u->ecSamplingRate) < 0) {
@@ -829,7 +829,7 @@ static void InitEcAndMicRefAttrs(pa_modargs *ma, struct Userdata *u)
         u->ecChannels = 0;
     }
     if (pa_modargs_get_value_u32(ma, "open_mic_ref", &u->micRef) < 0) {
-        u->micRef = 0;
+        u->micRef = REF_OFF;
     }
     if (pa_modargs_get_value_u32(ma, "mic_ref_rate", &u->micRefRate) < 0) {
         u->micRefRate = 0;
@@ -843,9 +843,6 @@ static void InitEcAndMicRefAttrs(pa_modargs *ma, struct Userdata *u)
 
 static void CreateEcCapture(struct Userdata *u)
 {
-    // decide whether to create ec source
-    u->ecType = EC_NONE;
-
     if (u->ecType == EC_NONE) {
         u->captureHandleEc = NULL;
         u->bufferEc = NULL;
@@ -876,9 +873,6 @@ static void CreateEcCapture(struct Userdata *u)
 
 static void CreateMicRefCapture(struct Userdata *u)
 {
-    // decide whether to create mic ref source
-    u->micRef = REF_OFF;
-
     if (u->micRef != REF_ON) {
         u->captureHandleMicRef = NULL;
         u->bufferMicRef = NULL;
