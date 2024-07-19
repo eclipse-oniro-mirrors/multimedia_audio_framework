@@ -209,7 +209,7 @@ void AudioEffectManager::UpdateEffectChains(std::vector<std::string> &availableL
     int32_t count = 0;
     std::vector<int> deviceDelIdx;
     for (const auto &ec: supportedEffectConfig_.effectChains) {
-        for (auto &effectName: ec.apply) {
+        for (const auto &effectName: ec.apply) {
             auto it = std::find_if(availableEffects_.begin(), availableEffects_.end(),
                 [&effectName](const Effect &effect) {
                 return effect.name == effectName;
@@ -497,7 +497,7 @@ void AudioEffectManager::UpdateSupportedEffectProperty(const Device &device,
     if (effectChain == supportedEffectConfig_.effectChains.end()) {
         return;
     }
-    for (auto &effectName : effectChain->apply) {
+    for (const auto &effectName : effectChain->apply) {
         auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
             [&effectName](const Effect& effect) {
             return effect.name == effectName;
@@ -505,7 +505,7 @@ void AudioEffectManager::UpdateSupportedEffectProperty(const Device &device,
         if (effectIter == availableEffects_.end()) {
             continue;
         }
-        for (auto &property : effectIter->effectProperty) {
+        for (const auto &property : effectIter->effectProperty) {
             auto deviceIter = device2PropertySet.find(device.type);
             if (deviceIter == device2PropertySet.end()) {
                 device2PropertySet[device.type].insert({effectIter->name, property});
@@ -612,7 +612,7 @@ void AudioEffectManager::ConstructDefaultEffectProperty(const std::string &chain
     if (effectChain == supportedEffectConfig_.effectChains.end()) {
         return;
     }
-    for (auto &effectName : effectChain->apply) {
+    for (const auto &effectName : effectChain->apply) {
         auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
             [&effectName](const Effect& effect) {
             return effect.name == effectName;
@@ -673,7 +673,6 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
     std::string sceneType;
     std::string sceneMode;
     std::string key;
-
 
     for (auto &scene: supportedEffectConfig_.preProcessNew.stream) {
         sceneType = scene.scene;

@@ -1172,7 +1172,7 @@ HWTEST(AudioEffectChainManagerUnitTest, SetAudioEffectProperty_001, TestSize.Lev
     AudioEffectPropertyArray properties;
     ret = audioEffectChainManager->GetAudioEffectProperty(properties);
     EXPECT_EQ(SUCCESS, ret);
-    for (auto &property : DEFAULT_AUDIO_PROPERTY_ARRAY.property) {
+    for (const auto &property : DEFAULT_AUDIO_PROPERTY_ARRAY.property) {
         auto it = std::find(properties.property.begin(), properties.property.end(), property);
         EXPECT_NE(properties.property.end(), it);
     }
