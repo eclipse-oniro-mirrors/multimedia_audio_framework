@@ -440,6 +440,13 @@ struct AudioRendererInfoForSpatialization {
     std::string deviceMacAddress;
     StreamUsage streamUsage;
 };
+
+struct AudioEnhanceParam {
+    uint32_t muteInfo;
+    uint32_t volumeInfo;
+    const char *preDevice;
+    const char *postDevice;
+};
 } // namespace AudioStandard
 } // namespace OHOS
 

@@ -54,14 +54,13 @@ struct AlgoConfig {
 };
 
 struct AlgoCache {
-    std::vector<std::vector<uint8_t>> cache;
     std::vector<uint8_t> input;
     std::vector<uint8_t> output;
 };
 
 class AudioEnhanceChain {
 public:
-    AudioEnhanceChain(const std::string &scene, const std::string &mode);
+    AudioEnhanceChain(const std::string &scene, const AudioEnhanceParam &algoParam);
     ~AudioEnhanceChain();
     void AddEnhanceHandle(AudioEffectHandle handle, AudioEffectLibrary *libHandle, const std::string &enhance,
         const std::string &property);
@@ -71,6 +70,7 @@ public:
     uint32_t GetAlgoBufferSizeEc();
     int32_t ApplyEnhanceChain(std::unique_ptr<EnhanceBuffer> &enhanceBuffer, uint32_t length);
     int32_t SetEnhanceProperty(const std::string &effect, const std::string &property);
+    int32_t SetEnhanceParamToHandle(AudioEffectHandle handle);
 
 private:
     void InitAudioEnhanceChain();
@@ -82,10 +82,10 @@ private:
     bool setConfigFlag_;
     std::mutex chainMutex_;
     std::string sceneType_;
-    std::string enhanceMode_;
     AlgoAttr algoAttr_;
     AlgoConfig algoSupportedConfig_;
     AlgoCache algoCache_;
+    AudioEnhanceParam algoParam_;
     FILE *dumpFileIn_ = nullptr;
     FILE *dumpFileOut_ = nullptr;
     bool needEcFlag_;
