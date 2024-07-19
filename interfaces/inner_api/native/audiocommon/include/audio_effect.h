@@ -335,10 +335,10 @@ struct AudioEffectParam {
 };
 
 struct AudioEnhanceParam {
+    uint32_t muteInfo;
     uint32_t volumeInfo;
-    uint32_t isMute;
-    const char *upDeivce;
-    const char *downDeivce;
+    const char *preDeivce;
+    const char *postDeivce;
 };
 
 struct AudioBuffer {

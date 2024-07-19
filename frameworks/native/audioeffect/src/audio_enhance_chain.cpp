@@ -110,7 +110,7 @@ void AudioEnhanceChain::ReleaseEnhanceChain()
 }
 
 void AudioEnhanceChain::AddEnhanceHandle(AudioEffectHandle handle, AudioEffectLibrary *libHandle,
-    const std::string &enhnace, const std::string &property)
+    const std::string &enhance, const std::string &property)
 {
     std::lock_guard<std::mutex> lock(chainMutex_);
     int32_t ret = 0;
