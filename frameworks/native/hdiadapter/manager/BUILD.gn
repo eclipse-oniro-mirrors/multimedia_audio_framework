@@ -33,9 +33,7 @@ ohos_shared_library("hdiadapter_manager") {
     "../../../../interfaces/inner_api/native/audiocommon/include",
   ]
 
-  sources = [
-    "hdi_adapter_manager.cpp",
-  ]
+  sources = [ "hdi_adapter_manager.cpp" ]
 
   deps = [
     ":hdiadapter_utils",
@@ -69,9 +67,7 @@ ohos_shared_library("hdiadapter_utils") {
     "../../../../interfaces/inner_api/native/audiocommon/include",
   ]
 
-  sources = [
-    "utils/hdi_utils_ringbuffer.cpp",
-  ]
+  sources = [ "utils/hdi_utils_ringbuffer.cpp" ]
 
   external_deps = [
     "c_utils:utils",

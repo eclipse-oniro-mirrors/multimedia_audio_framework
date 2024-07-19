@@ -148,7 +148,7 @@ RingBuffer HdiRingBuffer::DequeueInputBuffer()
         memset_s(static_cast<void *>(inputBuffer_.data), sizeof(uint8_t) * perFrameLength_,
             0, sizeof(uint8_t) * perFrameLength_);
     } else {
-       AUDIO_ERR_LOG("error: Dequeue InputBuffer failed.");
+        AUDIO_ERR_LOG("error: Dequeue InputBuffer failed.");
     }
     return inputBuffer_;
 }
@@ -161,7 +161,7 @@ RingBuffer HdiRingBuffer::AcquireOutputBuffer()
         memset_s(static_cast<void *>(outputBuffer_.data), sizeof(uint8_t) * perFrameLength_,
             0, sizeof(uint8_t) * perFrameLength_);
     } else {
-       AUDIO_ERR_LOG("error: Acquire outpurtBuffer failed.");
+        AUDIO_ERR_LOG("error: Acquire outpurtBuffer failed.");
     }
     return outputBuffer_;
 }
