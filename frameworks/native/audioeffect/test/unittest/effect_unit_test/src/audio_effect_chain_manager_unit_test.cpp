@@ -69,12 +69,12 @@ void AudioEffectChainManagerUnitTest::TearDownTestCase(void) {}
 void AudioEffectChainManagerUnitTest::SetUp(void) {}
 void AudioEffectChainManagerUnitTest::TearDown(void) {}
 
-/**
-* @tc.name   : Test CreateAudioEffectChainDynamic API
-* @tc.number : CreateAudioEffectChainDynamic_001
-* @tc.desc   : Test CreateAudioEffectChainDynamic interface(using empty use case).
-*              Test GetDeviceTypeName interface and SetAudioEffectChainDynamic interface simultaneously.
-*/
+/*
+ * tc.name   : Test CreateAudioEffectChainDynamic API
+ * tc.number : CreateAudioEffectChainDynamic_001
+ * tc.desc   : Test CreateAudioEffectChainDynamic interface(using empty use case).
+ *             Test GetDeviceTypeName interface and SetAudioEffectChainDynamic interface simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, CreateAudioEffectChainDynamic_001, TestSize.Level1)
 {
     string sceneType = "";
@@ -87,12 +87,12 @@ HWTEST(AudioEffectChainManagerUnitTest, CreateAudioEffectChainDynamic_001, TestS
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test CreateAudioEffectChainDynamic API
-* @tc.number : CreateAudioEffectChainDynamic_002
-* @tc.desc   : Test CreateAudioEffectChainDynamic interface(using abnormal use case).
-*              Test GetDeviceTypeName interface and SetAudioEffectChainDynamic interface simultaneously.
-*/
+/*
+ * tc.name   : Test CreateAudioEffectChainDynamic API
+ * tc.number : CreateAudioEffectChainDynamic_002
+ * tc.desc   : Test CreateAudioEffectChainDynamic interface(using abnormal use case).
+ *             Test GetDeviceTypeName interface and SetAudioEffectChainDynamic interface simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, CreateAudioEffectChainDynamic_002, TestSize.Level1)
 {
     string sceneType = "123";
@@ -105,12 +105,12 @@ HWTEST(AudioEffectChainManagerUnitTest, CreateAudioEffectChainDynamic_002, TestS
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test CreateAudioEffectChainDynamic API
-* @tc.number : CreateAudioEffectChainDynamic_003
-* @tc.desc   : Test CreateAudioEffectChainDynamic interface(using correct use case).
-*              Test GetDeviceTypeName interface and SetAudioEffectChainDynamic interface simultaneously.
-*/
+/*
+ * tc.name   : Test CreateAudioEffectChainDynamic API
+ * tc.number : CreateAudioEffectChainDynamic_003
+ * tc.desc   : Test CreateAudioEffectChainDynamic interface(using correct use case).
+ *             Test GetDeviceTypeName interface and SetAudioEffectChainDynamic interface simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, CreateAudioEffectChainDynamic_003, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -123,11 +123,11 @@ HWTEST(AudioEffectChainManagerUnitTest, CreateAudioEffectChainDynamic_003, TestS
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test CheckAndAddSessionID API
-* @tc.number : CheckAndAddSessionID_001
-* @tc.desc   : Test CheckAndAddSessionID interface.
-*/
+/*
+ * tc.name   : Test CheckAndAddSessionID API
+ * tc.number : CheckAndAddSessionID_001
+ * tc.desc   : Test CheckAndAddSessionID interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, CheckAndAddSessionID_001, TestSize.Level1)
 {
     string sessionID = "123456";
@@ -137,11 +137,11 @@ HWTEST(AudioEffectChainManagerUnitTest, CheckAndAddSessionID_001, TestSize.Level
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test CheckAndRemoveSessionID API
-* @tc.number : CheckAndRemoveSessionID_001
-* @tc.desc   : Test CheckAndRemoveSessionID interface(using incorrect use case).
-*/
+/*
+ * tc.name   : Test CheckAndRemoveSessionID API
+ * tc.number : CheckAndRemoveSessionID_001
+ * tc.desc   : Test CheckAndRemoveSessionID interface(using incorrect use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, CheckAndRemoveSessionID_001, TestSize.Level1)
 {
     string sessionID = "123456";
@@ -152,11 +152,11 @@ HWTEST(AudioEffectChainManagerUnitTest, CheckAndRemoveSessionID_001, TestSize.Le
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test CheckAndRemoveSessionID API
-* @tc.number : CheckAndRemoveSessionID_002
-* @tc.desc   : Test CheckAndRemoveSessionID interface(using correct use case).
-*/
+/*
+ * tc.name   : Test CheckAndRemoveSessionID API
+ * tc.number : CheckAndRemoveSessionID_002
+ * tc.desc   : Test CheckAndRemoveSessionID interface(using correct use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, CheckAndRemoveSessionID_002, TestSize.Level1)
 {
     string sessionID = "123456";
@@ -167,11 +167,11 @@ HWTEST(AudioEffectChainManagerUnitTest, CheckAndRemoveSessionID_002, TestSize.Le
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test CheckAndRemoveSessionID API
-* @tc.number : CheckAndRemoveSessionID_003
-* @tc.desc   : Test CheckAndRemoveSessionID interface(without using CheckAndAddSessionID interface).
-*/
+/*
+ * tc.name   : Test CheckAndRemoveSessionID API
+ * tc.number : CheckAndRemoveSessionID_003
+ * tc.desc   : Test CheckAndRemoveSessionID interface(without using CheckAndAddSessionID interface).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, CheckAndRemoveSessionID_003, TestSize.Level1)
 {
     string sessionID = "123456";
@@ -181,11 +181,11 @@ HWTEST(AudioEffectChainManagerUnitTest, CheckAndRemoveSessionID_003, TestSize.Le
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ReleaseAudioEffectChainDynamic API
-* @tc.number : ReleaseAudioEffectChainDynamic_001
-* @tc.desc   : Test ReleaseAudioEffectChainDynamic interface(using empty use case).
-*/
+/*
+ * tc.name   : Test ReleaseAudioEffectChainDynamic API
+ * tc.number : ReleaseAudioEffectChainDynamic_001
+ * tc.desc   : Test ReleaseAudioEffectChainDynamic interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ReleaseAudioEffectChainDynamic_001, TestSize.Level1)
 {
     string sceneType = "";
@@ -198,11 +198,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ReleaseAudioEffectChainDynamic_001, Test
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ReleaseAudioEffectChainDynamic API
-* @tc.number : ReleaseAudioEffectChainDynamic_002
-* @tc.desc   : Test ReleaseAudioEffectChainDynamic interface(using incorrect use case).
-*/
+/*
+ * tc.name   : Test ReleaseAudioEffectChainDynamic API
+ * tc.number : ReleaseAudioEffectChainDynamic_002
+ * tc.desc   : Test ReleaseAudioEffectChainDynamic interface(using incorrect use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ReleaseAudioEffectChainDynamic_002, TestSize.Level1)
 {
     string sceneType = "123";
@@ -215,11 +215,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ReleaseAudioEffectChainDynamic_002, Test
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ReleaseAudioEffectChainDynamic API
-* @tc.number : ReleaseAudioEffectChainDynamic_003
-* @tc.desc   : Test ReleaseAudioEffectChainDynamic interface(using correct use case).
-*/
+/*
+ * tc.name   : Test ReleaseAudioEffectChainDynamic API
+ * tc.number : ReleaseAudioEffectChainDynamic_003
+ * tc.desc   : Test ReleaseAudioEffectChainDynamic interface(using correct use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ReleaseAudioEffectChainDynamic_003, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -232,11 +232,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ReleaseAudioEffectChainDynamic_003, Test
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ExistAudioEffectChain API
-* @tc.number : ExistAudioEffectChain_001
-* @tc.desc   : Test ExistAudioEffectChain interface(without using InitAudioEffectChainManager).
-*/
+/*
+ * tc.name   : Test ExistAudioEffectChain API
+ * tc.number : ExistAudioEffectChain_001
+ * tc.desc   : Test ExistAudioEffectChain interface(without using InitAudioEffectChainManager).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_001, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -249,11 +249,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_001, TestSize.Leve
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ExistAudioEffectChain API
-* @tc.number : ExistAudioEffectChain_002
-* @tc.desc   : Test ExistAudioEffectChain interface(using correct use case).
-*/
+/*
+ * tc.name   : Test ExistAudioEffectChain API
+ * tc.number : ExistAudioEffectChain_002
+ * tc.desc   : Test ExistAudioEffectChain interface(using correct use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_002, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -269,11 +269,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_002, TestSize.Leve
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ExistAudioEffectChain API
-* @tc.number : ExistAudioEffectChain_003
-* @tc.desc   : Test ExistAudioEffectChain interface(using empty use case).
-*/
+/*
+ * tc.name   : Test ExistAudioEffectChain API
+ * tc.number : ExistAudioEffectChain_003
+ * tc.desc   : Test ExistAudioEffectChain interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_003, TestSize.Level1)
 {
     string sceneType = "";
@@ -289,11 +289,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_003, TestSize.Leve
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ExistAudioEffectChain API
-* @tc.number : ExistAudioEffectChain_004
-* @tc.desc   : Test ExistAudioEffectChain interface(using incorrect use case).
-*/
+/*
+ * tc.name   : Test ExistAudioEffectChain API
+ * tc.number : ExistAudioEffectChain_004
+ * tc.desc   : Test ExistAudioEffectChain interface(using incorrect use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_004, TestSize.Level1)
 {
     string sceneType = "123";
@@ -309,11 +309,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_004, TestSize.Leve
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ExistAudioEffectChain API
-* @tc.number : ExistAudioEffectChain_005
-* @tc.desc   : Test ExistAudioEffectChain interface(without using CreateAudioEffectChainDynamic).
-*/
+/*
+ * tc.name   : Test ExistAudioEffectChain API
+ * tc.number : ExistAudioEffectChain_005
+ * tc.desc   : Test ExistAudioEffectChain interface(without using CreateAudioEffectChainDynamic).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_005, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -328,11 +328,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ExistAudioEffectChain_005, TestSize.Leve
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ApplyAudioEffectChain API
-* @tc.number : ApplyAudioEffectChain_001
-* @tc.desc   : Test ApplyAudioEffectChain interface(using empty use case).
-*/
+/*
+ * tc.name   : Test ApplyAudioEffectChain API
+ * tc.number : ApplyAudioEffectChain_001
+ * tc.desc   : Test ApplyAudioEffectChain interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ApplyAudioEffectChain_001, TestSize.Level1)
 {
     float* bufIn;
@@ -356,11 +356,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ApplyAudioEffectChain_001, TestSize.Leve
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ApplyAudioEffectChain API
-* @tc.number : ApplyAudioEffectChain_002
-* @tc.desc   : Test ApplyAudioEffectChain interface(using correct use case).
-*/
+/*
+ * tc.name   : Test ApplyAudioEffectChain API
+ * tc.number : ApplyAudioEffectChain_002
+ * tc.desc   : Test ApplyAudioEffectChain interface(using correct use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ApplyAudioEffectChain_002, TestSize.Level1)
 {
     float* bufIn;
@@ -384,11 +384,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ApplyAudioEffectChain_002, TestSize.Leve
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ApplyAudioEffectChain API
-* @tc.number : ApplyAudioEffectChain_003
-* @tc.desc   : Test ApplyAudioEffectChain interface(using abnormal use case).
-*/
+/*
+ * tc.name   : Test ApplyAudioEffectChain API
+ * tc.number : ApplyAudioEffectChain_003
+ * tc.desc   : Test ApplyAudioEffectChain interface(using abnormal use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ApplyAudioEffectChain_003, TestSize.Level1)
 {
     float* bufIn;
@@ -412,11 +412,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ApplyAudioEffectChain_003, TestSize.Leve
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ApplyAudioEffectChain API
-* @tc.number : ApplyAudioEffectChain_004
-* @tc.desc   : Test ApplyAudioEffectChain interface(without using CreateAudioEffectChainDynamic interface).
-*/
+/*
+ * tc.name   : Test ApplyAudioEffectChain API
+ * tc.number : ApplyAudioEffectChain_004
+ * tc.desc   : Test ApplyAudioEffectChain interface(without using CreateAudioEffectChainDynamic interface).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ApplyAudioEffectChain_004, TestSize.Level1)
 {
     float* bufIn;
@@ -439,12 +439,12 @@ HWTEST(AudioEffectChainManagerUnitTest, ApplyAudioEffectChain_004, TestSize.Leve
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SetOutputDeviceSink API
-* @tc.number : SetOutputDeviceSink_001
-* @tc.desc   : Test SetOutputDeviceSink interface(using correct use case),
-*              test SetSpkOffloadState interface simultaneously.
-*/
+/*
+ * tc.name   : Test SetOutputDeviceSink API
+ * tc.number : SetOutputDeviceSink_001
+ * tc.desc   : Test SetOutputDeviceSink interface(using correct use case),
+ *             test SetSpkOffloadState interface simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetOutputDeviceSink_001, TestSize.Level1)
 {
     int32_t device = 2;
@@ -456,12 +456,12 @@ HWTEST(AudioEffectChainManagerUnitTest, SetOutputDeviceSink_001, TestSize.Level1
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SetOutputDeviceSink API
-* @tc.number : SetOutputDeviceSink_002
-* @tc.desc   : Test SetOutputDeviceSink interface(using empty use case),
-*              test SetSpkOffloadState interface simultaneously.
-*/
+/*
+ * tc.name   : Test SetOutputDeviceSink API
+ * tc.number : SetOutputDeviceSink_002
+ * tc.desc   : Test SetOutputDeviceSink interface(using empty use case),
+ *             test SetSpkOffloadState interface simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetOutputDeviceSink_002, TestSize.Level1)
 {
     int32_t device = 2;
@@ -473,12 +473,12 @@ HWTEST(AudioEffectChainManagerUnitTest, SetOutputDeviceSink_002, TestSize.Level1
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SetOutputDeviceSink API
-* @tc.number : SetOutputDeviceSink_003
-* @tc.desc   : Test SetOutputDeviceSink interface(using abnormal use case),
-*              test SetSpkOffloadState interface simultaneously.
-*/
+/*
+ * tc.name   : Test SetOutputDeviceSink API
+ * tc.number : SetOutputDeviceSink_003
+ * tc.desc   : Test SetOutputDeviceSink interface(using abnormal use case),
+ *             test SetSpkOffloadState interface simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetOutputDeviceSink_003, TestSize.Level1)
 {
     int32_t device = 2;
@@ -490,11 +490,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SetOutputDeviceSink_003, TestSize.Level1
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test GetDeviceSinkName API
-* @tc.number : GetDeviceSinkName_001
-* @tc.desc   : Test GetDeviceSinkName interface.
-*/
+/*
+ * tc.name   : Test GetDeviceSinkName API
+ * tc.number : GetDeviceSinkName_001
+ * tc.desc   : Test GetDeviceSinkName interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, GetDeviceSinkName_001, TestSize.Level1)
 {
     string result = AudioEffectChainManager::GetInstance()->GetDeviceSinkName();
@@ -503,11 +503,11 @@ HWTEST(AudioEffectChainManagerUnitTest, GetDeviceSinkName_001, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test GetOffloadEnabled API
-* @tc.number : GetOffloadEnabled_001
-* @tc.desc   : Test GetOffloadEnabled interface.
-*/
+/*
+ * tc.name   : Test GetOffloadEnabled API
+ * tc.number : GetOffloadEnabled_001
+ * tc.desc   : Test GetOffloadEnabled interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, GetOffloadEnabled_001, TestSize.Level1)
 {
     bool result = AudioEffectChainManager::GetInstance()->GetOffloadEnabled();
@@ -516,21 +516,21 @@ HWTEST(AudioEffectChainManagerUnitTest, GetOffloadEnabled_001, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test Dump API
-* @tc.number : Dump_001
-* @tc.desc   : Test Dump interface.
-*/
+/*
+ * tc.name   : Test Dump API
+ * tc.number : Dump_001
+ * tc.desc   : Test Dump interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, Dump_001, TestSize.Level1)
 {
     AudioEffectChainManager::GetInstance()->Dump();
 }
 
-/**
-* @tc.name   : Test UpdateMultichannelConfig API
-* @tc.number : UpdateMultichannelConfig_001
-* @tc.desc   : Test UpdateMultichannelConfig interface(using correct use case).
-*/
+/*
+ * tc.name   : Test UpdateMultichannelConfig API
+ * tc.number : UpdateMultichannelConfig_001
+ * tc.desc   : Test UpdateMultichannelConfig interface(using correct use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, UpdateMultichannelConfig_001, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -543,11 +543,11 @@ HWTEST(AudioEffectChainManagerUnitTest, UpdateMultichannelConfig_001, TestSize.L
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test UpdateMultichannelConfig API
-* @tc.number : UpdateMultichannelConfig_002
-* @tc.desc   : Test UpdateMultichannelConfig interface(using abnormal use case).
-*/
+/*
+ * tc.name   : Test UpdateMultichannelConfig API
+ * tc.number : UpdateMultichannelConfig_002
+ * tc.desc   : Test UpdateMultichannelConfig interface(using abnormal use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, UpdateMultichannelConfig_002, TestSize.Level1)
 {
     string sceneType = "123";
@@ -560,11 +560,11 @@ HWTEST(AudioEffectChainManagerUnitTest, UpdateMultichannelConfig_002, TestSize.L
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test UpdateMultichannelConfig API
-* @tc.number : UpdateMultichannelConfig_003
-* @tc.desc   : Test UpdateMultichannelConfig interface(using empty use case).
-*/
+/*
+ * tc.name   : Test UpdateMultichannelConfig API
+ * tc.number : UpdateMultichannelConfig_003
+ * tc.desc   : Test UpdateMultichannelConfig interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, UpdateMultichannelConfig_003, TestSize.Level1)
 {
     string sceneType = "";
@@ -577,11 +577,11 @@ HWTEST(AudioEffectChainManagerUnitTest, UpdateMultichannelConfig_003, TestSize.L
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test UpdateMultichannelConfig API
-* @tc.number : UpdateMultichannelConfig_004
-* @tc.desc   : Test UpdateMultichannelConfig interface(without using CreateAudioEffectChainDynamic interface).
-*/
+/*
+ * tc.name   : Test UpdateMultichannelConfig API
+ * tc.number : UpdateMultichannelConfig_004
+ * tc.desc   : Test UpdateMultichannelConfig interface(without using CreateAudioEffectChainDynamic interface).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, UpdateMultichannelConfig_004, TestSize.Level1)
 {
     string sceneType = "";
@@ -593,11 +593,11 @@ HWTEST(AudioEffectChainManagerUnitTest, UpdateMultichannelConfig_004, TestSize.L
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test InitAudioEffectChainDynamic API
-* @tc.number : InitAudioEffectChainDynamic_001
-* @tc.desc   : Test InitAudioEffectChainDynamic interface(without using InitAudioEffectChainManager interface).
-*/
+/*
+ * tc.name   : Test InitAudioEffectChainDynamic API
+ * tc.number : InitAudioEffectChainDynamic_001
+ * tc.desc   : Test InitAudioEffectChainDynamic interface(without using InitAudioEffectChainManager interface).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, InitAudioEffectChainDynamic_001, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -607,11 +607,11 @@ HWTEST(AudioEffectChainManagerUnitTest, InitAudioEffectChainDynamic_001, TestSiz
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test InitAudioEffectChainDynamic API
-* @tc.number : InitAudioEffectChainDynamic_002
-* @tc.desc   : Test InitAudioEffectChainDynamic interface(using correct use case).
-*/
+/*
+ * tc.name   : Test InitAudioEffectChainDynamic API
+ * tc.number : InitAudioEffectChainDynamic_002
+ * tc.desc   : Test InitAudioEffectChainDynamic interface(using correct use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, InitAudioEffectChainDynamic_002, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -623,11 +623,11 @@ HWTEST(AudioEffectChainManagerUnitTest, InitAudioEffectChainDynamic_002, TestSiz
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test InitAudioEffectChainDynamic API
-* @tc.number : InitAudioEffectChainDynamic_003
-* @tc.desc   : Test InitAudioEffectChainDynamic interface(using incorrect use case).
-*/
+/*
+ * tc.name   : Test InitAudioEffectChainDynamic API
+ * tc.number : InitAudioEffectChainDynamic_003
+ * tc.desc   : Test InitAudioEffectChainDynamic interface(using incorrect use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, InitAudioEffectChainDynamic_003, TestSize.Level1)
 {
     string sceneType = "123";
@@ -639,11 +639,11 @@ HWTEST(AudioEffectChainManagerUnitTest, InitAudioEffectChainDynamic_003, TestSiz
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test InitAudioEffectChainDynamic API
-* @tc.number : InitAudioEffectChainDynamic_004
-* @tc.desc   : Test InitAudioEffectChainDynamic interface(using empty use case).
-*/
+/*
+ * tc.name   : Test InitAudioEffectChainDynamic API
+ * tc.number : InitAudioEffectChainDynamic_004
+ * tc.desc   : Test InitAudioEffectChainDynamic interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, InitAudioEffectChainDynamic_004, TestSize.Level1)
 {
     string sceneType = "";
@@ -655,12 +655,12 @@ HWTEST(AudioEffectChainManagerUnitTest, InitAudioEffectChainDynamic_004, TestSiz
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test UpdateSpatializationState API
-* @tc.number : UpdateSpatializationState_001
-* @tc.desc   : Test UpdateSpatializationState interface.Test UpdateSensorState,
-*              DeleteAllChains and RecoverAllChains interface simultaneously.
-*/
+/*
+ * tc.name   : Test UpdateSpatializationState API
+ * tc.number : UpdateSpatializationState_001
+ * tc.desc   : Test UpdateSpatializationState interface.Test UpdateSensorState,
+ *             DeleteAllChains and RecoverAllChains interface simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, UpdateSpatializationState_001, TestSize.Level1)
 {
     AudioSpatializationState spatializationState = {false, false};
@@ -670,12 +670,12 @@ HWTEST(AudioEffectChainManagerUnitTest, UpdateSpatializationState_001, TestSize.
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test UpdateSpatializationState API
-* @tc.number : UpdateSpatializationState_002
-* @tc.desc   : Test UpdateSpatializationState interface.Test UpdateSensorState,
-*              DeleteAllChains and RecoverAllChains interface simultaneously.
-*/
+/*
+ * tc.name   : Test UpdateSpatializationState API
+ * tc.number : UpdateSpatializationState_002
+ * tc.desc   : Test UpdateSpatializationState interface.Test UpdateSensorState,
+ *             DeleteAllChains and RecoverAllChains interface simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, UpdateSpatializationState_002, TestSize.Level1)
 {
     AudioSpatializationState spatializationState = {true, true};
@@ -685,11 +685,11 @@ HWTEST(AudioEffectChainManagerUnitTest, UpdateSpatializationState_002, TestSize.
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SetHdiParam API
-* @tc.number : SetHdiParam_001
-* @tc.desc   : Test SetHdiParam interface(without using InitAudioEffectChainManager interface).
-*/
+/*
+ * tc.name   : Test SetHdiParam API
+ * tc.number : SetHdiParam_001
+ * tc.desc   : Test SetHdiParam interface(without using InitAudioEffectChainManager interface).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_001, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -701,11 +701,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_001, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SetHdiParam API
-* @tc.number : SetHdiParam_002
-* @tc.desc   : Test SetHdiParam interface(enabled = true).
-*/
+/*
+ * tc.name   : Test SetHdiParam API
+ * tc.number : SetHdiParam_002
+ * tc.desc   : Test SetHdiParam interface(enabled = true).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_002, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -719,11 +719,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_002, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SetHdiParam API
-* @tc.number : SetHdiParam_003
-* @tc.desc   : Test SetHdiParam interface(enabled = false).
-*/
+/*
+ * tc.name   : Test SetHdiParam API
+ * tc.number : SetHdiParam_003
+ * tc.desc   : Test SetHdiParam interface(enabled = false).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_003, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -737,11 +737,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_003, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SetHdiParam API
-* @tc.number : SetHdiParam_004
-* @tc.desc   : Test SetHdiParam interface(using empty use case).
-*/
+/*
+ * tc.name   : Test SetHdiParam API
+ * tc.number : SetHdiParam_004
+ * tc.desc   : Test SetHdiParam interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_004, TestSize.Level1)
 {
     string sceneType = "";
@@ -755,11 +755,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_004, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SetHdiParam API
-* @tc.number : SetHdiParam_005
-* @tc.desc   : Test SetHdiParam interface(using incorrect use case).
-*/
+/*
+ * tc.name   : Test SetHdiParam API
+ * tc.number : SetHdiParam_005
+ * tc.desc   : Test SetHdiParam interface(using incorrect use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_005, TestSize.Level1)
 {
     string sceneType = "123";
@@ -773,11 +773,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SetHdiParam_005, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SessionInfoMapAdd API
-* @tc.number : SessionInfoMapAdd_001
-* @tc.desc   : Test SessionInfoMapAdd interface.
-*/
+/*
+ * tc.name   : Test SessionInfoMapAdd API
+ * tc.number : SessionInfoMapAdd_001
+ * tc.desc   : Test SessionInfoMapAdd interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapAdd_001, TestSize.Level1)
 {
     string sessionID = "123456";
@@ -787,11 +787,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapAdd_001, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SessionInfoMapAdd API
-* @tc.number : SessionInfoMapAdd_002
-* @tc.desc   : Test SessionInfoMapAdd interface(using empty use case).
-*/
+/*
+ * tc.name   : Test SessionInfoMapAdd API
+ * tc.number : SessionInfoMapAdd_002
+ * tc.desc   : Test SessionInfoMapAdd interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapAdd_002, TestSize.Level1)
 {
     string sessionID = "";
@@ -801,11 +801,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapAdd_002, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SessionInfoMapDelete API
-* @tc.number : SessionInfoMapDelete_001
-* @tc.desc   : Test SessionInfoMapDelete interface(without using SessionInfoMapAdd interface).
-*/
+/*
+ * tc.name   : Test SessionInfoMapDelete API
+ * tc.number : SessionInfoMapDelete_001
+ * tc.desc   : Test SessionInfoMapDelete interface(without using SessionInfoMapAdd interface).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapDelete_001, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -816,11 +816,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapDelete_001, TestSize.Level
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SessionInfoMapDelete API
-* @tc.number : SessionInfoMapDelete_002
-* @tc.desc   : Test SessionInfoMapDelete interface(using correct use case).
-*/
+/*
+ * tc.name   : Test SessionInfoMapDelete API
+ * tc.number : SessionInfoMapDelete_002
+ * tc.desc   : Test SessionInfoMapDelete interface(using correct use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapDelete_002, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -834,11 +834,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapDelete_002, TestSize.Level
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SessionInfoMapDelete API
-* @tc.number : SessionInfoMapDelete_003
-* @tc.desc   : Test SessionInfoMapDelete interface(using incorrect use case).
-*/
+/*
+ * tc.name   : Test SessionInfoMapDelete API
+ * tc.number : SessionInfoMapDelete_003
+ * tc.desc   : Test SessionInfoMapDelete interface(using incorrect use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapDelete_003, TestSize.Level1)
 {
     string sceneType = "123";
@@ -850,11 +850,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapDelete_003, TestSize.Level
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test SessionInfoMapDelete API
-* @tc.number : SessionInfoMapDelete_004
-* @tc.desc   : Test SessionInfoMapDelete interface(using empty use case).
-*/
+/*
+ * tc.name   : Test SessionInfoMapDelete API
+ * tc.number : SessionInfoMapDelete_004
+ * tc.desc   : Test SessionInfoMapDelete interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapDelete_004, TestSize.Level1)
 {
     string sceneType = "";
@@ -866,11 +866,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SessionInfoMapDelete_004, TestSize.Level
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ReturnEffectChannelInfo API
-* @tc.number : ReturnEffectChannelInfo_001
-* @tc.desc   : Test ReturnEffectChannelInfo interface(without using SessionInfoMapAdd interface).
-*/
+/*
+ * tc.name   : Test ReturnEffectChannelInfo API
+ * tc.number : ReturnEffectChannelInfo_001
+ * tc.desc   : Test ReturnEffectChannelInfo interface(without using SessionInfoMapAdd interface).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ReturnEffectChannelInfo_001, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -883,11 +883,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ReturnEffectChannelInfo_001, TestSize.Le
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ReturnEffectChannelInfo API
-* @tc.number : ReturnEffectChannelInfo_002
-* @tc.desc   : Test ReturnEffectChannelInfo interface(using correct use case).
-*/
+/*
+ * tc.name   : Test ReturnEffectChannelInfo API
+ * tc.number : ReturnEffectChannelInfo_002
+ * tc.desc   : Test ReturnEffectChannelInfo interface(using correct use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ReturnEffectChannelInfo_002, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -908,11 +908,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ReturnEffectChannelInfo_002, TestSize.Le
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ReturnEffectChannelInfo API
-* @tc.number : ReturnEffectChannelInfo_003
-* @tc.desc   : Test ReturnEffectChannelInfo interface(using incorrect use case).
-*/
+/*
+ * tc.name   : Test ReturnEffectChannelInfo API
+ * tc.number : ReturnEffectChannelInfo_003
+ * tc.desc   : Test ReturnEffectChannelInfo interface(using incorrect use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ReturnEffectChannelInfo_003, TestSize.Level1)
 {
     string sceneType = "123";
@@ -927,11 +927,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ReturnEffectChannelInfo_003, TestSize.Le
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ReturnEffectChannelInfo API
-* @tc.number : ReturnEffectChannelInfo_004
-* @tc.desc   : Test ReturnEffectChannelInfo interface(using empty use case).
-*/
+/*
+ * tc.name   : Test ReturnEffectChannelInfo API
+ * tc.number : ReturnEffectChannelInfo_004
+ * tc.desc   : Test ReturnEffectChannelInfo interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ReturnEffectChannelInfo_004, TestSize.Level1)
 {
     string sceneType = "";
@@ -946,11 +946,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ReturnEffectChannelInfo_004, TestSize.Le
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ReturnMultiChannelInfo API
-* @tc.number : ReturnMultiChannelInfo_001
-* @tc.desc   : Test ReturnMultiChannelInfo interface.
-*/
+/*
+ * tc.name   : Test ReturnMultiChannelInfo API
+ * tc.number : ReturnMultiChannelInfo_001
+ * tc.desc   : Test ReturnMultiChannelInfo interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ReturnMultiChannelInfo_001, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -964,11 +964,11 @@ HWTEST(AudioEffectChainManagerUnitTest, ReturnMultiChannelInfo_001, TestSize.Lev
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test RegisterEffectChainCountBackupMap API
-* @tc.number : RegisterEffectChainCountBackupMap_001
-* @tc.desc   : Test RegisterEffectChainCountBackupMap interface.
-*/
+/*
+ * tc.name   : Test RegisterEffectChainCountBackupMap API
+ * tc.number : RegisterEffectChainCountBackupMap_001
+ * tc.desc   : Test RegisterEffectChainCountBackupMap interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_001, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -978,11 +978,11 @@ HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_001, T
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test RegisterEffectChainCountBackupMap API
-* @tc.number : RegisterEffectChainCountBackupMap_002
-* @tc.desc   : Test RegisterEffectChainCountBackupMap interface.
-*/
+/*
+ * tc.name   : Test RegisterEffectChainCountBackupMap API
+ * tc.number : RegisterEffectChainCountBackupMap_002
+ * tc.desc   : Test RegisterEffectChainCountBackupMap interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_002, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -992,11 +992,11 @@ HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_002, T
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test RegisterEffectChainCountBackupMap API
-* @tc.number : RegisterEffectChainCountBackupMap_003
-* @tc.desc   : Test RegisterEffectChainCountBackupMap interface(using empty use case).
-*/
+/*
+ * tc.name   : Test RegisterEffectChainCountBackupMap API
+ * tc.number : RegisterEffectChainCountBackupMap_003
+ * tc.desc   : Test RegisterEffectChainCountBackupMap interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_003, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
@@ -1006,12 +1006,12 @@ HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_003, T
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test EffectRotationUpdate API
-* @tc.number : EffectRotationUpdate_001
-* @tc.desc   : Test EffectRotationUpdate interface.
-*              Test EffectDspRotationUpdate and EffectApRotationUpdate simultaneously.
-*/
+/*
+ * tc.name   : Test EffectRotationUpdate API
+ * tc.number : EffectRotationUpdate_001
+ * tc.desc   : Test EffectRotationUpdate interface.
+ *              Test EffectDspRotationUpdate and EffectApRotationUpdate simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, EffectRotationUpdate_001, TestSize.Level1)
 {
     uint32_t rotationState = 0;
@@ -1021,12 +1021,12 @@ HWTEST(AudioEffectChainManagerUnitTest, EffectRotationUpdate_001, TestSize.Level
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test EffectRotationUpdate API
-* @tc.number : EffectRotationUpdate_002
-* @tc.desc   : Test EffectRotationUpdate interface.
-*              Test EffectDspRotationUpdate and EffectApRotationUpdate simultaneously.
-*/
+/*
+ * tc.name   : Test EffectRotationUpdate API
+ * tc.number : EffectRotationUpdate_002
+ * tc.desc   : Test EffectRotationUpdate interface.
+ *              Test EffectDspRotationUpdate and EffectApRotationUpdate simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, EffectRotationUpdate_002, TestSize.Level1)
 {
     uint32_t rotationState = 1;
@@ -1035,11 +1035,11 @@ HWTEST(AudioEffectChainManagerUnitTest, EffectRotationUpdate_002, TestSize.Level
     EXPECT_EQ(SUCCESS, result);
 }
 
-/**
-* @tc.name   : Test EffectVolumeUpdate API
-* @tc.number : EffectVolumeUpdate_001
-* @tc.desc   : Test EffectVolumeUpdate interface.Test EffectDspVolumeUpdate and EffectApVolumeUpdate simultaneously.
-*/
+/*
+ * tc.name   : Test EffectVolumeUpdate API
+ * tc.number : EffectVolumeUpdate_001
+ * tc.desc   : Test EffectVolumeUpdate interface.Test EffectDspVolumeUpdate and EffectApVolumeUpdate simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, StreamVolumeUpdate_001, TestSize.Level1)
 {
     string sessionIDString = "123456";
@@ -1051,12 +1051,12 @@ HWTEST(AudioEffectChainManagerUnitTest, StreamVolumeUpdate_001, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test EffectVolumeUpdate API
-* @tc.number : EffectVolumeUpdate_002
-* @tc.desc   : Test EffectVolumeUpdate interface(using abnormal use case).
-*              Test EffectDspVolumeUpdate and EffectApVolumeUpdate simultaneously.
-*/
+/*
+ * tc.name   : Test EffectVolumeUpdate API
+ * tc.number : EffectVolumeUpdate_002
+ * tc.desc   : Test EffectVolumeUpdate interface(using abnormal use case).
+ *              Test EffectDspVolumeUpdate and EffectApVolumeUpdate simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SystemVolumeUpdate_001, TestSize.Level1)
 {
     float systemVolume = 0.888;
@@ -1068,11 +1068,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SystemVolumeUpdate_001, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test GetLatency API
-* @tc.number : GetLatency_001
-* @tc.desc   : Test GetLatency interface.
-*/
+/*
+ * tc.name   : Test GetLatency API
+ * tc.number : GetLatency_001
+ * tc.desc   : Test GetLatency interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, GetLatency_001, TestSize.Level1)
 {
     string sessionID = "123456" ;
@@ -1083,11 +1083,11 @@ HWTEST(AudioEffectChainManagerUnitTest, GetLatency_001, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test GetLatency API
-* @tc.number : GetLatency_002
-* @tc.desc   : Test GetLatency interface(using empty use case).
-*/
+/*
+ * tc.name   : Test GetLatency API
+ * tc.number : GetLatency_002
+ * tc.desc   : Test GetLatency interface(using empty use case).
+ */
 HWTEST(AudioEffectChainManagerUnitTest, GetLatency_002, TestSize.Level1)
 {
     string sessionID = "" ;
@@ -1098,13 +1098,12 @@ HWTEST(AudioEffectChainManagerUnitTest, GetLatency_002, TestSize.Level1)
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-
-/**
-* @tc.name   : Test SetSpatializationSceneType API
-* @tc.number : SetSpatializationSceneType_001
-* @tc.desc   : Test SetSpatializationSceneType interface.
-*              Test GetSceneTypeFromSpatializationSceneType and UpdateEffectChainParams interface simultaneously.
-*/
+/*
+ * tc.name   : Test SetSpatializationSceneType API
+ * tc.number : SetSpatializationSceneType_001
+ * tc.desc   : Test SetSpatializationSceneType interface.
+ *              Test GetSceneTypeFromSpatializationSceneType and UpdateEffectChainParams interface simultaneously.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetSpatializationSceneType_001, TestSize.Level1)
 {
     AudioSpatializationSceneType spatializationSceneType = SPATIALIZATION_SCENE_TYPE_DEFAULT;
@@ -1114,11 +1113,11 @@ HWTEST(AudioEffectChainManagerUnitTest, SetSpatializationSceneType_001, TestSize
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test GetCurSpatializationEnabled API
-* @tc.number : GetCurSpatializationEnabled_001
-* @tc.desc   : Test GetCurSpatializationEnabled interface.
-*/
+/*
+ * tc.name   : Test GetCurSpatializationEnabled API
+ * tc.number : GetCurSpatializationEnabled_001
+ * tc.desc   : Test GetCurSpatializationEnabled interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, GetCurSpatializationEnabled_001, TestSize.Level1)
 {
     bool result = AudioEffectChainManager::GetInstance()->GetCurSpatializationEnabled();
@@ -1126,21 +1125,21 @@ HWTEST(AudioEffectChainManagerUnitTest, GetCurSpatializationEnabled_001, TestSiz
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
-/**
-* @tc.name   : Test ResetEffectBuffer API
-* @tc.number : ResetEffectBuffer_001
-* @tc.desc   : Test ResetEffectBuffer interface.
-*/
+/*
+ * tc.name   : Test ResetEffectBuffer API
+ * tc.number : ResetEffectBuffer_001
+ * tc.desc   : Test ResetEffectBuffer interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, ResetEffectBuffer_001, TestSize.Level1)
 {
     AudioEffectChainManager::GetInstance()->ResetEffectBuffer();
 }
 
-/**
-* @tc.name   : Test GetAudioEffectProperty API
-* @tc.number : GetAudioEffectProperty_001
-* @tc.desc   : Test GetAudioEffectProperty interface.
-*/
+/*
+ * tc.name   : Test GetAudioEffectProperty API
+ * tc.number : GetAudioEffectProperty_001
+ * tc.desc   : Test GetAudioEffectProperty interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, GetAudioEffectProperty_001, TestSize.Level1)
 {
     AudioEffectChainManager::GetInstance()->ResetInfo();
@@ -1156,11 +1155,11 @@ HWTEST(AudioEffectChainManagerUnitTest, GetAudioEffectProperty_001, TestSize.Lev
     }
 }
 
-/**
-* @tc.name   : Test SetAudioEffectProperty API
-* @tc.number : SetAudioEffectProperty_001
-* @tc.desc   : Test SetAudioEffectProperty interface.
-*/
+/*
+ * tc.name   : Test SetAudioEffectProperty API
+ * tc.number : SetAudioEffectProperty_001
+ * tc.desc   : Test SetAudioEffectProperty interface.
+ */
 HWTEST(AudioEffectChainManagerUnitTest, SetAudioEffectProperty_001, TestSize.Level1)
 {
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
