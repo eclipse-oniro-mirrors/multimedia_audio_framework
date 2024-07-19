@@ -334,13 +334,6 @@ struct AudioEffectParam {
     int32_t data[];
 };
 
-struct AudioEnhanceParam {
-    uint32_t muteInfo;
-    uint32_t volumeInfo;
-    const char *preDeivce;
-    const char *postDeivce;
-};
-
 struct AudioBuffer {
     size_t frameLength;
     union {
