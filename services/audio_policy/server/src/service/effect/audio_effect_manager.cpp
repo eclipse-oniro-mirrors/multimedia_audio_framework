@@ -603,15 +603,49 @@ void AddKeyValueIntoMap(std::unordered_map<T, std::string> &map, std::string &ke
     map[key] = value;
 }
 
+void AudioEffectManager::ConstructDefaultEffectProperty(const std::string &chainName,
+    std::unordered_map<std::string, std::string> &effectDefaultProperty)
+{
+    auto effectChain = std::find_if(supportedEffectConfig_.effectChains.begin(),
+        supportedEffectConfig_.effectChains.end(),
+        [&chainName](const EffectChain& x) {
+            return x.name == chainName;
+        });
+    if (effectChain == supportedEffectConfig_.effectChains.end()) {
+        continue;
+    }
+    for (auto &effectName : effectChain->apply) {
+        auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
+            [&effectName](const Effect& effect) {
+            return effect.name == effectName;
+        });
+        if (effectIter == availableEffects_.end()) {
+            continue;
+        }
+        // if 0 property, no need to set default
+        for (auto &property : effectIter->effectProperty) {
+            auto it = effectDefaultProperty.find(effectIter->name);
+            // first assign, and no need to assign twice
+            if (it == effectDefaultProperty.end()) {
+                effectDefaultProperty[effectIter->name] = property;
+                AUDIO_INFO_LOG("effect %{public}s defaultProperty is %{public}s",
+                    effectIter->name.c_str(), property.c_str());
+            }
+            // only first property is default set
+            break;
+        }
+    }
+}
+
 void AudioEffectManager::ConstructEffectChainManagerParam(EffectChainManagerParam &effectChainMgrParam)
 {
     std::unordered_map<std::string, std::string> &map = effectChainMgrParam.sceneTypeToChainNameMap;
+    std::unordered_map<std::string, std::string> &effectDefaultProperty = effectChainMgrParam.effectDefaultProperty;
     effectChainMgrParam.maxExtraNum = oriEffectConfig_.postProcess.maxExtSceneNum;
 
     std::string sceneType;
     std::string sceneMode;
     std::string key;
-    std::unordered_map<std::string, std::string> &effectDefaultProperty = effectChainMgrParam.effectDefaultProperty;
 
     for (auto &scene: supportedEffectConfig_.postProcessNew.stream) {
         sceneType = scene.scene;
@@ -626,36 +660,7 @@ void AudioEffectManager::ConstructEffectChainManagerParam(EffectChainManagerPara
             for (auto &device: mode.devicePort) {
                 key = sceneType + "_&_" + sceneMode + "_&_" + device.type;
                 AddKeyValueIntoMap(map, key, device.chain);
-                auto chainName = device.chain;
-                auto effectChain = std::find_if(supportedEffectConfig_.effectChains.begin(),
-                    supportedEffectConfig_.effectChains.end(),
-                    [&chainName](const EffectChain& x) {
-                        return x.name == chainName;
-                    });
-                if (effectChain == supportedEffectConfig_.effectChains.end()) {
-                    continue;
-                }
-                for (auto &effectName : effectChain->apply) {
-                    auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
-                        [&effectName](const Effect& effect) {
-                        return effect.name == effectName;
-                    });
-                    if (effectIter == availableEffects_.end()) {
-                        continue;
-                    }
-                    // if 0 property, no need to set default
-                    for (auto &property : effectIter->effectProperty) {
-                        auto it = effectDefaultProperty.find(effectIter->name);
-                        // first assign, and no need to assign twice
-                        if (it == effectDefaultProperty.end()) {
-                            effectDefaultProperty[effectIter->name] = property;
-                            AUDIO_INFO_LOG("effect %{public}s defaultProperty is %{public}s",
-                                effectIter->name.c_str(), property.c_str());
-                        }
-                        // only first property is default set
-                        break;
-                    }
-                }
+                ConstructDefaultEffectProperty(device.chain, effectDefaultProperty);
             }
         }
     }
@@ -666,12 +671,12 @@ void AudioEffectManager::ConstructEffectChainManagerParam(EffectChainManagerPara
 void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerParam &enhanceChainMgrParam)
 {
     std::unordered_map<std::string, std::string> &map = enhanceChainMgrParam.sceneTypeToChainNameMap;
+    std::unordered_map<std::string, std::string> &enhanceDefaultProperty = enhanceChainMgrParam.effectDefaultProperty;
     enhanceChainMgrParam.maxExtraNum = oriEffectConfig_.preProcess.maxExtSceneNum;
 
     std::string sceneType;
     std::string sceneMode;
     std::string key;
-    std::unordered_map<std::string, std::string> &enhanceDefaultProperty = enhanceChainMgrParam.effectDefaultProperty;
 
 
     for (auto &scene: supportedEffectConfig_.preProcessNew.stream) {
@@ -688,36 +693,7 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
             for (auto &device: mode.devicePort) {
                 key = sceneType + "_&_" + sceneMode;
                 AddKeyValueIntoMap(map, key, device.chain);
-                auto chainName = device.chain;
-                auto effectChain = std::find_if(supportedEffectConfig_.effectChains.begin(),
-                    supportedEffectConfig_.effectChains.end(),
-                    [&chainName](const EffectChain& x) {
-                        return x.name == chainName;
-                    });
-                if (effectChain == supportedEffectConfig_.effectChains.end()) {
-                    continue;
-                }
-                for (auto &effectName : effectChain->apply) {
-                    auto effectIter = std::find_if(availableEffects_.begin(), availableEffects_.end(),
-                        [&effectName](const Effect& effect) {
-                        return effect.name == effectName;
-                    });
-                    if (effectIter == availableEffects_.end()) {
-                        continue;
-                    }
-                    // if 0 property, no need to set default
-                    for (auto &property : effectIter->effectProperty) {
-                        auto it = enhanceDefaultProperty.find(effectIter->name);
-                        // first assign, and no need to assign twice
-                        if (it == enhanceDefaultProperty.end()) {
-                            enhanceDefaultProperty[effectIter->name] = property;
-                            AUDIO_INFO_LOG("effect %{public}s defaultProperty is %{public}s",
-                                effectIter->name.c_str(), property.c_str());
-                        }
-                        // only first property is default set
-                        break;
-                    }
-                }
+                ConstructDefaultEffectProperty(device.chain, enhanceDefaultProperty);
             }
         }
     }

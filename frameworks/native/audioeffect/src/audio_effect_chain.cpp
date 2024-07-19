@@ -22,7 +22,6 @@
 #include "audio_log.h"
 #include "audio_utils.h"
 #include "securec.h"
-#include <ranges>
 
 namespace OHOS {
 namespace AudioStandard {

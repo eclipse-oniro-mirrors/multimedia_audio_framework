@@ -817,6 +817,29 @@ void AudioManagerProxy::RequestThreadPriority(uint32_t tid, string bundleName)
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "RequestThreadPriority failed, error: %{public}d", error);
 }
 
+static bool MarshellEffectChainMgrParam(const EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
+{
+    bool ret = data.WriteInt32(effectChainMgrParam.maxExtraNum);
+    ret &&= data.WriteString(effectChainMgrParam.defaultSceneName);
+    ret &&= data.WriteInt32(effectChainMgrParam.priorSceneList.size());
+    for (const auto &prioScene : effectChainMgrParam.priorSceneList) {
+        ret &&= data.WriteString(prioScene);
+    }
+    
+    ret &&= data.WriteInt32(effectChainMgrParam.sceneTypeToChainNameMap.size());
+    for (const auto &[scene, chain] : effectChainMgrParam.sceneTypeToChainNameMap) {
+        ret &&= data.WriteString(scene);
+        ret &&= data.WriteString(chain);
+    }
+    
+    ret &&= data.WriteInt32(effectChainMgrParam.effectDefaultProperty.size());
+    for (const auto &[effect, prop] : effectChainMgrParam.effectDefaultProperty) {
+        ret &&= data.WriteString(effect);
+        ret &&= data.WriteString(prop);
+    }
+    return ret;
+}
+
 bool AudioManagerProxy::CreateEffectChainManager(std::vector<EffectChain> &effectChains,
     const EffectChainManagerParam &effectParam, const EffectChainManagerParam &enhanceParam)
 {
@@ -848,26 +871,8 @@ bool AudioManagerProxy::CreateEffectChainManager(std::vector<EffectChain> &effec
         }
     }
 
-    dataParcel.WriteInt32(effectParam.sceneTypeToChainNameMap.size());
-    for (auto &[sceneType, effectChain] : effectParam.sceneTypeToChainNameMap) {
-        dataParcel.WriteString(sceneType);
-        dataParcel.WriteString(effectChain);
-    }
-    dataParcel.WriteInt32(enhanceParam.sceneTypeToChainNameMap.size());
-    for (auto &[sceneType, effectChain] : enhanceParam.sceneTypeToChainNameMap) {
-        dataParcel.WriteString(sceneType);
-        dataParcel.WriteString(effectChain);
-    }
-    dataParcel.WriteInt32(effectParam.effectDefaultProperty.size());
-    for (auto &[effect, property] : effectParam.effectDefaultProperty) {
-        dataParcel.WriteString(effect);
-        dataParcel.WriteString(property);
-    }
-    dataParcel.WriteInt32(enhanceParam.effectDefaultProperty.size());
-    for (auto &[effect, property] : enhanceParam.effectDefaultProperty) {
-        dataParcel.WriteString(effect);
-        dataParcel.WriteString(property);
-    }
+    MarshellEffectChainMgrParam(effectParam, dataParcel);
+    MarshellEffectChainMgrParam(enhanceParam, dataParcel);
 
     error = Remote()->SendRequest(
         static_cast<uint32_t>(AudioServerInterfaceCode::CREATE_AUDIO_EFFECT_CHAIN_MANAGER),
