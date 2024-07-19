@@ -105,41 +105,31 @@ bool EnhanceChainManagerExist(const char *sceneKey)
     return audioEnhanceChainMananger->ExistAudioEnhanceChain(sceneKeyString);
 }
 
-pa_sample_spec EnhanceChainManagerGetAlgoConfig(const char *sceneType, const char *upDevice, const char *downDevice)
+int32_t EnhanceChainManagerGetAlgoConfig(const char *sceneKey, pa_sample_spec *spec)
 {
-    pa_sample_spec spec;
-    pa_sample_spec_init(&spec);
     AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
-        spec, "null audioEnhanceChainManager");
-    std::string sceneTypeString = "";
-    std::string upDeviceString = "";
-    std::string downDeviceString = "";
-    if (sceneType) {
-        sceneTypeString = sceneType;
+        ERROR, "null audioEnhanceChainManager");
+    std::string sceneKeyString = "";
+    if (sceneKey) {
+        sceneKeyString = sceneKey;
     }
-    if (upDevice) {
-        upDeviceString = upDevice;
+    AudioBufferConfig config = {};
+    uint32_t ret = audioEnhanceChainMananger->AudioEnhanceChainGetAlgoConfig(sceneKeyString, config);
+    if (ret != 0 || config.samplingRate == 0) {
+        return ERROR;
     }
-    if (downDevice) {
-        downDeviceString = downDevice;
-    }
-    AudioBufferConfig config = audioEnhanceChainMananger->AudioEnhanceChainGetAlgoConfig(sceneTypeString,
-        upDeviceString, downDeviceString);
-    if (config.samplingRate == 0) {
-        return spec;
-    }
-    pa_sample_spec sampleSpec;
-    sampleSpec.rate = config.samplingRate;
-    sampleSpec.channels = static_cast<uint8_t>(config.channels);
+    spec->rate = config.samplingRate;
+    spec->channels = static_cast<uint8_t>(config.channels);
 
     auto item = FORMAT_CONVERT_MAP.find(config.format);
     if (item != FORMAT_CONVERT_MAP.end()) {
-        sampleSpec.format = item->second;
+        spec->format = item->second;
     } else {
-        sampleSpec.format = PA_SAMPLE_INVALID;
+        spec->format = PA_SAMPLE_INVALID;
+        return ERROR;
     }
-    return sampleSpec;
+    return SUCCESS;
 }
 
 bool EnhanceChainManagerIsEmptyEnhanceChain()

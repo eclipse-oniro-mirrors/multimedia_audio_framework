@@ -29,7 +29,7 @@ int32_t EnhanceChainManagerCreateCb(const char *sceneType, const char *enhanceMo
     const char *downDevice);
 int32_t EnhanceChainManagerReleaseCb(const char *sceneType, const char *upDevice, const char *downDevice);
 bool EnhanceChainManagerExist(const char *sceneKey);
-pa_sample_spec EnhanceChainManagerGetAlgoConfig(const char *sceneType, const char *upDevice, const char *downDevice);
+int32_t EnhanceChainManagerGetAlgoConfig(const char *sceneKey, pa_sample_spec *spec);
 bool EnhanceChainManagerIsEmptyEnhanceChain();
 int32_t EnhanceChainManagerInitEnhanceBuffer();
 int32_t CopyToEnhanceBufferAdapter(void *data, uint32_t length);
