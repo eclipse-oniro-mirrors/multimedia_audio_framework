@@ -8428,10 +8428,10 @@ int32_t AudioPolicyService::GetSupportedAudioEffectProperty(AudioEffectPropertyA
 {
     std::set<std::pair<std::string, std::string>> mergedSet = {};
     // Get supported property for all device
-    audioEffectManager_.GetSupportedAudioEnhanceProperty(DEVICE_TYPE_INVALID, mergedSet);
+    audioEffectManager_.AddSupportedAudioEffectPropertyByDevice(DEVICE_TYPE_INVALID, mergedSet);
     std::vector<sptr<AudioDeviceDescriptor>> descriptor = GetDevices(OUTPUT_DEVICES_FLAG);
     for (auto &item : descriptor) {
-        audioEffectManager_.GetSupportedAudioEffectProperty(item->getType(), mergedSet);
+        audioEffectManager_.AddSupportedAudioEffectPropertyByDevice(item->getType(), mergedSet);
     }
     propertyArray.property.reserve(mergedSet.size());
     std::transform(mergedSet.begin(), mergedSet.end(), std::back_inserter(propertyArray.property),
@@ -8445,10 +8445,10 @@ int32_t AudioPolicyService::GetSupportedAudioEnhanceProperty(AudioEnhancePropert
 {
     std::set<std::pair<std::string, std::string>> mergedSet = {};
     // Get supported property for all device
-    audioEffectManager_.GetSupportedAudioEnhanceProperty(DEVICE_TYPE_INVALID, mergedSet);
+    audioEffectManager_.AddSupportedAudioEnhancePropertyByDevice(DEVICE_TYPE_INVALID, mergedSet);
     std::vector<sptr<AudioDeviceDescriptor>> descriptor = GetDevices(INPUT_DEVICES_FLAG);
     for (auto &item : descriptor) {
-        audioEffectManager_.GetSupportedAudioEnhanceProperty(item->getType(), mergedSet);
+        audioEffectManager_.AddSupportedAudioEnhancePropertyByDevice(item->getType(), mergedSet);
     }
     propertyArray.property.reserve(mergedSet.size());
     std::transform(mergedSet.begin(), mergedSet.end(), std::back_inserter(propertyArray.property),

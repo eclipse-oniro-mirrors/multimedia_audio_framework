@@ -43,9 +43,9 @@ public:
     void ConstructEffectChainManagerParam(EffectChainManagerParam &effectChainMgrParam);
     void ConstructEnhanceChainManagerParam(EffectChainManagerParam &enhanceChainMgrParam);
     int32_t QueryEffectManagerSceneMode(SupportedEffectConfig &supportedEffectConfig);
-    int32_t GetSupportedAudioEffectProperty(const DeviceType& deviceType,
+    int32_t AddSupportedAudioEffectPropertyByDevice(const DeviceType& deviceType,
         std::set<std::pair<std::string, std::string>> &mergedSet);
-    int32_t GetSupportedAudioEnhanceProperty(const DeviceType& deviceType,
+    int32_t AddSupportedAudioEnhancePropertyByDevice(const DeviceType& deviceType,
         std::set<std::pair<std::string, std::string>> &mergedSet);
 
 private:
@@ -75,7 +75,7 @@ private:
     void UpdateDuplicateProcessNew(std::vector<std::string> &availableLayout, ProcessNew &processNew);
     void ConstructDefaultEffectProperty(const std::string &chainName,
         std::unordered_map<std::string, std::string> &defaultProperty);
-    int32_t GetSupportedPropertyInner(const DeviceType& deviceType,
+    int32_t AddSupportedPropertyByDeviceInner(const DeviceType& deviceType,
         std::set<std::pair<std::string, std::string>> &mergedSet,
         const std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &device2PropertySet);
 };

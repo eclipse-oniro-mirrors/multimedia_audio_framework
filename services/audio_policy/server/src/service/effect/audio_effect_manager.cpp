@@ -696,7 +696,7 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
         (int32_t)map.size());
 }
 
-int32_t AudioEffectManager::GetSupportedPropertyInner(const DeviceType& deviceType,
+int32_t AudioEffectManager::AddSupportedPropertyByDeviceInner(const DeviceType& deviceType,
     std::set<std::pair<std::string, std::string>> &mergedSet,
     const std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &device2PropertySet)
 {
@@ -713,16 +713,16 @@ int32_t AudioEffectManager::GetSupportedPropertyInner(const DeviceType& deviceTy
     return AUDIO_OK;
 }
 
-int32_t AudioEffectManager::GetSupportedAudioEffectProperty(const DeviceType &deviceType,
+int32_t AudioEffectManager::AddSupportedAudioEffectPropertyByDevice(const DeviceType &deviceType,
     std::set<std::pair<std::string, std::string>> &mergedSet)
 {
-    return GetSupportedPropertyInner(deviceType, mergedSet, device2EffectPropertySet_);
+    return AddSupportedPropertyByDeviceInner(deviceType, mergedSet, device2EffectPropertySet_);
 }
 
-int32_t AudioEffectManager::GetSupportedAudioEnhanceProperty(const DeviceType &deviceType,
+int32_t AudioEffectManager::AddSupportedAudioEnhancePropertyByDevice(const DeviceType &deviceType,
     std::set<std::pair<std::string, std::string>> &mergedSet)
 {
-    return GetSupportedPropertyInner(deviceType, mergedSet, device2EnhancePropertySet_);
+    return AddSupportedPropertyByDeviceInner(deviceType, mergedSet, device2EnhancePropertySet_);
 }
 } // namespce AudioStandard
 } // namespace OHOS
