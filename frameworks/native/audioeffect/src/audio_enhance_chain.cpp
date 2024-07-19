@@ -276,6 +276,5 @@ int32_t AudioEnhanceChain::SetPropertyToHandle(AudioEffectHandle handle, const s
     AudioEffectTransInfo replyInfo = {sizeof(int32_t), &replyData};
     return (*handle)->command(handle, EFFECT_CMD_SET_PROPERTY, &cmdInfo, &replyInfo);
 }
-
 } // namespace AudioStandard
 } // namespace OHOS
