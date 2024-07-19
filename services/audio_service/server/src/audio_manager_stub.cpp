@@ -442,14 +442,14 @@ static bool UnmarshellEffectChainMgrParam(EffectChainManagerParam &effectChainMg
 
     int32_t containSize = data.ReadInt32();
     CHECK_AND_RETURN_RET_LOG(containSize >= 0 && containSize <= AUDIO_EFFECT_PRIO_SCENE_UPPER_LIMIT,
-        AUDIO_ERR, "Create audio effect prioscene failed, please check log");
+        false, "Create audio effect prioscene failed, please check log");
     while (containSize--) {
         effectChainMgrParam.priorSceneList.emplace_back(data.ReadString());
     }
 
     containSize = data.ReadInt32();
     CHECK_AND_RETURN_RET_LOG(containSize >= 0 && containSize <= AUDIO_EFFECT_CHAIN_CONFIG_UPPER_LIMIT,
-        AUDIO_ERR, "Create audio effect chain name map failed, please check log");
+        false, "Create audio effect chain name map failed, please check log");
     while (containSize--) {
         string key = data.ReadString();
         string value = data.ReadString();
@@ -458,7 +458,7 @@ static bool UnmarshellEffectChainMgrParam(EffectChainManagerParam &effectChainMg
 
     containSize = data.ReadInt32();
     CHECK_AND_RETURN_RET_LOG(containSize >= 0 && containSize <= AUDIO_EFFECT_COUNT_PROPERTY_UPPER_LIMIT,
-        AUDIO_ERR, "Create audio effect default property failed, please check log");
+        false, "Create audio effect default property failed, please check log");
     while (containSize--) {
         string key = data.ReadString();
         string value = data.ReadString();
@@ -493,8 +493,9 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
 
     EffectChainManagerParam effectParam;
     EffectChainManagerParam enhanceParam;
-    UnmarshellEffectChainMgrParam(effectParam, data);
-    UnmarshellEffectChainMgrParam(enhanceParam, data);
+    if (!UnmarshellEffectChainMgrParam(effectParam, data) || UnmarshellEffectChainMgrParam(enhanceParam, data)) {
+        return AUDIO_ERR;
+    }
 
     bool createSuccess = CreateEffectChainManager(effectChains, effectParam, enhanceParam);
     CHECK_AND_RETURN_RET_LOG(createSuccess, AUDIO_ERR,

@@ -817,27 +817,26 @@ void AudioManagerProxy::RequestThreadPriority(uint32_t tid, string bundleName)
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "RequestThreadPriority failed, error: %{public}d", error);
 }
 
-static bool MarshellEffectChainMgrParam(const EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
+static void MarshellEffectChainMgrParam(const EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
 {
-    bool ret = data.WriteInt32(effectChainMgrParam.maxExtraNum);
-    ret &&= data.WriteString(effectChainMgrParam.defaultSceneName);
-    ret &&= data.WriteInt32(effectChainMgrParam.priorSceneList.size());
+    data.WriteInt32(effectChainMgrParam.maxExtraNum);
+    data.WriteString(effectChainMgrParam.defaultSceneName);
+    data.WriteInt32(effectChainMgrParam.priorSceneList.size());
     for (const auto &prioScene : effectChainMgrParam.priorSceneList) {
-        ret &&= data.WriteString(prioScene);
+        data.WriteString(prioScene);
     }
-    
-    ret &&= data.WriteInt32(effectChainMgrParam.sceneTypeToChainNameMap.size());
+
+    data.WriteInt32(effectChainMgrParam.sceneTypeToChainNameMap.size());
     for (const auto &[scene, chain] : effectChainMgrParam.sceneTypeToChainNameMap) {
-        ret &&= data.WriteString(scene);
-        ret &&= data.WriteString(chain);
+        data.WriteString(scene);
+        data.WriteString(chain);
     }
-    
-    ret &&= data.WriteInt32(effectChainMgrParam.effectDefaultProperty.size());
+
+    data.WriteInt32(effectChainMgrParam.effectDefaultProperty.size());
     for (const auto &[effect, prop] : effectChainMgrParam.effectDefaultProperty) {
-        ret &&= data.WriteString(effect);
-        ret &&= data.WriteString(prop);
+        data.WriteString(effect);
+        data.WriteString(prop);
     }
-    return ret;
 }
 
 bool AudioManagerProxy::CreateEffectChainManager(std::vector<EffectChain> &effectChains,
