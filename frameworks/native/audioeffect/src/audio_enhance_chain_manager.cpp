@@ -315,22 +315,19 @@ bool AudioEnhanceChainManager::ExistAudioEnhanceChain(const std::string &sceneKe
     return !audioEnhanceChain->IsEmptyEnhanceHandles();
 }
 
-AudioBufferConfig AudioEnhanceChainManager::AudioEnhanceChainGetAlgoConfig(const std::string &sceneType,
-    const std::string &upDevice, const std::string &downDevice)
+int32_t AudioEnhanceChainManager::AudioEnhanceChainGetAlgoConfig(const std::string &sceneKey, AudioBufferConfig &config)
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
-    AudioBufferConfig config = {};
-    CHECK_AND_RETURN_RET_LOG(isInitialized_, config, "has not been initialized");
-    std::string sceneTypeAndDeviceKey = sceneType + "_&_" + upDevice + "_&_" + downDevice;
-    if (!sceneTypeToEnhanceChainMap_.count(sceneTypeAndDeviceKey)) {
-        AUDIO_ERR_LOG("sceneTypeToEnhanceChainMap_ have not %{public}s", sceneTypeAndDeviceKey.c_str());
-        return config;
+    CHECK_AND_RETURN_RET_LOG(isInitialized_, ERROR, "has not been initialized");
+    if (!sceneTypeToEnhanceChainMap_.count(sceneKey)) {
+        AUDIO_ERR_LOG("sceneTypeToEnhanceChainMap_ have not %{public}s", sceneKey.c_str());
+        return ERROR;
     }
-    auto audioEnhanceChain = sceneTypeToEnhanceChainMap_[sceneTypeAndDeviceKey];
-    CHECK_AND_RETURN_RET_LOG(audioEnhanceChain != nullptr, config, "[%{public}s] get config faild",
-        sceneTypeAndDeviceKey.c_str());
+    auto audioEnhanceChain = sceneTypeToEnhanceChainMap_[sceneKey];
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChain != nullptr, ERROR, "[%{public}s] get config faild",
+        sceneKey.c_str());
     audioEnhanceChain->GetAlgoConfig(config);
-    return config;
+    return SUCCESS;
 }
 
 bool AudioEnhanceChainManager::IsEmptyEnhanceChain()

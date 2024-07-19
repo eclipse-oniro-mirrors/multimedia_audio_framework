@@ -66,6 +66,8 @@
 #define MAX_SCENE_NUM 5
 
 const char *DEVICE_CLASS_REMOTE = "remote";
+const int32_t SUCCESS = 0;
+const int32_t ERROR = -1;
 
 static int PaHdiCapturerInit(struct Userdata *u);
 static void PaHdiCapturerExit(struct Userdata *u);
@@ -120,6 +122,9 @@ static void UserdataFree(struct Userdata *u)
 
     if (u->sceneToCountMap) {
         pa_hashmap_free(u->sceneToCountMap);
+    }
+    if (u->sceneToResamplerMap) {
+        pa_hashmap_free(u->sceneToResamplerMap);
     }
     pa_xfree(u);
 }
@@ -330,6 +335,22 @@ static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
     return 0;
 }
 
+static int32_t SampleAlignment(const char *sceneKey, pa_memchunk *enhanceChunk, pa_memchunk *rChunk, struct Userdata *u)
+{
+    CHECK_AND_RETURN_RET_LOG(sceneKey != NULL, ERROR, "sceneKey is null");
+    CHECK_AND_RETURN_RET_LOG(enhanceChunk != NULL, ERROR, "enhanceChunk is null");
+    CHECK_AND_RETURN_RET_LOG(u != NULL, ERROR, "Userdata is null");
+
+    pa_resampler *resampler = (pa_resampler *)pa_hashmap_get(u->sceneToResamplerMap, sceneKey);
+    if (resampler != NULL) {
+        pa_resampler_run(resampler, enhanceChunk, rChunk);
+    } else {
+        *rChunk = *enhanceChunk;
+        pa_memblock_ref(rChunk->memblock);
+    }
+    return SUCCESS;
+}
+
 static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct Userdata *u)
 {
     if (GetCapturerFrameFromHdi(chunk, u) != 0) {
@@ -353,12 +374,16 @@ static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct User
         char *sceneKey = (char *)scene;
         AUDIO_DEBUG_LOG("Now sceneKey is : %{public}s", sceneKey);
 
-        pa_memchunk enhanceChunk;
+        pa_memchunk enhanceChunk, rChunk;
         enhanceChunk.length = chunk->length;
         enhanceChunk.memblock = pa_memblock_new(u->core->mempool, enhanceChunk.length);
         pa_memchunk_memcpy(&enhanceChunk, chunk);
-        EnhanceProcessAndPost(u->source, sceneKey, &enhanceChunk);
+        SampleAlignment(sceneKey, &enhanceChunk, &rChunk, u);
+        EnhanceProcessAndPost(u->source, sceneKey, &rChunk);
         pa_memblock_unref(enhanceChunk.memblock);
+        if (rChunk.memblock) {
+            pa_memblock_unref(rChunk.memblock);
+        }
     }
     pa_memblock_unref(chunk->memblock);
     
@@ -629,6 +654,9 @@ static void InitUserdataAttrs(pa_modargs *ma, struct Userdata *u, const pa_sampl
 
     u->sceneToCountMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,
         pa_xfree, pa_xfree);
+
+    u->sceneToResamplerMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,
+        NULL, (pa_free_cb_t) pa_resampler_free);
 }
 
 static void InitEcAndMicRefAttrs(pa_modargs *ma, struct Userdata *u)

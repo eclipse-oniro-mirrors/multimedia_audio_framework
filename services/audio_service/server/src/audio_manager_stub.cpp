@@ -474,11 +474,11 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
     vector<int32_t> countEffect = {};
     int32_t countChains = data.ReadInt32();
     CHECK_AND_RETURN_RET_LOG(countChains >= 0 && countChains <= AUDIO_EFFECT_CHAIN_COUNT_UPPER_LIMIT,
-        AUDIO_ERR, "Create audio effect chains failed, please check log");
+        AUDIO_ERR, "Create audio effect chains failed, invalid countChains");
     for (i = 0; i < countChains; i++) {
         int32_t count = data.ReadInt32();
         CHECK_AND_RETURN_RET_LOG(count >= 0 && count <= AUDIO_EFFECT_COUNT_PER_CHAIN_UPPER_LIMIT,
-            AUDIO_ERR, "Create audio effect chains failed, please check log");
+            AUDIO_ERR, "Create audio effect chains failed, invalid effect count");
         countEffect.emplace_back(count);
     }
 

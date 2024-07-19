@@ -42,8 +42,7 @@ public:
     int32_t ReleaseAudioEnhanceChainDynamic(const std::string &sceneType, const std::string &upDevice,
         const std::string &downDevice);
     bool ExistAudioEnhanceChain(const std::string &sceneKey);
-    AudioBufferConfig AudioEnhanceChainGetAlgoConfig(const std::string &sceneType, const std::string &upDevice,
-        const std::string &downDevice);
+    int32_t AudioEnhanceChainGetAlgoConfig(const std::string &sceneKey, AudioBufferConfig &config);
     bool IsEmptyEnhanceChain();
     int32_t InitEnhanceBuffer();
     int32_t CopyToEnhanceBuffer(void *data, uint32_t length);

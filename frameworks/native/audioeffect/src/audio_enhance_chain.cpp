@@ -116,6 +116,15 @@ void AudioEnhanceChain::AddEnhanceHandle(AudioEffectHandle handle, AudioEffectLi
     AudioEffectTransInfo cmdInfo = {};
     AudioEffectTransInfo replyInfo = {};
 
+    uint32_t maxSampleRate = DEFAULT_SAMPLE_RATE;
+    replyInfo.data = &maxSampleRate;
+    replyInfo.size = sizeof(maxSampleRate);
+    ret = (*handle)->command(handle, EFFECT_CMD_GET_CONFIG, &cmdInfo, &replyInfo);
+    if (ret) {
+        AUDIO_ERR_LOG("get algo maxSampleRate failed!");
+    }
+    algoSupportedConfig_.sampleRate = maxSampleRate;
+    
     cmdInfo.data = static_cast<void *>(&algoSupportedConfig_);
     cmdInfo.size = sizeof(algoSupportedConfig_);
 
