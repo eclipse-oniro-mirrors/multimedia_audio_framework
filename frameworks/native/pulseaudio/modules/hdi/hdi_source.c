@@ -66,6 +66,8 @@
 #define MAX_SCENE_NUM 5
 
 const char *DEVICE_CLASS_REMOTE = "remote";
+const int32_t SUCCESS = 0;
+const int32_t ERROR = -1;
 
 static int PaHdiCapturerInit(struct Userdata *u);
 static void PaHdiCapturerExit(struct Userdata *u);
@@ -333,11 +335,11 @@ static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
     return 0;
 }
 
-static void sampleAlignment(const char *sceneKey, pa_memchunk *enhanceChunk, pa_memchunk *rChunk, struct Userdata *u)
+static int32_t SampleAlignment(const char *sceneKey, pa_memchunk *enhanceChunk, pa_memchunk *rChunk, struct Userdata *u)
 {
-    pa_assert(sceneKey);
-    pa_assert(enhanceChunk);
-    pa_assert(u);
+    CHECK_AND_RETURN_RET_LOG(sceneKey != NULL, ERROR, "sceneKey is null");
+    CHECK_AND_RETURN_RET_LOG(enhanceChunk != NULL, ERROR, "enhanceChunk is null");
+    CHECK_AND_RETURN_RET_LOG(u != NULL, ERROR, "Userdata is null");
 
     pa_resampler *resampler = (pa_resampler *)pa_hashmap_get(u->sceneToResamplerMap, sceneKey);
     if (resampler != NULL) {
@@ -346,6 +348,7 @@ static void sampleAlignment(const char *sceneKey, pa_memchunk *enhanceChunk, pa_
         *rChunk = *enhanceChunk;
         pa_memblock_ref(rChunk->memblock);
     }
+    return SUCCESS;
 }
 
 static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct Userdata *u)
