@@ -378,7 +378,7 @@ static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct User
         enhanceChunk.length = chunk->length;
         enhanceChunk.memblock = pa_memblock_new(u->core->mempool, enhanceChunk.length);
         pa_memchunk_memcpy(&enhanceChunk, chunk);
-        sampleAlignment(sceneKey, &enhanceChunk, &rChunk, u);
+        SampleAlignment(sceneKey, &enhanceChunk, &rChunk, u);
         EnhanceProcessAndPost(u->source, sceneKey, &rChunk);
         pa_memblock_unref(enhanceChunk.memblock);
         if (rChunk.memblock) {
