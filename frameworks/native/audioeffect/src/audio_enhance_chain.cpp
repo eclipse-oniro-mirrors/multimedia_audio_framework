@@ -19,7 +19,6 @@
 #include "audio_enhance_chain.h"
 
 #include <chrono>
-#include <ranges>
 
 #include "securec.h"
 #include "audio_log.h"
@@ -223,7 +222,7 @@ int32_t AudioEnhanceChain::ApplyEnhanceChain(std::unique_ptr<EnhanceBuffer> &enh
     return SUCCESS;
 }
 
-int32_t AudioEnhanceChain::SetAudioEnhanceProperty(const std::string &effect, const std::string &property)
+int32_t AudioEnhanceChain::SetEnhanceProperty(const std::string &effect, const std::string &property)
 {
     std::lock_guard<std::mutex> lock(chainMutex_);
     int32_t ret = 0;

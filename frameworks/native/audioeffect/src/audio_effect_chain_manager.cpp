@@ -388,8 +388,13 @@ int32_t AudioEffectChainManager::SetAudioEffectChainDynamic(const std::string &s
             currSceneType = GetSceneTypeFromSpatializationSceneType(static_cast<AudioEffectScene>(
                 GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, sceneType)));
         }
+        auto propIter = effectPropertyMap_.find(effect);
+        std::string property = "";
+        if (propIter != effectPropertyMap_.end()) {
+            property = propIter->second;
+        }
         audioEffectChain->AddEffectHandle(handle, EffectToLibraryEntryMap_[effect]->audioEffectLibHandle,
-            currSceneType, effect, "");
+            currSceneType, effect, property);
     }
     audioEffectChain->ResetIoBufferConfig();
 
