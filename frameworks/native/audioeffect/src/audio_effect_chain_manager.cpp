@@ -1134,7 +1134,8 @@ void AudioEffectChainManager::UpdateRealAudioEffect()
     uint32_t maxSessionID = 0;
     std::string sceneType = "";
     for (auto& scenePair : SceneTypeToSessionIDMap_) {
-        if (!SceneTypeToSpecialEffectSet_.count(scenePair.first)) {
+        if (!SceneTypeToSpecialEffectSet_.count(scenePair.first) &&
+            std::find(priorSceneList_.begin(), priorSceneList_.end(), sceneType) == priorSceneList_.end()) {
             std::set<std::string> &sessions = scenePair.second;
             FindMaxSessionID(maxSessionID, sceneType, scenePair.first, sessions);
         }
@@ -1159,13 +1160,13 @@ bool AudioEffectChainManager::CheckSceneTypeMatch(const std::string &sinkSceneTy
         !SceneTypeToEffectChainMap_.count(sinkSceneTypeAndDeviceKey)) {
         return false;
     }
-    if (sceneType == sinkSceneType && SceneTypeToSpecialEffectSet_.count(sinkSceneType)) {
+    if (sceneType == sinkSceneType && (SceneTypeToSpecialEffectSet_.count(sinkSceneType) ||
+        std::find(priorSceneList_.begin(), priorSceneList_.end(), sceneType) != priorSceneList_.end())) {
         return true;
-    } else {
-        if (SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] ==
-            SceneTypeToEffectChainMap_[sinkSceneTypeAndDeviceKey]) {
-            return sceneTypeAndDeviceKey == defaultSceneTypeAndDeviceKey;
-        }
+    }
+    if (SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] ==
+        SceneTypeToEffectChainMap_[sinkSceneTypeAndDeviceKey]) {
+        return sceneTypeAndDeviceKey == defaultSceneTypeAndDeviceKey;
     }
     return false;
 }
