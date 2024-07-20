@@ -604,12 +604,7 @@ int32_t AudioEffectChainManager::EffectApVolumeUpdate(std::shared_ptr<AudioEffec
             static_cast<int32_t>(volumeMax * MAX_UINT_VOLUME_NUM)) {
             audioEffectChain->SetFinalVolume(volumeMax);
             AudioEffectScene currSceneType;
-            if (!spatializationEnabled_ || (GetDeviceTypeName() != "DEVICE_TYPE_BLUETOOTH_A2DP")) {
-                currSceneType = static_cast<AudioEffectScene>(GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, it->first));
-            } else {
-                currSceneType = GetSceneTypeFromSpatializationSceneType(static_cast<AudioEffectScene>(
-                    GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, it->first)));
-            }
+            UpdateCurrSceneType(currSceneType, it->first);
             int32_t ret = audioEffectChain->SetEffectParam(currSceneType);
             CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "set ap volume failed");
             AUDIO_INFO_LOG("The delay of SceneType %{public}s is %{public}u, finalVolume changed to %{public}f",
@@ -696,12 +691,7 @@ int32_t AudioEffectChainManager::EffectApRotationUpdate(std::shared_ptr<AudioEff
                 return ERROR;
             }
             AudioEffectScene currSceneType;
-            if (!spatializationEnabled_ || (GetDeviceTypeName() != "DEVICE_TYPE_BLUETOOTH_A2DP")) {
-                currSceneType = static_cast<AudioEffectScene>(GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, it->first));
-            } else {
-                currSceneType = GetSceneTypeFromSpatializationSceneType(static_cast<AudioEffectScene>(
-                    GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, it->first)));
-            }
+            UpdateCurrSceneType(currSceneType, it->first);
             int32_t ret = audioEffectChain->SetEffectParam(currSceneType);
             CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "set ap rotation failed");
             AUDIO_INFO_LOG("The delay of SceneType %{public}s is %{public}u, rotation changed to %{public}u",
