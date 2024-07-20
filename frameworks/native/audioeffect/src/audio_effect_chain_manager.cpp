@@ -250,9 +250,12 @@ void AudioEffectChainManager::InitHdiState()
 
 // Boot initialize
 void AudioEffectChainManager::InitAudioEffectChainManager(std::vector<EffectChain> &effectChains,
-    std::unordered_map<std::string, std::string> &map,
+    const EffectChainManagerParam &effectChainManagerParam,
     std::vector<std::shared_ptr<AudioEffectLibEntry>> &effectLibraryList)
 {
+    const std::unordered_map<std::string, std::string> &map = effectChainManagerParam.sceneTypeToChainNameMap;
+    maxEffectChainCount_ = effectChainManagerParam.maxExtraNum + 1;
+    priorSceneList_ = effectChainManagerParam.priorSceneList;
     std::set<std::string> effectSet;
     for (EffectChain efc: effectChains) {
         for (std::string effect: efc.apply) {
@@ -284,6 +287,11 @@ void AudioEffectChainManager::InitAudioEffectChainManager(std::vector<EffectChai
     // Constrcut SceneTypeAndModeToEffectChainNameMap that stores effectMode associated with the effectChainName
     for (auto item = map.begin(); item != map.end(); ++item) {
         SceneTypeAndModeToEffectChainNameMap_[item->first] = item->second;
+        if (item->first.substr(0, effectChainManagerParam.defaultSceneName.size()) ==
+            effectChainManagerParam.defaultSceneName) {
+            SceneTypeAndModeToEffectChainNameMap_[DEFAULT_SCENE_TYPE + item->first.substr(
+                effectChainManagerParam.defaultSceneName.size())] = item->second;
+        }
     }
 
     AUDIO_INFO_LOG("EffectToLibraryEntryMap size %{public}zu", EffectToLibraryEntryMap_.size());

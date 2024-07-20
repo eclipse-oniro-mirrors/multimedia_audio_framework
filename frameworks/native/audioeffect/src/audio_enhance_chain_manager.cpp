@@ -85,9 +85,9 @@ AudioEnhanceChainManager *AudioEnhanceChainManager::GetInstance()
 }
 
 void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectChain> &enhanceChains,
-    std::unordered_map<std::string, std::string> &enhanceChainNameMap,
-    std::vector<std::shared_ptr<AudioEffectLibEntry>> &enhanceLibraryList)
+    const EffectChainManagerParam &managerParam, std::vector<std::shared_ptr<AudioEffectLibEntry>> &enhanceLibraryList)
 {
+    const std::unordered_map<std::string, std::string> &enhanceChainNameMap = managerParam.sceneTypeToChainNameMap;
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     std::set<std::string> enhanceSet;
     for (EffectChain enhanceChain : enhanceChains) {
