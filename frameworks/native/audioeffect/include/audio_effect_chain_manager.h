@@ -145,7 +145,7 @@ private:
     AudioEffectScene GetSceneTypeFromSpatializationSceneType(AudioEffectScene sceneType);
     void UpdateEffectChainParams(AudioEffectScene sceneType);
     void SetSpkOffloadState();
-    void UpdateCurrSceneType(AudioEffectScene &currSceneType, std::string &sceneType);
+    void UpdateCurrSceneType(AudioEffectScene &currSceneType, const std::string &sceneType);
     void ChangeEffectChainCountMapForCreate(const std::string &sceneType);
     void EraseEffectChainSetAndMapForCreate(const std::string &sceneType);
     void FindMaxEffectChannels(const std::string &sceneType, const std::set<std::string> &sessions, uint32_t &channels,
