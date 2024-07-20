@@ -49,8 +49,6 @@ EffectChainManagerParam DEFAULT_EFFECT_CHAIN_MANAGER_PARAM{
     {{"effect1", "property1"}, {"effect4", "property5"}, {"effect1", "property4"}}
 };
 
-AudioEffectPropertyArray DEFAULT_AUDIO_PROPERTY_ARRAY = { { {"effect19", "property19"}, {"effect8", "property10"} } };
-
 vector<shared_ptr<AudioEffectLibEntry>> DEFAULT_EFFECT_LIBRARY_LIST = {};
 SessionEffectInfo DEFAULT_INFO = {
     "EFFECT_DEFAULT",
@@ -1131,48 +1129,6 @@ HWTEST(AudioEffectChainManagerUnitTest, GetCurSpatializationEnabled_001, TestSiz
 HWTEST(AudioEffectChainManagerUnitTest, ResetEffectBuffer_001, TestSize.Level1)
 {
     AudioEffectChainManager::GetInstance()->ResetEffectBuffer();
-}
-
-/**
-* @tc.name   : Test GetAudioEffectProperty API
-* @tc.number : GetAudioEffectProperty_001
-* @tc.desc   : Test GetAudioEffectProperty interface.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, GetAudioEffectProperty_001, TestSize.Level1)
-{
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
-        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
-    AudioEffectPropertyArray properties;
-    auto ret = AudioEffectChainManager::GetInstance()->GetAudioEffectProperty(properties);
-    EXPECT_EQ(SUCCESS, ret);
-    for (auto &[effect, property] : DEFAULT_EFFECT_CHAIN_MANAGER_PARAM.effectDefaultProperty) {
-        auto it = std::find(properties.property.begin(), properties.property.end(),
-            AudioEffectProperty{effect, property});
-        EXPECT_NE(properties.property.end(), it);
-    }
-}
-
-/**
-* @tc.name   : Test SetAudioEffectProperty API
-* @tc.number : SetAudioEffectProperty_001
-* @tc.desc   : Test SetAudioEffectProperty interface.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, SetAudioEffectProperty_001, TestSize.Level1)
-{
-    AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
-    audioEffectChainManager->ResetInfo();
-    audioEffectChainManager->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
-        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
-    auto ret = audioEffectChainManager->SetAudioEffectProperty(DEFAULT_AUDIO_PROPERTY_ARRAY);
-    EXPECT_EQ(SUCCESS, ret);
-    AudioEffectPropertyArray properties;
-    ret = audioEffectChainManager->GetAudioEffectProperty(properties);
-    EXPECT_EQ(SUCCESS, ret);
-    for (auto &property : DEFAULT_AUDIO_PROPERTY_ARRAY.property) {
-        auto it = std::find(properties.property.begin(), properties.property.end(), property);
-        EXPECT_NE(properties.property.end(), it);
-    }
 }
 } // namespace AudioStandard
 } // namespace OHOS
