@@ -164,6 +164,7 @@ static pa_hook_result_t SinkInputStateChangedCb(pa_core *c, pa_sink_input *si, v
         if (!EffectChainManagerAddSessionInfo(sceneType, sessionID, pack)) {
             EffectChainManagerMultichannelUpdate(sceneType);
             EffectChainManagerVolumeUpdate(sessionID);
+            EffectChainManagerEffectUpdate();
         }
     }
 
@@ -171,6 +172,7 @@ static pa_hook_result_t SinkInputStateChangedCb(pa_core *c, pa_sink_input *si, v
         !pa_safe_streq(clientUid, bootUpMusic)) {
         if (!EffectChainManagerDeleteSessionInfo(sceneType, sessionID)) {
             EffectChainManagerMultichannelUpdate(sceneType);
+            EffectChainManagerEffectUpdate();
         }
     }
     return PA_HOOK_OK;

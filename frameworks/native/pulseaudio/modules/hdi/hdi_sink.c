@@ -68,7 +68,7 @@
 #define IN_CHANNEL_NUM_MAX 16
 #define OUT_CHANNEL_NUM_MAX 2
 #define DEFAULT_FRAMELEN 2048
-#define SCENE_TYPE_NUM 8
+#define SCENE_TYPE_NUM 9
 #define HDI_MIN_MS_MAINTAIN 30
 #define OFFLOAD_HDI_CACHE1 200 // ms, should equal with val in client
 #define OFFLOAD_HDI_CACHE2 7000 // ms, should equal with val in client
@@ -115,8 +115,8 @@ time_t g_speakerPaClosedTime = 0;
 bool g_effectAllStreamVolumeZeroMap[SCENE_TYPE_NUM] = {false};
 bool g_effectHaveDisabledMap[SCENE_TYPE_NUM] = {false};
 time_t g_effectStartVolZeroTimeMap[SCENE_TYPE_NUM] = {0};
-char *const SCENE_TYPE_SET[SCENE_TYPE_NUM] = {"SCENE_MUSIC", "SCENE_GAME", "SCENE_MOVIE", "SCENE_SPEECH", "SCENE_RING",
-    "SCENE_VOIP", "SCENE_OTHERS", "EFFECT_NONE"};
+char *const SCENE_TYPE_SET[SCENE_TYPE_NUM] = {"SCENE_DEFAULT", "SCENE_MUSIC", "SCENE_GAME", "SCENE_MOVIE",
+    "SCENE_SPEECH", "SCENE_RING", "SCENE_VOIP", "SCENE_OTHERS", "EFFECT_NONE"};
 const int32_t COMMON_SCENE_TYPE_INDEX = 0;
 
 enum HdiInputType { HDI_INPUT_TYPE_PRIMARY, HDI_INPUT_TYPE_OFFLOAD, HDI_INPUT_TYPE_MULTICHANNEL };
@@ -269,7 +269,6 @@ static void StopPrimaryHdiIfNoRunning(struct Userdata *u);
 static void StartPrimaryHdiIfRunning(struct Userdata *u);
 static void StartMultiChannelHdiIfRunning(struct Userdata *u);
 static void CheckInputChangeToOffload(struct Userdata *u, pa_sink_input *i);
-static void CheckIfCommonSceneTypeZeroVolume();
 
 // BEGIN Utility functions
 #define FLOAT_EPS 1e-9f
@@ -1743,7 +1742,7 @@ static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime
         pa_sw_cvolume_multiply(&vol, &input->sink->thread_info.soft_volume, &input->volume);
         bool isZeroVolume = input->sink->thread_info.soft_muted || pa_cvolume_is_muted(&vol) ||
             pa_safe_streq(clientVolumeIsZero, "true");
-        if (pa_safe_streq(sinkSceneTypeTmp, SCENE_TYPE_SET[i]) && !isZeroVolume) {
+        if (EffectChainManagerSceneCheck(sinkSceneTypeTmp, SCENE_TYPE_SET[i]) && !isZeroVolume) {
             g_effectAllStreamVolumeZeroMap[i] = false;
             g_effectStartVolZeroTimeMap[i] = 0;
             AUDIO_DEBUG_LOG("SCENE_TYPE_SET[%{public}d]:%{public}s for streamtype:[%{public}s]'s"
@@ -1752,7 +1751,7 @@ static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime
             break;
         }
     }
-    CheckIfCommonSceneTypeZeroVolume();
+
     if (g_effectAllStreamVolumeZeroMap[i] && !g_effectHaveDisabledMap[i] && (g_effectStartVolZeroTimeMap[i] == 0) &&
         PA_SINK_IS_RUNNING(u->sink->thread_info.state)) {
         AUDIO_INFO_LOG("Timing begins, will close [%{public}s] effect after [%{public}d]s", SCENE_TYPE_SET[i],
@@ -1778,17 +1777,6 @@ static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime
         }
     }
     return sinkSceneType;
-}
-
-static void CheckIfCommonSceneTypeZeroVolume()
-{
-    for (int32_t i = 0; i < SCENE_TYPE_NUM; i++) {
-        if (!g_effectAllStreamVolumeZeroMap[i] &&
-            EffectChainManagerSceneCheck(SCENE_TYPE_SET[i], SCENE_TYPE_SET[COMMON_SCENE_TYPE_INDEX])) {
-            g_effectAllStreamVolumeZeroMap[COMMON_SCENE_TYPE_INDEX] = false;
-            break;
-        }
-    }
 }
 
 static void CheckOnlyPrimarySpeakerPaLoading(struct Userdata *u)

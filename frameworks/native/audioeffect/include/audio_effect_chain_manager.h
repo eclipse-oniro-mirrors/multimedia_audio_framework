@@ -55,9 +55,9 @@ const std::string DEFAULT_DEVICE_SINK = "Speaker";
 const std::string BLUETOOTH_DEVICE_SINK = "Bt_Speaker";
 const uint32_t SIZE_OF_SPATIALIZATION_STATE = 2;
 const uint32_t HDI_ROOM_MODE_INDEX_TWO = 2;
-const uint32_t DEFAULT_NUM_EFFECT_INSTANCES = 1;
-const std::string COMMON_SCENE_TYPE = "SCENE_MUSIC";
 const uint32_t MAX_UINT_VOLUME_NUM = 10000;
+const std::string DEFAULT_SCENE_TYPE = "SCENE_DEFAULT";
+const std::string DEFAULT_PRESET_SCENE = "SCENE_MUSIC";
 
 struct SessionEffectInfo {
     std::string sceneMode;
@@ -151,7 +151,7 @@ private:
     void FindMaxEffectChannels(const std::string &sceneType, const std::set<std::string> &sessions, uint32_t &channels,
         uint64_t &channelLayout);
     int32_t UpdateDeviceInfo(int32_t device, const std::string &sinkName);
-    std::shared_ptr<AudioEffectChain> CreateAudioEffectChain(const std::string &sceneType);
+    std::shared_ptr<AudioEffectChain> CreateAudioEffectChain(const std::string &sceneType, bool isPriorScene);
     bool CheckIfSpkDsp();
     void CheckAndReleaseCommonEffectChain(const std::string &sceneType);
 #ifdef WINDOW_MANAGER_ENABLE
@@ -171,6 +171,7 @@ private:
     std::map<std::string, SessionEffectInfo> SessionIDToEffectInfoMap_;
     std::map<std::string, int32_t> SceneTypeToEffectChainCountBackupMap_;
     std::set<std::string> SceneTypeToSpecialEffectSet_;
+    std::vector<std::string> priorSceneList_;
     DeviceType deviceType_ = DEVICE_TYPE_SPEAKER;
     std::string deviceSink_ = DEFAULT_DEVICE_SINK;
     std::string deviceClass_ = "";
@@ -187,6 +188,7 @@ private:
     bool isCommonEffectChainExisted_ = false;
     bool debugArmFlag_ = false;
     int32_t commonEffectChainCount_ = 0;
+    int32_t maxEffectChainCount_ = 1;
 
 #ifdef SENSOR_ENABLE
     std::shared_ptr<HeadTracker> headTracker_;
