@@ -185,9 +185,9 @@ private:
     AudioSpatializationSceneType spatializationSceneType_ = SPATIALIZATION_SCENE_TYPE_DEFAULT;
     int32_t hdiSceneType_ = 0;
     int32_t hdiEffectMode_ = 0;
-    bool isCommonEffectChainExisted_ = false;
+    bool isDefaultEffectChainExisted_ = false;
     bool debugArmFlag_ = false;
-    int32_t commonEffectChainCount_ = 0;
+    int32_t defaultEffectChainCount_ = 0;
     int32_t maxEffectChainCount_ = 1;
 
 #ifdef SENSOR_ENABLE
