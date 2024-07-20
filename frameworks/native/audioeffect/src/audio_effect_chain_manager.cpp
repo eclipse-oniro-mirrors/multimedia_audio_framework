@@ -334,7 +334,7 @@ int32_t AudioEffectChainManager::CreateAudioEffectChainDynamic(const std::string
             SceneTypeToEffectChainCountMap_[sceneTypeAndDeviceKey], commonEffectChainCount_);
         return SUCCESS;
     }
-    bool isPriorScene = std::find(priorSceneList_.begin(), priorSceneList_.end(), sceneType) == priorSceneList_.end();
+    bool isPriorScene = std::find(priorSceneList_.begin(), priorSceneList_.end(), sceneType) != priorSceneList_.end();
     audioEffectChain = CreateAudioEffectChain(sceneType, isPriorScene);
 
     SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] = audioEffectChain;
@@ -1213,6 +1213,7 @@ std::shared_ptr<AudioEffectChain> AudioEffectChainManager::CreateAudioEffectChai
     std::string defaultSceneTypeAndDeviceKey = DEFAULT_SCENE_TYPE + "_&_" + GetDeviceTypeName();
 
     if (isPriorScene) {
+        AUDIO_INFO_LOG("create prior effect chain: %{public}s", sceneType.c_str());
 #ifdef SENSOR_ENABLE
         audioEffectChain = std::make_shared<AudioEffectChain>(sceneType, headTracker_);
 #else
