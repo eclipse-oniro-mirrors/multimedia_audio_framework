@@ -78,6 +78,11 @@ void IAudioCapturerSource::GetAllInstance(std::vector<IAudioCapturerSource *> &a
     allInstance.push_back(AudioCapturerSource::GetInstance());
 }
 
+IAudioCapturerSource *IAudioCapturerSource::Create(CaptureAttr *attr)
+{
+    return AudioCapturerSource::Create(attr);
+}
+
 } // namespace AudioStandard
 } // namesapce OHOS
 
@@ -175,6 +180,19 @@ int32_t IAudioCapturerSourceFrame(void *wapper, char *frame, uint64_t requestByt
     int32_t ret = iAudioCapturerSource->CaptureFrame(frame, requestBytes, *replyBytes);
 
     return ret;
+}
+
+int32_t IAudioCapturerSourceFrameWithEc(void *wapper,
+    FrameDesc *fdesc, uint64_t *replyBytes,
+    FrameDesc *fdescEc, uint64_t *replyBytesEc)
+{
+    IAudioCapturerSource *iAudioCapturerSource = static_cast<IAudioCapturerSource *>(wapper);
+    CHECK_AND_RETURN_RET_LOG(iAudioCapturerSource != nullptr, ERR_INVALID_HANDLE, "null audioCapturerSource");
+    bool isInited = iAudioCapturerSource->IsInited();
+    CHECK_AND_RETURN_RET_LOG(isInited, ERR_DEVICE_INIT,
+        "audioCapturer Not Inited! Init the capturer first");
+
+    return iAudioCapturerSource->CaptureFrameWithEc(fdesc, *replyBytes, fdescEc, *replyBytesEc);
 }
 
 int32_t IAudioCapturerSourceSetVolume(void *wapper, float left, float right)

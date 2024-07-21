@@ -38,6 +38,10 @@ typedef struct IAudioSourceAttr {
     int32_t sourceType = 0;
     uint64_t channelLayout = 0;
     int32_t audioStreamFlag = 0;
+    bool hasEcConfig = false;
+    HdiAdapterFormat formatEc = HdiAdapterFormat::INVALID_WIDTH;
+    uint32_t sampleRateEc = 0;
+    uint32_t channelEc = 0;
 } IAudioSourceAttr;
 
 class IAudioSourceCallback {
@@ -57,10 +61,12 @@ class IAudioCapturerSource {
 public:
     static IAudioCapturerSource *GetInstance(const char *deviceClass, const char *deviceNetworkId,
            const SourceType sourceType = SourceType::SOURCE_TYPE_MIC, const char *sourceName = "Built_in_wakeup");
+    static IAudioCapturerSource *Create(CaptureAttr *attr);
     static void GetAllInstance(std::vector<IAudioCapturerSource *> &allInstance);
     virtual ~IAudioCapturerSource() = default;
 
     virtual int32_t Init(const IAudioSourceAttr &attr) = 0;
+    virtual int32_t InitWithoutAttr() { return 0; }
     virtual bool IsInited(void) = 0;
     virtual void DeInit(void) = 0;
 
@@ -72,6 +78,9 @@ public:
     virtual int32_t Resume(void) = 0;
 
     virtual int32_t CaptureFrame(char *frame, uint64_t requestBytes, uint64_t &replyBytes) = 0;
+    virtual int32_t CaptureFrameWithEc(
+        FrameDesc *fdesc, uint64_t &replyBytes,
+        FrameDesc *fdescEc, uint64_t &replyBytesEc) = 0;
 
     virtual int32_t SetVolume(float left, float right) = 0;
     virtual int32_t GetVolume(float &left, float &right) = 0;

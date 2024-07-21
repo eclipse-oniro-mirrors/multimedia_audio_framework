@@ -22,6 +22,7 @@ config("hdi_config") {
     ".",
     "../../../audioschedule/include",
     "../../../hdiadapter/common/include",
+    "../../../hdiadapter/manager/include",
     "../../../hdiadapter/sink/bluetooth",
     "../../../hdiadapter/sink/common",
     "../../../hdiadapter/sink/file",
@@ -112,6 +113,7 @@ ohos_shared_library("module-hdi-source") {
   deps = [
     "../../../audioeffect:audio_effect",
     "../../../audioutils:audio_utils",
+    "../../../hdiadapter/manager:hdiadapter_manager",
     "../../../hdiadapter/source:capturer_source_adapter",
   ]
 
