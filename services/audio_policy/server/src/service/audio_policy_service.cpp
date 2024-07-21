@@ -4456,14 +4456,14 @@ void AudioPolicyService::LoadEffectLibrary()
     // Initialize EffectChainManager in audio service through IPC
     SupportedEffectConfig supportedEffectConfig;
     audioEffectManager_.GetSupportedEffectConfig(supportedEffectConfig);
-    std::unique_ptr<EffectChainManagerParam> effectChainMgrParam = std::make_unique<EffectChainManagerParam>();
-    std::unique_ptr<EffectChainManagerParam> enhanceChainMgrParam = std::make_unique<EffectChainManagerParam>();
-    audioEffectManager_.ConstructEffectChainManagerParam(*effectChainMgrParam);
-    audioEffectManager_.ConstructEnhanceChainManagerParam(*enhanceChainMgrParam);
+    EffectChainManagerParam effectChainManagerParam;
+    EffectChainManagerParam enhanceChainManagerParam;
+    audioEffectManager_.ConstructEffectChainManagerParam(effectChainManagerParam);
+    audioEffectManager_.ConstructEnhanceChainManagerParam(enhanceChainManagerParam);
 
     identity = IPCSkeleton::ResetCallingIdentity();
     bool ret = gsp->CreateEffectChainManager(supportedEffectConfig.effectChains,
-        effectChainMgrParam->sceneTypeToChainNameMap, enhanceChainMgrParam->sceneTypeToChainNameMap);
+        effectChainManagerParam, enhanceChainManagerParam);
     IPCSkeleton::SetCallingIdentity(identity);
 
     CHECK_AND_RETURN_LOG(ret, "EffectChainManager create failed");
