@@ -40,82 +40,43 @@ const std::map<int32_t, pa_sample_format_t> FORMAT_CONVERT_MAP {
     {SAMPLE_FORMAT_S32LE, PA_SAMPLE_S32LE},
 };
 
-int32_t EnhanceChainManagerCreateCb(const char *sceneType, const char *enhanceMode, const char *upDevice,
-    const char *downDevice)
+int32_t EnhanceChainManagerCreateCb(const uint32_t sceneKeyCode)
 {
     AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
         ERR_INVALID_HANDLE, "null audioEnhanceChainManager");
-    std::string sceneTypeString = "";
-    std::string sceneModeString = "";
-    std::string upDeviceString = "";
-    std::string downDeviceString = "";
-    if (sceneType) {
-        sceneTypeString = sceneType;
-    }
-    if (enhanceMode) {
-        sceneModeString = enhanceMode;
-    }
-    if (upDevice) {
-        upDeviceString = upDevice;
-    }
-    if (downDevice) {
-        downDeviceString = downDevice;
-    }
-    if (audioEnhanceChainMananger->CreateAudioEnhanceChainDynamic(sceneTypeString, sceneModeString, upDeviceString,
-        downDeviceString) != SUCCESS) {
+    if (audioEnhanceChainMananger->CreateAudioEnhanceChainDynamic(sceneKeyCode) != SUCCESS) {
         return ERROR;
     }
     return SUCCESS;
 }
 
-int32_t EnhanceChainManagerReleaseCb(const char *sceneType, const char *upDevice, const char *downDevice)
+int32_t EnhanceChainManagerReleaseCb(const uint32_t sceneKeyCode)
 {
     AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
         ERR_INVALID_HANDLE, "null audioEnhanceChainManager");
-    std::string sceneTypeString = "";
-    std::string upDeviceString = "";
-    std::string downDeviceString = "";
-    if (sceneType) {
-        sceneTypeString = sceneType;
-    }
-    if (upDevice) {
-        upDeviceString = upDevice;
-    }
-    if (downDevice) {
-        downDeviceString = downDevice;
-    }
-    if (audioEnhanceChainMananger->ReleaseAudioEnhanceChainDynamic(sceneTypeString, upDeviceString,
-        downDeviceString) != SUCCESS) {
+    if (audioEnhanceChainMananger->ReleaseAudioEnhanceChainDynamic(sceneKeyCode) != SUCCESS) {
         return ERROR;
     }
     return SUCCESS;
 }
 
-bool EnhanceChainManagerExist(const char *sceneKey)
+bool EnhanceChainManagerExist(const uint32_t sceneKeyCode)
 {
     AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
         ERR_INVALID_HANDLE, "null audioEnhanceChainManager");
-    std::string sceneKeyString = "";
-    if (sceneKey) {
-        sceneKeyString = sceneKey;
-    }
-    return audioEnhanceChainMananger->ExistAudioEnhanceChain(sceneKeyString);
+    return audioEnhanceChainMananger->ExistAudioEnhanceChain(sceneKeyCode);
 }
 
-int32_t EnhanceChainManagerGetAlgoConfig(const char *sceneKey, pa_sample_spec *spec)
+int32_t EnhanceChainManagerGetAlgoConfig(const uint32_t sceneKeyCode, pa_sample_spec *spec)
 {
     AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
         ERROR, "null audioEnhanceChainManager");
-    std::string sceneKeyString = "";
-    if (sceneKey) {
-        sceneKeyString = sceneKey;
-    }
     AudioBufferConfig config = {};
-    uint32_t ret = audioEnhanceChainMananger->AudioEnhanceChainGetAlgoConfig(sceneKeyString, config);
+    uint32_t ret = audioEnhanceChainMananger->AudioEnhanceChainGetAlgoConfig(sceneKeyCode, config);
     if (ret != 0 || config.samplingRate == 0) {
         return ERROR;
     }
@@ -178,43 +139,30 @@ int32_t CopyFromEnhanceBufferAdapter(void *data, uint32_t length)
     return SUCCESS;
 }
 
-int32_t EnhanceChainManagerProcess(const char *sceneKey, uint32_t length)
+int32_t EnhanceChainManagerProcess(const uint32_t sceneKeyCode, uint32_t length)
 {
     AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
         ERR_INVALID_HANDLE, "null audioEnhanceChainManager");
-    std::string sceneKeyString = "";
-    if (sceneKey) {
-        sceneKeyString = sceneKey;
-    }
-    if (audioEnhanceChainMananger->ApplyAudioEnhanceChain(sceneKeyString, length) != SUCCESS) {
-        AUDIO_ERR_LOG("%{public}s process failed", sceneKeyString.c_str());
+    if (audioEnhanceChainMananger->ApplyAudioEnhanceChain(sceneKeyCode, length) != SUCCESS) {
+        AUDIO_ERR_LOG("%{public}u process failed", sceneKeyCode);
         return ERROR;
     }
-    AUDIO_DEBUG_LOG("%{public}s process success", sceneKeyString.c_str());
+    AUDIO_DEBUG_LOG("%{public}u process success", sceneKeyCode);
     return SUCCESS;
 }
 
-int32_t ConcatStr(const char *sceneType, const char *upDevice, const char *downDevice, char *sceneKey,
-    uint32_t sceneKeyLen)
+int32_t GetSceneTypeCode(const char *sceneType, uint32_t *sceneTypeCode)
 {
     std::string sceneTypeString = "";
-    std::string upDeviceString = "";
-    std::string downDeviceString = "";
     if (sceneType) {
         sceneTypeString = sceneType;
     }
-    if (upDevice) {
-        upDeviceString = upDevice;
+    for (auto &item : AUDIO_ENHANCE_SUPPORTED_SCENE_TYPES) {
+        if (item.second == sceneTypeString) {
+            *sceneTypeCode = static_cast<uint32_t>(item.first);
+            return SUCCESS;
+        }
     }
-    if (downDevice) {
-        downDeviceString = downDevice;
-    }
-    std::string sceneKeyString = sceneTypeString + "_&_" + upDeviceString + "_&_" + downDeviceString + "\0";
-    int32_t ret = memcpy_s(sceneKey, sceneKeyLen, sceneKeyString.c_str(), sceneKeyString.size());
-    if (ret != 0) {
-        AUDIO_ERR_LOG("memcpy from sceneKeyString to sceneKey failed");
-        return ERROR;
-    }
-    return SUCCESS;
+    return ERROR;
 }

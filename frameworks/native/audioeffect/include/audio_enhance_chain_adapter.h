@@ -25,18 +25,16 @@
 extern "C" {
 #endif
 
-int32_t EnhanceChainManagerCreateCb(const char *sceneType, const char *enhanceMode, const char *upDevice,
-    const char *downDevice);
-int32_t EnhanceChainManagerReleaseCb(const char *sceneType, const char *upDevice, const char *downDevice);
-bool EnhanceChainManagerExist(const char *sceneKey);
-int32_t EnhanceChainManagerGetAlgoConfig(const char *sceneKey, pa_sample_spec *spec);
+int32_t EnhanceChainManagerCreateCb(const uint32_t sceneKeyCode);
+int32_t EnhanceChainManagerReleaseCb(const uint32_t sceneKeyCode);
+bool EnhanceChainManagerExist(const uint32_t sceneKeyCode);
+int32_t EnhanceChainManagerGetAlgoConfig(const uint32_t sceneKeyCode, pa_sample_spec *spec);
 bool EnhanceChainManagerIsEmptyEnhanceChain();
 int32_t EnhanceChainManagerInitEnhanceBuffer();
 int32_t CopyToEnhanceBufferAdapter(void *data, uint32_t length);
 int32_t CopyFromEnhanceBufferAdapter(void *data, uint32_t length);
-int32_t EnhanceChainManagerProcess(const char *sceneKey, uint32_t length);
-int32_t ConcatStr(const char *sceneType, const char *upDevice, const char *downDevice, char *sceneKey,
-    uint32_t sceneKeyLen);
+int32_t EnhanceChainManagerProcess(const uint32_t sceneKeyCode, uint32_t length);
+int32_t GetSceneTypeCode(const char *sceneType, uint32_t *sceneTypeCode);
 
 
 #ifdef __cplusplus

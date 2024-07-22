@@ -64,8 +64,8 @@
 #define AUDIO_POINT_NUM  1024
 #define AUDIO_FRAME_NUM_IN_BUF 30
 #define HDI_WAKEUP_BUFFER_TIME (PA_USEC_PER_SEC * 2)
-#define MAX_SCENE_NUM 5
 #define DEVICE_TYPE_MIC 15
+#define BASE_TEN 10
 
 const char *DEVICE_CLASS_REMOTE = "remote";
 const int32_t SUCCESS = 0;
@@ -304,18 +304,17 @@ static void PostSourceData(pa_source *source, pa_source_output *sourceOutput, pa
     }
 }
 
-static void EnhanceProcess(const char *sceneKey, pa_memchunk *chunk)
+static void EnhanceProcess(const uint32_t sceneKeyCode, pa_memchunk *chunk)
 {
-    pa_assert(sceneKey);
     pa_assert(chunk);
     void *src = pa_memblock_acquire_chunk(chunk);
-    AUDIO_DEBUG_LOG("chunk length: %{public}zu scene: %{public}s", chunk->length, sceneKey);
+    AUDIO_DEBUG_LOG("chunk length: %{public}zu sceneKey: %{public}u", chunk->length, sceneKeyCode);
     pa_memblock_release(chunk->memblock);
 
     if (CopyToEnhanceBufferAdapter(src, chunk->length) != 0) {
         return;
     }
-    if (EnhanceChainManagerProcess(sceneKey, chunk->length) != 0) {
+    if (EnhanceChainManagerProcess(sceneKeyCode, chunk->length) != 0) {
         return;
     }
     void *dst = pa_memblock_acquire_chunk(chunk);
@@ -323,26 +322,31 @@ static void EnhanceProcess(const char *sceneKey, pa_memchunk *chunk)
     pa_memblock_release(chunk->memblock);
 }
 
-static void EnhanceProcessAndPost(pa_source *source, const char *scene, pa_memchunk *enhanceChunk)
+static void EnhanceProcessAndPost(struct Userdata *u, const uint32_t sceneKeyCode, pa_memchunk *enhanceChunk)
 {
-    pa_source_assert_ref(source);
-    pa_assert(scene);
+    pa_assert(u);
     pa_assert(enhanceChunk);
+    pa_source *source = u->source;
+    pa_source_assert_ref(source);
+    
     void *state = NULL;
     pa_source_output *sourceOutput;
-    char sceneKey[MAX_SCENE_NAME_LEN];
-    EnhanceProcess(scene, enhanceChunk);
+    EnhanceProcess(sceneKeyCode, enhanceChunk);
 
+    uint32_t capturerId = u->capturerId;
+    uint32_t rendererId = u->rendererId;
     while ((sourceOutput = pa_hashmap_iterate(source->thread_info.outputs, &state, NULL))) {
         pa_source_output_assert_ref(sourceOutput);
         const char *sourceOutputSceneType = pa_proplist_gets(sourceOutput->proplist, "scene.type");
-        const char *sourceOutputUpDevice = pa_proplist_gets(sourceOutput->proplist, "device.up");
-        const char *sourceOutputDownDevice = pa_proplist_gets(sourceOutput->proplist, "device.down");
-        if (ConcatStr(sourceOutputSceneType, sourceOutputUpDevice, sourceOutputDownDevice, sceneKey,
-            MAX_SCENE_NAME_LEN) != 0) {
+        
+        uint32_t sceneTypeCode = 0;
+        if (GetSceneTypeCode(sourceOutputSceneType, &sceneTypeCode) != 0) {
+            AUDIO_ERR_LOG("GetSceneTypeCode failed");
             continue;
         }
-        if (strcmp(scene, sceneKey) != 0) {
+        uint32_t sceneKeyCodeTemp = 0;
+        sceneKeyCodeTemp = (sceneTypeCode << SCENE_TYPE_OFFSET) + (capturerId << CAPTURER_ID_OFFSET) + rendererId;
+        if (sceneKeyCode != sceneKeyCodeTemp) {
             continue;
         }
         PostSourceData(source, sourceOutput, enhanceChunk);
@@ -419,11 +423,6 @@ static int GetCapturerFrameFromHdi(pa_memchunk *chunk, const struct Userdata *u)
 
     void *p = NULL;
 
-    chunk->length = u->bufferSize;
-
-    AUDIO_DEBUG_LOG("HDI Source: chunk.length = u->bufferSize: %{public}zu", chunk->length);
-
-    chunk->memblock = pa_memblock_new(u->core->mempool, chunk->length);
     pa_assert(chunk->memblock);
     p = pa_memblock_acquire(chunk->memblock);
     pa_assert(p);
@@ -475,6 +474,11 @@ static int32_t SampleAlignment(const char *sceneKey, pa_memchunk *enhanceChunk, 
 
 static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct Userdata *u)
 {
+    // new chunks
+    chunk->length = u->bufferSize;
+    AUDIO_DEBUG_LOG("HDI Source: chunk.length = u->bufferSize: %{public}zu", chunk->length);
+    chunk->memblock = pa_memblock_new(u->core->mempool, chunk->length);
+
     if (GetCapturerFrameFromHdi(chunk, u) != 0) {
         return -1;
     }
@@ -491,17 +495,17 @@ static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct User
 
     void *state = NULL;
     uint32_t *sceneKeyNum;
-    const void *scene;
-    while ((sceneKeyNum = pa_hashmap_iterate(u->sceneToCountMap, &state, &scene))) {
-        char *sceneKey = (char *)scene;
-        AUDIO_DEBUG_LOG("Now sceneKey is : %{public}s", sceneKey);
+    const void *sceneKey;
+    while ((sceneKeyNum = pa_hashmap_iterate(u->sceneToCountMap, &state, &sceneKey))) {
+        uint32_t sceneKeyCode = (uint32_t)std::strtoul((char *)sceneKey, NULL, BASE_TEN);
+        AUDIO_DEBUG_LOG("Now sceneKeyCode is : %{public}u", sceneKeyCode);
 
         pa_memchunk enhanceChunk, rChunk;
         enhanceChunk.length = chunk->length;
         enhanceChunk.memblock = pa_memblock_new(u->core->mempool, enhanceChunk.length);
         pa_memchunk_memcpy(&enhanceChunk, chunk);
-        SampleAlignment(sceneKey, &enhanceChunk, &rChunk, u);
-        EnhanceProcessAndPost(u->source, sceneKey, &rChunk);
+        SampleAlignment((char *)sceneKey, &enhanceChunk, &rChunk, u);
+        EnhanceProcessAndPost(u, sceneKeyCode, &rChunk);
         pa_memblock_unref(enhanceChunk.memblock);
         if (rChunk.memblock) {
             pa_memblock_unref(rChunk.memblock);
@@ -619,6 +623,15 @@ static int PaHdiCapturerInit(struct Userdata *u)
         AUDIO_ERR_LOG("Audio capturer init failed!");
         return ret;
     }
+
+    u->capturerId = 0;
+    u->rendererId = 0;
+    ret = u->sourceAdapter->CapturerSourceGetCaptureId(u->sourceAdapter->wapper, &u->capturerId);
+    if (ret != 0) {
+        AUDIO_ERR_LOG("Audio capturer get capturer id failed!");
+        return ret;
+    }
+
     InitAuxCapture(u);
 
     // No start test for remote device.
@@ -777,7 +790,7 @@ static void InitUserdataAttrs(pa_modargs *ma, struct Userdata *u, const pa_sampl
 
     u->attrs.openMicSpeaker = u->openMicSpeaker;
 
-    u->sceneToCountMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,
+    u->sceneToCountMap = pa_hashmap_new_full(pa_idxset_trivial_hash_func, pa_idxset_trivial_compare_func,
         pa_xfree, pa_xfree);
 
     u->sceneToResamplerMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,
