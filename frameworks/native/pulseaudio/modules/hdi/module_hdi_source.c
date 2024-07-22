@@ -160,7 +160,7 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
     }
     EnhanceChainManagerInitEnhanceBuffer();
     char sceneKey[MAX_SCENE_NAME_LEN];
-    if (sprintf_s(sceneKey, sizeof(sceneKey), "%u", sceneKeyCode) != 0) {
+    if (sprintf_s(sceneKey, sizeof(sceneKey), "%u", sceneKeyCode) < 0) {
         AUDIO_ERR_LOG("sprintf from sceneKeyCode to sceneKey failed");
         return PA_HOOK_OK;
     }
@@ -197,7 +197,7 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
     EnhanceChainManagerReleaseCb(sceneKeyCode);
     
     char sceneKey[MAX_SCENE_NAME_LEN];
-    if (sprintf_s(sceneKey, sizeof(sceneKey), "%u", sceneKeyCode) != 0) {
+    if (sprintf_s(sceneKey, sizeof(sceneKey), "%u", sceneKeyCode) < 0) {
         AUDIO_ERR_LOG("sprintf from sceneKeyCode to sceneKey failed");
         return PA_HOOK_OK;
     }
