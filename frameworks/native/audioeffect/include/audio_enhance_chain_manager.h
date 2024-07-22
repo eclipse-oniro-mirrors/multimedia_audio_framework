@@ -56,7 +56,7 @@ public:
     int32_t GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray);
 private:
     int32_t SetAudioEnhanceChainDynamic(const uint32_t sceneKeyCode, std::string &sceneType,
-        const std::string &capturerDevice);
+        std::string &capturerDevice);
     int32_t FreeEnhanceBuffer();
     int32_t ParseSceneKeyCode(const uint32_t sceneKeyCode, std::string &sceneType, std::string &capturerDeviceStr,
         std::string &rendererDeivceStr);

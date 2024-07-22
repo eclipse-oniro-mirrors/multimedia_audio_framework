@@ -497,7 +497,7 @@ static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct User
     uint32_t *sceneKeyNum;
     const void *sceneKey;
     while ((sceneKeyNum = pa_hashmap_iterate(u->sceneToCountMap, &state, &sceneKey))) {
-        uint32_t sceneKeyCode = (uint32_t)std::strtoul((char *)sceneKey, NULL, BASE_TEN);
+        uint32_t sceneKeyCode = (uint32_t)strtoul((char *)sceneKey, NULL, BASE_TEN);
         AUDIO_DEBUG_LOG("Now sceneKeyCode is : %{public}u", sceneKeyCode);
 
         pa_memchunk enhanceChunk, rChunk;
@@ -790,7 +790,7 @@ static void InitUserdataAttrs(pa_modargs *ma, struct Userdata *u, const pa_sampl
 
     u->attrs.openMicSpeaker = u->openMicSpeaker;
 
-    u->sceneToCountMap = pa_hashmap_new_full(pa_idxset_trivial_hash_func, pa_idxset_trivial_compare_func,
+    u->sceneToCountMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,
         pa_xfree, pa_xfree);
 
     u->sceneToResamplerMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,

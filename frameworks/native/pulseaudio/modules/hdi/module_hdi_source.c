@@ -27,6 +27,7 @@
 #include <pulsecore/core-util.h>
 #include <pulsecore/namereg.h>
 
+#include "securec.h"
 #include "audio_log.h"
 #include "audio_enhance_chain_adapter.h"
 #include "userdata.h"
