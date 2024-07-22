@@ -70,15 +70,6 @@ static int32_t CheckReturnIfinvalid(bool expr, const int32_t retVal)
     return CHECK_UTIL_SUCCESS;
 }
 
-static bool IsEnhanceMode(SourceType sourceType)
-{
-    if (sourceType == SOURCE_TYPE_MIC || sourceType == SOURCE_TYPE_VOICE_COMMUNICATION ||
-        sourceType == SOURCE_TYPE_VOICE_CALL) {
-        return true;
-    }
-    return false;
-}
-
 PaAdapterManager::PaAdapterManager(ManagerType type)
 {
     AUDIO_INFO_LOG("Constructor with type:%{public}d", type);
@@ -465,15 +456,7 @@ void PaAdapterManager::SetRecordProplist(pa_proplist *propList, AudioProcessConf
     pa_proplist_sets(propList, "stream.capturerSource",
         std::to_string(processConfig.capturerInfo.sourceType).c_str());
     const std::string sceneType = GetEnhanceSceneName(processConfig.capturerInfo.sourceType);
-    AudioEnhanceMode enhanceMode = IsEnhanceMode(processConfig.capturerInfo.sourceType) ?
-        ENHANCE_DEFAULT : ENHANCE_NONE;
-    const std::string sceneMode = GetEnhanceModeName(enhanceMode);
-    std::string upDevice = "DEVICE_TYPE_MIC";
-    std::string downDevice = "DEVICE_TYPE_SPEAKER";
     pa_proplist_sets(propList, "scene.type", sceneType.c_str());
-    pa_proplist_sets(propList, "scene.mode", sceneMode.c_str());
-    pa_proplist_sets(propList, "device.up", upDevice.c_str());
-    pa_proplist_sets(propList, "device.down", downDevice.c_str());
 }
 
 int32_t PaAdapterManager::SetPaProplist(pa_proplist *propList, pa_channel_map &map, AudioProcessConfig &processConfig,
@@ -682,24 +665,6 @@ int32_t PaAdapterManager::SetStreamAudioEnhanceMode(pa_stream *paStream, AudioEn
     pa_proplist_free(propList);
     pa_operation_unref(updatePropOperation);
     return SUCCESS;
-}
-
-const std::string PaAdapterManager::GetEnhanceModeName(AudioEnhanceMode mode)
-{
-    std::string name;
-    switch (mode) {
-        case AudioEnhanceMode::ENHANCE_NONE:
-            name = "ENHANCE_NONE";
-            break;
-        case AudioEnhanceMode::ENHANCE_DEFAULT:
-            name = "ENHANCE_DEFAULT";
-            break;
-        default:
-            name = "ENHANCE_NONE";
-            break;
-    }
-    const std::string modeName = name;
-    return modeName;
 }
 
 void PaAdapterManager::PAStreamUpdateStreamIndexSuccessCb(pa_stream *stream, int32_t success, void *userdata)

@@ -29,6 +29,8 @@
 
 #define DEFAULT_SCENE_BYPASS "scene.bypass"
 #define MAX_SCENE_NAME_LEN 100
+#define SCENE_TYPE_OFFSET 16
+#define CAPTURER_ID_OFFSET 8
 
 struct Userdata {
     pa_core *core;
@@ -62,6 +64,8 @@ struct Userdata {
     uint64_t requestBytesMicRef;
     void *bufferEc;
     void *bufferMicRef;
+    uint32_t capturerId;
+    uint32_t rendererId;
 };
 
-#endif
+#endif // USERDATA_H
