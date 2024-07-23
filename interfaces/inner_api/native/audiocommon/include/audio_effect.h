@@ -260,6 +260,10 @@ const std::unordered_map<DeviceType, std::string> SUPPORTED_DEVICE_TYPE {
 struct AudioEnhanceProperty {
     std::string enhanceClass;
     std::string enhanceProp;
+    friend bool operator==(const AudioEnhanceProperty &lhs, const AudioEnhanceProperty &rhs)
+    {
+        return lhs.enhanceClass == rhs.enhanceClass && lhs.enhanceProp == rhs.enhanceProp;
+    }
     bool Marshalling(Parcel &parcel) const
     {
         return parcel.WriteString(enhanceClass)&&
@@ -279,6 +283,10 @@ struct AudioEnhancePropertyArray {
 struct AudioEffectProperty {
     std::string effectClass;
     std::string effectProp;
+    friend bool operator==(const AudioEffectProperty &lhs, const AudioEffectProperty &rhs)
+    {
+        return lhs.effectClass == rhs.effectClass && lhs.effectProp == rhs.effectProp;
+    }
     bool Marshalling(Parcel &parcel) const
     {
         return parcel.WriteString(effectClass)&&
@@ -303,7 +311,8 @@ enum AudioEffectCommandCode {
     EFFECT_CMD_SET_PARAM = 4,
     EFFECT_CMD_GET_PARAM = 5,
     EFFECT_CMD_GET_CONFIG = 6,
-    EFFECT_CMD_SET_IMU = 7
+    EFFECT_CMD_SET_IMU = 7,
+    EFFECT_CMD_SET_PROPERTY = 8
 };
 
 enum AudioEffectParamSetCode {

@@ -40,10 +40,12 @@ static int32_t FindEnhanceLib(const std::string &enhance,
     std::shared_ptr<AudioEffectLibEntry> &libEntry, std::string &libName)
 {
     for (const std::shared_ptr<AudioEffectLibEntry> &lib : enhanceLibraryList) {
-        if (lib->libraryName == enhance) {
-            libName = lib->libraryName;
-            libEntry = lib;
-            return SUCCESS;
+        for (const auto &effectName : lib->effectName) {
+            if (effectName == enhance) {
+                libName = lib->libraryName;
+                libEntry = lib;
+                return SUCCESS;
+            }
         }
     }
     return ERROR;
@@ -117,7 +119,9 @@ void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectCh
         std::string key = enhanceChain.name;
         std::vector<std::string> enhances;
         for (std::string enhanceName : enhanceChain.apply) {
-            enhances.emplace_back(enhanceName);
+            if (enhanceToLibraryEntryMap_.count(enhanceName)) {
+                enhances.emplace_back(enhanceName);
+            }
         }
         enhanceChainToEnhancesMap_[key] = enhances;
     }
@@ -125,6 +129,9 @@ void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectCh
     for (auto item = enhanceChainNameMap.begin(); item != enhanceChainNameMap.end(); item++) {
         sceneTypeAndModeToEnhanceChainNameMap_[item->first] = item->second;
     }
+    // Construct enhancePropertyMap_ that stores effect's property
+    enhancePropertyMap_ = managerParam.effectDefaultProperty;
+
     AUDIO_INFO_LOG("enhanceToLibraryEntryMap_ size %{public}zu \
         enhanceToLibraryNameMap_ size %{public}zu \
         sceneTypeAndModeToEnhanceChainNameMap_ size %{public}zu",
@@ -304,7 +311,9 @@ int32_t AudioEnhanceChainManager::SetAudioEnhanceChainDynamic(const uint32_t sce
         int32_t ret = enhanceToLibraryEntryMap_[enhance]->audioEffectLibHandle->createEffect(descriptor, &handle);
         CHECK_AND_CONTINUE_LOG(ret == 0, "EnhanceToLibraryEntryMap[%{public}s] createEffect fail",
             enhance.c_str());
-        audioEnhanceChain->AddEnhanceHandle(handle, enhanceToLibraryEntryMap_[enhance]->audioEffectLibHandle);
+        auto propIter = enhancePropertyMap_.find(enhance);
+        audioEnhanceChain->AddEnhanceHandle(handle, enhanceToLibraryEntryMap_[enhance]->audioEffectLibHandle,
+            enhance, propIter == enhancePropertyMap_.end() ? "" : propIter->second);
     }
 
     if (audioEnhanceChain->IsEmptyEnhanceHandles()) {
@@ -402,15 +411,6 @@ bool AudioEnhanceChainManager::IsEmptyEnhanceChain()
     return ret;
 }
 
-int32_t AudioEnhanceChainManager::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
-{
-    return AUDIO_OK;
-}
-int32_t AudioEnhanceChainManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
-{
-    return AUDIO_OK;
-}
-
 int32_t AudioEnhanceChainManager::CopyToEnhanceBuffer(void *data, uint32_t length)
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
@@ -499,6 +499,36 @@ int32_t AudioEnhanceChainManager::SetStreamVolumeInfo(const uint32_t &sessionId,
     streamVol_ = streamVol;
     AUDIO_INFO_LOG("success, sessionId: %{public}d, streamVol: %{public}f", sessionId_, streamVol_);
     return SUCCESS;
+}
+
+int32_t AudioEnhanceChainManager::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
+{
+    std::lock_guard<std::mutex> lock(chainManagerMutex_);
+    int32_t ret = 0;
+    for (const auto &property : propertyArray.property) {
+        enhancePropertyMap_.insert_or_assign(property.enhanceClass, property.enhanceProp);
+        for (const auto &[sceneType, enhanceChain] : sceneTypeToEnhanceChainMap_) {
+            if (enhanceChain) {
+                ret = enhanceChain->SetEnhanceProperty(property.enhanceClass, property.enhanceProp);
+                CHECK_AND_RETURN_RET_LOG(ret == 0, ERR_OPERATION_FAILED, "set property failed");
+            }
+        }
+    }
+    return 0;
+}
+
+int32_t AudioEnhanceChainManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    std::lock_guard<std::mutex> lock(chainManagerMutex_);
+    propertyArray.property.clear();
+    for (const auto &[effect, prop] : enhancePropertyMap_) {
+        if (!prop.empty()) {
+            propertyArray.property.emplace_back(AudioEnhanceProperty{effect, prop});
+            AUDIO_INFO_LOG("effect %{public}s is now %{public}s mode",
+                effect.c_str(), prop.c_str());
+        }
+    }
+    return AUDIO_OK;
 }
 } // namespace AudioStandard
 } // namespace OHOS

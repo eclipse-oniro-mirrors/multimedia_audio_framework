@@ -49,10 +49,12 @@ static int32_t FindEffectLib(const std::string &effect,
     std::shared_ptr<AudioEffectLibEntry> &libEntry, std::string &libName)
 {
     for (const std::shared_ptr<AudioEffectLibEntry> &lib : effectLibraryList) {
-        if (lib->libraryName == effect) {
-            libName = lib->libraryName;
-            libEntry = lib;
-            return SUCCESS;
+        for (const auto &effectName : lib->effectName) {
+            if (effectName == effect) {
+                libName = lib->libraryName;
+                libEntry = lib;
+                return SUCCESS;
+            }
         }
     }
     return ERROR;
@@ -88,6 +90,7 @@ AudioEffectChainManager::AudioEffectChainManager()
     SceneTypeToSessionIDMap_.clear();
     SessionIDToEffectInfoMap_.clear();
     SceneTypeToEffectChainCountBackupMap_.clear();
+    effectPropertyMap_.clear();
     deviceType_ = DEVICE_TYPE_SPEAKER;
     deviceSink_ = DEFAULT_DEVICE_SINK;
     isInitialized_ = false;
@@ -279,7 +282,9 @@ void AudioEffectChainManager::InitAudioEffectChainManager(std::vector<EffectChai
         std::string key = efc.name;
         std::vector <std::string> effects;
         for (std::string effectName: efc.apply) {
-            effects.emplace_back(effectName);
+            if (EffectToLibraryEntryMap_.count(effectName)) {
+                effects.emplace_back(effectName);
+            }
         }
         EffectChainToEffectsMap_[key] = effects;
     }
@@ -293,6 +298,8 @@ void AudioEffectChainManager::InitAudioEffectChainManager(std::vector<EffectChai
                 effectChainManagerParam.defaultSceneName.size())] = item->second;
         }
     }
+    // Construct effectPropertyMap_ that stores effect's property
+    effectPropertyMap_ = effectChainManagerParam.effectDefaultProperty;
 
     AUDIO_INFO_LOG("EffectToLibraryEntryMap size %{public}zu", EffectToLibraryEntryMap_.size());
     AUDIO_DEBUG_LOG("EffectChainToEffectsMap size %{public}zu, SceneTypeAndModeToEffectChainNameMap size %{public}zu",
@@ -397,8 +404,9 @@ int32_t AudioEffectChainManager::SetAudioEffectChainDynamic(const std::string &s
             currSceneType = GetSceneTypeFromSpatializationSceneType(static_cast<AudioEffectScene>(GetKeyFromValue(
                 AUDIO_SUPPORTED_SCENE_TYPES, sceneType == DEFAULT_SCENE_TYPE ? DEFAULT_PRESET_SCENE : sceneType)));
         }
+        auto propIter = effectPropertyMap_.find(effect);
         audioEffectChain->AddEffectHandle(handle, EffectToLibraryEntryMap_[effect]->audioEffectLibHandle,
-            currSceneType);
+            currSceneType, effect, propIter == effectPropertyMap_.end() ? "" : propIter->second);
     }
     audioEffectChain->ResetIoBufferConfig();
 
@@ -1355,13 +1363,28 @@ bool AudioEffectChainManager::CheckIfSpkDsp()
 
 int32_t AudioEffectChainManager::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
 {
+    std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
+    for (const auto &property : propertyArray.property) {
+        effectPropertyMap_.insert_or_assign(property.effectClass, property.effectProp);
+        for (const auto &[sceneType, effectChain] : SceneTypeToEffectChainMap_) {
+            if (effectChain) {
+                effectChain->SetEffectProperty(property.effectClass, property.effectProp);
+            }
+        }
+    }
     return AUDIO_OK;
 }
 
 int32_t AudioEffectChainManager::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
 {
+    std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
+    propertyArray.property.clear();
+    for (const auto &[effect, prop] : effectPropertyMap_) {
+        if (!prop.empty()) {
+            propertyArray.property.emplace_back(AudioEffectProperty{effect, prop});
+        }
+    }
     return AUDIO_OK;
 }
-
 } // namespace AudioStandard
 } // namespace OHOS

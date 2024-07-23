@@ -122,12 +122,18 @@ int32_t AudioEnhanceChain::SetEnhanceParamToHandle(AudioEffectHandle handle)
     return SUCCESS;
 }
 
-void AudioEnhanceChain::AddEnhanceHandle(AudioEffectHandle handle, AudioEffectLibrary *libHandle)
+void AudioEnhanceChain::AddEnhanceHandle(AudioEffectHandle handle, AudioEffectLibrary *libHandle,
+    const std::string &enhance, const std::string &property)
 {
     std::lock_guard<std::mutex> lock(chainMutex_);
     int32_t ret = 0;
     AudioEffectTransInfo cmdInfo = {};
     AudioEffectTransInfo replyInfo = {};
+
+    if (SetPropertyToHandle(handle, property) != SUCCESS) {
+        AUDIO_INFO_LOG("[%{public}s] %{public}s effect EFFECT_CMD_SET_PROPERTY fail",
+            sceneType_.c_str(), enhance.c_str());
+    }
 
     uint32_t maxSampleRate = DEFAULT_SAMPLE_RATE;
     replyInfo.data = &maxSampleRate;
@@ -242,5 +248,33 @@ int32_t AudioEnhanceChain::ApplyEnhanceChain(std::unique_ptr<EnhanceBuffer> &enh
     return SUCCESS;
 }
 
+int32_t AudioEnhanceChain::SetEnhanceProperty(const std::string &enhance, const std::string &property)
+{
+    std::lock_guard<std::mutex> lock(chainMutex_);
+    int32_t ret = 0;
+    int32_t size = standByEnhanceHandles_.size();
+    for (int32_t index = 0; index < size; index++) {
+        auto &handle = standByEnhanceHandles_[index];
+        auto const &enhanceName = enhanceNames_[index];
+        if (enhance == enhanceName) {
+            if (SetPropertyToHandle(handle, property) != SUCCESS) {
+                AUDIO_INFO_LOG("[%{public}s] %{public}s effect EFFECT_CMD_SET_PROPERTY fail",
+                    sceneType_.c_str(), enhance.c_str());
+                ret = ERROR;
+            }
+        }
+    }
+    return ret;
+}
+
+int32_t AudioEnhanceChain::SetPropertyToHandle(AudioEffectHandle handle, const std::string &property)
+{
+    if (property.empty()) { return SUCCESS; }
+    int32_t replyData = 0;
+    const char *propCstr = property.c_str();
+    AudioEffectTransInfo cmdInfo = {sizeof(const char *), reinterpret_cast<void*>(&propCstr)};
+    AudioEffectTransInfo replyInfo = {sizeof(int32_t), &replyData};
+    return (*handle)->command(handle, EFFECT_CMD_SET_PROPERTY, &cmdInfo, &replyInfo);
+}
 } // namespace AudioStandard
 } // namespace OHOS

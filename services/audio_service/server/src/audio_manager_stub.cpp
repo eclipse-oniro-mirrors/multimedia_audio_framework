@@ -435,7 +435,7 @@ int AudioManagerStub::HandleRequestThreadPriority(MessageParcel &data, MessagePa
     return AUDIO_OK;
 }
 
-static bool UnmarshellEffectChainMgrParam(EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
+static bool UnmarshallEffectChainMgrParam(EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
 {
     effectChainMgrParam.maxExtraNum = data.ReadInt32();
     effectChainMgrParam.defaultSceneName = data.ReadString();
@@ -478,7 +478,7 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
     for (i = 0; i < countChains; i++) {
         int32_t count = data.ReadInt32();
         CHECK_AND_RETURN_RET_LOG(count >= 0 && count <= AUDIO_EFFECT_COUNT_PER_CHAIN_UPPER_LIMIT,
-            AUDIO_ERR, "Create audio effect chains failed, invalid count");
+            AUDIO_ERR, "Create audio effect chains failed, invalid effect count");
         countEffect.emplace_back(count);
     }
 
@@ -493,7 +493,7 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
 
     EffectChainManagerParam effectParam;
     EffectChainManagerParam enhanceParam;
-    if (!UnmarshellEffectChainMgrParam(effectParam, data) || !UnmarshellEffectChainMgrParam(enhanceParam, data)) {
+    if (!UnmarshallEffectChainMgrParam(effectParam, data) || !UnmarshallEffectChainMgrParam(enhanceParam, data)) {
         return AUDIO_ERR;
     }
 

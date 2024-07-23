@@ -62,12 +62,14 @@ class AudioEnhanceChain {
 public:
     AudioEnhanceChain(const std::string &scene, const AudioEnhanceParam &algoParam);
     ~AudioEnhanceChain();
-    void AddEnhanceHandle(AudioEffectHandle handle, AudioEffectLibrary *libHandle);
+    void AddEnhanceHandle(AudioEffectHandle handle, AudioEffectLibrary *libHandle, const std::string &enhance,
+        const std::string &property);
     bool IsEmptyEnhanceHandles();
     void GetAlgoConfig(AudioBufferConfig &algoConfig);
     uint32_t GetAlgoBufferSize();
     uint32_t GetAlgoBufferSizeEc();
     int32_t ApplyEnhanceChain(std::unique_ptr<EnhanceBuffer> &enhanceBuffer, uint32_t length);
+    int32_t SetEnhanceProperty(const std::string &effect, const std::string &property);
     int32_t SetEnhanceParamToHandle(AudioEffectHandle handle);
 
 private:
@@ -75,6 +77,7 @@ private:
     void InitDump();
     void ReleaseEnhanceChain();
     int32_t GetOneFrameInputData(std::unique_ptr<EnhanceBuffer> &enhanceBuffer);
+    int32_t SetPropertyToHandle(AudioEffectHandle handle, const std::string &property);
 
     bool setConfigFlag_;
     std::mutex chainMutex_;
@@ -87,6 +90,7 @@ private:
     FILE *dumpFileOut_ = nullptr;
     bool needEcFlag_;
     std::vector<AudioEffectHandle> standByEnhanceHandles_;
+    std::vector<std::string> enhanceNames_;
     std::vector<AudioEffectLibrary*> enhanceLibHandles_;
 };
 

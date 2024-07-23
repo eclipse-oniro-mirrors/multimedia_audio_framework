@@ -67,6 +67,7 @@ private:
     std::map<std::string, std::vector<std::string>> enhanceChainToEnhancesMap_;
     std::map<std::string, std::shared_ptr<AudioEffectLibEntry>> enhanceToLibraryEntryMap_;
     std::map<std::string, std::string> enhanceToLibraryNameMap_;
+    std::unordered_map<std::string, std::string> enhancePropertyMap_;
     std::map<uint32_t, DeviceType> capturerIdToDeviceMap_;
     std::map<uint32_t, DeviceType> rendererIdToDeviceMap_;
     std::unique_ptr<EnhanceBuffer> enhanceBuffer_ = nullptr;

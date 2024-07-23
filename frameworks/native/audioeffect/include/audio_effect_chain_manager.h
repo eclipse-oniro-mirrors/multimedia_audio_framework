@@ -171,6 +171,7 @@ private:
     std::map<std::string, SessionEffectInfo> SessionIDToEffectInfoMap_;
     std::map<std::string, int32_t> SceneTypeToEffectChainCountBackupMap_;
     std::set<std::string> SceneTypeToSpecialEffectSet_;
+    std::unordered_map<std::string, std::string> effectPropertyMap_;
     std::vector<std::string> priorSceneList_;
     DeviceType deviceType_ = DEVICE_TYPE_SPEAKER;
     std::string deviceSink_ = DEFAULT_DEVICE_SINK;
