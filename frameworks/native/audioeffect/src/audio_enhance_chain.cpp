@@ -154,6 +154,7 @@ void AudioEnhanceChain::AddEnhanceHandle(AudioEffectHandle handle, AudioEffectLi
     CHECK_AND_RETURN_LOG(ret == 0, "[%{public}s], either one of libs EFFECT_CMD_INIT fail", sceneType_.c_str());
     
     setConfigFlag_ = true;
+    enhanceNames_.emplace_back(enhance);
     standByEnhanceHandles_.emplace_back(handle);
     enhanceLibHandles_.emplace_back(libHandle);
 }

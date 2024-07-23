@@ -387,6 +387,7 @@ int32_t AudioEffectChainManager::SetAudioEffectChainDynamic(const std::string &s
     }
 
     audioEffectChain->SetEffectMode(effectMode);
+    std::string tSceneType = (sceneType == DEFAULT_SCENE_TYPE ? DEFAULT_PRESET_SCENE : sceneType);
     for (std::string effect: EffectChainToEffectsMap_[effectChain]) {
         AudioEffectHandle handle = nullptr;
         AudioEffectDescriptor descriptor;
@@ -397,13 +398,7 @@ int32_t AudioEffectChainManager::SetAudioEffectChainDynamic(const std::string &s
         AUDIO_DEBUG_LOG("createEffect, EffectToLibraryEntryMap [%{public}s], effectChainKey [%{public}s]",
             effect.c_str(), effectChainKey.c_str());
         AudioEffectScene currSceneType;
-        if (!spatializationEnabled_ || (GetDeviceTypeName() != "DEVICE_TYPE_BLUETOOTH_A2DP")) {
-            currSceneType = static_cast<AudioEffectScene>(GetKeyFromValue(
-                AUDIO_SUPPORTED_SCENE_TYPES, sceneType == DEFAULT_SCENE_TYPE ? DEFAULT_PRESET_SCENE : sceneType));
-        } else {
-            currSceneType = GetSceneTypeFromSpatializationSceneType(static_cast<AudioEffectScene>(GetKeyFromValue(
-                AUDIO_SUPPORTED_SCENE_TYPES, sceneType == DEFAULT_SCENE_TYPE ? DEFAULT_PRESET_SCENE : sceneType)));
-        }
+        UpdateCurrSceneType(currSceneType, tSceneType);
         auto propIter = effectPropertyMap_.find(effect);
         audioEffectChain->AddEffectHandle(handle, EffectToLibraryEntryMap_[effect]->audioEffectLibHandle,
             currSceneType, effect, propIter == effectPropertyMap_.end() ? "" : propIter->second);
@@ -609,12 +604,7 @@ int32_t AudioEffectChainManager::EffectApVolumeUpdate(std::shared_ptr<AudioEffec
             static_cast<int32_t>(volumeMax * MAX_UINT_VOLUME_NUM)) {
             audioEffectChain->SetFinalVolume(volumeMax);
             AudioEffectScene currSceneType;
-            if (!spatializationEnabled_ || (GetDeviceTypeName() != "DEVICE_TYPE_BLUETOOTH_A2DP")) {
-                currSceneType = static_cast<AudioEffectScene>(GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, it->first));
-            } else {
-                currSceneType = GetSceneTypeFromSpatializationSceneType(static_cast<AudioEffectScene>(
-                    GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, it->first)));
-            }
+            UpdateCurrSceneType(currSceneType, it->first);
             int32_t ret = audioEffectChain->SetEffectParam(currSceneType);
             CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "set ap volume failed");
             AUDIO_INFO_LOG("The delay of SceneType %{public}s is %{public}u, finalVolume changed to %{public}f",
@@ -701,12 +691,7 @@ int32_t AudioEffectChainManager::EffectApRotationUpdate(std::shared_ptr<AudioEff
                 return ERROR;
             }
             AudioEffectScene currSceneType;
-            if (!spatializationEnabled_ || (GetDeviceTypeName() != "DEVICE_TYPE_BLUETOOTH_A2DP")) {
-                currSceneType = static_cast<AudioEffectScene>(GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, it->first));
-            } else {
-                currSceneType = GetSceneTypeFromSpatializationSceneType(static_cast<AudioEffectScene>(
-                    GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, it->first)));
-            }
+            UpdateCurrSceneType(currSceneType, it->first);
             int32_t ret = audioEffectChain->SetEffectParam(currSceneType);
             CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "set ap rotation failed");
             AUDIO_INFO_LOG("The delay of SceneType %{public}s is %{public}u, rotation changed to %{public}u",
@@ -1122,6 +1107,7 @@ void AudioEffectChainManager::ResetInfo()
     SessionIDToEffectInfoMap_.clear();
     SceneTypeToEffectChainCountBackupMap_.clear();
     SceneTypeToSpecialEffectSet_.clear();
+    effectPropertyMap_.clear();
     deviceType_ = DEVICE_TYPE_SPEAKER;
     deviceSink_ = DEFAULT_DEVICE_SINK;
     isInitialized_ = false;
@@ -1179,7 +1165,7 @@ bool AudioEffectChainManager::CheckSceneTypeMatch(const std::string &sinkSceneTy
     return false;
 }
 
-void AudioEffectChainManager::UpdateCurrSceneType(AudioEffectScene &currSceneType, std::string &sceneType)
+void AudioEffectChainManager::UpdateCurrSceneType(AudioEffectScene &currSceneType, const std::string &sceneType)
 {
     if (!spatializationEnabled_ || (GetDeviceTypeName() != "DEVICE_TYPE_BLUETOOTH_A2DP")) {
         currSceneType = static_cast<AudioEffectScene>(GetKeyFromValue(AUDIO_SUPPORTED_SCENE_TYPES, sceneType));
