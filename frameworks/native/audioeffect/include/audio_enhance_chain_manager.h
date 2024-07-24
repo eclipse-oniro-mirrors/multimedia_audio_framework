@@ -68,8 +68,8 @@ private:
     std::map<std::string, std::shared_ptr<AudioEffectLibEntry>> enhanceToLibraryEntryMap_;
     std::map<std::string, std::string> enhanceToLibraryNameMap_;
     std::unordered_map<std::string, std::string> enhancePropertyMap_;
-    std::map<uint32_t, DeviceType> capturerIdToDeviceMap_;
-    std::map<uint32_t, DeviceType> rendererIdToDeviceMap_;
+    std::map<uint32_t, DeviceType> captureIdToDeviceMap_;
+    std::map<uint32_t, DeviceType> renderIdToDeviceMap_;
     std::unique_ptr<EnhanceBuffer> enhanceBuffer_ = nullptr;
     std::mutex chainManagerMutex_;
     bool isInitialized_;
