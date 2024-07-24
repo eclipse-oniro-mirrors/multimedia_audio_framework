@@ -76,8 +76,8 @@ AudioEnhanceChainManager::AudioEnhanceChainManager()
     enhanceChainToEnhancesMap_.clear();
     enhanceToLibraryEntryMap_.clear();
     enhanceToLibraryNameMap_.clear();
-    capturerIdToDeviceMap_.clear();
-    rendererIdToDeviceMap_.clear();
+    captureIdToDeviceMap_.clear();
+    renderIdToDeviceMap_.clear();
     enhanceBuffer_ = nullptr;
     isInitialized_ = false;
 }
@@ -194,12 +194,12 @@ int32_t AudioEnhanceChainManager::ParseSceneKeyCode(const uint32_t sceneKeyCode,
     } else {
         return ERROR;
     }
-    uint32_t capturerIdMask = CAPTURER_ID_MASK;
-    uint32_t capturerId = (sceneKeyCode & capturerIdMask) >> 8;
-    DeviceType capturerDevice = capturerIdToDeviceMap_[capturerId];
-    uint32_t rendererIdMask = RENDERER_ID_MASK;
-    uint32_t rendererId = (sceneKeyCode & rendererIdMask);
-    DeviceType rendererDevice = rendererIdToDeviceMap_[rendererId];
+    uint32_t captureIdMask = CAPTURER_ID_MASK;
+    uint32_t captureId = (sceneKeyCode & captureIdMask) >> 8;
+    DeviceType capturerDevice = captureIdToDeviceMap_[captureId];
+    uint32_t renderIdMask = RENDERER_ID_MASK;
+    uint32_t renderId = (sceneKeyCode & renderIdMask);
+    DeviceType rendererDevice = renderIdToDeviceMap_[renderId];
 
     auto deviceItem = SUPPORTED_DEVICE_TYPE.find(capturerDevice);
     if (deviceItem != SUPPORTED_DEVICE_TYPE.end()) {
@@ -352,12 +352,6 @@ int32_t AudioEnhanceChainManager::ReleaseAudioEnhanceChainDynamic(const uint32_t
     }
     sceneTypeToEnhanceChainCountMap_.erase(sceneKeyCode);
     sceneTypeToEnhanceChainMap_.erase(sceneKeyCode);
-    uint32_t capturerIdMask = CAPTURER_ID_MASK;
-    uint32_t capturerId = (sceneKeyCode & capturerIdMask) >> 8;
-    capturerIdToDeviceMap_.erase(capturerId);
-    uint32_t rendererIdMask = RENDERER_ID_MASK;
-    uint32_t rendererId = (sceneKeyCode & rendererIdMask);
-    rendererIdToDeviceMap_.erase(rendererId);
     AUDIO_INFO_LOG("release %{public}u", sceneKeyCode);
     if (sceneTypeToEnhanceChainMap_.size() == 0) {
         FreeEnhanceBuffer();
@@ -459,21 +453,15 @@ int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const uint32_t sceneKey
 int32_t AudioEnhanceChainManager::SetInputDevice(const uint32_t &captureId, const DeviceType &inputDevice)
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
-    if (capturerIdToDeviceMap_.count(captureId) && capturerIdToDeviceMap_[captureId] == inputDevice) {
-        return SUCCESS;
-    }
-    capturerIdToDeviceMap_[captureId] = inputDevice;
+    captureIdToDeviceMap_.insert_or_assign(captureId, inputDevice);
     AUDIO_INFO_LOG("success, captureId: %{public}d, inputDevice: %{public}d", captureId, inputDevice);
     return SUCCESS;
 }
 
 int32_t AudioEnhanceChainManager::SetOutputDevice(const uint32_t &renderId, const DeviceType &outputDevice)
 {
-    std::lock_guard<std::mutex> lock(chainManagerMutex_);
-    if (rendererIdToDeviceMap_.count(renderId) && rendererIdToDeviceMap_[renderId] == outputDevice) {
-        return SUCCESS;
-    }
-    rendererIdToDeviceMap_[renderId] = outputDevice;
+    renderId_ = renderId;
+    outputDevice_ = outputDevice;
     AUDIO_INFO_LOG("success, renderId: %{public}d, outputDevice: %{public}d", renderId, outputDevice);
     return SUCCESS;
 }

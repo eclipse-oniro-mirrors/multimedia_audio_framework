@@ -333,8 +333,8 @@ static void EnhanceProcessAndPost(struct Userdata *u, const uint32_t sceneKeyCod
     pa_source_output *sourceOutput;
     EnhanceProcess(sceneKeyCode, enhanceChunk);
 
-    uint32_t capturerId = u->capturerId;
-    uint32_t rendererId = u->rendererId;
+    uint32_t captureId = u->captureId;
+    uint32_t renderId = u->renderId;
     while ((sourceOutput = pa_hashmap_iterate(source->thread_info.outputs, &state, NULL))) {
         pa_source_output_assert_ref(sourceOutput);
         const char *sourceOutputSceneType = pa_proplist_gets(sourceOutput->proplist, "scene.type");
@@ -345,7 +345,7 @@ static void EnhanceProcessAndPost(struct Userdata *u, const uint32_t sceneKeyCod
             continue;
         }
         uint32_t sceneKeyCodeTemp = 0;
-        sceneKeyCodeTemp = (sceneTypeCode << SCENE_TYPE_OFFSET) + (capturerId << CAPTURER_ID_OFFSET) + rendererId;
+        sceneKeyCodeTemp = (sceneTypeCode << SCENE_TYPE_OFFSET) + (captureId << CAPTURER_ID_OFFSET) + renderId;
         if (sceneKeyCode != sceneKeyCodeTemp) {
             continue;
         }
@@ -624,9 +624,9 @@ static int PaHdiCapturerInit(struct Userdata *u)
         return ret;
     }
 
-    u->capturerId = 0;
-    u->rendererId = 0;
-    ret = u->sourceAdapter->CapturerSourceGetCaptureId(u->sourceAdapter->wapper, &u->capturerId);
+    u->captureId = 0;
+    u->renderId = 0;
+    ret = u->sourceAdapter->CapturerSourceGetCaptureId(u->sourceAdapter->wapper, &u->captureId);
     if (ret != 0) {
         AUDIO_ERR_LOG("Audio capturer get capturer id failed!");
         return ret;

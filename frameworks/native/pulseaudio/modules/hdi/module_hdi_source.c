@@ -144,15 +144,15 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
     AUDIO_INFO_LOG("Trigger SourceOutputPutCb");
     pa_assert(c);
     const char *sceneType = pa_proplist_gets(so->proplist, "scene.type");
-    uint32_t capturerId = u->capturerId;
-    uint32_t rendererId = u->rendererId;
+    uint32_t captureId = u->captureId;
+    uint32_t renderId = u->renderId;
     uint32_t sceneTypeCode = 0;
     if (GetSceneTypeCode(sceneType, &sceneTypeCode) != 0) {
         AUDIO_ERR_LOG("GetSceneTypeCode failed");
         return PA_HOOK_OK;
     }
     uint32_t sceneKeyCode = 0;
-    sceneKeyCode = (sceneTypeCode << SCENE_TYPE_OFFSET) + (capturerId << CAPTURER_ID_OFFSET) + rendererId;
+    sceneKeyCode = (sceneTypeCode << SCENE_TYPE_OFFSET) + (captureId << CAPTURER_ID_OFFSET) + renderId;
     if (EnhanceChainManagerCreateCb(sceneKeyCode) != 0) {
         AUDIO_INFO_LOG("Create EnhanceChain failed, set to bypass");
         pa_proplist_sets(so->proplist, "scene.bypass", DEFAULT_SCENE_BYPASS);
@@ -185,15 +185,15 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
     }
     pa_assert(c);
     const char *sceneType = pa_proplist_gets(so->proplist, "scene.type");
-    uint32_t capturerId = u->capturerId;
-    uint32_t rendererId = u->rendererId;
+    uint32_t captureId = u->captureId;
+    uint32_t renderId = u->renderId;
     uint32_t sceneTypeCode = 0;
     if (GetSceneTypeCode(sceneType, &sceneTypeCode) != 0) {
         AUDIO_ERR_LOG("GetSceneTypeCode failed");
         return PA_HOOK_OK;
     }
     uint32_t sceneKeyCode = 0;
-    sceneKeyCode = (sceneTypeCode << SCENE_TYPE_OFFSET) + (capturerId << CAPTURER_ID_OFFSET) + rendererId;
+    sceneKeyCode = (sceneTypeCode << SCENE_TYPE_OFFSET) + (captureId << CAPTURER_ID_OFFSET) + renderId;
     EnhanceChainManagerReleaseCb(sceneKeyCode);
     
     char sceneKey[MAX_SCENE_NAME_LEN];

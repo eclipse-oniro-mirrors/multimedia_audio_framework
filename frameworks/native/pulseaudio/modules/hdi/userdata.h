@@ -64,8 +64,8 @@ struct Userdata {
     uint64_t requestBytesMicRef;
     void *bufferEc;
     void *bufferMicRef;
-    uint32_t capturerId;
-    uint32_t rendererId;
+    uint32_t captureId;
+    uint32_t renderId;
 };
 
 #endif // USERDATA_H
