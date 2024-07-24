@@ -635,13 +635,24 @@ void AudioEffectManager::ConstructDefaultEffectProperty(const std::string &chain
 
 void AudioEffectManager::ConstructEffectChainManagerParam(EffectChainManagerParam &effectChainMgrParam)
 {
+    std::unordered_map<std::string, std::string> &map = effectChainMgrParam.sceneTypeToChainNameMap;
+    std::unordered_map<std::string, std::string> &effectDefaultProperty = effectChainMgrParam.effectDefaultProperty;
+    effectChainMgrParam.maxExtraNum = oriEffectConfig_.postProcess.maxExtSceneNum;
     std::string sceneType;
     std::string sceneMode;
     std::string key;
     std::string defaultChain;
     bool defaultFlag = false;
+
     for (auto &scene: supportedEffectConfig_.postProcessNew.stream) {
         sceneType = scene.scene;
+        if (scene.priority == PRIOR_SCENE) {
+            effectChainMgrParam.priorSceneList.push_back(sceneType);
+        }
+        if (scene.priority == DEFAULT_SCENE) {
+            effectChainMgrParam.defaultSceneName = sceneType;
+        }
+
         for (auto &mode: scene.streamEffectMode) {
             sceneMode = mode.mode;
             defaultFlag = false;
@@ -689,9 +700,9 @@ void AudioEffectManager::ConstructEnhanceChainManagerParam(EffectChainManagerPar
         for (auto &mode: scene.streamEffectMode) {
             sceneMode = mode.mode;
             for (auto &device: mode.devicePort) {
+                ConstructDefaultEffectProperty(device.chain, enhanceDefaultProperty);
                 key = sceneType + "_&_" + sceneMode;
                 AddKeyValueIntoMap(map, key, device.chain);
-                ConstructDefaultEffectProperty(device.chain, enhanceDefaultProperty);
             }
         }
     }
