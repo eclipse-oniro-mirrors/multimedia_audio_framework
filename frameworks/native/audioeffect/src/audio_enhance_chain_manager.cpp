@@ -460,8 +460,8 @@ int32_t AudioEnhanceChainManager::SetInputDevice(const uint32_t &captureId, cons
 
 int32_t AudioEnhanceChainManager::SetOutputDevice(const uint32_t &renderId, const DeviceType &outputDevice)
 {
-    renderId_ = renderId;
-    outputDevice_ = outputDevice;
+    std::lock_guard<std::mutex> lock(chainManagerMutex_);
+    rendererIdToDeviceMap_.insert_or_assign(renderId, outputDevice);
     AUDIO_INFO_LOG("success, renderId: %{public}d, outputDevice: %{public}d", renderId, outputDevice);
     return SUCCESS;
 }

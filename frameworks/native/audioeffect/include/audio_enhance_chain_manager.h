@@ -69,11 +69,10 @@ private:
     std::map<std::string, std::string> enhanceToLibraryNameMap_;
     std::unordered_map<std::string, std::string> enhancePropertyMap_;
     std::map<uint32_t, DeviceType> captureIdToDeviceMap_;
+    std::map<uint32_t, DeviceType> renderIdToDeviceMap_;
     std::unique_ptr<EnhanceBuffer> enhanceBuffer_ = nullptr;
     std::mutex chainManagerMutex_;
     bool isInitialized_;
-    uint32_t renderId_ = 0;
-    DeviceType outputDevice_ = DEVICE_TYPE_SPEAKER;
     uint32_t sessionId_ = 0;
     AudioVolumeType volumeType_ = STREAM_MUSIC;
     float systemVol_ = 0.0f;
