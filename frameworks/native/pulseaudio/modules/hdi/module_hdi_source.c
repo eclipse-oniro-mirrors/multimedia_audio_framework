@@ -201,7 +201,7 @@ static pa_hook_result_t CheckIfAvailSource(pa_source_output *so, struct Userdata
         return PA_HOOK_CANCEL;
     }
     if (soSource->index != thisSource->index) {
-        AUDIO_FATAL_LOG("NOT correspondant SOURCE %{public}s AND %{public}s.", soSource->name, thisSource->name);
+        AUDIO_INFO_LOG("NOT correspondant SOURCE %{public}s AND %{public}s.", soSource->name, thisSource->name);
         return PA_HOOK_CANCEL;
     }
     return PA_HOOK_OK;
@@ -215,9 +215,6 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so, stru
         return PA_HOOK_OK;
     }
     pa_assert(c);
-    AUDIO_FATAL_LOG("SO_INDEX = %{public}u", so->index);
-    AUDIO_FATAL_LOG("SO_SOURCE_INDEX = %{public}u, SO_SOURCE_NAME = %{public}s", so->source->index, so->source->name);
-    AUDIO_FATAL_LOG("THIS SOURCE_INDEX = %{public}u, THIS_SOURCE_NAME = %{public}s", u->source->index, u->source->name);
     if (CheckIfAvailSource(so, u) == PA_HOOK_CANCEL) {
         return PA_HOOK_OK;
     }
@@ -232,48 +229,10 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so, s
         return PA_HOOK_OK;
     }
     pa_assert(c);
-    AUDIO_FATAL_LOG("SO_INDEX = %{public}u", so->index);
-    AUDIO_FATAL_LOG("SO_SOURCE_INDEX = %{public}u, SO_SOURCE_NAME = %{public}s", so->source->index, so->source->name);
-    AUDIO_FATAL_LOG("THIS SOURCE_INDEX = %{public}u, THIS_SOURCE_NAME = %{public}s", u->source->index, u->source->name);
     if (CheckIfAvailSource(so, u) == PA_HOOK_CANCEL) {
         return PA_HOOK_OK;
     }
     return HandleSourceOutputUnlink(so, u);
-}
-
-static pa_hook_result_t SourceOutputMoveStartCb(pa_core *c, pa_source_output *so, struct Userdata *u)
-{
-    AUDIO_FATAL_LOG("==========SourceOutputMoveStartCb==========");
-    if (u != NULL) {
-        AUDIO_FATAL_LOG("This SourceName = %{public}s", u->source->name);
-    }
-    AUDIO_FATAL_LOG("SO_INDEX = %{public}u", so->index);
-    AUDIO_FATAL_LOG("SO_SOURCE_INDEX = %{public}u, SO_SOURCE_NAME = %{public}s", so->source->index, so->source->name);
-    AUDIO_FATAL_LOG("THIS SOURCE_INDEX = %{public}u, THIS_SOURCE_NAME = %{public}s", u->source->index, u->source->name);
-
-    if (so->source->index != u->source->index) {
-        AUDIO_FATAL_LOG("NOT RIGHT SOURCE");
-        return PA_HOOK_OK;
-    }
-    // Create Things
-    HandleSourceOutputPut(so, u);
-
-    // Release Old Things, if old source is still alive
-    pa_source *sourceOri = so->source;
-    if (sourceOri == NULL) {
-        AUDIO_FATAL_LOG("original Source has been free");
-        return PA_HOOK_OK;
-    }
-    AUDIO_FATAL_LOG("original sourceName = %{public}s", sourceOri->name);
-    struct Userdata *uOri = (struct Userdata *)sourceOri->userdata;
-    if (u == NULL) {
-        AUDIO_FATAL_LOG("original Source userdata is NULL");
-        return PA_HOOK_OK;
-    }
-    AUDIO_FATAL_LOG("origin_capture_ID = %{public}u", u->capturerId);
-    HandleSourceOutputUnlink(so, uOri);
-    
-    return PA_HOOK_OK;
 }
 
 static pa_hook_result_t SourceOutputMoveFinishCb(pa_core *c, pa_source_output *so, struct Userdata *u)
@@ -345,8 +304,7 @@ static void ReleaseAllChains(struct Userdata *u)
     const void *sceneKey;
     while ((sceneKeyNum = pa_hashmap_iterate(u->sceneToCountMap, &state, &sceneKey))) {
         uint32_t sceneKeyCode = (uint32_t)strtoul((char *)sceneKey, NULL, BASE_TEN);
-        AUDIO_FATAL_LOG("sceneKey=%{public}u, number=%{public}u", sceneKeyCode, *sceneKeyNum);
-        for (int32_t count = 0; count < *sceneKeyNum; count++) {
+        for (uint32_t count = 0; count < *sceneKeyNum; count++) {
             EnhanceChainManagerReleaseCb(sceneKeyCode);
         }
     }
@@ -359,10 +317,9 @@ void pa__done(pa_module *m)
     pa_assert(m);
 
     if ((source = m->userdata)) {
-        AUDIO_FATAL_LOG("==========Unload Source[%{public}s]==========", source->name);
         struct Userdata *u = (struct Userdata *)source->userdata;
         if (u != NULL) {
-            AUDIO_FATAL_LOG("THIS SOURCE HAS UserData");
+            AUDIO_INFO_LOG("Release all enhChains on [%{public}s]", source->name);
             ReleaseAllChains(u);
         }
         PaHdiSourceFree(source);
