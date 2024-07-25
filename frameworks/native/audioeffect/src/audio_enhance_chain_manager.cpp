@@ -219,11 +219,14 @@ int32_t AudioEnhanceChainManager::ParseSceneKeyCode(const uint32_t sceneKeyCode,
 int32_t AudioEnhanceChainManager::CreateAudioEnhanceChainDynamic(const uint32_t sceneKeyCode)
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
-
+    AUDIO_FATAL_LOG("=====Create enhanceChain=====, sceneKeyCode = %{public}u", sceneKeyCode);
     std::string sceneType = "";
     std::string capturerDevice = "";
     std::string rendererDeivce = "";
     if (ParseSceneKeyCode(sceneKeyCode, sceneType, capturerDevice, rendererDeivce)) {
+        AUDIO_FATAL_LOG("sceneType=%{public}s", sceneType.c_str());
+        AUDIO_FATAL_LOG("capturerDevice=%{public}s", capturerDevice.c_str());
+        AUDIO_FATAL_LOG("rendererDeivce=%{public}s", rendererDeivce.c_str());
         return ERROR;
     }
     AudioEnhanceParam algoParam = {(uint32_t)isMute_, (uint32_t)(systemVol_ * VOLUME_FACTOR),
@@ -260,6 +263,14 @@ int32_t AudioEnhanceChainManager::CreateAudioEnhanceChainDynamic(const uint32_t 
             sceneTypeToEnhanceChainCountMap_[sceneKeyCode] = 1;
         }
     }
+
+    // CXDEBUG
+    AUDIO_FATAL_LOG("chainMapSize = %{public}zu", sceneTypeToEnhanceChainMap_.size());
+    for (auto item = sceneTypeToEnhanceChainCountMap_.begin(); item != sceneTypeToEnhanceChainCountMap_.end(); item++) {
+        AUDIO_FATAL_LOG("SceneCode = %{public}u, Count = %{public}d", item->first, item->second);
+    }
+    // CXDEBUG
+
     if (SetAudioEnhanceChainDynamic(sceneKeyCode, sceneType, capturerDevice) != SUCCESS) {
         AUDIO_ERR_LOG("%{public}s create failed.", sceneType.c_str());
         return ERROR;
@@ -341,6 +352,7 @@ int32_t AudioEnhanceChainManager::ReleaseAudioEnhanceChainDynamic(const uint32_t
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     CHECK_AND_RETURN_RET_LOG(isInitialized_, ERROR, "has not been initialized");
+    AUDIO_FATAL_LOG("=====Release enhanceChain=====, sceneKeyCode = %{public}u", sceneKeyCode);
 
     if (!sceneTypeToEnhanceChainMap_.count(sceneKeyCode)) {
         sceneTypeToEnhanceChainCountMap_.erase(sceneKeyCode);

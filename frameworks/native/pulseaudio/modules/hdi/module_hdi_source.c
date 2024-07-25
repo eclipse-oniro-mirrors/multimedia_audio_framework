@@ -134,15 +134,8 @@ static void SetResampler(pa_source_output *so, const pa_sample_spec *algoConfig,
     }
 }
 
-static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
+static pa_hook_result_t HandleSourceOutputPut(pa_source_output *so, struct Userdata *u)
 {
-    struct Userdata *u = (struct Userdata *)so->source->userdata;
-    if (u == NULL) {
-        AUDIO_ERR_LOG("Get Userdata failed! userdata is NULL");
-        return PA_HOOK_OK;
-    }
-    AUDIO_INFO_LOG("Trigger SourceOutputPutCb");
-    pa_assert(c);
     const char *sceneType = pa_proplist_gets(so->proplist, "scene.type");
     uint32_t captureId = u->captureId;
     uint32_t renderId = u->renderId;
@@ -175,15 +168,8 @@ static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so)
     return PA_HOOK_OK;
 }
 
-static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
+static pa_hook_result_t HandleSourceOutputUnlink(pa_source_output *so, struct Userdata *u)
 {
-    AUDIO_INFO_LOG("Trigger SourceOutputUnlinkCb");
-    struct Userdata *u = (struct Userdata *)so->source->userdata;
-    if (u == NULL) {
-        AUDIO_ERR_LOG("Get Userdata failed! userdata is NULL");
-        return PA_HOOK_OK;
-    }
-    pa_assert(c);
     const char *sceneType = pa_proplist_gets(so->proplist, "scene.type");
     uint32_t captureId = u->captureId;
     uint32_t renderId = u->renderId;
@@ -207,6 +193,103 @@ static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so)
     return PA_HOOK_OK;
 }
 
+static pa_hook_result_t CheckIfAvailSource(pa_source_output *so, struct Userdata *u)
+{   
+    pa_source *soSource = so->source;
+    pa_source *thisSource = u->source;
+    if (soSource == NULL || thisSource == NULL) {
+        return PA_HOOK_CANCEL;
+    }
+    if (soSource->index != thisSource->index) {
+        AUDIO_FATAL_LOG("NOT correspondant SOURCE %{public}s AND %{public}s.", soSource->name, thisSource->name);
+        return PA_HOOK_CANCEL;
+    }
+    return PA_HOOK_OK;
+}
+
+static pa_hook_result_t SourceOutputPutCb(pa_core *c, pa_source_output *so, struct Userdata *u)
+{
+    AUDIO_INFO_LOG("Trigger SourceOutputPutCb");
+    if (u == NULL) {
+        AUDIO_ERR_LOG("Get Userdata failed! userdata is NULL");
+        return PA_HOOK_OK;
+    }
+    pa_assert(c);
+    AUDIO_FATAL_LOG("SO_INDEX = %{public}u", so->index);
+    AUDIO_FATAL_LOG("SO_SOURCE_INDEX = %{public}u, SO_SOURCE_NAME = %{public}s", so->source->index, so->source->name);
+    AUDIO_FATAL_LOG("THIS SOURCE_INDEX = %{public}u, THIS_SOURCE_NAME = %{public}s", u->source->index, u->source->name);
+    if (CheckIfAvailSource(so, u) == PA_HOOK_CANCEL) {
+        return PA_HOOK_OK;
+    }
+    return HandleSourceOutputPut(so, u);
+}
+
+static pa_hook_result_t SourceOutputUnlinkCb(pa_core *c, pa_source_output *so, struct Userdata *u)
+{
+    AUDIO_INFO_LOG("Trigger SourceOutputUnlinkCb");
+    if (u == NULL) {
+        AUDIO_ERR_LOG("Get Userdata failed! userdata is NULL");
+        return PA_HOOK_OK;
+    }
+    pa_assert(c);
+    AUDIO_FATAL_LOG("SO_INDEX = %{public}u", so->index);
+    AUDIO_FATAL_LOG("SO_SOURCE_INDEX = %{public}u, SO_SOURCE_NAME = %{public}s", so->source->index, so->source->name);
+    AUDIO_FATAL_LOG("THIS SOURCE_INDEX = %{public}u, THIS_SOURCE_NAME = %{public}s", u->source->index, u->source->name);
+    if (CheckIfAvailSource(so, u) == PA_HOOK_CANCEL) {
+        return PA_HOOK_OK;
+    }
+    return HandleSourceOutputUnlink(so, u);
+}
+
+static pa_hook_result_t SourceOutputMoveStartCb(pa_core *c, pa_source_output *so, struct Userdata *u)
+{
+    AUDIO_FATAL_LOG("==========SourceOutputMoveStartCb==========");
+    if (u != NULL) {
+        AUDIO_FATAL_LOG("This SourceName = %{public}s", u->source->name);
+    }
+    AUDIO_FATAL_LOG("SO_INDEX = %{public}u", so->index);
+    AUDIO_FATAL_LOG("SO_SOURCE_INDEX = %{public}u, SO_SOURCE_NAME = %{public}s", so->source->index, so->source->name);
+    AUDIO_FATAL_LOG("THIS SOURCE_INDEX = %{public}u, THIS_SOURCE_NAME = %{public}s", u->source->index, u->source->name);
+
+    if (so->source->index != u->source->index) {
+        AUDIO_FATAL_LOG("NOT RIGHT SOURCE");
+        return PA_HOOK_OK;
+    }
+    // Create Things
+    HandleSourceOutputPut(so, u);
+
+    // Release Old Things, if old source is still alive
+    pa_source *sourceOri = so->source;
+    if (sourceOri == NULL) {
+        AUDIO_FATAL_LOG("original Source has been free");
+        return PA_HOOK_OK;
+    }
+    AUDIO_FATAL_LOG("original sourceName = %{public}s", sourceOri->name);
+    struct Userdata *uOri = (struct Userdata *)sourceOri->userdata;
+    if (u == NULL) {
+        AUDIO_FATAL_LOG("original Source userdata is NULL");
+        return PA_HOOK_OK;
+    }
+    AUDIO_FATAL_LOG("origin_capture_ID = %{public}u", u->capturerId);
+    HandleSourceOutputUnlink(so, uOri);
+    
+    return PA_HOOK_OK;
+}
+
+static pa_hook_result_t SourceOutputMoveFinishCb(pa_core *c, pa_source_output *so, struct Userdata *u)
+{
+    AUDIO_INFO_LOG("Trigger SourceOutputMoveFinishCb");
+    if (u == NULL) {
+        AUDIO_ERR_LOG("Get Userdata failed! userdata is NULL");
+        return PA_HOOK_OK;
+    }
+    pa_assert(c);
+    if (CheckIfAvailSource(so, u) == PA_HOOK_CANCEL) {
+        return PA_HOOK_OK;
+    }
+    return HandleSourceOutputPut(so, u);
+}
+
 int pa__init(pa_module *m)
 {
     pa_modargs *ma = NULL;
@@ -221,11 +304,14 @@ int pa__init(pa_module *m)
     if (!(m->userdata = PaHdiSourceNew(m, ma, __FILE__))) {
         goto fail;
     }
+    pa_source *source = (pa_source *)m->userdata;
 
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SOURCE_OUTPUT_PUT], PA_HOOK_LATE,
-        (pa_hook_cb_t)SourceOutputPutCb, NULL);
+        (pa_hook_cb_t)SourceOutputPutCb, source->userdata);
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SOURCE_OUTPUT_UNLINK], PA_HOOK_LATE,
-        (pa_hook_cb_t)SourceOutputUnlinkCb, NULL);
+        (pa_hook_cb_t)SourceOutputUnlinkCb, source->userdata);
+    pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SOURCE_OUTPUT_MOVE_FINISH], PA_HOOK_LATE,
+        (pa_hook_cb_t)SourceOutputMoveFinishCb, source->userdata);
 
     pa_modargs_free(ma);
 
@@ -252,6 +338,20 @@ int pa__get_n_used(pa_module *m)
     return pa_source_linked_by(source);
 }
 
+static void ReleaseAllChains(struct Userdata *u)
+{
+    void *state = NULL;
+    uint32_t *sceneKeyNum;
+    const void *sceneKey;
+    while ((sceneKeyNum = pa_hashmap_iterate(u->sceneToCountMap, &state, &sceneKey))) {
+        uint32_t sceneKeyCode = (uint32_t)strtoul((char *)sceneKey, NULL, BASE_TEN);
+        AUDIO_FATAL_LOG("sceneKey=%{public}u, number=%{public}u", sceneKeyCode, *sceneKeyNum);
+        for (int32_t count = 0; count < *sceneKeyNum; count++) {
+            EnhanceChainManagerReleaseCb(sceneKeyCode);
+        }
+    }
+}
+
 void pa__done(pa_module *m)
 {
     pa_source *source = NULL;
@@ -259,6 +359,12 @@ void pa__done(pa_module *m)
     pa_assert(m);
 
     if ((source = m->userdata)) {
+        AUDIO_FATAL_LOG("==========Unload Source[%{public}s]==========", source->name);
+        struct Userdata *u = (struct Userdata *)source->userdata;
+        if (u != NULL) {
+            AUDIO_FATAL_LOG("THIS SOURCE HAS UserData");
+            ReleaseAllChains(u);
+        }
         PaHdiSourceFree(source);
     }
 }

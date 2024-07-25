@@ -481,6 +481,7 @@ int32_t PulseAudioServiceAdapterImpl::MoveSourceOutputByIndexOrName(uint32_t sou
         operation = pa_context_move_source_output_by_index(mContext, sourceOutputId, sourceIndex,
             PulseAudioServiceAdapterImpl::PaMoveSourceOutputCb, reinterpret_cast<void *>(userData.get()));
     } else {
+        AUDIO_FATAL_LOG("sourceName = %{public}s, sourceOutputId = %{public}u", sourceName.c_str(), sourceOutputId);
         operation = pa_context_move_source_output_by_name(mContext, sourceOutputId, sourceName.c_str(),
             PulseAudioServiceAdapterImpl::PaMoveSourceOutputCb, reinterpret_cast<void *>(userData.get()));
     }
