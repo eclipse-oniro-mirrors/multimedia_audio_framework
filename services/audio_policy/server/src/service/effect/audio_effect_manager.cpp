@@ -633,8 +633,8 @@ void AudioEffectManager::ConstructDefaultEffectProperty(const std::string &chain
     }
 }
 
-void ConstructEffectChainMode(StreamEffectMode &mode, std::string sceneType,
-                              EffectChainManagerParam &effectChainMgrParam)
+void AudioEffectManager::ConstructEffectChainMode(StreamEffectMode &mode, std::string sceneType,
+                                                  EffectChainManagerParam &effectChainMgrParam)
 {
     std::unordered_map<std::string, std::string> &map = effectChainMgrParam.sceneTypeToChainNameMap;
     std::string sceneMode = mode.mode;
