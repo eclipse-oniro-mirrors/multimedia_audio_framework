@@ -61,6 +61,8 @@ private:
     std::unordered_map<std::string, std::string> effectDefaultProperty_;
     std::unordered_map<std::string, std::string> enhanceDefaultProperty_;
 
+    void ConstructEffectChainMode(StreamEffectMode &mode, std::string sceneType,
+                                  EffectChainManagerParam &effectChainMgrParam);
     void UpdateAvailableAEConfig(OriginalEffectConfig &aeConfig);
     void UpdateEffectChains(std::vector<std::string> &availableLayout);
     void UpdateDuplicateBypassMode(ProcessNew &processNew);
