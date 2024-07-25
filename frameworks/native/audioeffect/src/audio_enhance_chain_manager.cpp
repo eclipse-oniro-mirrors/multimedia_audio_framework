@@ -260,7 +260,6 @@ int32_t AudioEnhanceChainManager::CreateAudioEnhanceChainDynamic(const uint32_t 
             sceneTypeToEnhanceChainCountMap_[sceneKeyCode] = 1;
         }
     }
-
     if (SetAudioEnhanceChainDynamic(sceneKeyCode, sceneType, capturerDevice) != SUCCESS) {
         AUDIO_ERR_LOG("%{public}s create failed.", sceneType.c_str());
         return ERROR;

@@ -194,7 +194,7 @@ static pa_hook_result_t HandleSourceOutputUnlink(pa_source_output *so, struct Us
 }
 
 static pa_hook_result_t CheckIfAvailSource(pa_source_output *so, struct Userdata *u)
-{   
+{
     pa_source *soSource = so->source;
     pa_source *thisSource = u->source;
     if (soSource == NULL || thisSource == NULL) {
