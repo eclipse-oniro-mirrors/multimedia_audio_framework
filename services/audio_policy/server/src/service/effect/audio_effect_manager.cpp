@@ -634,13 +634,13 @@ void AudioEffectManager::ConstructDefaultEffectProperty(const std::string &chain
 }
 
 void ConstructEffectChainMode(StreamEffectMode &mode, std::string sceneType,
-                                EffectChainManagerParam &effectChainMgrParam)
+                              EffectChainManagerParam &effectChainMgrParam)
 {
     std::unordered_map<std::string, std::string> &map = effectChainMgrParam.sceneTypeToChainNameMap;
     std::string sceneMode = mode.mode;
     std::unordered_map<std::string, std::string> &effectDefaultProperty = effectChainMgrParam.effectDefaultProperty;
     std::string key;
-    std::string sceneMode = defaultChain;
+    std::string defaultChain;
     bool defaultFlag = false;
     for (auto &device : mode.devicePort) {
         ConstructDefaultEffectProperty(device.chain, effectDefaultProperty);
