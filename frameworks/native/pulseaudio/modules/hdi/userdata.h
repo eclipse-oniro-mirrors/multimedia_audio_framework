@@ -31,6 +31,7 @@
 #define MAX_SCENE_NAME_LEN 100
 #define SCENE_TYPE_OFFSET 16
 #define CAPTURER_ID_OFFSET 8
+#define BASE_TEN 10
 
 struct Userdata {
     pa_core *core;
