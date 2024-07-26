@@ -33,7 +33,7 @@
 #define INVALID_SCENEKEY_CODE 23333
 #define VALID_BUFFER_SIZE 1000
 #define INVALID_BUFFER_SIZE 10000
-#define UT_LIBRARY_PATH "/system/lib64/librecord_process.so"
+#define MAX_EXTRA_NUM 3
 
 namespace OHOS {
 namespace AudioStandard {
@@ -43,9 +43,7 @@ public:
     static std::vector<EffectChain> enhanceChains_;
     static EffectChainManagerParam managerParam_;
     static std::vector<std::shared_ptr<AudioEffectLibEntry>> enhanceLibraryList_;
-
-    static void SetEnhanceLibraryList();
-
+    
     // SetUpTestSuite: Called before all test cases
     static void SetUpTestSuite(void);
     // TearDownTestSuite: Called after all test cases

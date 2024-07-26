@@ -102,8 +102,8 @@ void AudioEnhanceChainManager::ResetInfo()
     enhanceToLibraryEntryMap_.clear();
     enhanceToLibraryNameMap_.clear();
     enhancePropertyMap_.clear();
-    capturerIdToDeviceMap_.clear();
-    rendererIdToDeviceMap_.clear();
+    captureIdToDeviceMap_.clear();
+    renderIdToDeviceMap_.clear();
     FreeEnhanceBuffer();
     isInitialized_ = false;
     sessionId_ = 0;
