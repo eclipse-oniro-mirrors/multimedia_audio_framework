@@ -18,6 +18,24 @@
 
 #include "audio_enhance_chain_manager_unit_test.h"
 
+#include <chrono>
+#include <thread>
+#include <fstream>
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
+#include "audio_effect.h"
+#include "audio_utils.h"
+#include "audio_log.h"
+#include "audio_enhance_chain_manager.h"
+#include "audio_errors.h"
+
+#define VALID_SCENEKEY_CODE 68864
+#define INVALID_SCENEKEY_CODE 23333
+#define VALID_BUFFER_SIZE 1000
+#define INVALID_BUFFER_SIZE 10000
+#define MAX_EXTRA_NUM 3
+
 using namespace std;
 using namespace testing::ext;
 using namespace testing;
