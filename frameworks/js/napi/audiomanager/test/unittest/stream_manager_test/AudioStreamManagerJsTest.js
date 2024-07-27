@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import HashSet from '@ohos.util.HashSet';
 import audio from '@ohos.multimedia.audio';
 import { describe, beforeAll, beforeEach, afterEach, afterAll, it, expect } from 'deccjsunit/index'
 
@@ -471,6 +471,344 @@ describe("AudioStreamManagerJsTest", function () {
       await audioRenderer.release();
       done();
       return;
+    }
+  });
+
+  /*
+   * @tc.name:getSupportedAudioEffectProperty001
+   * @tc.desc:Get getSupportedAudioEffectProperty success - check repeats data
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("getSupportedAudioEffectProperty001", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEffectArray = audioStreamManager.getSupportedAudioEffectProperty();
+      console.info(`${TAG} getSupportedAudioEffectProperty success:${JSON.stringify(audioEffectArray)}`);
+      let hashClassSet = new HashSet();
+      for (let i = 0; i < audioEffectArray.length; i++) {
+        expect(audioEffectArray[i].effectClass !== ""
+          && audioEffectArray[i].effectClass !== undefined).assertTrue();
+        expect(audioEffectArray[i].effectProp !== ""
+          && audioEffectArray[i].effectProp !== undefined).assertTrue();
+        hashClassSet.add(audioEffectArray[i].effectClass);
+      }
+      expect(hashClassSet.length == audioEffectArray.length).assertTrue();
+      done();
+    } catch (e) {
+      console.error(`${TAG} getSupportedAudioEffectProperty001 ERROR: ${e.message}`);
+      expect().assertFail();
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:getAudioEffectProperty001
+   * @tc.desc:Get getAudioEffectProperty success - check repeats data
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("getAudioEffectProperty001", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEffectArray = audioStreamManager.getAudioEffectProperty();
+      console.info(`${TAG} getAudioEffectProperty success:${JSON.stringify(audioEffectArray)}`);
+      let hashClassSet = new HashSet();
+      for (let i = 0; i < audioEffectArray.length; i++) {
+        expect(audioEffectArray[i].effectClass !== ""
+          && audioEffectArray[i].effectClass !== undefined).assertTrue();
+        expect(audioEffectArray[i].effectProp !== ""
+          && audioEffectArray[i].effectProp !== undefined).assertTrue();
+        hashClassSet.add(audioEffectArray[i].effectClass);
+      }
+      expect(hashClassSet.length == audioEffectArray.length).assertTrue();
+      done();
+    } catch (e) {
+      console.error(`${TAG} getAudioEffectProperty001 ERROR: ${e.message}`);
+      expect().assertFail();
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:getSupportedAudioEnhanceProperty001
+   * @tc.desc:Get getSupportedAudioEnhanceProperty success - check repeats data
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("getSupportedAudioEnhanceProperty001", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEnhanceArray = audioStreamManager.getSupportedAudioEnhanceProperty();
+      console.info(`${TAG} getSupportedAudioEnhanceProperty success:${JSON.stringify(audioEnhanceArray)}`);
+      let hashClassSet = new HashSet();
+      for (let i = 0; i < audioEnhanceArray.length; i++) {
+        expect(audioEnhanceArray[i].enhanceClass !== ""
+          && audioEnhanceArray[i].enhanceClass !== undefined).assertTrue();
+        expect(audioEnhanceArray[i].enhanceProp !== ""
+          && audioEnhanceArray[i].enhanceProp !== undefined).assertTrue();
+        hashClassSet.add(audioEnhanceArray[i].enhanceClass);
+      }
+      expect(hashClassSet.length == audioEnhanceArray.length).assertTrue();
+      done();
+    } catch (e) {
+      console.error(`${TAG} getSupportedAudioEnhanceProperty001 ERROR: ${e.message}`);
+      expect().assertFail();
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:getAudioEnhanceProperty001
+   * @tc.desc:Get getAudioEnhanceProperty success - check repeats data
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("getAudioEnhanceProperty001", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEnhanceArray = audioStreamManager.getAudioEnhanceProperty();
+      console.info(`${TAG} getAudioEnhanceProperty success:${JSON.stringify(audioEnhanceArray)}`);
+      let hashClassSet = new HashSet();
+      for (let i = 0; i < audioEnhanceArray.length; i++) {
+        expect(audioEnhanceArray[i].enhanceClass !== ""
+          && audioEnhanceArray[i].enhanceClass !== undefined).assertTrue();
+        expect(audioEnhanceArray[i].enhanceProp !== ""
+          && audioEnhanceArray[i].enhanceProp !== undefined).assertTrue();
+        hashClassSet.add(audioEnhanceArray[i].enhanceClass);
+      }
+      expect(hashClassSet.length == audioEnhanceArray.length).assertTrue();
+      done();
+    } catch (e) {
+      console.error(`${TAG} getAudioEnhanceProperty001 ERROR: ${e.message}`);
+      expect().assertFail();
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:setAudioEffectProperty001
+   * @tc.desc:Get setAudioEffectProperty success
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("setAudioEffectProperty001", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEffectArray = audioStreamManager.getSupportedAudioEffectProperty();
+      console.info(`${TAG} get supported effect property SUCCESS:${JSON.stringify(audioEffectArray)}`);
+      let ret = audioStreamManager.setAudioEffectProperty(audioEffectArray);
+      expect(ret).assertEqual(0);
+      console.info(`${TAG} setAudioEffectProperty001 SUCCESS: ${data}`);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEffectProperty001 ERROR: ${e.message}`);
+      expect().assertFail();
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:setAudioEffectProperty002
+   * @tc.desc:Get setAudioEffectProperty no parameter
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("setAudioEffectProperty002", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEffectArray = [];
+      let ret = audioStreamManager.setAudioEffectProperty(audioEffectArray);
+      console.error(`${TAG} setAudioEffectProperty002 check invalid parameter fail`);
+      expect(ret).assertEqual(0);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEffectProperty002 PASS: ${e.message}`);
+      expect(e.code).assertEqual(ERROR_INVALID_PARAM);
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:setAudioEffectProperty003
+   * @tc.desc:Get setAudioEffectProperty invalid parameter - repeats data
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("setAudioEffectProperty003", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let effect_1 = { effectClass: "testClass", effectProp: "testProp" };
+      let effect_2 = { effectClass: "testClass", effectProp: "testProp" };
+      let audioEffectArray = [effect_1, effect_2];
+      let ret = audioStreamManager.setAudioEffectProperty(audioEffectArray);
+      console.error(`${TAG} setAudioEffectProperty003 check invalid parameter fail`);
+      expect(ret).assertEqual(0);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEffectProperty003 PASS: ${e.message}`);
+      expect(e.code).assertEqual(ERROR_INVALID_PARAM);
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:setAudioEffectProperty004
+   * @tc.desc:Get setAudioEffectProperty invalid parameter - empty property value
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("setAudioEffectProperty004", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let effectProperty = { effectClass: "", effectProp: "" };
+      let audioEffectArray = [effectProperty];
+      let ret = audioStreamManager.setAudioEffectProperty(audioEffectArray);
+      console.error(`${TAG} setAudioEffectProperty004 check invalid parameter fail`);
+      expect(ret).assertEqual(0);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEffectProperty004 PASS: ${e.message}`);
+      expect(e.code).assertEqual(ERROR_INVALID_PARAM);
+      done();
+    }
+  });
+
+  /*
+ * @tc.name:setAudioEffectProperty005
+ * @tc.desc:Get setAudioEffectProperty invalid parameter - upper limit 
+ * @tc.type: FUNC
+ * @tc.require: I7V04L
+ */
+  it("setAudioEffectProperty005", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEffectArray = [];
+      for (let i = 0; i < audio.AUDIO_EFFECT_COUNT_UPPER_LIMIT + 1; i++) {
+        let effectProperty = { effectClass: 'testClass' + i, effectProp: 'testProp' + i };
+        audioEffectArray.push(effectProperty);
+      }
+      let ret = audioStreamManager.setAudioEffectProperty(audioEffectArray);
+      console.error(`${TAG} setAudioEffectProperty005 check invalid parameter fail`);
+      expect(ret).assertEqual(0);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEffectProperty005 PASS: ${e.message}`);
+      expect(e.code).assertEqual(ERROR_INVALID_PARAM);
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:setAudioEnhanceProperty001
+   * @tc.desc:Get setAudioEnhanceProperty success
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("setAudioEnhanceProperty001", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEnhanceArray = audioStreamManager.getSupportedAudioEnhanceProperty();
+      console.info(`${TAG} get supported enhance property SUCCESS:${JSON.stringify(audioEnhanceArray)}`);
+      let ret = audioStreamManager.setAudioEnhanceProperty(audioEnhanceArray);
+      expect(ret).assertEqual(0);
+      console.info(`${TAG} setAudioEnhanceProperty001 SUCCESS: ${data}`);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEnhanceProperty001 ERROR: ${e.message}`);
+      expect().assertFail();
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:setAudioEnhanceProperty002
+   * @tc.desc:Get setAudioEnhanceProperty no parameter
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("setAudioEnhanceProperty002", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEnhanceArray = [];
+      let ret = audioStreamManager.setAudioEnhanceProperty(audioEnhanceArray);
+      console.error(`${TAG} setAudioEnhanceProperty002 check invalid parameter fail`);
+      expect(ret).assertEqual(0);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEnhanceProperty002 PASS: ${e.message}`);
+      expect(e.code).assertEqual(ERROR_INVALID_PARAM);
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:setAudioEnhanceProperty003
+   * @tc.desc:Get setAudioEnhanceProperty invalid parameter - repeats data
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("setAudioEnhanceProperty003", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let enhance_1 = { enhanceClass: "testClass", enhanceProp: "testProp" };
+      let enhance_2 = { enhanceClass: "testClass", enhanceProp: "testProp" };
+      let audioEnhanceArray = [enhance_1, enhance_2];
+      let ret = audioStreamManager.setAudioEnhanceProperty(audioEnhanceArray);
+      console.error(`${TAG} setAudioEnhanceProperty003 check invalid parameter fail`);
+      expect(ret).assertEqual(0);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEnhanceProperty003 PASS: ${e.message}`);
+      expect(e.code).assertEqual(ERROR_INVALID_PARAM);
+      done();
+    }
+  });
+
+  /*
+   * @tc.name:setAudioEnhanceProperty004
+   * @tc.desc:Get setAudioEnhanceProperty invalid parameter - empty property value
+   * @tc.type: FUNC
+   * @tc.require: I7V04L
+   */
+  it("setAudioEnhanceProperty004", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let enhanceProperty = { enhanceClass: "", enhanceProp: "" };
+      let audioEnhanceArray = [enhanceProperty];
+      let ret = audioStreamManager.setAudioEnhanceProperty(audioEnhanceArray);
+      console.error(`${TAG} setAudioEnhanceProperty004 check invalid parameter fail`);
+      expect(ret).assertEqual(0);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEnhanceProperty004 PASS: ${e.message}`);
+      expect(e.code).assertEqual(ERROR_INVALID_PARAM);
+      done();
+    }
+  });
+
+  /*
+ * @tc.name:setAudioEnhanceProperty005
+ * @tc.desc:Get setAudioEnhanceProperty invalid parameter - upper limit 
+ * @tc.type: FUNC
+ * @tc.require: I7V04L
+ */
+  it("setAudioEnhanceProperty005", 0, async function (done) {
+    try {
+      let audioStreamManager = audio.getAudioManager().getStreamManager();
+      let audioEnhanceArray = [];
+      for (let i = 0; i < audio.AUDIO_EFFECT_COUNT_UPPER_LIMIT + 1; i++) {
+        let enhanceProperty = { enhanceClass: 'testClass' + i, enhanceProp: 'testProp' + i };
+        audioEnhanceArray.push(enhanceProperty);
+      }
+      let ret = audioStreamManager.setAudioEnhanceProperty(audioEnhanceArray);
+      console.error(`${TAG} setAudioEnhanceProperty005 check invalid parameter fail`);
+      expect(ret).assertEqual(0);
+      done();
+    } catch (e) {
+      console.error(`${TAG} setAudioEnhanceProperty005 PASS: ${e.message}`);
+      expect(e.code).assertEqual(ERROR_INVALID_PARAM);
+      done();
     }
   });
 

@@ -91,12 +91,13 @@ std::string NapiAudioError::GetMessageByCode(int32_t &code)
             break;
         case NAPI_ERR_PERMISSION_DENIED:
         case ERR_PERMISSION_DENIED:
-        case ERR_SYSTEM_PERMISSION_DENIED:
             errMessage = NAPI_ERROR_PERMISSION_DENIED_INFO;
             code = NAPI_ERR_PERMISSION_DENIED;
             break;
         case NAPI_ERR_NO_PERMISSION:
+        case ERR_SYSTEM_PERMISSION_DENIED:
             errMessage = NAPI_ERR_NO_PERMISSION_INFO;
+            code = NAPI_ERR_NO_PERMISSION;
             break;
         default:
             errMessage = NAPI_ERR_SYSTEM_INFO;

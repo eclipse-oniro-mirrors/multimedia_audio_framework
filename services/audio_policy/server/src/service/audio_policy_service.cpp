@@ -8427,7 +8427,6 @@ void AudioPolicyService::LoadHdiEffectModel()
 int32_t AudioPolicyService::GetSupportedAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
 {
     std::set<std::pair<std::string, std::string>> mergedSet = {};
-    // Get supported property for all device
     audioEffectManager_.AddSupportedAudioEffectPropertyByDevice(DEVICE_TYPE_INVALID, mergedSet);
     std::vector<sptr<AudioDeviceDescriptor>> descriptor = GetDevices(OUTPUT_DEVICES_FLAG);
     for (auto &item : descriptor) {
@@ -8444,7 +8443,6 @@ int32_t AudioPolicyService::GetSupportedAudioEffectProperty(AudioEffectPropertyA
 int32_t AudioPolicyService::GetSupportedAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
 {
     std::set<std::pair<std::string, std::string>> mergedSet = {};
-    // Get supported property for all device
     audioEffectManager_.AddSupportedAudioEnhancePropertyByDevice(DEVICE_TYPE_INVALID, mergedSet);
     std::vector<sptr<AudioDeviceDescriptor>> descriptor = GetDevices(INPUT_DEVICES_FLAG);
     for (auto &item : descriptor) {
@@ -8460,10 +8458,19 @@ int32_t AudioPolicyService::GetSupportedAudioEnhanceProperty(AudioEnhancePropert
 
 int32_t AudioPolicyService::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
 {
+    AudioEffectPropertyArray supportPropertyArray;
+    std::vector<AudioEffectProperty>::iterator oIter;
+    int32_t ret = GetSupportedAudioEffectProperty(supportPropertyArray);
+    for (auto &item : propertyArray.property) {
+        oIter = std::find(supportPropertyArray.property.begin(), supportPropertyArray.property.end(), item);
+        CHECK_AND_RETURN_RET_LOG(oIter != supportPropertyArray.property.end(),
+            ERR_INVALID_PARAM, "set audio effect property not valid %{public}s:%{public}s",
+            item.effectClass.c_str(), item.effectProp.c_str());
+    }
     const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
-    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "Set Audio Effect Property: gsp null");
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "set audio effect property: gsp null");
     std::string identity = IPCSkeleton::ResetCallingIdentity();
-    int32_t ret = gsp->SetAudioEffectProperty(propertyArray);
+    ret = gsp->SetAudioEffectProperty(propertyArray);
     IPCSkeleton::SetCallingIdentity(identity);
     return ret;
 }
@@ -8471,7 +8478,7 @@ int32_t AudioPolicyService::SetAudioEffectProperty(const AudioEffectPropertyArra
 int32_t AudioPolicyService::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
 {
     const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
-    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "Get Audio Effect Property: gsp null");
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "get audio effect property: gsp null");
     std::string identity = IPCSkeleton::ResetCallingIdentity();
     int32_t ret = gsp->GetAudioEffectProperty(propertyArray);
     IPCSkeleton::SetCallingIdentity(identity);
@@ -8480,10 +8487,19 @@ int32_t AudioPolicyService::GetAudioEffectProperty(AudioEffectPropertyArray &pro
 
 int32_t AudioPolicyService::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
 {
+    AudioEnhancePropertyArray supportPropertyArray;
+    std::vector<AudioEnhanceProperty>::iterator oIter;
+    int32_t ret = GetSupportedAudioEnhanceProperty(supportPropertyArray);
+    for (auto &item : propertyArray.property) {
+        oIter = std::find(supportPropertyArray.property.begin(), supportPropertyArray.property.end(), item);
+        CHECK_AND_RETURN_RET_LOG(oIter != supportPropertyArray.property.end(),
+            ERR_INVALID_PARAM, "set audio enhance property not valid %{public}s:%{public}s",
+            item.enhanceClass.c_str(), item.enhanceProp.c_str());
+    }
     const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
-    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "Set Audio Enhance Property: gsp null");
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "set audio enhance property: gsp null");
     std::string identity = IPCSkeleton::ResetCallingIdentity();
-    int32_t ret = gsp->SetAudioEnhanceProperty(propertyArray);
+    ret = gsp->SetAudioEnhanceProperty(propertyArray);
     IPCSkeleton::SetCallingIdentity(identity);
     return ret;
 }
@@ -8491,7 +8507,7 @@ int32_t AudioPolicyService::SetAudioEnhanceProperty(const AudioEnhancePropertyAr
 int32_t AudioPolicyService::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
 {
     const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
-    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "Get Audio Enhance Property: gsp null");
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERR_INVALID_HANDLE, "get audio enhance property: gsp null");
     std::string identity = IPCSkeleton::ResetCallingIdentity();
     int32_t ret = gsp->GetAudioEnhanceProperty(propertyArray);
     IPCSkeleton::SetCallingIdentity(identity);
