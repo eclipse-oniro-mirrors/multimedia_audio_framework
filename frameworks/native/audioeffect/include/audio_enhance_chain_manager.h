@@ -54,6 +54,7 @@ public:
 	
     int32_t SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray);
     int32_t GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray);
+    void ResetInfo(); // use for unit test
 private:
     int32_t SetAudioEnhanceChainDynamic(const uint32_t sceneKeyCode, std::string &sceneType,
         std::string &capturerDevice);

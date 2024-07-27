@@ -93,6 +93,26 @@ AudioEnhanceChainManager *AudioEnhanceChainManager::GetInstance()
     return &audioEnhanceChainManager;
 }
 
+void AudioEnhanceChainManager::ResetInfo()
+{
+    sceneTypeToEnhanceChainMap_.clear();
+    sceneTypeToEnhanceChainCountMap_.clear();
+    sceneTypeAndModeToEnhanceChainNameMap_.clear();
+    enhanceChainToEnhancesMap_.clear();
+    enhanceToLibraryEntryMap_.clear();
+    enhanceToLibraryNameMap_.clear();
+    enhancePropertyMap_.clear();
+    captureIdToDeviceMap_.clear();
+    renderIdToDeviceMap_.clear();
+    FreeEnhanceBuffer();
+    isInitialized_ = false;
+    sessionId_ = 0;
+    volumeType_ = STREAM_MUSIC;
+    systemVol_ = 0.0f;
+    streamVol_ = 0.0f;
+    isMute_ = false;
+}
+
 void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectChain> &enhanceChains,
     const EffectChainManagerParam &managerParam, std::vector<std::shared_ptr<AudioEffectLibEntry>> &enhanceLibraryList)
 {
@@ -133,7 +153,7 @@ void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectCh
     enhancePropertyMap_ = managerParam.effectDefaultProperty;
 
     AUDIO_INFO_LOG("enhanceToLibraryEntryMap_ size %{public}zu \
-        enhanceToLibraryNameMap_ size %{public}zu \
+        enhanceChainToEnhancesMap_ size %{public}zu \
         sceneTypeAndModeToEnhanceChainNameMap_ size %{public}zu",
         enhanceToLibraryEntryMap_.size(),
         enhanceChainToEnhancesMap_.size(),
@@ -436,6 +456,10 @@ int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const uint32_t sceneKey
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     if (!sceneTypeToEnhanceChainMap_.count(sceneKeyCode)) {
+        if (enhanceBuffer_ == nullptr) {
+            AUDIO_ERR_LOG("enhanceBuffer has not been initialized");
+            return ERROR;
+        }
         CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferOut.data(), enhanceBuffer_->length,
             enhanceBuffer_->micBufferIn.data(), length) == 0, ERROR, "memcpy error in apply enhance");
         AUDIO_ERR_LOG("Can not find %{public}u in sceneTypeToEnhanceChainMap_", sceneKeyCode);
