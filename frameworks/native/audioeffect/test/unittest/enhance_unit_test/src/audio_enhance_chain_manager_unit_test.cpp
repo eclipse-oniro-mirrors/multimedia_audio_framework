@@ -61,11 +61,11 @@ void AudioEnhanceChainManagerUnitTest::TearDown(void)
     manager_->ResetInfo();
 }
 
-/**
-* @tc.name   : Test CreateAudioEnhanceChainDynamic API
-* @tc.number : CreateAudioEnhanceChainDynamic_001
-* @tc.desc   : Test CreateAudioEnhanceChainDynamic interface(using wrong input case).
-*/
+/*
+ * tc.name   : Test CreateAudioEnhanceChainDynamic API
+ * tc.number : CreateAudioEnhanceChainDynamic_001
+ * tc.desc   : Test CreateAudioEnhanceChainDynamic interface(using wrong input case).
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CreateAudioEnhanceChainDynamic_001, TestSize.Level1)
 {
     uint32_t invalidKeyCode = INVALID_SCENEKEY_CODE;
@@ -73,11 +73,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CreateAudioEnhanceChainDynamic_001, T
     EXPECT_EQ(result, ERROR);
 }
 
-/**
-* @tc.name   : Test CreateAudioEnhanceChainDynamic API
-* @tc.number : CreateAudioEnhanceChainDynamic_002
-* @tc.desc   : Test CreateAudioEnhanceChainDynamic interface(using correct input case).
-*/
+/*
+ * tc.name   : Test CreateAudioEnhanceChainDynamic API
+ * tc.number : CreateAudioEnhanceChainDynamic_002
+ * tc.desc   : Test CreateAudioEnhanceChainDynamic interface(using correct input case).
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CreateAudioEnhanceChainDynamic_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -85,11 +85,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CreateAudioEnhanceChainDynamic_002, T
 }
 
 
-/**
-* @tc.name   : Test ReleaseAudioEnhanceChainDynamic API
-* @tc.number : ReleaseAudioEnhanceChainDynamic_001
-* @tc.desc   : Test ReleaseAudioEnhanceChainDynamic interface when has not been initialized.
-*/
+/*
+ * tc.name   : Test ReleaseAudioEnhanceChainDynamic API
+ * tc.number : ReleaseAudioEnhanceChainDynamic_001
+ * tc.desc   : Test ReleaseAudioEnhanceChainDynamic interface when has not been initialized.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ReleaseAudioEnhanceChainDynamic_001, TestSize.Level1)
 {
     manager_->ResetInfo();
@@ -98,11 +98,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ReleaseAudioEnhanceChainDynamic_001, 
     EXPECT_EQ(result, ERROR);
 }
 
-/**
-* @tc.name   : Test ReleaseAudioEnhanceChainDynamic API
-* @tc.number : ReleaseAudioEnhanceChainDynamic_002
-* @tc.desc   : Test ReleaseAudioEnhanceChainDynamic interface after correctly creating an enhanceChain.
-*/
+/*
+ * tc.name   : Test ReleaseAudioEnhanceChainDynamic API
+ * tc.number : ReleaseAudioEnhanceChainDynamic_002
+ * tc.desc   : Test ReleaseAudioEnhanceChainDynamic interface after correctly creating an enhanceChain.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ReleaseAudioEnhanceChainDynamic_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -113,11 +113,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ReleaseAudioEnhanceChainDynamic_002, 
 }
 
 
-/**
-* @tc.name   : Test ExistAudioEnhanceChain API
-* @tc.number : ExistAudioEnhanceChain_001
-* @tc.desc   : Test ExistAudioEnhanceChain interface with a nonexistent ehanceChain.
-*/
+/*
+ * tc.name   : Test ExistAudioEnhanceChain API
+ * tc.number : ExistAudioEnhanceChain_001
+ * tc.desc   : Test ExistAudioEnhanceChain interface with a nonexistent ehanceChain.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ExistAudioEnhanceChain_001, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -128,11 +128,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ExistAudioEnhanceChain_001, TestSize.
     EXPECT_EQ(result, false);
 }
 
-/**
-* @tc.name   : Test ExistAudioEnhanceChain API
-* @tc.number : ExistAudioEnhanceChain_002
-* @tc.desc   : Test ExistAudioEnhanceChain interface after correctly creating an ehanceChain.
-*/
+/*
+ * tc.name   : Test ExistAudioEnhanceChain API
+ * tc.number : ExistAudioEnhanceChain_002
+ * tc.desc   : Test ExistAudioEnhanceChain interface after correctly creating an ehanceChain.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ExistAudioEnhanceChain_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -140,11 +140,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ExistAudioEnhanceChain_002, TestSize.
     manager_->ExistAudioEnhanceChain(validKeyCode);
 }
 
-/**
-* @tc.name   : Test AudioEnhanceChainGetAlgoConfig API
-* @tc.number : AudioEnhanceChainGetAlgoConfig_001
-* @tc.desc   : Test AudioEnhanceChainGetAlgoConfig interface with an invalid scene key code.
-*/
+/*
+ * tc.name   : Test AudioEnhanceChainGetAlgoConfig API
+ * tc.number : AudioEnhanceChainGetAlgoConfig_001
+ * tc.desc   : Test AudioEnhanceChainGetAlgoConfig interface with an invalid scene key code.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, AudioEnhanceChainGetAlgoConfig_001, TestSize.Level1)
 {
     AudioBufferConfig config;
@@ -156,11 +156,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, AudioEnhanceChainGetAlgoConfig_001, T
     EXPECT_EQ(result, ERROR);
 }
 
-/**
-* @tc.name   : Test AudioEnhanceChainGetAlgoConfig API
-* @tc.number : AudioEnhanceChainGetAlgoConfig_002
-* @tc.desc   : Test AudioEnhanceChainGetAlgoConfig interface with a valid scene key code.
-*/
+/*
+ * tc.name   : Test AudioEnhanceChainGetAlgoConfig API
+ * tc.number : AudioEnhanceChainGetAlgoConfig_002
+ * tc.desc   : Test AudioEnhanceChainGetAlgoConfig interface with a valid scene key code.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, AudioEnhanceChainGetAlgoConfig_002, TestSize.Level1)
 {
     AudioBufferConfig config;
@@ -169,22 +169,22 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, AudioEnhanceChainGetAlgoConfig_002, T
     manager_->AudioEnhanceChainGetAlgoConfig(VALID_SCENEKEY_CODE, config);
 }
 
-/**
-* @tc.name   : Test IsEmptyEnhanceChain API
-* @tc.number : IsEmptyEnhanceChain_001
-* @tc.desc   : Ensures the function returns true when there are no audio enhance chains.
-*/
+/*
+ * tc.name   : Test IsEmptyEnhanceChain API
+ * tc.number : IsEmptyEnhanceChain_001
+ * tc.desc   : Ensures the function returns true when there are no audio enhance chains.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, IsEmptyEnhanceChain_001, TestSize.Level1)
 {
     bool result = manager_->IsEmptyEnhanceChain();
     EXPECT_EQ(result, true);
 }
 
-/**
-* @tc.name   : Test IsEmptyEnhanceChain API
-* @tc.number : IsEmptyEnhanceChain_002
-* @tc.desc   : Ensures the function returns false when there is at least one audio enhance chain.
-*/
+/*
+ * tc.name   : Test IsEmptyEnhanceChain API
+ * tc.number : IsEmptyEnhanceChain_002
+ * tc.desc   : Ensures the function returns false when there is at least one audio enhance chain.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, IsEmptyEnhanceChain_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -193,11 +193,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, IsEmptyEnhanceChain_002, TestSize.Lev
 }
 
 
-/**
-* @tc.name   : Test InitEnhanceBuffer API
-* @tc.number : InitEnhanceBuffer_001
-* @tc.desc   : Test InitEnhanceBuffer interface
-*/
+/*
+ * tc.name   : Test InitEnhanceBuffer API
+ * tc.number : InitEnhanceBuffer_001
+ * tc.desc   : Test InitEnhanceBuffer interface
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, InitEnhanceBuffer_001, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -206,11 +206,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, InitEnhanceBuffer_001, TestSize.Level
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test CopyToEnhanceBuffer API
-* @tc.number : CopyToEnhanceBuffer_001
-* @tc.desc   : Ensures data is correctly copied to the internal buffer when it is initialized.
-*/
+/*
+ * tc.name   : Test CopyToEnhanceBuffer API
+ * tc.number : CopyToEnhanceBuffer_001
+ * tc.desc   : Ensures data is correctly copied to the internal buffer when it is initialized.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyToEnhanceBuffer_001, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -223,11 +223,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyToEnhanceBuffer_001, TestSize.Lev
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test CopyToEnhanceBuffer API
-* @tc.number : CopyToEnhanceBuffer_002
-* @tc.desc   : Ensures the function returns an error when the internal buffer is not initialized.
-*/
+/*
+ * tc.name   : Test CopyToEnhanceBuffer API
+ * tc.number : CopyToEnhanceBuffer_002
+ * tc.desc   : Ensures the function returns an error when the internal buffer is not initialized.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyToEnhanceBuffer_002, TestSize.Level1)
 {
     uint32_t bufferSize = VALID_BUFFER_SIZE;
@@ -236,11 +236,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyToEnhanceBuffer_002, TestSize.Lev
     EXPECT_EQ(result, ERROR);
 }
 
-/**
-* @tc.name   : Test CopyToEnhanceBuffer API
-* @tc.number : CopyToEnhanceBuffer_003
-* @tc.desc   : Ensures the function returns an error when trying to copy more data than the buffer can hold.
-*/
+/*
+ * tc.name   : Test CopyToEnhanceBuffer API
+ * tc.number : CopyToEnhanceBuffer_003
+ * tc.desc   : Ensures the function returns an error when trying to copy more data than the buffer can hold.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyToEnhanceBuffer_003, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -253,11 +253,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyToEnhanceBuffer_003, TestSize.Lev
     EXPECT_EQ(result, ERROR);
 }
 
-/**
-* @tc.name   : Test CopyFromEnhanceBuffer API
-* @tc.number : CopyFromEnhanceBuffer_001
-* @tc.desc   : Ensures the function returns an error when the internal buffer is not initialized.
-*/
+/*
+ * tc.name   : Test CopyFromEnhanceBuffer API
+ * tc.number : CopyFromEnhanceBuffer_001
+ * tc.desc   : Ensures the function returns an error when the internal buffer is not initialized.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_001, TestSize.Level1)
 {
     uint32_t bufferSize = VALID_BUFFER_SIZE;
@@ -266,11 +266,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_001, TestSize.L
     EXPECT_EQ(result, ERROR);
 }
 
-/**
-* @tc.name   : Test CopyFromEnhanceBuffer API
-* @tc.number : CopyFromEnhanceBuffer_002
-* @tc.desc   : Ensures the function returns an error when trying to copy more data than the buffer contains.
-*/
+/*
+ * tc.name   : Test CopyFromEnhanceBuffer API
+ * tc.number : CopyFromEnhanceBuffer_002
+ * tc.desc   : Ensures the function returns an error when trying to copy more data than the buffer contains.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -283,11 +283,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_002, TestSize.L
     EXPECT_EQ(result, ERROR);
 }
 
-/**
-* @tc.name   : Test CopyFromEnhanceBuffer API
-* @tc.number : CopyFromEnhanceBuffer_003
-* @tc.desc   : Ensures the function returns an error when the data pointer is null.
-*/
+/*
+ * tc.name   : Test CopyFromEnhanceBuffer API
+ * tc.number : CopyFromEnhanceBuffer_003
+ * tc.desc   : Ensures the function returns an error when the data pointer is null.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_003, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -300,11 +300,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_003, TestSize.L
     EXPECT_EQ(result, ERROR);
 }
 
-/**
-* @tc.name   : Test CopyFromEnhanceBuffer API
-* @tc.number : CopyFromEnhanceBuffer_004
-* @tc.desc   : Ensures the function successfully copies data from the internal buffer under normal conditions.
-*/
+/*
+ * tc.name   : Test CopyFromEnhanceBuffer API
+ * tc.number : CopyFromEnhanceBuffer_004
+ * tc.desc   : Ensures the function successfully copies data from the internal buffer under normal conditions.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_004, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
@@ -322,11 +322,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_004, TestSize.L
 }
 
 
-/**
-* @tc.name   : Test ApplyAudioEnhanceChain API
-* @tc.number : ApplyAudioEnhanceChain_001
-* @tc.desc   : Ensures the function returns an error when the scene key does not exist in the map.
-*/
+/*
+ * tc.name   : Test ApplyAudioEnhanceChain API
+ * tc.number : ApplyAudioEnhanceChain_001
+ * tc.desc   : Ensures the function returns an error when the scene key does not exist in the map.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_001, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
@@ -341,11 +341,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_001, TestSize.
     EXPECT_EQ(result, ERROR);
 }
 
-/**
-* @tc.name   : Test ApplyAudioEnhanceChain API
-* @tc.number : ApplyAudioEnhanceChain_002
-* @tc.desc   : Test ApplyAudioEnhanceChain interface when the input length exceeds the buffer capacity.
-*/
+/*
+ * tc.name   : Test ApplyAudioEnhanceChain API
+ * tc.number : ApplyAudioEnhanceChain_002
+ * tc.desc   : Test ApplyAudioEnhanceChain interface when the input length exceeds the buffer capacity.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_002, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
@@ -358,11 +358,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_002, TestSize.
     manager_->ApplyAudioEnhanceChain(validSceneKeyCode, dummyData.size());
 }
 
-/**
-* @tc.name   : Test ApplyAudioEnhanceChain API
-* @tc.number : ApplyAudioEnhanceChain_003
-* @tc.desc   : Ensures the function successfully applies the audio enhance chain under normal conditions.
-*/
+/*
+ * tc.name   : Test ApplyAudioEnhanceChain API
+ * tc.number : ApplyAudioEnhanceChain_003
+ * tc.desc   : Ensures the function successfully applies the audio enhance chain under normal conditions.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_003, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
@@ -375,11 +375,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_003, TestSize.
     manager_->ApplyAudioEnhanceChain(validSceneKeyCode, dummyData.size());
 }
 
-/**
-* @tc.name   : Test SetInputDevice API
-* @tc.number : SetInputDevice_001
-* @tc.desc   : Ensures the function sets a new input device correctly and returns success.
-*/
+/*
+ * tc.name   : Test SetInputDevice API
+ * tc.number : SetInputDevice_001
+ * tc.desc   : Ensures the function sets a new input device correctly and returns success.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetInputDevice_001, TestSize.Level1)
 {
     uint32_t captureId = 13;
@@ -388,11 +388,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetInputDevice_001, TestSize.Level1)
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetInputDevice API
-* @tc.number : SetInputDevice_002
-* @tc.desc   : Ensures the function recognizes the same input device setting and returns success without redundancy.
-*/
+/*
+ * tc.name   : Test SetInputDevice API
+ * tc.number : SetInputDevice_002
+ * tc.desc   : Ensures the function recognizes the same input device setting and returns success without redundancy.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetInputDevice_002, TestSize.Level1)
 {
     uint32_t captureId = 13;
@@ -403,11 +403,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetInputDevice_002, TestSize.Level1)
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetOutputDevice API
-* @tc.number : SetOutputDevice_001
-* @tc.desc   : Ensures the function sets a new output device correctly and returns success.
-*/
+/*
+ * tc.name   : Test SetOutputDevice API
+ * tc.number : SetOutputDevice_001
+ * tc.desc   : Ensures the function sets a new output device correctly and returns success.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetOutputDevice_001, TestSize.Level1)
 {
     uint32_t renderId = 0;
@@ -416,11 +416,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetOutputDevice_001, TestSize.Level1)
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetOutputDevice API
-* @tc.number : SetOutputDevice_002
-* @tc.desc   : Ensures the function recognizes the same output device setting and returns success without redundancy.
-*/
+/*
+ * tc.name   : Test SetOutputDevice API
+ * tc.number : SetOutputDevice_002
+ * tc.desc   : Ensures the function recognizes the same output device setting and returns success without redundancy.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetOutputDevice_002, TestSize.Level1)
 {
     uint32_t renderId = 0;
@@ -431,11 +431,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetOutputDevice_002, TestSize.Level1)
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetVolumeInfo API
-* @tc.number : SetVolumeInfo_001
-* @tc.desc   : Ensures the function sets volume information correctly for music stream type.
-*/
+/*
+ * tc.name   : Test SetVolumeInfo API
+ * tc.number : SetVolumeInfo_001
+ * tc.desc   : Ensures the function sets volume information correctly for music stream type.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetVolumeInfo_001, TestSize.Level1)
 {
     AudioVolumeType volumeType = STREAM_MUSIC;
@@ -444,11 +444,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetVolumeInfo_001, TestSize.Level1)
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetVolumeInfo API
-* @tc.number : SetVolumeInfo_002
-* @tc.desc   : Ensures the function sets volume information correctly for alarm stream type.
-*/
+/*
+ * tc.name   : Test SetVolumeInfo API
+ * tc.number : SetVolumeInfo_002
+ * tc.desc   : Ensures the function sets volume information correctly for alarm stream type.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetVolumeInfo_002, TestSize.Level1)
 {
     AudioVolumeType volumeType = STREAM_ALARM;
@@ -457,11 +457,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetVolumeInfo_002, TestSize.Level1)
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetVolumeInfo API
-* @tc.number : SetVolumeInfo_003
-* @tc.desc   : Ensures the function sets volume information correctly for system sound stream type.
-*/
+/*
+ * tc.name   : Test SetVolumeInfo API
+ * tc.number : SetVolumeInfo_003
+ * tc.desc   : Ensures the function sets volume information correctly for system sound stream type.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetVolumeInfo_003, TestSize.Level1)
 {
     AudioVolumeType volumeType = STREAM_SYSTEM;
@@ -470,11 +470,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetVolumeInfo_003, TestSize.Level1)
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetMicrophoneMuteInfo API
-* @tc.number : SetMicrophoneMuteInfo_001
-* @tc.desc   : Ensures the function correctly sets the microphone to mute.
-*/
+/*
+ * tc.name   : Test SetMicrophoneMuteInfo API
+ * tc.number : SetMicrophoneMuteInfo_001
+ * tc.desc   : Ensures the function correctly sets the microphone to mute.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetMicrophoneMuteInfo_001, TestSize.Level1)
 {
     bool isMute = true;
@@ -482,11 +482,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetMicrophoneMuteInfo_001, TestSize.L
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetMicrophoneMuteInfo API
-* @tc.number : SetMicrophoneMuteInfo_002
-* @tc.desc   : Ensures the function correctly sets the microphone to unmute.
-*/
+/*
+ * tc.name   : Test SetMicrophoneMuteInfo API
+ * tc.number : SetMicrophoneMuteInfo_002
+ * tc.desc   : Ensures the function correctly sets the microphone to unmute.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetMicrophoneMuteInfo_002, TestSize.Level1)
 {
     bool isMute = false;
@@ -494,11 +494,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetMicrophoneMuteInfo_002, TestSize.L
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetStreamVolumeInfo API
-* @tc.number : SetStreamVolumeInfo_001
-* @tc.desc   : Ensures the function correctly sets the stream volume for a valid session.
-*/
+/*
+ * tc.name   : Test SetStreamVolumeInfo API
+ * tc.number : SetStreamVolumeInfo_001
+ * tc.desc   : Ensures the function correctly sets the stream volume for a valid session.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetStreamVolumeInfo_001, TestSize.Level1)
 {
     uint32_t sessionId = 1;
@@ -507,11 +507,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetStreamVolumeInfo_001, TestSize.Lev
     EXPECT_EQ(result, SUCCESS);
 }
 
-/**
-* @tc.name   : Test SetAudioEnhanceProperty API
-* @tc.number : SetAudioEnhanceProperty_001
-* @tc.desc   : Ensures the function handles an empty property array correctly.
-*/
+/*
+ * tc.name   : Test SetAudioEnhanceProperty API
+ * tc.number : SetAudioEnhanceProperty_001
+ * tc.desc   : Ensures the function handles an empty property array correctly.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_001, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
@@ -522,11 +522,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_001, TestSize
     EXPECT_EQ(result, 0);
 }
 
-/**
-* @tc.name   : Test SetAudioEnhanceProperty API
-* @tc.number : SetAudioEnhanceProperty_002
-* @tc.desc   : Tests setting a property with valid enhanceClass but invalid enhanceProp.
-*/
+/*
+ * tc.name   : Test SetAudioEnhanceProperty API
+ * tc.number : SetAudioEnhanceProperty_002
+ * tc.desc   : Tests setting a property with valid enhanceClass but invalid enhanceProp.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_002, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
@@ -537,11 +537,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_002, TestSize
     manager_->SetAudioEnhanceProperty(propertyArray);
 }
 
-/**
-* @tc.name   : Test SetAudioEnhanceProperty API
-* @tc.number : SetAudioEnhanceProperty_003
-* @tc.desc   : Tests setting a property with invalid enhanceClass and valid enhanceProp.
-*/
+/*
+ * tc.name   : Test SetAudioEnhanceProperty API
+ * tc.number : SetAudioEnhanceProperty_003
+ * tc.desc   : Tests setting a property with invalid enhanceClass and valid enhanceProp.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_003, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
@@ -553,11 +553,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_003, TestSize
     EXPECT_EQ(result, 0);
 }
 
-/**
-* @tc.name   : Test SetAudioEnhanceProperty API
-* @tc.number : SetAudioEnhanceProperty_004
-* @tc.desc   : Tests setting a property with both valid enhanceClass and enhanceProp.
-*/
+/*
+ * tc.name   : Test SetAudioEnhanceProperty API
+ * tc.number : SetAudioEnhanceProperty_004
+ * tc.desc   : Tests setting a property with both valid enhanceClass and enhanceProp.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_004, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
@@ -569,11 +569,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_004, TestSize
     EXPECT_EQ(result, 0);
 }
 
-/**
-* @tc.name   : Test GetAudioEnhanceProperty API
-* @tc.number : GetAudioEnhanceProperty_001
-* @tc.desc   : Ensures the function correctly retrieves an empty property list if no properties are set.
-*/
+/*
+ * tc.name   : Test GetAudioEnhanceProperty API
+ * tc.number : GetAudioEnhanceProperty_001
+ * tc.desc   : Ensures the function correctly retrieves an empty property list if no properties are set.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, GetAudioEnhanceProperty_001, TestSize.Level1)
 {
     AudioEnhancePropertyArray propertyArray;
@@ -582,11 +582,11 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, GetAudioEnhanceProperty_001, TestSize
     EXPECT_EQ(result, AUDIO_OK);
 }
 
-/**
-* @tc.name   : Test GetAudioEnhanceProperty API
-* @tc.number : GetAudioEnhanceProperty_002
-* @tc.desc   : Tests retrieving a property list when properties are set.
-*/
+/*
+ * tc.name   : Test GetAudioEnhanceProperty API
+ * tc.number : GetAudioEnhanceProperty_002
+ * tc.desc   : Tests retrieving a property list when properties are set.
+ */
 HWTEST_F(AudioEnhanceChainManagerUnitTest, GetAudioEnhanceProperty_002, TestSize.Level1)
 {
     AudioEnhancePropertyArray propertiesToSet;
