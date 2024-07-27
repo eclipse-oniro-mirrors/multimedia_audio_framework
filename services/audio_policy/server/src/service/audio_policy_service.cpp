@@ -8427,7 +8427,6 @@ void AudioPolicyService::LoadHdiEffectModel()
 int32_t AudioPolicyService::GetSupportedAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
 {
     std::set<std::pair<std::string, std::string>> mergedSet = {};
-    // Get supported property for all device
     audioEffectManager_.AddSupportedAudioEffectPropertyByDevice(DEVICE_TYPE_INVALID, mergedSet);
     std::vector<sptr<AudioDeviceDescriptor>> descriptor = GetDevices(OUTPUT_DEVICES_FLAG);
     for (auto &item : descriptor) {
@@ -8444,7 +8443,6 @@ int32_t AudioPolicyService::GetSupportedAudioEffectProperty(AudioEffectPropertyA
 int32_t AudioPolicyService::GetSupportedAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
 {
     std::set<std::pair<std::string, std::string>> mergedSet = {};
-    // Get supported property for all device
     audioEffectManager_.AddSupportedAudioEnhancePropertyByDevice(DEVICE_TYPE_INVALID, mergedSet);
     std::vector<sptr<AudioDeviceDescriptor>> descriptor = GetDevices(INPUT_DEVICES_FLAG);
     for (auto &item : descriptor) {
