@@ -1080,6 +1080,7 @@ void AudioEffectChainManager::UpdateExtraSceneType(const std::string &mainkey, c
     } else {
         AUDIO_INFO_LOG("UpdateExtraSceneType failed, mainkey is %{public}s, subkey is %{public}s, 
             extraSceneType is %{public}s",mainkey.c_str(), subkey.c_str(), extraSceneType.c_str())
+        return;
     }
 }
 
