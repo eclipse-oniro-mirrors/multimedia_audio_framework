@@ -984,6 +984,11 @@ private:
 
     void SendA2dpConnectedWhileRunning(const RendererState &rendererState, const uint32_t &sessionId);
 
+    int32_t ConnectVirtualDevice(sptr<AudioDeviceDescriptor> &desc);
+    void UpdateDeviceList(AudioDeviceDescriptor &updatedDesc, bool isConnected,
+        std::vector<sptr<AudioDeviceDescriptor>> &descForCb,
+        AudioStreamDeviceChangeReasonExt &reason);
+
     bool isUpdateRouteSupported_ = true;
     bool isCurrentRemoteRenderer = false;
     bool remoteCapturerSwitch_ = false;

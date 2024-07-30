@@ -172,6 +172,12 @@ void MediaBluetoothDeviceManager::SetMediaStack(const BluetoothRemoteDevice &dev
         case BluetoothDeviceAction::USER_SELECTION_ACTION:
             HandleUserSelection(device);
             break;
+        case BluetoothDeviceAction::VIRTUAL_DEVICE_ADD_ACTION:
+            HandleVirtualConnectDevice(device);
+            break;
+        case BluetoothDeviceAction::VIRTUAL_DEVICE_REMOVE_ACTION:
+            HandleRemoveVirtualConnectDevice(device);
+            break;
         default:
             AUDIO_ERR_LOG("SetMediaStack failed due to the unknow action: %{public}d", action);
             break;
@@ -183,7 +189,8 @@ void MediaBluetoothDeviceManager::HandleConnectDevice(const BluetoothRemoteDevic
     if (IsA2dpBluetoothDeviceExist(device.GetDeviceAddr())) {
         return;
     }
-
+    // If the device was virtual connected, remove it from the negativeDevices_ list.
+    RemoveDeviceInConfigVector(device, negativeDevices_);
     DeviceCategory bluetoothCategory = GetDeviceCategory(device);
     AudioDeviceDescriptor desc;
     desc.deviceCategory_ = bluetoothCategory;
@@ -221,7 +228,7 @@ void MediaBluetoothDeviceManager::HandleDisconnectDevice(const BluetoothRemoteDe
         AUDIO_INFO_LOG("The device is already disconnected, ignore disconnect action.");
         return;
     }
-    
+
     RemoveDeviceInConfigVector(device, privacyDevices_);
     RemoveDeviceInConfigVector(device, commonDevices_);
     RemoveDeviceInConfigVector(device, negativeDevices_);
@@ -363,6 +370,30 @@ void MediaBluetoothDeviceManager::HandleUserSelection(const BluetoothRemoteDevic
     }
 }
 
+void MediaBluetoothDeviceManager::HandleVirtualConnectDevice(const BluetoothRemoteDevice &device)
+{
+    if (IsA2dpBluetoothDeviceExist(device.GetDeviceAddr())) {
+        return;
+    }
+    DeviceCategory bluetoothCategory = GetDeviceCategory(device);
+    AudioDeviceDescriptor desc;
+    desc.deviceCategory_ = bluetoothCategory;
+    AddDeviceInConfigVector(device, negativeDevices_);
+    NotifyToUpdateVirtualDevice(device, desc, DeviceStatus::VIRTUAL_ADD);
+}
+
+void MediaBluetoothDeviceManager::HandleRemoveVirtualConnectDevice(const BluetoothRemoteDevice &device)
+{
+    if (IsA2dpBluetoothDeviceExist(device.GetDeviceAddr())) {
+        AUDIO_INFO_LOG("The device is already removed as virtual Devices, ignore remove action.");
+        return;
+    }
+    RemoveDeviceInConfigVector(device, negativeDevices_);
+    AudioDeviceDescriptor desc;
+    desc.deviceCategory_ = CATEGORY_DEFAULT;
+    NotifyToUpdateVirtualDevice(device, desc, DeviceStatus::VIRTUAL_REMOVE);
+}
+
 void MediaBluetoothDeviceManager::AddDeviceInConfigVector(const BluetoothRemoteDevice &device,
     std::vector<BluetoothRemoteDevice> &deviceVector)
 {
@@ -403,7 +434,7 @@ void MediaBluetoothDeviceManager::NotifyToUpdateAudioDevice(const BluetoothRemot
         std::lock_guard<std::mutex> deviceMapLock(g_a2dpDeviceMapLock);
         if (deviceStatus == DeviceStatus::ADD) {
             a2dpBluetoothDeviceMap_[device.GetDeviceAddr()] = device;
-        } else {
+        } else if (deviceStatus == DeviceStatus::REMOVE) {
             if (a2dpBluetoothDeviceMap_.find(device.GetDeviceAddr()) != a2dpBluetoothDeviceMap_.end()) {
                 a2dpBluetoothDeviceMap_.erase(device.GetDeviceAddr());
             }
@@ -411,7 +442,21 @@ void MediaBluetoothDeviceManager::NotifyToUpdateAudioDevice(const BluetoothRemot
     }
     std::lock_guard<std::mutex> observerLock(g_observerLock);
     CHECK_AND_RETURN_LOG(g_deviceObserver != nullptr, "NotifyToUpdateAudioDevice, device observer is null");
-    bool isConnected = deviceStatus == DeviceStatus::ADD ? true : false;
+    bool isConnected = deviceStatus == DeviceStatus::ADD;
+    g_deviceObserver->OnDeviceStatusUpdated(desc, isConnected);
+}
+
+void MediaBluetoothDeviceManager::NotifyToUpdateVirtualDevice(const BluetoothRemoteDevice &device,
+    AudioDeviceDescriptor &desc, DeviceStatus deviceStatus)
+{
+    desc.deviceType_ = DEVICE_TYPE_BLUETOOTH_A2DP;
+    desc.deviceRole_ = DeviceRole::OUTPUT_DEVICE;
+    desc.macAddress_ = device.GetDeviceAddr();
+    desc.deviceName_ = device.GetDeviceName();
+    desc.connectState_ = ConnectState::VIRTUAL_CONNECTED;
+    std::lock_guard<std::mutex> observerLock(g_observerLock);
+    CHECK_AND_RETURN_LOG(g_deviceObserver != nullptr, "NotifyToUpdateVirtualDevice, device observer is null");
+    bool isConnected = deviceStatus == DeviceStatus::VIRTUAL_ADD;
     g_deviceObserver->OnDeviceStatusUpdated(desc, isConnected);
 }
 
@@ -504,6 +549,12 @@ void HfpBluetoothDeviceManager::SetHfpStack(const BluetoothRemoteDevice &device,
         case BluetoothDeviceAction::STOP_VIRTUAL_CALL:
             HandleStopVirtualCall(device);
             break;
+        case BluetoothDeviceAction::VIRTUAL_DEVICE_ADD_ACTION:
+            HandleVirtualConnectDevice(device);
+            break;
+        case BluetoothDeviceAction::VIRTUAL_DEVICE_REMOVE_ACTION:
+            HandleRemoveVirtualConnectDevice(device);
+            break;
         default:
             AUDIO_ERR_LOG("SetHfpStack failed due to the unknow action: %{public}d", action);
             break;
@@ -515,7 +566,7 @@ void HfpBluetoothDeviceManager::HandleConnectDevice(const BluetoothRemoteDevice 
     if (IsHfpBluetoothDeviceExist(device.GetDeviceAddr())) {
         return;
     }
-
+    RemoveDeviceInConfigVector(device, negativeDevices_);
     DeviceCategory bluetoothCategory = GetDeviceCategory(device);
     AudioDeviceDescriptor desc;
     desc.deviceCategory_ = bluetoothCategory;
@@ -724,6 +775,30 @@ void HfpBluetoothDeviceManager::HandleStopVirtualCall(const BluetoothRemoteDevic
     disconnectScoThread.detach();
 }
 
+void HfpBluetoothDeviceManager::HandleVirtualConnectDevice(const BluetoothRemoteDevice &device)
+{
+    if (IsHfpBluetoothDeviceExist(device.GetDeviceAddr())) {
+        return;
+    }
+    DeviceCategory bluetoothCategory = GetDeviceCategory(device);
+    AudioDeviceDescriptor desc;
+    desc.deviceCategory_ = bluetoothCategory;
+    AddDeviceInConfigVector(device, negativeDevices_);
+    NotifyToUpdateVirtualDevice(device, desc, DeviceStatus::VIRTUAL_ADD);
+}
+
+void HfpBluetoothDeviceManager::HandleRemoveVirtualConnectDevice(const BluetoothRemoteDevice &device)
+{
+    if (IsHfpBluetoothDeviceExist(device.GetDeviceAddr())) {
+        AUDIO_INFO_LOG("The device is already removed as virtual Devices, ignore remove action.");
+        return;
+    }
+    RemoveDeviceInConfigVector(device, negativeDevices_);
+    AudioDeviceDescriptor desc;
+    desc.deviceCategory_ = CATEGORY_DEFAULT;
+    NotifyToUpdateVirtualDevice(device, desc, DeviceStatus::VIRTUAL_REMOVE);
+}
+
 void HfpBluetoothDeviceManager::AddDeviceInConfigVector(const BluetoothRemoteDevice &device,
     std::vector<BluetoothRemoteDevice> &deviceVector)
 {
@@ -763,7 +838,7 @@ void HfpBluetoothDeviceManager::NotifyToUpdateAudioDevice(const BluetoothRemoteD
         std::lock_guard<std::mutex> deviceMapLock(g_hfpDeviceMapLock);
         if (deviceStatus == DeviceStatus::ADD) {
             hfpBluetoothDeviceMap_[device.GetDeviceAddr()] = device;
-        } else {
+        } else if (deviceStatus == DeviceStatus::REMOVE) {
             if (hfpBluetoothDeviceMap_.find(device.GetDeviceAddr()) != hfpBluetoothDeviceMap_.end()) {
                 hfpBluetoothDeviceMap_.erase(device.GetDeviceAddr());
             }
@@ -774,7 +849,20 @@ void HfpBluetoothDeviceManager::NotifyToUpdateAudioDevice(const BluetoothRemoteD
         AUDIO_ERR_LOG("NotifyToUpdateAudioDevice, device observer is null");
         return;
     }
-    bool isConnected = deviceStatus == DeviceStatus::ADD ? true : false;
+    bool isConnected = deviceStatus == DeviceStatus::ADD;
+    g_deviceObserver->OnDeviceStatusUpdated(desc, isConnected);
+}
+
+void HfpBluetoothDeviceManager::NotifyToUpdateVirtualDevice(const BluetoothRemoteDevice &device,
+    AudioDeviceDescriptor &desc, DeviceStatus deviceStatus)
+{
+    desc.deviceType_ = DEVICE_TYPE_BLUETOOTH_SCO;
+    desc.macAddress_ = device.GetDeviceAddr();
+    desc.deviceName_ = device.GetDeviceName();
+    desc.connectState_ = ConnectState::VIRTUAL_CONNECTED;
+    std::lock_guard<std::mutex> observerLock(g_observerLock);
+    CHECK_AND_RETURN_LOG(g_deviceObserver != nullptr, "NotifyToUpdateVirtualDevice, device observer is null");
+    bool isConnected = deviceStatus == DeviceStatus::VIRTUAL_ADD;
     g_deviceObserver->OnDeviceStatusUpdated(desc, isConnected);
 }
 

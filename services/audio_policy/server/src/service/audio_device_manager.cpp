@@ -19,6 +19,7 @@
 #include "audio_device_manager.h"
 
 #include "audio_utils.h"
+#include "audio_errors.h"
 #include "audio_device_parser.h"
 
 namespace OHOS {
@@ -344,6 +345,19 @@ bool AudioDeviceManager::UpdateExistDeviceDescriptor(const sptr<AudioDeviceDescr
     return false;
 }
 
+void AudioDeviceManager::RemoveVirtualConnectedDevice(const shared_ptr<AudioDeviceDescriptor> &devDesc)
+{
+    auto isPresent = [&devDesc](const shared_ptr<AudioDeviceDescriptor> &descriptor) {
+        return descriptor->deviceType_ == devDesc->deviceType_
+            && descriptor->deviceRole_ == devDesc->deviceRole_
+            && descriptor->networkId_ == devDesc->networkId_
+            && descriptor->macAddress_ == devDesc->macAddress_
+            && descriptor->connectState_ == VIRTUAL_CONNECTED;
+    };
+    connectedDevices_.erase(std::remove_if(connectedDevices_.begin(), connectedDevices_.end(), isPresent),
+        connectedDevices_.end());
+}
+
 void AudioDeviceManager::AddNewDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor)
 {
     shared_ptr<AudioDeviceDescriptor> devDesc = make_shared<AudioDeviceDescriptor>(deviceDescriptor);
@@ -352,6 +366,7 @@ void AudioDeviceManager::AddNewDevice(const sptr<AudioDeviceDescriptor> &deviceD
     int32_t audioId = deviceDescriptor->deviceId_;
     AUDIO_INFO_LOG("add type:id %{public}d:%{public}d", deviceDescriptor->getType(), audioId);
 
+    RemoveVirtualConnectedDevice(devDesc);
     if (UpdateExistDeviceDescriptor(deviceDescriptor)) {
         AUDIO_INFO_LOG("The device has been added and will not be added again.");
         return;
@@ -1044,6 +1059,41 @@ bool AudioDeviceManager::IsDeviceConnected(sptr<AudioDeviceDescriptor> &audioDev
         audioDeviceDescriptors->deviceRole_, GetEncryptStr(audioDeviceDescriptors->networkId_).c_str(),
         audioDeviceDescriptors->deviceType_, GetEncryptAddr(audioDeviceDescriptors->macAddress_).c_str());
     return false;
+}
+
+bool AudioDeviceManager::IsVirtualConnectedDevice(const sptr<AudioDeviceDescriptor> &selectedDesc)
+{
+    CHECK_AND_RETURN_RET_LOG(selectedDesc != nullptr, false, "Invalid device descriptor");
+    auto isVirtual = [&selectedDesc](const shared_ptr<AudioDeviceDescriptor>& desc) {
+        return desc->connectState_ == VIRTUAL_CONNECTED
+            && desc->deviceRole_ == selectedDesc->deviceRole_
+            && desc->deviceType_ == selectedDesc->deviceType_
+            && desc->networkId_ == selectedDesc->networkId_
+            && desc->macAddress_ == selectedDesc->macAddress_;
+    };
+    bool isVirtualDevice = false;
+    auto itr = std::find_if(connectedDevices_.begin(), connectedDevices_.end(), isVirtual);
+    if (itr != connectedDevices_.end()) {
+        isVirtualDevice = true;
+        AUDIO_INFO_LOG("Device[%{public}s] is virtual connection",
+            GetEncryptAddr(selectedDesc->macAddress_).c_str());
+    }
+    return isVirtualDevice;
+}
+
+int32_t AudioDeviceManager::UpdateDeviceDescDeviceId(sptr<AudioDeviceDescriptor> &deviceDescriptor)
+{
+    CHECK_AND_RETURN_RET_LOG(deviceDescriptor != nullptr, ERROR, "Invalid device descriptor");
+    auto isPresent = [&deviceDescriptor](const shared_ptr<AudioDeviceDescriptor> &desc) {
+        return desc->deviceRole_ == deviceDescriptor->deviceRole_
+            && desc->deviceType_ == deviceDescriptor->deviceType_
+            && desc->networkId_ == deviceDescriptor->networkId_
+            && desc->macAddress_ == deviceDescriptor->macAddress_;
+    };
+    auto itr = std::find_if(connectedDevices_.begin(), connectedDevices_.end(), isPresent);
+    CHECK_AND_RETURN_RET_LOG(itr != connectedDevices_.end(), ERROR, "Device not found");
+    deviceDescriptor->deviceId_ = (*itr)->deviceId_;
+    return SUCCESS;
 }
 // LCOV_EXCL_STOP
 }

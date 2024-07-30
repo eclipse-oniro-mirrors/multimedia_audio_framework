@@ -14,6 +14,7 @@
  */
 
 #include "audio_state_manager.h"
+#include "audio_log.h"
 
 using namespace std;
 
@@ -88,6 +89,28 @@ unique_ptr<AudioDeviceDescriptor> AudioStateManager::GetPreferredToneRenderDevic
     return devDesc;
 }
 
+void AudioStateManager::UpdatePreferredMediaRenderDeviceConnectState(ConnectState state)
+{
+    CHECK_AND_RETURN_LOG(preferredMediaRenderDevice_ != nullptr, "preferredMediaRenderDevice_ is nullptr");
+    preferredMediaRenderDevice_->connectState_ = state;
+}
+
+void AudioStateManager::UpdatePreferredCallRenderDeviceConnectState(ConnectState state)
+{
+    CHECK_AND_RETURN_LOG(preferredCallRenderDevice_ != nullptr, "preferredCallRenderDevice_ is nullptr");
+    preferredCallRenderDevice_->connectState_ = state;
+}
+
+void AudioStateManager::UpdatePreferredCallCaptureDeviceConnectState(ConnectState state)
+{
+    CHECK_AND_RETURN_LOG(preferredCallCaptureDevice_ != nullptr, "preferredCallCaptureDevice_ is nullptr");
+    preferredCallCaptureDevice_->connectState_ = state;
+}
+
+void AudioStateManager::UpdatePreferredRecordCaptureDeviceConnectState(ConnectState state)
+{
+    CHECK_AND_RETURN_LOG(preferredRecordCaptureDevice_ != nullptr, "preferredRecordCaptureDevice_ is nullptr");
+    preferredRecordCaptureDevice_->connectState_ = state;
+}
 } // namespace AudioStandard
 } // namespace OHOS
-
