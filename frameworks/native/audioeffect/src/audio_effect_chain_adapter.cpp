@@ -122,7 +122,7 @@ int32_t EffectChainManagerCreateCb(const char *sceneType, const char *sessionID)
         return SUCCESS;
     }
     if (audioEffectChainManager->CreateAudioEffectChainDynamic(sceneTypeString) != SUCCESS) {
-        AUDIO_DEBUG_LOG("createAudioEffectChainDynamic");
+        AUDIO_ERR_LOG("create effect chain fail");
         return ERROR;
     }
     AUDIO_INFO_LOG("Create Audio Effect Chain Success, sessionID is %{public}s, sceneType is %{public}s",
@@ -154,7 +154,7 @@ int32_t EffectChainManagerReleaseCb(const char *sceneType, const char *sessionID
         return SUCCESS;
     }
     if (audioEffectChainManager->ReleaseAudioEffectChainDynamic(sceneTypeString) != SUCCESS) {
-        AUDIO_DEBUG_LOG("releaseAudioEffectChainDynamic");
+        AUDIO_ERR_LOG("release effect chain fail");
         return ERROR;
     }
     AUDIO_INFO_LOG("Release Audio Effect Chain Success, sessionID is %{public}s, sceneType is %{public}s",
