@@ -332,14 +332,20 @@ int32_t AudioEffectChainManager::CreateAudioEffectChainDynamic(const std::string
     std::string defaultSceneTypeAndDeviceKey = DEFAULT_SCENE_TYPE + "_&_" + GetDeviceTypeName();
 
     if (SceneTypeToEffectChainMap_.count(sceneTypeAndDeviceKey)) {
-        SceneTypeToEffectChainCountMap_[sceneTypeAndDeviceKey]++;
-        if (isDefaultEffectChainExisted_ && SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] ==
-            SceneTypeToEffectChainMap_[defaultSceneTypeAndDeviceKey]) {
-            defaultEffectChainCount_++;
+        if (SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] == nullptr) {
+            SceneTypeToEffectChainMap_.erase(sceneTypeAndDeviceKey);
+            SceneTypeToEffectChainCountMap_.erase(sceneTypeAndDeviceKey);
+            AUDIO_WARNING_LOG("scene type %{public}s has null effect chain", sceneTypeAndDeviceKey.c_str());
+        } else {
+            SceneTypeToEffectChainCountMap_[sceneTypeAndDeviceKey]++;
+            if (isDefaultEffectChainExisted_ && SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] ==
+                SceneTypeToEffectChainMap_[defaultSceneTypeAndDeviceKey]) {
+                defaultEffectChainCount_++;
+            }
+            AUDIO_INFO_LOG("effect chain already exist, current count: %{public}d, default count: %{public}d",
+                SceneTypeToEffectChainCountMap_[sceneTypeAndDeviceKey], defaultEffectChainCount_);
+            return SUCCESS;
         }
-        AUDIO_INFO_LOG("effect chain already exist, current count: %{public}d, default count: %{public}d",
-            SceneTypeToEffectChainCountMap_[sceneTypeAndDeviceKey], defaultEffectChainCount_);
-        return SUCCESS;
     }
     bool isPriorScene = std::find(priorSceneList_.begin(), priorSceneList_.end(), sceneType) != priorSceneList_.end();
     audioEffectChain = CreateAudioEffectChain(sceneType, isPriorScene);
@@ -598,8 +604,9 @@ int32_t AudioEffectChainManager::EffectApVolumeUpdate(std::shared_ptr<AudioEffec
                (streamVolumeTemp * systemVolume) : volumeMax;
         }
         std::string sceneTypeAndDeviceKey = it->first + "_&_" + GetDeviceTypeName();
+        CHECK_AND_RETURN_RET_LOG(SceneTypeToEffectChainMap_.count(sceneTypeAndDeviceKey) > 0 &&
+            SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] != nullptr, ERROR, "null audioEffectChain");
         auto audioEffectChain = SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey];
-        CHECK_AND_RETURN_RET_LOG(audioEffectChain != nullptr, ERROR, "null audioEffectChain");
         if (static_cast<int32_t>(audioEffectChain->GetFinalVolume() * MAX_UINT_VOLUME_NUM) !=
             static_cast<int32_t>(volumeMax * MAX_UINT_VOLUME_NUM)) {
             audioEffectChain->SetFinalVolume(volumeMax);
@@ -781,7 +788,8 @@ int32_t AudioEffectChainManager::ReturnEffectChannelInfo(const std::string &scen
     }
     for (auto& scenePair : SceneTypeToSessionIDMap_) {
         std::string pairSceneTypeAndDeviceKey = scenePair.first + "_&_" + GetDeviceTypeName();
-        if (SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] ==
+        if (SceneTypeToEffectChainMap_.count(pairSceneTypeAndDeviceKey) > 0 &&
+            SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] ==
             SceneTypeToEffectChainMap_[pairSceneTypeAndDeviceKey]) {
             std::set<std::string> sessions = scenePair.second;
             FindMaxEffectChannels(scenePair.first, sessions, channels, channelLayout);
