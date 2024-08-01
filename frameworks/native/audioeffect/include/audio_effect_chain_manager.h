@@ -89,6 +89,11 @@ struct EffectBufferAttr {
     }
 };
 
+enum SceneTypeOperation {
+    ADD_SCENE_TYPE = 0,
+    REMOVE_SCENE_TYPE = 0,
+};
+
 class AudioEffectChainManager {
 public:
     AudioEffectChainManager();
@@ -117,7 +122,7 @@ public:
     int32_t SessionInfoMapDelete(const std::string &sceneType, const std::string &sessionID);
     int32_t ReturnEffectChannelInfo(const std::string &sceneType, uint32_t &channels, uint64_t &channelLayout);
     int32_t ReturnMultiChannelInfo(uint32_t *channels, uint64_t *channelLayout);
-    void RegisterEffectChainCountBackupMap(const std::string &sceneType, const std::string &operation);
+    void RegisterEffectChainCountBackupMap(const std::string &sceneType, SceneTypeOperation operation);
     int32_t EffectRotationUpdate(const uint32_t rotationState);
     int32_t EffectVolumeUpdate(std::shared_ptr<AudioEffectVolume> audioEffectVolume);
     int32_t StreamVolumeUpdate(const std::string sessionIDString, const float streamVolume);
@@ -135,6 +140,7 @@ public:
 
     int32_t SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray);
     int32_t GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray);
+    void UpdateSceneTypeList(const std::string &sceneType, SceneTypeOperation operation);
 private:
     int32_t SetAudioEffectChainDynamic(const std::string &sceneType, const std::string &effectMode);
     void UpdateSensorState();
@@ -173,6 +179,7 @@ private:
     std::set<std::string> SceneTypeToSpecialEffectSet_;
     std::unordered_map<std::string, std::string> effectPropertyMap_;
     std::vector<std::string> priorSceneList_;
+    std::vector<std::pair<std::string, int32_t>> sceneTypeCountList_;
     DeviceType deviceType_ = DEVICE_TYPE_SPEAKER;
     std::string deviceSink_ = DEFAULT_DEVICE_SINK;
     std::string deviceClass_ = "";

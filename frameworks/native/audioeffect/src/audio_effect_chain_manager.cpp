@@ -956,14 +956,14 @@ void AudioEffectChainManager::DeleteAllChains()
 {
     for (auto it = SceneTypeToEffectChainCountMap_.begin(); it != SceneTypeToEffectChainCountMap_.end(); ++it) {
         AUDIO_DEBUG_LOG("sceneTypeAndDeviceKey %{public}s count:%{public}d", it->first.c_str(), it->second);
-        SceneTypeToEffectChainCountBackupMap_.insert(std::make_pair(it->first, it->second));
+        SceneTypeToEffectChainCountBackupMap_.insert(
+            std::make_pair(it->first.substr(0, static_cast<size_t>(it->first.find("_&_"))), it->second));
     }
-    
+
     for (auto it = SceneTypeToEffectChainCountBackupMap_.begin(); it != SceneTypeToEffectChainCountBackupMap_.end();
         ++it) {
-        std::string sceneType = it->first.substr(0, static_cast<size_t>(it->first.find("_&_")));
         for (int32_t k = 0; k < it->second; ++k) {
-            ReleaseAudioEffectChainDynamic(sceneType);
+            ReleaseAudioEffectChainDynamic(it->first);
         }
     }
     return;
@@ -971,35 +971,38 @@ void AudioEffectChainManager::DeleteAllChains()
 
 void AudioEffectChainManager::RecoverAllChains()
 {
-    for (auto it = SceneTypeToEffectChainCountBackupMap_.begin(); it != SceneTypeToEffectChainCountBackupMap_.end();
-        ++it) {
-        AUDIO_DEBUG_LOG("sceneTypeAndDeviceKey %{public}s count:%{public}d", it->first.c_str(), it->second);
-        std::string sceneType = it->first.substr(0, static_cast<size_t>(it->first.find("_&_")));
-        for (int32_t k = 0; k < it->second; ++k) {
-            CreateAudioEffectChainDynamic(sceneType);
+    for (auto item : sceneTypeCountList_) {
+        if (!SceneTypeToEffectChainCountBackupMap_.count(item->first) ||
+            item->second != SceneTypeToEffectChainCountBackupMap_[item->first]) {
+            AUDIO_WARNING_LOG("sceneType %{public}s count not match", item->first.c_str());
+            continue;
         }
-        UpdateMultichannelConfig(sceneType);
+
+        AUDIO_DEBUG_LOG("sceneType %{public}s count:%{public}d", item->first.c_str(), item->second);
+        for (int32_t k = 0; k < item->second; ++k) {
+            CreateAudioEffectChainDynamic(item->first);
+        }
+        UpdateMultichannelConfig(item->first);
     }
     SceneTypeToEffectChainCountBackupMap_.clear();
 }
 
 void AudioEffectChainManager::RegisterEffectChainCountBackupMap(const std::string &sceneType,
-    const std::string &operation)
+    SceneTypeOperation operation)
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-    std::string sceneTypeAndDeviceKey = sceneType + "_&_" + GetDeviceTypeName();
-    if (operation == "Register") {
-        if (!SceneTypeToEffectChainCountBackupMap_.count(sceneTypeAndDeviceKey)) {
-            SceneTypeToEffectChainCountBackupMap_[sceneTypeAndDeviceKey] = 1;
+    if (operation == ADD_SCENE_TYPE) {
+        if (!SceneTypeToEffectChainCountBackupMap_.count(sceneType)) {
+            SceneTypeToEffectChainCountBackupMap_[sceneType] = 1;
             return;
         }
-        SceneTypeToEffectChainCountBackupMap_[sceneTypeAndDeviceKey]++;
-    } else if (operation == "Deregister") {
-        if (SceneTypeToEffectChainCountBackupMap_.count(sceneTypeAndDeviceKey) == 1) {
-            SceneTypeToEffectChainCountBackupMap_.erase(sceneTypeAndDeviceKey);
+        SceneTypeToEffectChainCountBackupMap_[sceneType]++;
+    } else if (operation == REMOVE_SCENE_TYPE) {
+        if (SceneTypeToEffectChainCountBackupMap_.count(sceneType) == 1) {
+            SceneTypeToEffectChainCountBackupMap_.erase(sceneType);
             return;
         }
-        SceneTypeToEffectChainCountBackupMap_[sceneTypeAndDeviceKey]--;
+        SceneTypeToEffectChainCountBackupMap_[sceneType]--;
     } else {
         AUDIO_ERR_LOG("Wrong operation to SceneTypeToEffectChainCountBackupMap.");
     }
@@ -1379,6 +1382,42 @@ int32_t AudioEffectChainManager::GetAudioEffectProperty(AudioEffectPropertyArray
         }
     }
     return AUDIO_OK;
+}
+
+void UpdateSceneTypeList(const std::string &sceneType, SceneTypeOperation operation)
+{
+    std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
+    if (operation == ADD_SCENE_TYPE) {
+        auto it = std::find_if(sceneTypeCountList_.begin(), sceneTypeCountList_.end(),
+            [sceneType](const std::pair<std::string, int32_t> &element) {
+                return element.first == sceneType;
+            })
+        if (it == sceneTypeCountList_.end()) {
+            sceneTypeCountList_.push_back(std::make_pair(sceneType, 1));
+            AUDIO_INFO_LOG("scene Type %{public}s is added", sceneType.c_str());
+        } else {
+            it->sceond++;
+            AUDIO_INFO_LOG("scene Type %{public}s count is increased to %{public}d", sceneType.c_str(), it->sceond);
+        }
+    } else if (operation == REMOVE_SCENE_TYPE) {
+        auto it = std::find_if(sceneTypeCountList_.begin(), sceneTypeCountList_.end(),
+            [sceneType](const std::pair<std::string, int32_t> &element) {
+                return element.first == sceneType;
+            })
+        if (it == sceneTypeCountList_.end()) {
+            AUDIO_WARNING_LOG("scene type %{public}s to be removed is not found", sceneType.c_str());
+            return;
+        }
+        if (it->sceond <= 1) {
+            sceneTypeCountList_.erase(it);
+            AUDIO_INFO_LOG("scene Type %{public}s is removed", sceneType.c_str());
+        } else {
+            it->sceond--;
+            AUDIO_INFO_LOG("scene Type %{public}s count is decreased to %{public}d", sceneType.c_str(), it->sceond);
+        }
+    } else {
+        AUDIO_ERR_LOG("Wrong operation to SceneTypeToEffectChainCountBackupMap.");
+    }
 }
 } // namespace AudioStandard
 } // namespace OHOS
