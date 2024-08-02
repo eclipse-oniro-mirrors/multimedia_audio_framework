@@ -232,11 +232,19 @@ public:
 
     virtual bool IsSpatializationEnabled() = 0;
 
+    virtual bool IsSpatializationEnabled(const std::string address) = 0;
+
     virtual int32_t SetSpatializationEnabled(const bool enable) = 0;
+
+    virtual int32_t SetSpatializationEnabled(const std::string address, const bool enable) = 0;
 
     virtual bool IsHeadTrackingEnabled() = 0;
 
+    virtual bool IsHeadTrackingEnabled(const std::string address) = 0;
+
     virtual int32_t SetHeadTrackingEnabled(const bool enable) = 0;
+
+    virtual int32_t SetHeadTrackingEnabled(const std::string address, const bool enable) = 0;
 
     virtual AudioSpatializationState GetSpatializationState(const StreamUsage streamUsage) = 0;
 

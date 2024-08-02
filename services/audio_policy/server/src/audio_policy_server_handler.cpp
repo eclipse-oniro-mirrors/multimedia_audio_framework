@@ -460,6 +460,19 @@ bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeEvent(const bool &e
     return ret;
 }
 
+bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeEvent(const std::string address, const bool &enabled)
+{
+    std::shared_ptr<EventContextObj> eventContextObj = std::make_shared<EventContextObj>();
+    CHECK_AND_RETURN_RET_LOG(eventContextObj != nullptr, false, "EventContextObj get nullptr");
+    eventContextObj->spatializationEnabled = enabled;
+    eventContextObj->descriptor->macAddress_ = address;
+    lock_guard<mutex> runnerlock(runnerMutex_);
+    bool ret = SendEvent(AppExecFwk::InnerEvent::Get(EventAudioServerCmd::SPATIALIZATION_DEVICE_ENABLED_CHANGE,
+        eventContextObj));
+    CHECK_AND_RETURN_RET_LOG(ret, ret, "Send SPATIALIZATION_ENABLED_CHANGE event failed");
+    return ret;
+}
+
 bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeEvent(const bool &enabled)
 {
     std::shared_ptr<EventContextObj> eventContextObj = std::make_shared<EventContextObj>();
@@ -467,6 +480,19 @@ bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeEvent(const bool &en
     eventContextObj->headTrackingEnabled = enabled;
     lock_guard<mutex> runnerlock(runnerMutex_);
     bool ret = SendEvent(AppExecFwk::InnerEvent::Get(EventAudioServerCmd::HEAD_TRACKING_ENABLED_CHANGE,
+        eventContextObj));
+    CHECK_AND_RETURN_RET_LOG(ret, ret, "Send HEAD_TRACKING_ENABLED_CHANGE event failed");
+    return ret;
+}
+
+bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeEvent(const std::string address, const bool &enabled)
+{
+    std::shared_ptr<EventContextObj> eventContextObj = std::make_shared<EventContextObj>();
+    CHECK_AND_RETURN_RET_LOG(eventContextObj != nullptr, false, "EventContextObj get nullptr");
+    eventContextObj->headTrackingEnabled = enabled;
+    eventContextObj->descriptor->macAddress_ = address;
+    lock_guard<mutex> runnerlock(runnerMutex_);
+    bool ret = SendEvent(AppExecFwk::InnerEvent::Get(EventAudioServerCmd::HEAD_TRACKING_DEVICE_ENABLED_CHANGE,
         eventContextObj));
     CHECK_AND_RETURN_RET_LOG(ret, ret, "Send HEAD_TRACKING_ENABLED_CHANGE event failed");
     return ret;
@@ -866,6 +892,22 @@ void AudioPolicyServerHandler::HandleSpatializatonEnabledChangeEvent(const AppEx
     }
 }
 
+void AudioPolicyServerHandler::HandleSpatializatonDeviceEnabledChangeEvent(const AppExecFwk::InnerEvent::Pointer &event)
+{
+    std::shared_ptr<EventContextObj> eventContextObj = event->GetSharedObject<EventContextObj>();
+    CHECK_AND_RETURN_LOG(eventContextObj != nullptr, "EventContextObj get nullptr");
+    std::lock_guard<std::mutex> lock(runnerMutex_);
+    for (auto it = audioPolicyClientProxyAPSCbsMap_.begin(); it != audioPolicyClientProxyAPSCbsMap_.end(); ++it) {
+        sptr<IAudioPolicyClient> spatializationEnabledChangeCb = it->second;
+        if (spatializationEnabledChangeCb == nullptr) {
+            AUDIO_ERR_LOG("spatializationEnabledChangeCb : nullptr for client : %{public}d", it->first);
+            continue;
+        }
+        spatializationEnabledChangeCb->OnSpatializationEnabledChange(eventContextObj->descriptor,
+            eventContextObj->spatializationEnabled);
+    }
+}
+
 void AudioPolicyServerHandler::HandleHeadTrackingEnabledChangeEvent(const AppExecFwk::InnerEvent::Pointer &event)
 {
     std::shared_ptr<EventContextObj> eventContextObj = event->GetSharedObject<EventContextObj>();
@@ -878,6 +920,22 @@ void AudioPolicyServerHandler::HandleHeadTrackingEnabledChangeEvent(const AppExe
             continue;
         }
         headTrackingEnabledChangeCb->OnHeadTrackingEnabledChange(eventContextObj->headTrackingEnabled);
+    }
+}
+
+void AudioPolicyServerHandler::HandleHeadTrackingDeviceEnabledChangeEvent(const AppExecFwk::InnerEvent::Pointer &event)
+{
+    std::shared_ptr<EventContextObj> eventContextObj = event->GetSharedObject<EventContextObj>();
+    CHECK_AND_RETURN_LOG(eventContextObj != nullptr, "EventContextObj get nullptr");
+    std::lock_guard<std::mutex> lock(runnerMutex_);
+    for (auto it = audioPolicyClientProxyAPSCbsMap_.begin(); it != audioPolicyClientProxyAPSCbsMap_.end(); ++it) {
+        sptr<IAudioPolicyClient> headTrackingEnabledChangeCb = it->second;
+        if (headTrackingEnabledChangeCb == nullptr) {
+            AUDIO_ERR_LOG("headTrackingEnabledChangeCb : nullptr for client : %{public}d", it->first);
+            continue;
+        }
+        headTrackingEnabledChangeCb->OnHeadTrackingEnabledChange(eventContextObj->descriptor,
+            eventContextObj->headTrackingEnabled);
     }
 }
 
@@ -1007,8 +1065,14 @@ void AudioPolicyServerHandler::ProcessEvent(const AppExecFwk::InnerEvent::Pointe
         case EventAudioServerCmd::SPATIALIZATION_ENABLED_CHANGE:
             HandleSpatializatonEnabledChangeEvent(event);
             break;
+        case EventAudioServerCmd::SPATIALIZATION_DEVICE_ENABLED_CHANGE:
+            HandleSpatializatonDeviceEnabledChangeEvent(event);
+            break;
         case EventAudioServerCmd::HEAD_TRACKING_ENABLED_CHANGE:
             HandleHeadTrackingEnabledChangeEvent(event);
+            break;
+        case EventAudioServerCmd::HEAD_TRACKING_DEVICE_ENABLED_CHANGE:
+            HandleHeadTrackingDeviceEnabledChangeEvent(event);
             break;
         default:
             break;

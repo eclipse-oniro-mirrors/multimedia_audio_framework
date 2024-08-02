@@ -238,10 +238,28 @@ void AudioPolicyClientStub::HandleSpatializationEnabledChange(MessageParcel &dat
     OnSpatializationEnabledChange(enabled);
 }
 
+void AudioPolicyClientStub::HandleSpatializationDeviceEnabledChange(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<AudioDeviceDescriptor> deviceDescriptor = new(std::nothrow) AudioDeviceDescriptor();
+    std::string macAddress = data.ReadString();
+    deviceDescriptor->macAddress_ = macAddress;
+    bool enabled = data.ReadBool();
+    OnSpatializationEnabledChange(deviceDescriptor, enabled);
+}
+
 void AudioPolicyClientStub::HandleHeadTrackingEnabledChange(MessageParcel &data, MessageParcel &reply)
 {
     bool enabled = data.ReadBool();
     OnHeadTrackingEnabledChange(enabled);
+}
+
+void AudioPolicyClientStub::HandleHeadTrackingDeviceEnabledChange(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<AudioDeviceDescriptor> deviceDescriptor = new(std::nothrow) AudioDeviceDescriptor();
+    std::string macAddress = data.ReadString();
+    deviceDescriptor->macAddress_ = macAddress;
+    bool enabled = data.ReadBool();
+    OnHeadTrackingEnabledChange(deviceDescriptor, enabled);
 }
 } // namespace AudioStandard
 } // namespace OHOS

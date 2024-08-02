@@ -36,10 +36,13 @@ public:
     void RemoveAllSpatializationEnabledChangeCallbackReference();
     int32_t GetSpatializationEnabledChangeCbListSize();
     void OnSpatializationEnabledChange(const bool &enabled) override;
+    void OnSpatializationEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+        const bool &enabled) override;
 
 private:
     struct AudioSpatializationEnabledJsCallback {
         std::shared_ptr<AutoRef> callback = nullptr;
+        sptr<AudioDeviceDescriptor> deviceDescriptor = new(std::nothrow) AudioDeviceDescriptor();
         bool enabled;
     };
 
@@ -60,10 +63,13 @@ public:
     void RemoveAllHeadTrackingEnabledChangeCallbackReference();
     int32_t GetHeadTrackingEnabledChangeCbListSize();
     void OnHeadTrackingEnabledChange(const bool &enabled) override;
+    void OnHeadTrackingEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+        const bool &enabled) override;
 
 private:
     struct AudioHeadTrackingEnabledJsCallback {
         std::shared_ptr<AutoRef> callback = nullptr;
+        sptr<AudioDeviceDescriptor> deviceDescriptor = new(std::nothrow) AudioDeviceDescriptor();
         bool enabled;
     };
 

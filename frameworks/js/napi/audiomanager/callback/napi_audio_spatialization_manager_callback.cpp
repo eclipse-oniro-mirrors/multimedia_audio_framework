@@ -109,6 +109,26 @@ void NapiAudioSpatializationEnabledChangeCallback::OnSpatializationEnabledChange
     return;
 }
 
+void NapiAudioSpatializationEnabledChangeCallback::OnSpatializationEnabledChange(
+    const sptr<AudioDeviceDescriptor> &deviceDescriptor, const bool &enabled)
+{
+    AUDIO_INFO_LOG("OnSpatializationEnabledChange by the speified device entered");
+
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    for (auto it = spatializationEnabledChangeCbList_.begin(); it != spatializationEnabledChangeCbList_.end(); it++) {
+        std::unique_ptr<AudioSpatializationEnabledJsCallback> cb =
+            std::make_unique<AudioSpatializationEnabledJsCallback>();
+        CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
+        cb->callback = (*it);
+        cb->deviceDescriptor = deviceDescriptor;
+        cb->enabled = enabled;
+        OnJsCallbackSpatializationEnabled(cb);
+    }
+
+    return;
+}
+
 void NapiAudioSpatializationEnabledChangeCallback::WorkCallbackInterruptDone(uv_work_t *work, int status)
 {
     std::shared_ptr<AudioSpatializationEnabledJsCallback> context(
@@ -240,6 +260,26 @@ void NapiAudioHeadTrackingEnabledChangeCallback::OnHeadTrackingEnabledChange(con
             std::make_unique<AudioHeadTrackingEnabledJsCallback>();
         CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
         cb->callback = (*it);
+        cb->enabled = enabled;
+        OnJsCallbackHeadTrackingEnabled(cb);
+    }
+
+    return;
+}
+
+void NapiAudioHeadTrackingEnabledChangeCallback::OnHeadTrackingEnabledChange(
+    const sptr<AudioDeviceDescriptor> &deviceDescriptor, const bool &enabled)
+{
+    AUDIO_INFO_LOG("OnHeadTrackingEnabledChange by the specified device entered");
+
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    for (auto it = headTrackingEnabledChangeCbList_.begin(); it != headTrackingEnabledChangeCbList_.end(); it++) {
+        std::unique_ptr<AudioHeadTrackingEnabledJsCallback> cb =
+            std::make_unique<AudioHeadTrackingEnabledJsCallback>();
+        CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
+        cb->callback = (*it);
+        cb->deviceDescriptor = deviceDescriptor;
         cb->enabled = enabled;
         OnJsCallbackHeadTrackingEnabled(cb);
     }

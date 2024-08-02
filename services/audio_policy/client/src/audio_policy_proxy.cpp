@@ -1720,6 +1720,24 @@ bool AudioPolicyProxy::IsSpatializationEnabled()
     return reply.ReadBool();
 }
 
+bool AudioPolicyProxy::IsSpatializationEnabled(const std::string address)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, false, "WriteInterfaceToken failed");
+    data.WriteString(address);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_SPATIALIZATION_ENABLED_FOR_DEVICE), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, false,
+        "IsSpatializationEnabled failed, error: %{public}d", error);
+    return reply.ReadBool();
+}
+
+
 int32_t AudioPolicyProxy::SetSpatializationEnabled(const bool enable)
 {
     MessageParcel data;
@@ -1732,6 +1750,24 @@ int32_t AudioPolicyProxy::SetSpatializationEnabled(const bool enable)
 
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_SPATIALIZATION_ENABLED), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, ERROR,
+        "SetSpatializationEnabled failed, error: %{public}d", error);
+    return reply.ReadInt32();
+}
+
+int32_t AudioPolicyProxy::SetSpatializationEnabled(const std::string address, const bool enable)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, ERROR, "WriteInterfaceToken failed");
+    data.WriteString(address);
+    data.WriteBool(enable);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_SPATIALIZATION_ENABLED_FOR_DEVICE), data, reply, option);
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, ERROR,
         "SetSpatializationEnabled failed, error: %{public}d", error);
     return reply.ReadInt32();
@@ -1754,6 +1790,24 @@ bool AudioPolicyProxy::IsHeadTrackingEnabled()
     return reply.ReadBool();
 }
 
+bool AudioPolicyProxy::IsHeadTrackingEnabled(const std::string address)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, false, "WriteInterfaceToken failed");
+    data.WriteString(address);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_HEAD_TRACKING_ENABLED_FOR_DEVICE), data, reply, option);
+
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, false,
+        "IsHeadTrackingEnabled failed, error: %{public}d", error);
+    return reply.ReadBool();
+}
+
 int32_t AudioPolicyProxy::SetHeadTrackingEnabled(const bool enable)
 {
     MessageParcel data;
@@ -1766,6 +1820,24 @@ int32_t AudioPolicyProxy::SetHeadTrackingEnabled(const bool enable)
 
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_HEAD_TRACKING_ENABLED), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, ERROR,
+        "SetHeadTrackingEnabled failed, error: %{public}d", error);
+    return reply.ReadInt32();
+}
+
+int32_t AudioPolicyProxy::SetHeadTrackingEnabled(const std::string address, const bool enable)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, ERROR, "WriteInterfaceToken failed");
+    data.WriteString(address);
+    data.WriteBool(enable);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_HEAD_TRACKING_ENABLED_FOR_DEVICE), data, reply, option);
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, ERROR,
         "SetHeadTrackingEnabled failed, error: %{public}d", error);
     return reply.ReadInt32();

@@ -132,6 +132,14 @@ bool AudioSpatializationService::IsSpatializationEnabled()
     return spatializationStateFlag_.spatializationEnabled;
 }
 
+bool AudioSpatializationService::IsSpatializationEnabled(const std::string address)
+{
+    std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
+    CHECK_AND_RETURN_RET_LOG(addressToSpatialEnabledMap_.count(address), false,
+        "specified address for set spatialization enabled is not in memory");
+    return addressToSpatialEnabledMap_[address].spatializationEnabled;
+}
+
 int32_t AudioSpatializationService::SetSpatializationEnabled(const bool enable)
 {
     AUDIO_INFO_LOG("Spatialization enabled is set to be: %{public}d", enable);
@@ -148,10 +156,35 @@ int32_t AudioSpatializationService::SetSpatializationEnabled(const bool enable)
     return SPATIALIZATION_SERVICE_OK;
 }
 
+int32_t AudioSpatializationService::SetSpatializationEnabled(const std::string address, const bool enable)
+{
+    AUDIO_INFO_LOG("Device %{public}s Spatialization enabled is set to be: %{public}d", address.c_str(), enable);
+    std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
+    currSettingHeadTrackingAddress_ = address;
+    if (addressToSpatialEnabledMap_[address].spatializationEnabled == enable) {
+        return SPATIALIZATION_SERVICE_OK;
+    }
+    addressToSpatialEnabledMap_[address].spatializationEnabled = enable;
+    HandleSpatializationEnabledChange(address, enable);
+    if (UpdateSpatializationStateReal(false) != 0) {
+        return ERROR;
+    }
+    WriteSpatializationStateToDb(WRITE_SPATIALIZATION_STATE);
+    return SPATIALIZATION_SERVICE_OK;
+}
+
 bool AudioSpatializationService::IsHeadTrackingEnabled()
 {
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     return spatializationStateFlag_.headTrackingEnabled;
+}
+
+bool AudioSpatializationService::IsHeadTrackingEnabled(const std::string address)
+{
+    std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
+    CHECK_AND_RETURN_RET_LOG(addressToSpatialEnabledMap_.count(address), false,
+        "specified address for set head tracking enabled is not in memory");
+    return addressToSpatialEnabledMap_[address].headTrackingEnabled;
 }
 
 int32_t AudioSpatializationService::SetHeadTrackingEnabled(const bool enable)
@@ -170,6 +203,23 @@ int32_t AudioSpatializationService::SetHeadTrackingEnabled(const bool enable)
     return SPATIALIZATION_SERVICE_OK;
 }
 
+int32_t AudioSpatializationService::SetHeadTrackingEnabled(const std::string address, const bool enable)
+{
+    AUDIO_INFO_LOG("Device %{public}s Head tracking enabled is set to be: %{public}d", address.c_str(), enable);
+    std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
+    currSettingHeadTrackingAddress_ = address;
+    if (addressToSpatialEnabledMap_[address].headTrackingEnabled == enable) {
+        return SPATIALIZATION_SERVICE_OK;
+    }
+    addressToSpatialEnabledMap_[address].headTrackingEnabled = enable;
+    HandleHeadTrackingEnabledChange(address, enable);
+    if (UpdateSpatializationStateReal(false) != 0) {
+        return ERROR;
+    }
+    WriteSpatializationStateToDb(WRITE_SPATIALIZATION_STATE);
+    return SPATIALIZATION_SERVICE_OK;
+}
+
 void AudioSpatializationService::HandleSpatializationEnabledChange(const bool &enabled)
 {
     AUDIO_INFO_LOG("Spatialization enabled callback is triggered: state is %{public}d", enabled);
@@ -178,11 +228,29 @@ void AudioSpatializationService::HandleSpatializationEnabledChange(const bool &e
     }
 }
 
+void AudioSpatializationService::HandleSpatializationEnabledChange(const std::string address, const bool &enabled)
+{
+    AUDIO_INFO_LOG("device %{public}s Spatialization enabled callback is triggered: state is %{public}d",
+        address.c_str(), enabled);
+    if (audioPolicyServerHandler_ != nullptr) {
+        audioPolicyServerHandler_->SendSpatializatonEnabledChangeEvent(address, enabled);
+    }
+}
+
 void AudioSpatializationService::HandleHeadTrackingEnabledChange(const bool &enabled)
 {
     AUDIO_INFO_LOG("Head tracking enabled callback is triggered: state is %{public}d", enabled);
     if (audioPolicyServerHandler_ != nullptr) {
         audioPolicyServerHandler_->SendHeadTrackingEnabledChangeEvent(enabled);
+    }
+}
+
+void AudioSpatializationService::HandleHeadTrackingEnabledChange(const std::string address, const bool &enabled)
+{
+    AUDIO_INFO_LOG("device %{public}s Head tracking enabled callback is triggered: state is %{public}d",
+        address.c_str(), enabled);
+    if (audioPolicyServerHandler_ != nullptr) {
+        audioPolicyServerHandler_->SendHeadTrackingEnabledChangeEvent(address, enabled);
     }
 }
 
@@ -342,10 +410,10 @@ void AudioSpatializationService::UpdateRendererInfo(
 
 int32_t AudioSpatializationService::UpdateSpatializationStateReal(bool outputDeviceChange, std::string preDeviceAddress)
 {
-    bool spatializationEnabled = spatializationStateFlag_.spatializationEnabled && IsSpatializationSupported() &&
-        IsSpatializationSupportedForDevice(currentDeviceAddress_);
-    bool headTrackingEnabled = spatializationStateFlag_.headTrackingEnabled && IsHeadTrackingSupported() &&
-        IsHeadTrackingSupportedForDevice(currentDeviceAddress_) && spatializationEnabled;
+    bool spatializationEnabled = addressToSpatialEnabledMap_[currentDeviceAddress_].spatializationEnabled &&
+        IsSpatializationSupported() && IsSpatializationSupportedForDevice(currentDeviceAddress_);
+    bool headTrackingEnabled = addressToSpatialEnabledMap_[currentDeviceAddress_].headTrackingEnabled &&
+        IsHeadTrackingSupported() && IsHeadTrackingSupportedForDevice(currentDeviceAddress_) && spatializationEnabled;
     if ((spatializationEnabledReal_ == spatializationEnabled) && (headTrackingEnabledReal_ == headTrackingEnabled)) {
         AUDIO_INFO_LOG("no need to update real spatialization state");
         UpdateHeadTrackingDeviceState(outputDeviceChange, preDeviceAddress);

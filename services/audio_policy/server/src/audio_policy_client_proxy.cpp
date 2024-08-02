@@ -402,6 +402,33 @@ void AudioPolicyClientProxy::OnSpatializationEnabledChange(const bool &enabled)
     reply.ReadInt32();
 }
 
+void AudioPolicyClientProxy::OnSpatializationEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+    const bool &enabled)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_ASYNC);
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        AUDIO_ERR_LOG("WriteInterfaceToken failed");
+        return;
+    }
+
+    data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_DEVICE_ENABLED_CHANGE,));
+
+    if (hasSystemPermission_) {
+        date.WriteString(deviceDescriptor->macAddress_);
+        data.WriteBool(enabled);
+    } else {
+        data.WriteBool(false);
+    }
+
+    int error = Remote()->SendRequest(static_cast<uint32_t>(UPDATE_CALLBACK_CLIENT), data, reply, option);
+    if (error != 0) {
+        AUDIO_ERR_LOG("Error while sending enabled info: %{public}d", error);
+    }
+    reply.ReadInt32();
+}
+
 void AudioPolicyClientProxy::OnHeadTrackingEnabledChange(const bool &enabled)
 {
     MessageParcel data;
@@ -415,6 +442,33 @@ void AudioPolicyClientProxy::OnHeadTrackingEnabledChange(const bool &enabled)
     data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE));
 
     if (hasSystemPermission_) {
+        data.WriteBool(enabled);
+    } else {
+        data.WriteBool(false);
+    }
+
+    int error = Remote()->SendRequest(static_cast<uint32_t>(UPDATE_CALLBACK_CLIENT), data, reply, option);
+    if (error != 0) {
+        AUDIO_ERR_LOG("Error while sending enabled info: %{public}d", error);
+    }
+    reply.ReadInt32();
+}
+
+void AudioPolicyClientProxy::OnHeadTrackingEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+    const bool &enabled)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_ASYNC);
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        AUDIO_ERR_LOG("WriteInterfaceToken failed");
+        return;
+    }
+
+    data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_DEVICE_ENABLED_CHANGE));
+
+    if (hasSystemPermission_) {
+        data.WriteString(deviceDescriptor->macAddress_);
         data.WriteBool(enabled);
     } else {
         data.WriteBool(false);

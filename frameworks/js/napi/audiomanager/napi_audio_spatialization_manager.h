@@ -37,6 +37,7 @@ public:
 
 private:
 struct AudioSpatializationManagerAsyncContext : public ContextBase {
+    AudioDeviceDescriptor deviceDescriptor;
     bool spatializationEnable;
     bool headTrackingEnable;
     int32_t intValue;
@@ -74,6 +75,10 @@ struct AudioSpatializationManagerAsyncContext : public ContextBase {
         NapiAudioSpatializationManager *napiAudioSpatializationManager);
     static void UnregisterHeadTrackingEnabledChangeCallback(napi_env env, napi_value callback,
         NapiAudioSpatializationManager *napiAudioSpatializationManager);
+    static void updateSpatializationEnabled(napi_env env, const std::size_t argc,
+    std::shared_ptr<AudioSpatializationManagerAsyncContext> &context);
+    static void updateHeadTrackingEnabled(napi_env env, const std::size_t argc,
+    std::shared_ptr<AudioSpatializationManagerAsyncContext> &context);
 
     AudioSpatializationManager *audioSpatializationMngr_;
     std::shared_ptr<AudioSpatializationEnabledChangeCallback> spatializationEnabledChangeCallbackNapi_ = nullptr;

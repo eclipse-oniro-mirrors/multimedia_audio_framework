@@ -1059,6 +1059,13 @@ void AudioPolicyManagerStub::IsSpatializationEnabledInternal(MessageParcel &data
     reply.WriteBool(result);
 }
 
+void AudioPolicyManagerStub::IsSpatializationEnabledInternal(MessageParcel &data, MessageParcel &reply)
+{
+    std::string address = data.ReadString();
+    bool result = IsSpatializationEnabled(address);
+    reply.WriteBool(result);
+}
+
 void AudioPolicyManagerStub::SetSpatializationEnabledInternal(MessageParcel &data, MessageParcel &reply)
 {
     bool enable = data.ReadBool();
@@ -1066,10 +1073,33 @@ void AudioPolicyManagerStub::SetSpatializationEnabledInternal(MessageParcel &dat
     reply.WriteInt32(result);
 }
 
+void AudioPolicyManagerStub::SetSpatializationEnabledInternal(MessageParcel &data, MessageParcel &reply)
+{
+    std::string address = data.ReadString();
+    bool enable = data.ReadBool();
+    int32_t result = SetSpatializationEnabled(address, enable);
+    reply.WriteInt32(result);
+}
+
 void AudioPolicyManagerStub::IsHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply)
 {
     bool result = IsHeadTrackingEnabled();
     reply.WriteBool(result);
+}
+
+void AudioPolicyManagerStub::IsHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply)
+{
+    std::string address = data.ReadString();
+    bool result = IsHeadTrackingEnabled(address);
+    reply.WriteBool(result);
+}
+
+void AudioPolicyManagerStub::SetHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply)
+{
+    std::string address = data.ReadString();
+    bool enable = data.ReadBool();
+    int32_t result = SetHeadTrackingEnabled(address, enable);
+    reply.WriteInt32(result);
 }
 
 void AudioPolicyManagerStub::SetHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply)
