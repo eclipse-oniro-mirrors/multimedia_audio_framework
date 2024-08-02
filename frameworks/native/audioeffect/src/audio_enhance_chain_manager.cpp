@@ -502,7 +502,7 @@ int32_t AudioEnhanceChainManager::CopyToEnhanceBuffer(void *data, uint32_t lengt
     if (enhanceBuffer_ == nullptr) {
         return ERROR;
     }
-    AUDIO_DEBUG_LOG("length: %{public}lu chunk length: %{public}u", enhanceBuffer_->micBufferIn.size(), length);
+    AUDIO_DEBUG_LOG("length: %{public}zu chunk length: %{public}u", enhanceBuffer_->micBufferIn.size(), length);
     CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferIn.data(), enhanceBuffer_->micBufferIn.size(), data,
         length) == 0, ERROR, "memcpy error in data to enhanceBuffer->micBufferIn");
     return SUCCESS;
@@ -514,7 +514,7 @@ int32_t AudioEnhanceChainManager::CopyEcToEnhanceBuffer(void *data, uint32_t len
     if (enhanceBuffer_ == nullptr) {
         return ERROR;
     }
-    AUDIO_DEBUG_LOG("lengthEc: %{public}lu chunkEc length: %{public}u", enhanceBuffer_->ecBuffer.size(), length);
+    AUDIO_DEBUG_LOG("lengthEc: %{public}zu chunkEc length: %{public}u", enhanceBuffer_->ecBuffer.size(), length);
     CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->ecBuffer.data(), enhanceBuffer_->ecBuffer.size(), data,
         length) == 0, ERROR, "memcpy error in data to enhanceBuffer->ecBuffer");
     return SUCCESS;
@@ -526,7 +526,7 @@ int32_t AudioEnhanceChainManager::CopyMicRefToEnhanceBuffer(void *data, uint32_t
     if (enhanceBuffer_ == nullptr) {
         return ERROR;
     }
-    AUDIO_DEBUG_LOG("lengthMicRef: %{public}lu chunkMicRef length: %{public}u", enhanceBuffer_->micRefBuffer.size(),
+    AUDIO_DEBUG_LOG("lengthMicRef: %{public}zu chunkMicRef length: %{public}u", enhanceBuffer_->micRefBuffer.size(),
         length);
     CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micRefBuffer.data(), enhanceBuffer_->micRefBuffer.size(),
         data, length) == 0, ERROR, "memcpy error in data to enhanceBuffer->micBufferIn");
