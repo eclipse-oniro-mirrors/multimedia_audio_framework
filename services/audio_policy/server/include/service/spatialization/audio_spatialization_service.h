@@ -108,7 +108,7 @@ private:
     void HandleHeadTrackingDeviceChange(const std::unordered_map<std::string, bool> &changeInfo);
     std::shared_ptr<AudioPolicyServerHandler> audioPolicyServerHandler_;
     std::string currentDeviceAddress_ = "";
-    std::string preSettingSpatializationAddress_ = "";
+    std::string preSettingSpatialAddress_ = "NO_PREVIOUS_SET_DEVICE";
     std::string currSettingHeadTrackingAddress_ = "";
     bool isSpatializationSupported_ = false;
     bool isHeadTrackingSupported_ = false;

@@ -103,6 +103,7 @@ void NapiAudioSpatializationEnabledChangeCallback::OnSpatializationEnabledChange
         CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
         cb->callback = (*it);
         cb->enabled = enabled;
+        onSpatializationEnabledChangeflag_ = 1;
         OnJsCallbackSpatializationEnabled(cb);
     }
 
@@ -123,6 +124,7 @@ void NapiAudioSpatializationEnabledChangeCallback::OnSpatializationEnabledChange
         cb->callback = (*it);
         cb->deviceDescriptor = deviceDescriptor;
         cb->enabled = enabled;
+        onSpatializationEnabledChangeflag_ = 2;
         OnJsCallbackSpatializationEnabled(cb);
     }
 
@@ -154,9 +156,24 @@ void NapiAudioSpatializationEnabledChangeCallback::WorkCallbackInterruptDone(uv_
         NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM0]);
         CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr, "fail to convert to jsobj");
 
-        const size_t argCount = ARGS_ONE;
-        napi_value result = nullptr;
-        nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
+        if(onSpatializationEnabledChangeflag_ == 1) {
+            napi_value args[ARGS_ONE] = { nullptr };
+            NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM0]);
+            CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr, "fail to convert to jsobj");
+            const size_t argCount = ARGS_ONE;
+            napi_value result = nullptr;
+            nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
+        } else if(onSpatializationEnabledChangeflag_ ==2) {
+            napi_value args[ARGS_TWO] = { nullptr };
+            NapiParamUtils::SetDeviceDescriptor(env, event->deviceDescriptor, args[PARAM0]);
+            NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM1]);
+            CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr && args[PARAM1] != nullptr,
+                "fail to convert to jsobj");
+            const size_t argCount = ARGS_TWO;
+            napi_value result = nullptr;
+            nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
+        }
+
         CHECK_AND_BREAK_LOG(nstatus == napi_ok, "Fail to call spatialization enabled callback");
     } while (0);
     napi_close_handle_scope(env, scope);
@@ -261,6 +278,7 @@ void NapiAudioHeadTrackingEnabledChangeCallback::OnHeadTrackingEnabledChange(con
         CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
         cb->callback = (*it);
         cb->enabled = enabled;
+        onHeadTrackingEnabledChangeflag_ = 1;
         OnJsCallbackHeadTrackingEnabled(cb);
     }
 
@@ -281,6 +299,7 @@ void NapiAudioHeadTrackingEnabledChangeCallback::OnHeadTrackingEnabledChange(
         cb->callback = (*it);
         cb->deviceDescriptor = deviceDescriptor;
         cb->enabled = enabled;
+        onHeadTrackingEnabledChangeflag_ = 2;
         OnJsCallbackHeadTrackingEnabled(cb);
     }
 
@@ -308,13 +327,25 @@ void NapiAudioHeadTrackingEnabledChangeCallback::WorkCallbackInterruptDone(uv_wo
         napi_value jsCallback = nullptr;
         napi_status nstatus = napi_get_reference_value(env, callback, &jsCallback);
         CHECK_AND_BREAK_LOG(nstatus == napi_ok && jsCallback != nullptr, "callback get reference value fail");
-        napi_value args[ARGS_ONE] = { nullptr };
-        NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM0]);
-        CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr, "fail to convert to jsobj");
 
-        const size_t argCount = ARGS_ONE;
-        napi_value result = nullptr;
-        nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
+        if(onHeadTrackingEnabledChangeflag_ == 1) {
+            napi_value args[ARGS_ONE] = { nullptr };
+            NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM0]);
+            CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr, "fail to convert to jsobj");
+            const size_t argCount = ARGS_ONE;
+            napi_value result = nullptr;
+            nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
+        } else if(onHeadTrackingEnabledChangeflag_ ==2) {
+            napi_value args[ARGS_TWO] = { nullptr };
+            NapiParamUtils::SetDeviceDescriptor(env, event->deviceDescriptor, args[PARAM0]);
+            NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM1]);
+            CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr && args[PARAM1] != nullptr,
+                "fail to convert to jsobj");
+            const size_t argCount = ARGS_TWO;
+            napi_value result = nullptr;
+            nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
+        }
+
         CHECK_AND_BREAK_LOG(nstatus == napi_ok, "Fail to call head tracking enabled callback");
     } while (0);
     napi_close_handle_scope(env, scope);
