@@ -113,11 +113,12 @@ int32_t EffectChainManagerCreateCb(const char *sceneType, const char *sessionID)
         // for AISS, dsp has not implemented it yet
         audioEffectChainManager->UpdateSpkOffloadEnabled();
     }
+    audioEffectChainManager->UpdateSceneTypeList(sceneTypeString, ADD_SCENE_TYPE);
     bool curSpatializationEnabled = audioEffectChainManager->GetCurSpatializationEnabled();
     std::string curDeviceType = audioEffectChainManager->GetDeviceTypeName();
     if (audioEffectChainManager->GetOffloadEnabled() ||
         ((curDeviceType == "DEVICE_TYPE_BLUETOOTH_A2DP") && !curSpatializationEnabled)) {
-        audioEffectChainManager->RegisterEffectChainCountBackupMap(sceneTypeString, "Register");
+        audioEffectChainManager->RegisterEffectChainCountBackupMap(sceneTypeString, ADD_SCENE_TYPE);
         AUDIO_DEBUG_LOG("registerEffectChainCountBackupMap");
         return SUCCESS;
     }
@@ -145,11 +146,12 @@ int32_t EffectChainManagerReleaseCb(const char *sceneType, const char *sessionID
     if (!audioEffectChainManager->CheckAndRemoveSessionID(sessionIDString)) {
         return SUCCESS;
     }
+    audioEffectChainManager->UpdateSceneTypeList(sceneTypeString, REMOVE_SCENE_TYPE);
     bool curSpatializationEnabled = audioEffectChainManager->GetCurSpatializationEnabled();
     std::string curDeviceType = audioEffectChainManager->GetDeviceTypeName();
     if (audioEffectChainManager->GetOffloadEnabled() ||
         ((curDeviceType == "DEVICE_TYPE_BLUETOOTH_A2DP") && !curSpatializationEnabled)) {
-        audioEffectChainManager->RegisterEffectChainCountBackupMap(sceneTypeString, "Deregister");
+        audioEffectChainManager->RegisterEffectChainCountBackupMap(sceneTypeString, REMOVE_SCENE_TYPE);
         AUDIO_DEBUG_LOG("deRegisterEffectChainCountBackupMap");
         return SUCCESS;
     }

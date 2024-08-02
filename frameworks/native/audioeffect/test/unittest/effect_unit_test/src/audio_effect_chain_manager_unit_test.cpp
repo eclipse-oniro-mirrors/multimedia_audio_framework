@@ -972,7 +972,7 @@ HWTEST(AudioEffectChainManagerUnitTest, ReturnMultiChannelInfo_001, TestSize.Lev
 HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_001, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
-    string operation = "Register";
+    SceneTypeOperation operation = ADD_SCENE_TYPE;
 
     AudioEffectChainManager::GetInstance()->RegisterEffectChainCountBackupMap(sceneType, operation);
     AudioEffectChainManager::GetInstance()->ResetInfo();
@@ -986,21 +986,7 @@ HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_001, T
 HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_002, TestSize.Level1)
 {
     string sceneType = "SCENE_MOVIE";
-    string operation = "Deregister";
-
-    AudioEffectChainManager::GetInstance()->RegisterEffectChainCountBackupMap(sceneType, operation);
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-}
-
-/*
- * tc.name   : Test RegisterEffectChainCountBackupMap API
- * tc.number : RegisterEffectChainCountBackupMap_003
- * tc.desc   : Test RegisterEffectChainCountBackupMap interface(using empty use case).
- */
-HWTEST(AudioEffectChainManagerUnitTest, RegisterEffectChainCountBackupMap_003, TestSize.Level1)
-{
-    string sceneType = "SCENE_MOVIE";
-    string operation = "";
+    SceneTypeOperation operation = REMOVE_SCENE_TYPE;
 
     AudioEffectChainManager::GetInstance()->RegisterEffectChainCountBackupMap(sceneType, operation);
     AudioEffectChainManager::GetInstance()->ResetInfo();
