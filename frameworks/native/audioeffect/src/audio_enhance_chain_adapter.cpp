@@ -13,15 +13,16 @@
  * limitations under the License.
  */
 
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioEnhanceChainAdapter"
+#endif
 
 #include "audio_enhance_chain_adapter.h"
 
 #include <map>
 
 #include "securec.h"
-#include "audio_log.h"
+#include "audio_effect_log.h"
 #include "audio_effect.h"
 #include "audio_errors.h"
 #include "audio_enhance_chain_manager.h"

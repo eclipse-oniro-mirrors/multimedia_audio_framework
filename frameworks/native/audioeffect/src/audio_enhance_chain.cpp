@@ -13,15 +13,16 @@
  * limitations under the License.
  */
 
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioEnhanceChain"
+#endif
 
 #include "audio_enhance_chain.h"
 
 #include <chrono>
 
 #include "securec.h"
-#include "audio_log.h"
+#include "audio_effect_log.h"
 #include "audio_errors.h"
 
 namespace OHOS {

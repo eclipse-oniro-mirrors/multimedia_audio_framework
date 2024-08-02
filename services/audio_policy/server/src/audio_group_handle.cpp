@@ -12,10 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioGroupHandle"
+#endif
 
-#include "audio_log.h"
+#include "audio_policy_log.h"
 #include "audio_group_handle.h"
 
 

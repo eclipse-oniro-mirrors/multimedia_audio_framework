@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioServer"
+#endif
 
 #include "audio_server.h"
 
@@ -35,7 +36,7 @@
 #include "audio_capturer_source.h"
 #include "fast_audio_capturer_source.h"
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_asr.h"
 #include "audio_manager_listener_proxy.h"
 #include "audio_service.h"
@@ -81,6 +82,7 @@ static const int32_t MODERN_INNER_API_VERSION = 12;
 const int32_t API_VERSION_REMAINDER = 1000;
 static constexpr int32_t VM_MANAGER_UID = 7700;
 static const int32_t FAST_DUMPINFO_LEN = 2;
+static const int32_t BUNDLENAME_LENGTH_LIMIT = 1024;
 constexpr int32_t UID_CAMERA = 1047;
 static const std::set<int32_t> RECORD_CHECK_FORWARD_LIST = {
     VM_MANAGER_UID,
@@ -257,7 +259,7 @@ int32_t AudioServer::Dump(int32_t fd, const std::vector<std::u16string> &args)
     if (args.size() == FAST_DUMPINFO_LEN && args[0] == u"-fb") {
         std::string bundleName = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.to_bytes(args[1]);
         std::string result = GetAudioParameter(CHECK_FAST_BLOCK_PREFIX + bundleName);
-        std::string dumpString = "check fast white list :bundle name is" + bundleName + " result is " + result + "\n";
+        std::string dumpString = "check fast list :bundle name is" + bundleName + " result is " + result + "\n";
         return write(fd, dumpString.c_str(), dumpString.size());
     }
     std::queue<std::u16string> argQue;
@@ -466,19 +468,28 @@ int32_t AudioServer::SetAsrAecMode(AsrAecMode asrAecMode)
     std::lock_guard<std::mutex> lockSet(audioParameterMutex_);
     std::string key = "asr_aec_mode";
     std::string value = key + "=";
+    std::string keyAec = "ASR_AEC";
+    std::string valueAec = "";
 
     auto it = AEC_MODE_MAP_VERSE.find(asrAecMode);
     if (it != AEC_MODE_MAP_VERSE.end()) {
         value = key + "=" + it->second;
+        if (it->second == "STANDARD") {
+            valueAec = "ASR_AEC=ON";
+        } else {
+            valueAec = "ASR_AEC=OFF";
+        }
     } else {
         AUDIO_ERR_LOG("get value failed.");
         return ERR_INVALID_PARAM;
     }
     AudioServer::audioParameters[key] = value;
+    AudioServer::audioParameters[keyAec] = valueAec;
     AudioParamKey parmKey = AudioParamKey::NONE;
     IAudioRendererSink *audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
     CHECK_AND_RETURN_RET_LOG(audioRendererSinkInstance != nullptr, ERROR, "has no valid sink");
     audioRendererSinkInstance->SetAudioParameter(parmKey, "", value);
+    audioRendererSinkInstance->SetAudioParameter(parmKey, "", valueAec);
     return 0;
 }
 
@@ -488,6 +499,7 @@ int32_t AudioServer::GetAsrAecMode(AsrAecMode& asrAecMode)
         "Check playback permission failed, no system permission");
     std::lock_guard<std::mutex> lockSet(audioParameterMutex_);
     std::string key = "asr_aec_mode";
+    std::string keyAec = "ASR_AEC";
     AudioParamKey parmKey = AudioParamKey::NONE;
     IAudioRendererSink *audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
     CHECK_AND_RETURN_RET_LOG(audioRendererSinkInstance != nullptr, ERROR, "has no valid sink");
@@ -496,8 +508,19 @@ int32_t AudioServer::GetAsrAecMode(AsrAecMode& asrAecMode)
     if (it != AudioServer::audioParameters.end()) {
         asrAecModeSink = it->second;
     } else {
-        AUDIO_ERR_LOG("get value failed.");
-        return ERR_INVALID_PARAM;
+        // if asr_aec_mode null, return ASR_AEC.
+        // if asr_aec_mode null and ASR_AEC null, return err.
+        auto itAec = AudioServer::audioParameters.find(keyAec);
+        std::string asrAecSink = itAec->second;
+        if (asrAecSink == "ASR_AEC=ON") {
+            asrAecMode = AsrAecMode::STANDARD;
+        } else if (asrAecSink == "ASR_AEC=OFF") {
+            asrAecMode = AsrAecMode::BYPASS;
+        } else {
+            AUDIO_ERR_LOG("get value failed.");
+            return ERR_INVALID_PARAM;
+        }
+        return 0;
     }
 
     std::vector<std::string> resMode = splitString(asrAecModeSink, "=");
@@ -826,7 +849,7 @@ const std::string AudioServer::GetAudioParameter(const std::string &key)
         if (key == "perf_info") {
             return audioRendererSinkInstance->GetAudioParameter(AudioParamKey::PERF_INFO, key);
         }
-        if (key.size() > CHECK_FAST_BLOCK_PREFIX.size() &&
+        if (key.size() < BUNDLENAME_LENGTH_LIMIT && key.size() > CHECK_FAST_BLOCK_PREFIX.size() &&
             key.substr(0, CHECK_FAST_BLOCK_PREFIX.size()) == CHECK_FAST_BLOCK_PREFIX) {
             return audioRendererSinkInstance->GetAudioParameter(AudioParamKey::NONE, key);
         }
@@ -1010,6 +1033,8 @@ int32_t AudioServer::SetVoiceVolume(float volume)
 
 int32_t AudioServer::OffloadSetVolume(float volume)
 {
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_, ERR_NOT_SUPPORTED, "refused for %{public}d", callingUid);
     IAudioRendererSink *audioRendererSinkInstance = IAudioRendererSink::GetInstance("offload", "");
 
     if (audioRendererSinkInstance == nullptr) {
@@ -1020,7 +1045,7 @@ int32_t AudioServer::OffloadSetVolume(float volume)
 }
 
 int32_t AudioServer::SetAudioScene(AudioScene audioScene, std::vector<DeviceType> &activeOutputDevices,
-    DeviceType activeInputDevice)
+    DeviceType activeInputDevice, BluetoothOffloadState a2dpOffloadFlag)
 {
     std::lock_guard<std::mutex> lock(audioSceneMutex_);
 
@@ -1050,8 +1075,9 @@ int32_t AudioServer::SetAudioScene(AudioScene audioScene, std::vector<DeviceType
     if (audioRendererSinkInstance == nullptr || !audioRendererSinkInstance->IsInited()) {
         AUDIO_WARNING_LOG("Renderer is not initialized.");
     } else {
-        std::vector<DeviceType> deviceTypes;
-        deviceTypes.push_back(activeOutputDevice);
+        if (activeOutputDevice == DEVICE_TYPE_BLUETOOTH_A2DP && a2dpOffloadFlag != A2DP_OFFLOAD) {
+            activeOutputDevices[0] = DEVICE_TYPE_NONE;
+        }
         audioRendererSinkInstance->SetAudioScene(audioScene, activeOutputDevices);
     }
 
@@ -1093,7 +1119,7 @@ int32_t AudioServer::SetIORoutes(DeviceType type, DeviceFlag flag, std::vector<D
         }
         if (type == DEVICE_TYPE_BLUETOOTH_A2DP && a2dpOffloadFlag != A2DP_OFFLOAD &&
             deviceTypes.size() == 1 && deviceTypes[0] == DEVICE_TYPE_BLUETOOTH_A2DP) {
-            deviceTypes[0] = DEVICE_TYPE_SPEAKER;
+            deviceTypes[0] = DEVICE_TYPE_NONE;
         }
     }
     CHECK_AND_RETURN_RET_LOG(audioCapturerSourceInstance != nullptr && audioRendererSinkInstance != nullptr,
@@ -1437,6 +1463,32 @@ bool AudioServer::CheckConfigFormat(const AudioProcessConfig &config)
     return false;
 }
 
+const std::string AudioServer::GetBundleNameFromUid(int32_t uid)
+{
+    AudioXCollie audioXCollie("AudioServer::GetBundleNameFromUid",
+        GET_BUNDLE_TIME_OUT_SECONDS);
+    std::string bundleName {""};
+    auto systemAbilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_AND_RETURN_RET_LOG(systemAbilityManager != nullptr, "", "systemAbilityManager is nullptr");
+
+    sptr<IRemoteObject> remoteObject = systemAbilityManager->CheckSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, "", "remoteObject is nullptr");
+
+    sptr<AppExecFwk::IBundleMgr> bundleMgrProxy = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
+    CHECK_AND_RETURN_RET_LOG(bundleMgrProxy != nullptr, "", "bundleMgrProxy is nullptr");
+
+    bundleMgrProxy->GetNameForUid(uid, bundleName);
+
+    return bundleName;
+}
+
+bool AudioServer::IsFastBlocked(int32_t uid)
+{
+    std::string bundleName = GetBundleNameFromUid(uid);
+    std::string result = GetAudioParameter(CHECK_FAST_BLOCK_PREFIX + bundleName);
+    return result == "true";
+}
+
 sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &config)
 {
     Trace trace("AudioServer::CreateAudioProcess");
@@ -1445,7 +1497,7 @@ sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &co
         ":%{public}s", ProcessConfig::DumpProcessConfig(resetConfig).c_str());
     CHECK_AND_RETURN_RET_LOG(PermissionChecker(resetConfig), nullptr, "Create audio process failed, no permission");
 
-    if ((IsNormalIpcStream(resetConfig))) {
+    if ((IsNormalIpcStream(resetConfig)) || IsFastBlocked(resetConfig.appInfo.appUid)) {
         AUDIO_INFO_LOG("Create normal ipc stream.");
         int32_t ret = 0;
         sptr<IpcStreamInServer> ipcStream = AudioService::GetInstance()->GetIpcStream(resetConfig, ret);
@@ -1764,55 +1816,6 @@ bool AudioServer::CheckVoiceCallRecorderPermission(Security::AccessToken::Access
     return true;
 }
 
-int32_t AudioServer::OffloadDrain()
-{
-    auto *audioRendererSinkInstance = static_cast<IOffloadAudioRendererSink*> (IAudioRendererSink::GetInstance(
-        "offload", ""));
-
-    CHECK_AND_RETURN_RET_LOG(audioRendererSinkInstance != nullptr, ERROR, "Renderer is null.");
-    return audioRendererSinkInstance->Drain(AUDIO_DRAIN_EARLY_NOTIFY);
-}
-
-int32_t AudioServer::GetCapturePresentationPosition(const std::string& deviceClass, uint64_t& frames, int64_t& timeSec,
-    int64_t& timeNanoSec)
-{
-    AudioCapturerSource *audioCapturerSourceInstance = AudioCapturerSource::GetInstance("primary");
-    if (audioCapturerSourceInstance == nullptr) {
-        AUDIO_ERR_LOG("Capturer is null.");
-        return ERROR;
-    }
-    return audioCapturerSourceInstance->GetPresentationPosition(frames, timeSec, timeNanoSec);
-}
-
-int32_t AudioServer::GetRenderPresentationPosition(const std::string& deviceClass, uint64_t& frames, int64_t& timeSec,
-    int64_t& timeNanoSec)
-{
-    IAudioRendererSink *audioRendererSinkInstance = IAudioRendererSink::GetInstance(deviceClass.c_str(), "");
-    if (audioRendererSinkInstance == nullptr) {
-        AUDIO_ERR_LOG("Renderer is null.");
-        return ERROR;
-    }
-    return audioRendererSinkInstance->GetPresentationPosition(frames, timeSec, timeNanoSec);
-}
-
-int32_t AudioServer::OffloadGetPresentationPosition(uint64_t& frames, int64_t& timeSec, int64_t& timeNanoSec)
-{
-    auto *audioRendererSinkInstance = static_cast<IOffloadAudioRendererSink*> (IAudioRendererSink::GetInstance(
-        "offload", ""));
-
-    CHECK_AND_RETURN_RET_LOG(audioRendererSinkInstance != nullptr, ERROR, "Renderer is null.");
-    return audioRendererSinkInstance->GetPresentationPosition(frames, timeSec, timeNanoSec);
-}
-
-int32_t AudioServer::OffloadSetBufferSize(uint32_t sizeMs)
-{
-    auto *audioRendererSinkInstance = static_cast<IOffloadAudioRendererSink*> (IAudioRendererSink::GetInstance(
-        "offload", ""));
-
-    CHECK_AND_RETURN_RET_LOG(audioRendererSinkInstance != nullptr, ERROR, "Renderer is null.");
-    return audioRendererSinkInstance->SetBufferSize(sizeMs);
-}
-
 void AudioServer::AudioServerDied(pid_t pid)
 {
     AUDIO_INFO_LOG("Policy server died: restart pulse audio");
@@ -2046,6 +2049,25 @@ int32_t AudioServer::SetSinkRenderEmpty(const std::string &devceClass, int32_t d
     return audioRendererSinkInstance->SetRenderEmpty(durationUs);
 }
 
+int32_t AudioServer::SetSinkMuteForSwitchDevice(const std::string &devceClass, int32_t durationUs, bool mute)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_RET_LOG(callingUid == audioUid_, ERR_PERMISSION_DENIED, "refused for %{public}d", callingUid);
+    if (devceClass == "primary") {
+        if (durationUs <= 0) {
+            return SUCCESS;
+        }
+        IAudioRendererSink *audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
+        CHECK_AND_RETURN_RET_LOG(audioRendererSinkInstance != nullptr, ERROR, "has no valid sink");
+        return audioRendererSinkInstance->SetRenderEmpty(durationUs);
+    } else if (devceClass == "offload") {
+        IAudioRendererSink *audioRendererSinkInstance = IAudioRendererSink::GetInstance("offload", "");
+        CHECK_AND_RETURN_RET_LOG(audioRendererSinkInstance != nullptr, ERROR, "has no valid sink");
+        return audioRendererSinkInstance->SetSinkMuteForSwitchDevice(mute);
+    }
+    return SUCCESS;
+}
+
 void AudioServer::LoadHdiEffectModel()
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
@@ -2064,6 +2086,16 @@ void AudioServer::UpdateEffectBtOffloadSupported(const bool &isSupported)
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
     CHECK_AND_RETURN_LOG(audioEffectChainManager != nullptr, "audioEffectChainManager is nullptr");
     audioEffectChainManager->UpdateEffectBtOffloadSupported(isSupported);
+}
+
+void AudioServer::SetRotationToEffect(const uint32_t rotate)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_LOG(callingUid == audioUid_, "set rotation to effect refused for %{public}d", callingUid);
+
+    AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
+    CHECK_AND_RETURN_LOG(audioEffectChainManager != nullptr, "audioEffectChainManager is nullptr");
+    audioEffectChainManager->EffectRotationUpdate(rotate);
 }
 } // namespace AudioStandard
 } // namespace OHOS

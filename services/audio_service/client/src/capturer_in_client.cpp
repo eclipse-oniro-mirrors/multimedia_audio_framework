@@ -15,8 +15,9 @@
 #ifndef FAST_AUDIO_STREAM_H
 #define FAST_AUDIO_STREAM_H
 
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "CapturerInClientInner"
+#endif
 
 #include "capturer_in_client.h"
 
@@ -34,7 +35,7 @@
 #include "safe_block_queue.h"
 
 #include "ipc_stream.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_errors.h"
 
 #include "audio_manager_base.h"
@@ -1633,7 +1634,8 @@ int32_t CapturerInClientInner::Read(uint8_t &buffer, size_t userSize, bool isBlo
 
     // if first call, call set thread priority. if thread tid change recall set thread priority
     if (needSetThreadPriority_) {
-        AudioSystemManager::GetInstance()->RequestThreadPriority(gettid());
+        ipcStream_->RegisterThreadPriority(gettid(),
+            AudioSystemManager::GetInstance()->GetSelfBundleName(clientConfig_.appInfo.appUid));
         needSetThreadPriority_ = false;
     }
 

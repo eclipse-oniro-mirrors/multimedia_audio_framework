@@ -12,13 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "NapiRendererPositionCallback"
+#endif
 
 #include "napi_renderer_position_callback.h"
 
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_renderer_log.h"
 #include "napi_audio_error.h"
 #include "napi_audio_renderer_callback.h"
 

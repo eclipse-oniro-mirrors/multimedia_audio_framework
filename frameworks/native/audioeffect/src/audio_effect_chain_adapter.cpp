@@ -12,14 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioEffectChainAdapter"
+#endif
 
 #include "audio_effect_chain_adapter.h"
 #include "audio_effect_chain_manager.h"
 #include "audio_effect.h"
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_effect_log.h"
 #include "securec.h"
 
 using namespace OHOS::AudioStandard;

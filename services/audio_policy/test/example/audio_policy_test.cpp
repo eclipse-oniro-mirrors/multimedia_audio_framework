@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioPolicyTest"
+#endif
 
 #include <cstdio>
 #include <cstdlib>
@@ -24,7 +25,7 @@
 
 #include "audio_errors.h"
 #include "audio_system_manager.h"
-#include "audio_log.h"
+#include "audio_policy_log.h"
 
 using namespace std;
 using namespace OHOS;

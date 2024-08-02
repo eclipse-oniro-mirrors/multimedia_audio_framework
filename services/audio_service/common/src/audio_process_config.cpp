@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "ProcessConfig"
+#endif
 
 #include "audio_process_config.h"
 
@@ -21,7 +22,7 @@
 #include <sstream>
 
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 
 namespace OHOS {
 namespace AudioStandard {

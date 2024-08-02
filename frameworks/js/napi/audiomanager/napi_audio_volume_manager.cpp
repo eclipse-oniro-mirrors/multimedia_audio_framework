@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "NapiAudioVolumeManager"
+#endif
 
 #include "napi_audio_volume_manager.h"
 #include "napi_audio_volume_group_manager.h"
@@ -21,7 +22,7 @@
 #include "napi_audio_error.h"
 #include "napi_param_utils.h"
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_manager_log.h"
 
 namespace OHOS {
 namespace AudioStandard {

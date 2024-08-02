@@ -12,15 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "NapiAudioRenderer"
+#endif
 
 #include "napi_audio_renderer.h"
 #include "audio_utils.h"
 #if defined(ANDROID_PLATFORM) || defined(IOS_PLATFORM)
 #include "errors.h"
 #else
+#ifdef FEATURE_HIVIEW_ENABLE
 #include "xpower_event_js.h"
+#endif
 #endif
 #include "napi_param_utils.h"
 #include "napi_audio_error.h"
@@ -479,8 +482,10 @@ napi_value NapiAudioRenderer::Start(napi_env env, napi_callback_info info)
     }
 
     context->GetCbInfo(env, info);
+#ifdef FEATURE_HIVIEW_ENABLE
 #if !defined(ANDROID_PLATFORM) && !defined(IOS_PLATFORM)
     HiviewDFX::ReportXPowerJsStackSysEvent(env, "STREAM_CHANGE", "SRC=Audio");
+#endif
 #endif
 
     auto executor = [context]() {

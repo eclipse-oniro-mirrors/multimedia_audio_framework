@@ -12,15 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioRendererTest"
+#endif
 
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <cinttypes>
 #include <unistd.h>
-#include "audio_log.h"
+#include "audio_renderer_log.h"
 #include "audio_renderer.h"
 #include "pcm2wav.h"
 

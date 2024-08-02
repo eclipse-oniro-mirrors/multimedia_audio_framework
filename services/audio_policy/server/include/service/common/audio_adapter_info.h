@@ -23,7 +23,7 @@
 
 #include "audio_module_info.h"
 #include "audio_info.h"
-#include "audio_log.h"
+#include "audio_policy_log.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -232,7 +232,7 @@ public:
     AudioAdapterInfo() = default;
     virtual ~AudioAdapterInfo() = default;
 
-    PipeInfo *GetPipeByName(std::string &pipeName);
+    PipeInfo *GetPipeByName(const std::string &pipeName);
     AudioPipeDeviceInfo *GetDeviceInfoByDeviceType(DeviceType deviceType);
 
     std::string adapterName_ = STR_INIT;

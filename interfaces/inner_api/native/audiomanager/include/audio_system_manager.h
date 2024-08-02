@@ -1144,20 +1144,6 @@ public:
 
     int32_t SetWakeUpSourceCloseCallback(const std::shared_ptr<WakeUpSourceCloseCallback> &callback);
 
-    int32_t OffloadDrain();
-
-    int32_t GetCapturePresentationPosition(const std::string& deviceClass, uint64_t& frames, int64_t& timeSec,
-        int64_t& timeNanoSec);
-
-    int32_t GetRenderPresentationPosition(const std::string& deviceClass, uint64_t& frames, int64_t& timeSec,
-        int64_t& timeNanoSec);
-
-    int32_t OffloadGetPresentationPosition(uint64_t& frames, int64_t& timeSec, int64_t& timeNanoSec);
-
-    int32_t OffloadSetBufferSize(uint32_t sizeMs);
-
-    int32_t OffloadSetVolume(float volume);
-
     /**
      * @brief Set whether or not absolute volume is supported for the specified Bluetooth device
      *
@@ -1253,6 +1239,19 @@ public:
     static void AudioServerDied(pid_t pid);
 
     std::string GetSelfBundleName(int32_t uid);
+
+    /**
+     * @brief inject interruption event.
+     *
+     * @param networkId networkId.
+     * @param event Indicates the InterruptEvent information needed by client.
+     * For details, refer InterruptEvent struct in audio_interrupt_info.h
+     * @return Returns {@link SUCCESS} if the setting is successful; returns an error code defined
+     * in {@link audio_errors.h} otherwise.
+     * @since 12
+     */
+    int32_t InjectInterruption(const std::string networkId, InterruptEvent &event);
+
 private:
     class WakeUpCallbackImpl : public WakeUpSourceCallback {
     public:

@@ -21,7 +21,7 @@
 #include <string>
 
 #include "audio_info.h"
-#include "audio_log.h"
+#include "audio_policy_log.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -87,7 +87,6 @@ public:
     std::string lib;
     std::string role;
 
-    // The default rate is the maximun supported rate.
     std::string rate;
 
     std::set<uint32_t> supportedRate_;

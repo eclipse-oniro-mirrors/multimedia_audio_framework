@@ -12,12 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioEffectRotation"
+#endif
 
 #include "audio_effect_chain_adapter.h"
 #include "audio_effect_rotation.h"
-#include "audio_log.h"
+#include "audio_effect_log.h"
 
 namespace OHOS {
 namespace AudioStandard {

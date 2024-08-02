@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioSpatializationManager"
+#endif
 
 #include "audio_spatialization_manager.h"
 
@@ -21,7 +22,7 @@
 #include "system_ability_definition.h"
 #include "bundle_mgr_interface.h"
 
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_errors.h"
 #include "audio_manager_base.h"
 #include "audio_manager_proxy.h"

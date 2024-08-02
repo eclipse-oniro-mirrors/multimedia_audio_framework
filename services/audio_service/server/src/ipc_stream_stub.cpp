@@ -12,11 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "IpcStreamStub"
+#endif
 
 #include "ipc_stream_stub.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_errors.h"
 #include "audio_process_config.h"
 #include "audio_utils.h"
@@ -315,6 +316,14 @@ int32_t IpcStreamStub::HandleSetClientVolume(MessageParcel &data, MessageParcel 
 {
     (void)data;
     reply.WriteInt32(SetClientVolume());
+    return AUDIO_OK;
+}
+
+int32_t IpcStreamStub::HandleRegisterThreadPriority(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t tid = data.ReadUint32();
+    std::string bundleName = data.ReadString();
+    reply.WriteInt32(RegisterThreadPriority(tid, bundleName));
     return AUDIO_OK;
 }
 } // namespace AudioStandard

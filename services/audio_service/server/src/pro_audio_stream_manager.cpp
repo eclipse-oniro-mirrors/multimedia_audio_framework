@@ -12,13 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "ProAudioStreamManager"
+#endif
 
 #include "pro_audio_stream_manager.h"
 #include <sstream>
 #include <atomic>
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_errors.h"
 #include "policy_handler.h"
 #include "pro_renderer_stream_impl.h"

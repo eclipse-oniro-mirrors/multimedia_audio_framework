@@ -12,13 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioPolicyClientStub"
+#endif
 
 #include "audio_policy_client_stub.h"
-#include <utility>
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_policy_log.h"
 
 using namespace std;
 namespace OHOS {
