@@ -57,7 +57,6 @@ namespace {
     std::list<std::pair<AudioInterrupt, AudioFocuState>> g_audioFocusInfoList;
     static constexpr char CONFIG_FILE[] = "/vendor/etc/audio/audio_policy_config.xml";
     static constexpr char CONFIG_FILE_NEW[] = "/chip_prod/etc/audio/audio_policy_config.xml";
-    constexpr int32_t OFFLOAD_HDI_CACHE1 = 200;
 }
 
 void AudioManagerUnitTest::SetUpTestCase(void) {}
@@ -136,6 +135,18 @@ HWTEST(AudioManagerUnitTest, GetConnectedDevicesList_002, TestSize.Level1)
     EXPECT_THAT(inputDevice->audioStreamInfo_.channels, Each(AllOf(Le(CHANNEL_8), Ge(MONO))));
     EXPECT_GE(inputDevice->audioStreamInfo_.format, SAMPLE_U8);
     EXPECT_LE(inputDevice->audioStreamInfo_.format, SAMPLE_F32LE);
+}
+
+/**
+ * @tc.name   : Test GetAudioParameter API
+ * @tc.number : GetAudioParameter_001
+ * @tc.desc   : Test GetAudioParameter interface. Returns if app in fastlist
+ */
+HWTEST(AudioManagerUnitTest, GetAudioParameter_001, TestSize.Level1)
+{
+    std::string mockBundleName = "Is_Fast_Blocked_For_AppName#com.samples.audio";
+    std::string result =  AudioSystemManager::GetInstance()->GetAudioParameter(mockBundleName);
+    EXPECT_EQ(result, "true");
 }
 
 /**
@@ -2776,72 +2787,6 @@ bool GetOffloadAvailable()
     }
     ifs.close();
     return false;
-}
-
-/**
-* @tc.name   : Test OffloadDrain API
-* @tc.number : OffloadDrainTest_001
-* @tc.desc   : Test OffloadDrain inner api
-*/
-HWTEST(AudioManagerUnitTest, OffloadDrainTest_001, TestSize.Level1)
-{
-    bool isOffloadAvailable = GetOffloadAvailable();
-    int32_t ret = AudioSystemManager::GetInstance()->OffloadDrain();
-    if (isOffloadAvailable) {
-        EXPECT_EQ(SUCCESS, ret);
-    } else {
-        EXPECT_NE(SUCCESS, ret);
-    }
-}
-
-/**
-* @tc.name   : Test OffloadGetPresentationPosition API
-* @tc.number : OffloadGetPresentationPositionTest_001
-* @tc.desc   : Test OffloadGetPresentationPosition inner api
-*/
-HWTEST(AudioManagerUnitTest, OffloadGetPresentationPositionTest_001, TestSize.Level1)
-{
-    bool isOffloadAvailable = GetOffloadAvailable();
-    uint64_t frames;
-    int64_t timeSec, timeNanoSec;
-    int32_t ret = AudioSystemManager::GetInstance()->OffloadGetPresentationPosition(frames, timeSec, timeNanoSec);
-    if (isOffloadAvailable) {
-        EXPECT_EQ(SUCCESS, ret);
-    } else {
-        EXPECT_NE(SUCCESS, ret);
-    }
-}
-
-/**
-* @tc.name   : Test OffloadSetBufferSize API
-* @tc.number : OffloadSetBufferSizeTest_001
-* @tc.desc   : Test OffloadSetBufferSize inner api
-*/
-HWTEST(AudioManagerUnitTest, OffloadSetBufferSizeTest_001, TestSize.Level1)
-{
-    bool isOffloadAvailable = GetOffloadAvailable();
-    int32_t ret = AudioSystemManager::GetInstance()->OffloadSetBufferSize(OFFLOAD_HDI_CACHE1);
-    if (isOffloadAvailable) {
-        EXPECT_EQ(SUCCESS, ret);
-    } else {
-        EXPECT_NE(SUCCESS, ret);
-    }
-}
-
-/**
-* @tc.name   : Test OffloadSetVolume API
-* @tc.number : OffloadSetVolumeTest_001
-* @tc.desc   : Test OffloadSetVolume inner api
-*/
-HWTEST(AudioManagerUnitTest, OffloadSetVolumeTest_001, TestSize.Level1)
-{
-    bool isOffloadAvailable = GetOffloadAvailable();
-    int32_t ret = AudioSystemManager::GetInstance()->OffloadSetVolume(VOLUME_MAX);
-    if (isOffloadAvailable) {
-        EXPECT_EQ(SUCCESS, ret);
-    } else {
-        EXPECT_NE(SUCCESS, ret);
-    }
 }
 
 /**

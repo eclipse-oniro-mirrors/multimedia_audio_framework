@@ -12,14 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "PaCapturerStreamImpl"
+#endif
 
 #include "safe_map.h"
 #include "pa_capturer_stream_impl.h"
 #include "pa_adapter_tools.h"
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_utils.h"
 #include "policy_handler.h"
 

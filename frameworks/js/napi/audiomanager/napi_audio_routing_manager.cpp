@@ -12,15 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "NapiAudioRoutingManager"
+#endif
 
 #include "napi_audio_routing_manager.h"
 #include "napi_audio_error.h"
 #include "napi_param_utils.h"
 #include "napi_audio_enum.h"
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_manager_log.h"
 #include "napi_audio_manager_callbacks.h"
 #include "napi_audio_rounting_available_devicechange_callback.h"
 #include "napi_audio_routing_manager_callbacks.h"

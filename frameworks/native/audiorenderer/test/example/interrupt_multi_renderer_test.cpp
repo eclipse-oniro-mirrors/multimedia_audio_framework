@@ -12,15 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "InterruptMultiRendererTest"
+#endif
 
 #include <chrono>
 #include <thread>
 #include <climits>
 #include <cstdlib>
 #include <unistd.h>
-#include "audio_log.h"
+#include "audio_renderer_log.h"
 #include "interrupt_multi_renderer_test.h"
 #include "pcm2wav.h"
 

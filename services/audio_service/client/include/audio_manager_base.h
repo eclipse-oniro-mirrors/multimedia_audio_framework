@@ -45,16 +45,7 @@ public:
      */
     virtual int32_t SetVoiceVolume(float volume) = 0;
 
-    virtual int32_t GetCapturePresentationPosition(const std::string& deviceClass, uint64_t& frames, int64_t& timeSec,
-        int64_t& timeNanoSec) = 0;
-
-    virtual int32_t GetRenderPresentationPosition(const std::string& deviceClass, uint64_t& frames, int64_t& timeSec,
-        int64_t& timeNanoSec) = 0;
-
     virtual int32_t OffloadSetVolume(float volume) = 0;
-    virtual int32_t OffloadDrain() = 0;
-    virtual int32_t OffloadGetPresentationPosition(uint64_t& frames, int64_t& timeSec, int64_t& timeNanoSec) = 0;
-    virtual int32_t OffloadSetBufferSize(uint32_t sizeMs) = 0;
     virtual int32_t SuspendRenderSink(const std::string &sinkName) = 0;
     virtual int32_t RestoreRenderSink(const std::string &sinkName) = 0;
 
@@ -66,7 +57,7 @@ public:
      * @return Returns 0 if success. Otherwise returns Errocode defined in audio_errors.h.
      */
     virtual int32_t SetAudioScene(AudioScene audioScene, std::vector<DeviceType> &activeOutputDevices,
-        DeviceType activeInputDevice) = 0;
+        DeviceType activeInputDevice, BluetoothOffloadState a2dpOffloadFlag) = 0;
 
     /**
      * Set Audio Parameter.
@@ -427,6 +418,16 @@ public:
      * Update Effect BtOffload Supported state.
      */
     virtual void UpdateEffectBtOffloadSupported(const bool &isSupported) = 0;
+
+    /**
+     * Set Sink Mute For Switch Device.
+     */
+    virtual int32_t SetSinkMuteForSwitchDevice(const std::string &devceClass, int32_t durationUs, bool mute) = 0;
+
+    /**
+     * Set Rotation To Effect.
+     */
+    virtual void SetRotationToEffect(const uint32_t rotate) = 0;
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"IStandardAudioService");
 };
@@ -466,12 +467,7 @@ private:
     int HandleSetWakeupSourceCallback(MessageParcel &data, MessageParcel &reply);
     int HandleSetCaptureSilentState(MessageParcel &data, MessageParcel &reply);
     int HandleUpdateSpatializationState(MessageParcel &data, MessageParcel &reply);
-    int HandleGetCapturePresentationPosition(MessageParcel &data, MessageParcel &reply);
-    int HandleGetRenderPresentationPosition(MessageParcel &data, MessageParcel &reply);
     int HandleOffloadSetVolume(MessageParcel &data, MessageParcel &reply);
-    int HandleOffloadDrain(MessageParcel &data, MessageParcel &reply);
-    int HandleOffloadGetPresentationPosition(MessageParcel &data, MessageParcel &reply);
-    int HandleOffloadSetBufferSize(MessageParcel &data, MessageParcel &reply);
     int HandleNotifyStreamVolumeChanged(MessageParcel &data, MessageParcel &reply);
     int HandleSetSpatializationSceneType(MessageParcel &data, MessageParcel &reply);
     int HandleGetMaxAmplitude(MessageParcel &data, MessageParcel &reply);
@@ -493,69 +489,11 @@ private:
     int HandleRestoreRenderSink(MessageParcel &data, MessageParcel &reply);
     int HandleLoadHdiEffectModel(MessageParcel &data, MessageParcel &reply);
     int HandleUpdateEffectBtOffloadSupported(MessageParcel &data, MessageParcel &reply);
-
-    using HandlerFunc = int (AudioManagerStub::*)(MessageParcel &data, MessageParcel &reply);
-    static inline HandlerFunc handlers[] = {
-        &AudioManagerStub::HandleGetAudioParameter,
-        &AudioManagerStub::HandleSetAudioParameter,
-        &AudioManagerStub::HandleGetExtraAudioParameters,
-        &AudioManagerStub::HandleSetExtraAudioParameters,
-        &AudioManagerStub::HandleSetMicrophoneMute,
-        &AudioManagerStub::HandleSetAudioScene,
-        &AudioManagerStub::HandleUpdateActiveDeviceRoute,
-        &AudioManagerStub::HandleUpdateActiveDevicesRoute,
-        &AudioManagerStub::HandleDualToneState,
-        &AudioManagerStub::HandleGetTransactionId,
-        &AudioManagerStub::HandleSetParameterCallback,
-        &AudioManagerStub::HandleGetRemoteAudioParameter,
-        &AudioManagerStub::HandleSetRemoteAudioParameter,
-        &AudioManagerStub::HandleNotifyDeviceInfo,
-        &AudioManagerStub::HandleCheckRemoteDeviceState,
-        &AudioManagerStub::HandleSetVoiceVolume,
-        &AudioManagerStub::HandleSetAudioMonoState,
-        &AudioManagerStub::HandleSetAudioBalanceValue,
-        &AudioManagerStub::HandleCreateAudioProcess,
-        &AudioManagerStub::HandleLoadAudioEffectLibraries,
-        &AudioManagerStub::HandleRequestThreadPriority,
-        &AudioManagerStub::HandleCreateAudioEffectChainManager,
-        &AudioManagerStub::HandleSetOutputDeviceSink,
-        &AudioManagerStub::HandleCreatePlaybackCapturerManager,
-        &AudioManagerStub::HandleSetSupportStreamUsage,
-        &AudioManagerStub::HandleRegiestPolicyProvider,
-        &AudioManagerStub::HandleSetWakeupSourceCallback,
-        &AudioManagerStub::HandleSetCaptureSilentState,
-        &AudioManagerStub::HandleUpdateSpatializationState,
-        &AudioManagerStub::HandleOffloadSetVolume,
-        &AudioManagerStub::HandleOffloadDrain,
-        &AudioManagerStub::HandleOffloadGetPresentationPosition,
-        &AudioManagerStub::HandleOffloadSetBufferSize,
-        &AudioManagerStub::HandleNotifyStreamVolumeChanged,
-        &AudioManagerStub::HandleGetCapturePresentationPosition,
-        &AudioManagerStub::HandleGetRenderPresentationPosition,
-        &AudioManagerStub::HandleSetSpatializationSceneType,
-        &AudioManagerStub::HandleGetMaxAmplitude,
-        &AudioManagerStub::HandleResetAudioEndpoint,
-        &AudioManagerStub::HandleResetRouteForDisconnect,
-        &AudioManagerStub::HandleGetEffectLatency,
-        &AudioManagerStub::HandleUpdateLatencyTimestamp,
-        &AudioManagerStub::HandleSetAsrAecMode,
-        &AudioManagerStub::HandleGetAsrAecMode,
-        &AudioManagerStub::HandleSetAsrNoiseSuppressionMode,
-        &AudioManagerStub::HandleGetAsrNoiseSuppressionMode,
-        &AudioManagerStub::HandleSetAsrWhisperDetectionMode,
-        &AudioManagerStub::HandleGetAsrWhisperDetectionMode,
-        &AudioManagerStub::HandleSetAsrVoiceControlMode,
-        &AudioManagerStub::HandleSetAsrVoiceMuteMode,
-        &AudioManagerStub::HandleIsWhispering,
-        &AudioManagerStub::HandleGetEffectOffloadEnabled,
-        &AudioManagerStub::HandleSuspendRenderSink,
-        &AudioManagerStub::HandleRestoreRenderSink,
-        &AudioManagerStub::HandleLoadHdiEffectModel,
-        &AudioManagerStub::HandleUpdateEffectBtOffloadSupported,
-    };
-    static constexpr size_t handlersNums = sizeof(handlers) / sizeof(HandlerFunc);
-    static_assert(handlersNums == (static_cast<size_t> (AudioServerInterfaceCode::AUDIO_SERVER_CODE_MAX) + 1),
-        "please check pulseaudio_ipc_interface_code");
+    int HandleSetSinkMuteForSwitchDevice(MessageParcel &data, MessageParcel &reply);
+    int HandleSecondPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
+    int HandleThirdPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
+    int HandleFourthPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
+    int HandleSetRotationToEffect(MessageParcel &data, MessageParcel &reply);
 };
 } // namespace AudioStandard
 } // namespace OHOS

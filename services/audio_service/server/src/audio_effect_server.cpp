@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioEffectServer"
+#endif
 
 #include <iostream>
 #include <vector>
@@ -21,7 +22,7 @@
 #include "memory"
 #include <dlfcn.h>
 #include "unistd.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_effect_server.h"
 #include "media_monitor_manager.h"
 

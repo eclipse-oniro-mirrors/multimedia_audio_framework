@@ -12,12 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioProcessProxy"
+#endif
 
 #include "audio_process_cb_stub.h"
 #include "audio_process_proxy.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_errors.h"
 
 namespace OHOS {
@@ -38,7 +39,13 @@ int ProcessCbStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessagePa
         AUDIO_WARNING_LOG("OnRemoteRequest unsupported request code:%{public}d.", code);
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
-    return (this->*funcList_[code])(data, reply);
+    switch (code) {
+        case ON_ENDPOINT_CHANGE:
+            return HandleOnEndpointChange(data, reply);
+        default:
+            AUDIO_WARNING_LOG("OnRemoteRequest not supported code:%{public}d.", code);
+            return AUDIO_ERR;
+    }
 }
 
 int32_t ProcessCbStub::HandleOnEndpointChange(MessageParcel &data, MessageParcel &reply)
@@ -189,6 +196,22 @@ int32_t AudioProcessProxy::RegisterProcessCb(sptr<IRemoteObject> object)
     CHECK_AND_RETURN_RET_LOG(ret == AUDIO_OK, ERR_OPERATION_FAILED, "RegisterProcessCb failed, error: %{public}d", ret);
 
     return reply.ReadInt32();
+}
+
+int32_t AudioProcessProxy::RegisterThreadPriority(uint32_t tid, const std::string &bundleName)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    CHECK_AND_RETURN_RET_LOG(data.WriteInterfaceToken(GetDescriptor()), ERROR, "Write descriptor failed!");
+    data.WriteUint32(tid);
+    data.WriteString(bundleName);
+    int ret = Remote()->SendRequest(IAudioProcessMsg::ON_REGISTER_THREAD_PRIORITY, data, reply, option);
+    CHECK_AND_RETURN_RET(ret == AUDIO_OK, ret, "failed, ipc error: %{public}d", ret);
+    ret = reply.ReadInt32();
+    CHECK_AND_RETURN_RET(ret == SUCCESS, ret, "failed, error: %{public}d", ret);
+    return ret;
 }
 } // namespace AudioStandard
 } // namespace OHOS

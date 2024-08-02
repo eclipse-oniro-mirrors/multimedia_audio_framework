@@ -15,8 +15,9 @@
 #ifndef FAST_AUDIO_STREAM_H
 #define FAST_AUDIO_STREAM_H
 
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "RendererInClientInner"
+#endif
 
 #include "renderer_in_client.h"
 #include "renderer_in_client_private.h"
@@ -43,7 +44,7 @@
 #include "audio_errors.h"
 #include "audio_policy_manager.h"
 #include "audio_manager_base.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_ring_cache.h"
 #include "audio_channel_blend.h"
 #include "audio_server_death_recipient.h"
@@ -124,6 +125,7 @@ RendererInClientInner::~RendererInClientInner()
 
 int32_t RendererInClientInner::OnOperationHandled(Operation operation, int64_t result)
 {
+    Trace trace(traceTag_ + " OnOperationHandled:" + std::to_string(operation));
     AUDIO_INFO_LOG("sessionId %{public}d recv operation:%{public}d result:%{public}" PRId64".", sessionId_, operation,
         result);
     if (operation == SET_OFFLOAD_ENABLE) {
@@ -530,7 +532,7 @@ int32_t RendererInClientInner::InitIpcStream()
 
     ret = ipcStream_->GetAudioSessionID(sessionId_);
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "GetAudioSessionID failed:%{public}d", ret);
-    traceTag_ = "RendererInClient::sessionId:" + std::to_string(sessionId_);
+    traceTag_ = "[" + std::to_string(sessionId_) + "]RendererInClient"; // [100001]RendererInClient
     InitCallbackHandler();
     return SUCCESS;
 }
@@ -730,11 +732,7 @@ int32_t RendererInClientInner::SetVolume(float volume)
         volumeRamp_.Terminate();
     }
     float historyVolume = clientVolume_;
-    if (silentModeAndMixWithOthers_) {
-        cacheVolume_ = volume;
-    } else {
-        clientVolume_ = volume;
-    }
+    clientVolume_ = volume;
     if (getuid() == MEDIA_SERVICE_UID) {
         if (offloadEnable_) {
             SetInnerVolume(MAX_FLOAT_VOLUME); // so volume will not change in RendererInServer
@@ -759,11 +757,7 @@ int32_t RendererInClientInner::SetVolume(float volume)
 float RendererInClientInner::GetVolume()
 {
     Trace trace("RendererInClientInner::GetVolume:" + std::to_string(clientVolume_));
-    if (silentModeAndMixWithOthers_) {
-        return cacheVolume_;
-    } else {
-        return clientVolume_;
-    }
+    return clientVolume_;
 }
 
 int32_t RendererInClientInner::SetDuckVolume(float volume)
@@ -1611,7 +1605,8 @@ void RendererInClientInner::FirstFrameProcess()
 {
     // if first call, call set thread priority. if thread tid change recall set thread priority
     if (needSetThreadPriority_) {
-        AudioSystemManager::GetInstance()->RequestThreadPriority(gettid());
+        ipcStream_->RegisterThreadPriority(gettid(),
+            AudioSystemManager::GetInstance()->GetSelfBundleName(clientConfig_.appInfo.appUid));
         needSetThreadPriority_ = false;
     }
 
@@ -1672,6 +1667,12 @@ int32_t RendererInClientInner::WriteInner(uint8_t *buffer, size_t bufferSize)
         "invalid size is %{public}zu", bufferSize);
     Trace::CountVolume(traceTag_, *buffer);
     CHECK_AND_RETURN_RET_LOG(gServerProxy_ != nullptr, ERROR, "server is died");
+    if (clientBuffer_->GetStreamStatus()->load() == STREAM_STAND_BY) {
+        Trace trace2(traceTag_+ " call start to exit stand-by");
+        CHECK_AND_RETURN_RET_LOG(ipcStream_ != nullptr, ERROR, "ipcStream is not inited!");
+        int32_t ret = ipcStream_->Start();
+        AUDIO_INFO_LOG("%{public}u call start to exit stand-by ret %{public}u", sessionId_, ret);
+    }
     std::lock_guard<std::mutex> lock(writeMutex_);
 
     size_t oriBufferSize = bufferSize;
@@ -2180,12 +2181,6 @@ void RendererInClientInner::UpdateLatencyTimestamp(std::string &timestamp, bool 
 
 void RendererInClientInner::SetSilentModeAndMixWithOthers(bool on)
 {
-    if (!silentModeAndMixWithOthers_ && on) {
-        cacheVolume_ = clientVolume_;
-        clientVolume_ = 0.0;
-    } else if (silentModeAndMixWithOthers_ && !on) {
-        clientVolume_ = cacheVolume_;
-    }
     silentModeAndMixWithOthers_ = on;
     ipcStream_->SetSilentModeAndMixWithOthers(on);
     return;

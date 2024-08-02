@@ -12,21 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioAdapterManager"
+#endif
 
 #include "audio_adapter_manager.h"
 
-#include <memory>
-#include <unistd.h>
-#include <string>
 
 #include "parameter.h"
 #include "parameters.h"
-#include "setting_provider.h"
 
-#include "audio_errors.h"
-#include "audio_log.h"
 #include "audio_volume_parser.h"
 #include "audio_utils.h"
 #include "audio_adapter_manager_handler.h"
@@ -89,6 +84,7 @@ static const std::vector<std::string> SYSTEM_SOUND_KEY_LIST = {
     "system_tone_for_notification"
 };
 
+// LCOV_EXCL_START
 bool AudioAdapterManager::Init()
 {
     char testMode[10] = {0}; // 10 for system parameter usage
@@ -244,15 +240,16 @@ void AudioAdapterManager::Deinit(void)
     return audioServiceAdapter_->Disconnect();
 }
 
-int32_t AudioAdapterManager::SetAudioSessionCallback(AudioSessionCallback *callback)
+int32_t AudioAdapterManager::SetAudioStreamRemovedCallback(AudioStreamRemovedCallback *callback)
 {
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERR_INVALID_PARAM,
-        "SetAudioSessionCallback callback == nullptr");
+        "SetAudioStreamRemovedCallback callback == nullptr");
 
     sessionCallback_ = callback;
     return SUCCESS;
 }
 
+// LCOV_EXCL_STOP
 int32_t AudioAdapterManager::GetMaxVolumeLevel(AudioVolumeType volumeType)
 {
     CHECK_AND_RETURN_RET_LOG(volumeType >= STREAM_VOICE_CALL && volumeType <= STREAM_TYPE_MAX,
@@ -312,6 +309,7 @@ int32_t AudioAdapterManager::SetSystemVolumeLevel(AudioStreamType streamType, in
     auto handler = DelayedSingleton<AudioAdapterManagerHandler>::GetInstance();
     if (handler != nullptr) {
         if (Util::IsDualToneStreamType(streamType)) {
+            AUDIO_INFO_LOG("DualToneStreamType. Save volume for speaker.");
             handler->SendSaveVolume(DEVICE_TYPE_SPEAKER, streamType, volumeLevel);
         } else {
             handler->SendSaveVolume(currentActiveDevice_, streamType, volumeLevel);
@@ -483,6 +481,7 @@ bool AudioAdapterManager::GetStreamMuteInternal(AudioStreamType streamType)
     return volumeDataMaintainer_.GetStreamMute(streamType);
 }
 
+// LCOV_EXCL_START
 vector<SinkInfo> AudioAdapterManager::GetAllSinks()
 {
     if (!audioServiceAdapter_) {
@@ -640,6 +639,7 @@ int32_t AudioAdapterManager::MoveSourceOutputByIndexOrName(uint32_t sourceOutput
     return audioServiceAdapter_->MoveSourceOutputByIndexOrName(sourceOutputId, sourceIndex, sourceName);
 }
 
+// LCOV_EXCL_STOP
 int32_t AudioAdapterManager::SetRingerMode(AudioRingerMode ringerMode)
 {
     return SetRingerModeInternal(ringerMode);
@@ -662,6 +662,7 @@ AudioRingerMode AudioAdapterManager::GetRingerMode() const
     return ringerMode_;
 }
 
+// LCOV_EXCL_START
 AudioIOHandle AudioAdapterManager::OpenAudioPort(const AudioModuleInfo &audioModuleInfo)
 {
     std::string moduleArgs = GetModuleArgs(audioModuleInfo);
@@ -1237,9 +1238,19 @@ void  AudioAdapterManager::CheckAndDealMuteStatus(const DeviceType &deviceType, 
         bool muteStateForStreamRing = (ringerMode_ == RINGER_MODE_NORMAL) ? false : true;
         AUDIO_INFO_LOG("fist boot ringer mode:%{public}d, stream ring mute state:%{public}d", ringerMode_,
             muteStateForStreamRing);
+        // set stream mute status to mem.
+        if (currentActiveDevice_ == deviceType) {
+            volumeDataMaintainer_.SetStreamMuteStatus(streamType, muteStateForStreamRing);
+        }
         volumeDataMaintainer_.SaveMuteStatus(deviceType, streamType, muteStateForStreamRing);
     } else if (!volumeDataMaintainer_.GetMuteStatus(deviceType, streamType)) {
+        if (currentActiveDevice_ == deviceType) {
+            volumeDataMaintainer_.SetStreamMuteStatus(streamType, false);
+        }
         volumeDataMaintainer_.SaveMuteStatus(deviceType, streamType, false);
+    }
+    if (currentActiveDevice_ == deviceType) {
+        SetVolumeDb(streamType);
     }
 }
 
@@ -1261,6 +1272,9 @@ void AudioAdapterManager::CloneMuteStatusMap(void)
             }
             bool muteStatus = TransferByteArrayToType<int>(value.Data());
             // clone data to VolumeToShareData
+            if (currentActiveDevice_ == deviceType) {
+                volumeDataMaintainer_.SetStreamMuteStatus(streamType, muteStatus);
+            }
             volumeDataMaintainer_.SaveMuteStatus(deviceType, streamType, muteStatus);
         }
     }
@@ -1288,6 +1302,7 @@ bool AudioAdapterManager::LoadMuteStatusMap(void)
                 continue;
             }
             volumeDataMaintainer_.SaveMuteStatus(currentActiveDevice_, streamType, muteStateForStreamRing);
+            SetStreamMute(streamType, muteStateForStreamRing);
         }
     }
     return true;
@@ -1775,5 +1790,6 @@ void AudioAdapterManager::SafeVolumeDump(std::string &dumpString)
     AppendFormat(dumpString, "  - ActiveBtSafeTime: %lld\n", safeActiveBtTime_);
     AppendFormat(dumpString, "  - ActiveSafeTime: %lld\n", safeActiveTime_);
 }
+// LCOV_EXCL_STOP
 } // namespace AudioStandard
 } // namespace OHOS

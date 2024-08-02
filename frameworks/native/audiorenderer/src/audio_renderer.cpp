@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioRenderer"
+#endif
 
 #include <sstream>
 #include "securec.h"
@@ -23,7 +24,7 @@
 #include "audio_renderer.h"
 #include "audio_renderer_private.h"
 
-#include "audio_log.h"
+#include "audio_renderer_log.h"
 #include "audio_errors.h"
 #include "audio_policy_manager.h"
 #include "audio_utils.h"
@@ -787,6 +788,7 @@ bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType) const
     if (ret != 0) {
         AUDIO_ERR_LOG("DeactivateAudioInterrupt Failed");
     }
+    (void)audioStream_->SetDuckVolume(1.0f);
 
     return result;
 }
@@ -811,7 +813,8 @@ bool AudioRendererPrivate::Stop() const
     if (ret != 0) {
         AUDIO_WARNING_LOG("DeactivateAudioInterrupt Failed");
     }
-
+    (void)audioStream_->SetDuckVolume(1.0f);
+    
     return result;
 }
 
@@ -966,6 +969,7 @@ void AudioRendererInterruptCallbackImpl::HandleAndNotifyForcedEvent(const Interr
                 AUDIO_DEBUG_LOG("To pause incoming, no need to pause");
             } else if (audioStream_->GetState() == RUNNING) {
                 (void)audioStream_->PauseAudioStream(); // Just Pause, do not deactivate here
+                (void)audioStream_->SetDuckVolume(1.0f);
             } else {
                 AUDIO_WARNING_LOG("State of stream is not running.No need to pause");
                 return;
@@ -983,6 +987,7 @@ void AudioRendererInterruptCallbackImpl::HandleAndNotifyForcedEvent(const Interr
             return; // return, sending callback is taken care in NotifyForcePausedToResume
         case INTERRUPT_HINT_STOP:
             (void)audioStream_->StopAudioStream();
+            (void)audioStream_->SetDuckVolume(1.0f);
             break;
         case INTERRUPT_HINT_DUCK:
             if (!HandleForceDucking(interruptEvent)) {
@@ -992,10 +997,7 @@ void AudioRendererInterruptCallbackImpl::HandleAndNotifyForcedEvent(const Interr
             isForceDucked_ = true;
             break;
         case INTERRUPT_HINT_UNDUCK:
-            if (!isForceDucked_) {
-                AUDIO_WARNING_LOG("It is not forced ducked, don't unduck or notify app");
-                return;
-            }
+            CHECK_AND_RETURN_LOG(isForceDucked_, "It is not forced ducked, don't unduck or notify app");
             (void)audioStream_->SetDuckVolume(1.0f);
             AUDIO_INFO_LOG("Unduck Volume successfully");
             isForceDucked_ = false;
@@ -1742,7 +1744,9 @@ void AudioRendererPrivate::ActivateAudioConcurrency(const AudioStreamParams &aud
     const AudioStreamType &streamType, IAudioStream::StreamClass &streamClass)
 {
     rendererInfo_.pipeType = PIPE_TYPE_NORMAL_OUT;
-    if (rendererInfo_.streamUsage == STREAM_USAGE_VOICE_COMMUNICATION) {
+    if (rendererInfo_.streamUsage == STREAM_USAGE_VOICE_COMMUNICATION ||
+        rendererInfo_.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION ||
+        rendererInfo_.streamUsage == STREAM_USAGE_VIDEO_COMMUNICATION) {
         rendererInfo_.pipeType = PIPE_TYPE_CALL_OUT;
     } else if (streamClass == IAudioStream::FAST_STREAM) {
         rendererInfo_.pipeType = PIPE_TYPE_LOWLATENCY_OUT;

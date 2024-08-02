@@ -12,11 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "PolicyProviderStub"
+#endif
 
 #include "policy_provider_stub.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_errors.h"
 
 namespace OHOS {
@@ -38,7 +39,23 @@ int PolicyProviderStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mess
         AUDIO_WARNING_LOG("OnRemoteRequest unsupported request code:%{public}d.", code);
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
-    return (this->*funcList_[code])(data, reply);
+    switch (code) {
+        case GET_DEVICE_INFO:
+            return HandleGetProcessDeviceInfo(data, reply);
+        case INIT_VOLUME_MAP:
+            return HandleInitSharedVolume(data, reply);
+        case SET_WAKEUP_ADUIO_CAPTURER:
+            return HandleSetWakeupCapturer(data, reply);
+        case SET_AUDIO_CAPTURER:
+            return HandleSetCapturer(data, reply);
+        case REMOVE_WAKEUP_CAPUTER:
+            return HandleWakeupCapturerRemoved(data, reply);
+        case IS_ABS_VOLUME_SUPPORTED:
+            return HandleIsAbsVolumeSupported(data, reply);
+        default:
+            AUDIO_WARNING_LOG("OnRemoteRequest unsupported request code:%{public}d.", code);
+            return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+    }
 }
 
 int32_t PolicyProviderStub::HandleGetProcessDeviceInfo(MessageParcel &data, MessageParcel &reply)

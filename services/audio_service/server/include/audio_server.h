@@ -47,7 +47,6 @@ public:
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
-    int32_t OffloadDrain() override;
 
     int32_t Dump(int32_t fd, const std::vector<std::u16string> &args) override;
 
@@ -62,7 +61,7 @@ public:
     int32_t SetVoiceVolume(float volume) override;
     int32_t OffloadSetVolume(float volume) override;
     int32_t SetAudioScene(AudioScene audioScene, std::vector<DeviceType> &activeOutputDevices,
-        DeviceType activeInputDevice) override;
+        DeviceType activeInputDevice, BluetoothOffloadState a2dpOffloadFlag) override;
     static void *paDaemonThread(void *arg);
     int32_t SetExtraParameters(const std::string& key,
         const std::vector<std::pair<std::string, std::string>>& kvpairs) override;
@@ -121,16 +120,6 @@ public:
 
     int32_t SetCaptureSilentState(bool state) override;
 
-    int32_t GetCapturePresentationPosition(const std::string& deviceClass, uint64_t& frames, int64_t& timeSec,
-        int64_t& timeNanoSec) override;
-
-    int32_t GetRenderPresentationPosition(const std::string& deviceClass, uint64_t& frames, int64_t& timeSec,
-        int64_t& timeNanoSec) override;
-
-    int32_t OffloadGetPresentationPosition(uint64_t& frames, int64_t& timeSec, int64_t& timeNanoSec) override;
-
-    int32_t OffloadSetBufferSize(uint32_t sizeMs) override;
-
     int32_t UpdateSpatializationState(AudioSpatializationState spatializationState) override;
 
     int32_t NotifyStreamVolumeChanged(AudioStreamType streamType, float volume) override;
@@ -154,9 +143,13 @@ public:
     // IAudioServerInnerCall
     int32_t SetSinkRenderEmpty(const std::string &devceClass, int32_t durationUs) final;
 
+    int32_t SetSinkMuteForSwitchDevice(const std::string &devceClass, int32_t durationUs, bool mute) override;
+
     void LoadHdiEffectModel() override;
 
     void UpdateEffectBtOffloadSupported(const bool &isSupported) override;
+
+    void SetRotationToEffect(const uint32_t rotate) override;
 protected:
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
@@ -190,6 +183,8 @@ private:
     bool IsNormalIpcStream(const AudioProcessConfig &config) const;
     void RecognizeAudioEffectType(const std::string &mainkey, const std::string &subkey,
         const std::string &extraSceneType);
+    const std::string GetBundleNameFromUid(int32_t uid);
+    bool IsFastBlocked(int32_t uid);
 
 private:
     static constexpr int32_t MEDIA_SERVICE_UID = 1013;

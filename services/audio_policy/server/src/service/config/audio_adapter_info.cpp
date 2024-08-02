@@ -13,16 +13,16 @@
  * limitations under the License.
  */
 
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioAdapterInfo"
+#endif
 
 #include "audio_adapter_info.h"
 #include "audio_effect.h"
-#include "audio_log.h"
 
 namespace OHOS {
 namespace AudioStandard {
-PipeInfo* AudioAdapterInfo::GetPipeByName(std::string &pipeName)
+PipeInfo* AudioAdapterInfo::GetPipeByName(const std::string &pipeName)
 {
     for (auto &pipeInfo : pipeInfos_) {
         if (pipeInfo.name_ == pipeName) {

@@ -12,12 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "NapiAudioSpatializationMgrCallback"
+#endif
 
 #include "napi_audio_spatialization_manager_callback.h"
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_manager_log.h"
 #include "napi_param_utils.h"
 #include "napi_audio_error.h"
 #include "napi_audio_manager_callbacks.h"

@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioPolicyUnitTest"
+#endif
 
 #include <thread>
 #include "audio_errors.h"
@@ -265,6 +266,41 @@ HWTEST(AudioPolicyExtUnitTest, QueryEffectSceneMode_001, TestSize.Level1)
     SupportedEffectConfig supportedEffectConfig;
     int32_t ret = AudioPolicyManager::GetInstance().QueryEffectSceneMode(supportedEffectConfig);
     EXPECT_EQ(0, ret);
+}
+
+/**
+ * @tc.name  : Test SetPlaybackCapturerFilterInfos via legal state
+ * @tc.number: SetPlaybackCapturerFilterInfos_001
+ * @tc.desc  : Test SetPlaybackCapturerFilterInfos interface.set playback capturer filter infos and return ret.
+ */
+HWTEST(AudioPolicyExtUnitTest, SetPlaybackCapturerFilterInfos_001, TestSize.Level1)
+{
+    AudioPlaybackCaptureConfig audioPlaybackCaptureConfig;
+    int32_t ret = AudioPolicyManager::GetInstance().SetPlaybackCapturerFilterInfos(audioPlaybackCaptureConfig, 0);
+    EXPECT_EQ(0, ret);
+}
+
+/**
+ * @tc.name  : Test GetMaxAmplitude via legal state
+ * @tc.number: GetMaxAmplitude_001
+ * @tc.desc  : Test GetMaxAmplitude interface.Query effect scene mode and return ret.
+ */
+HWTEST(AudioPolicyExtUnitTest, GetMaxAmplitude_001, TestSize.Level1)
+{
+    int32_t ret = AudioPolicyManager::GetInstance().GetMaxAmplitude(0);
+    EXPECT_EQ(0, ret);
+}
+
+/**
+ * @tc.name  : Test GetMinStreamVolume via legal state
+ * @tc.number: GetMinStreamVolume_001
+ * @tc.desc  : Test GetMinStreamVolume interface.get min stream volume and return ret.
+ */
+HWTEST(AudioPolicyExtUnitTest, GetMinStreamVolume_001, TestSize.Level1)
+{
+    float minStreamVolume = AudioPolicyManager::GetInstance().GetMinStreamVolume();
+    float maxStreamVolume = AudioPolicyManager::GetInstance().GetMaxStreamVolume();
+    EXPECT_LT(minStreamVolume, maxStreamVolume);
 }
 
 } // namespace AudioStandard

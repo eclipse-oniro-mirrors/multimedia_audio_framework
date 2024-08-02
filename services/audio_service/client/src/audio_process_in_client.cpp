@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioProcessInClientInner"
+#endif
 
 #include "audio_process_in_client.h"
 
@@ -29,7 +30,7 @@
 #include "system_ability_definition.h"
 
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_system_manager.h"
 #include "audio_utils.h"
 #include "securec.h"
@@ -1286,7 +1287,8 @@ bool AudioProcessInClientInner::KeepLoopRunning()
 void AudioProcessInClientInner::RecordProcessCallbackFuc()
 {
     AUDIO_INFO_LOG("%{public}s enter.", __func__);
-    AudioSystemManager::GetInstance()->RequestThreadPriority(gettid());
+    processProxy_->RegisterThreadPriority(gettid(),
+        AudioSystemManager::GetInstance()->GetSelfBundleName(processConfig_.appInfo.appUid));
     uint64_t curReadPos = 0;
     int64_t wakeUpTime = ClockTime::GetCurNano();
     int64_t clientReadCost = 0;
@@ -1529,7 +1531,8 @@ void AudioProcessInClientInner::DoFadeInOut(uint64_t &curWritePos)
 void AudioProcessInClientInner::ProcessCallbackFuc()
 {
     AUDIO_INFO_LOG("Callback loop start.");
-    AudioSystemManager::GetInstance()->RequestThreadPriority(gettid());
+    processProxy_->RegisterThreadPriority(gettid(),
+        AudioSystemManager::GetInstance()->GetSelfBundleName(processConfig_.appInfo.appUid));
 
     uint64_t curWritePos = 0;
     int64_t curTime = 0;
@@ -1570,7 +1573,8 @@ void AudioProcessInClientInner::ProcessCallbackFuc()
 void AudioProcessInClientInner::ProcessCallbackFucIndependent()
 {
     AUDIO_INFO_LOG("multi play loop start");
-    AudioSystemManager::GetInstance()->RequestThreadPriority(gettid());
+    processProxy_->RegisterThreadPriority(gettid(),
+        AudioSystemManager::GetInstance()->GetSelfBundleName(processConfig_.appInfo.appUid));
     int64_t curTime = 0;
     uint64_t curWritePos = 0;
     int64_t wakeUpTime = ClockTime::GetCurNano();
@@ -1594,10 +1598,8 @@ void AudioProcessInClientInner::ProcessCallbackFucIndependent()
         } else {
             AudioStreamData writeStreamData;
             ret = audioBuffer_->GetWriteBuffer(curWritePos, writeStreamData.bufferDesc);
-            if (ret != SUCCESS || writeStreamData.bufferDesc.buffer == nullptr) {
-                AUDIO_INFO_LOG("ret is fail or buffer is nullptr");
-                return;
-            }
+            CHECK_AND_RETURN_LOG(ret == SUCCESS && writeStreamData.bufferDesc.buffer != nullptr,
+                "ret is fail or buffer is nullptr");
             memset_s(writeStreamData.bufferDesc.buffer, writeStreamData.bufferDesc.bufLength,
                 0, writeStreamData.bufferDesc.bufLength);
         }
@@ -1678,7 +1680,7 @@ void AudioProcessInClientInner::CheckIfWakeUpTooLate(int64_t &curTime, int64_t &
 void AudioProcessInClientInner::CheckIfWakeUpTooLate(int64_t &curTime, int64_t &wakeUpTime, int64_t clientWriteCost)
 {
     curTime = ClockTime::GetCurNano();
-    int64_t round = (spanSizeInFrame_ == 0 ? 1 : clientSpanSizeInFrame_ / spanSizeInFrame_);
+    int64_t round = static_cast<int64_t>(spanSizeInFrame_ == 0 ? 1 : clientSpanSizeInFrame_ / spanSizeInFrame_);
     int64_t clientBufferDurationInMs = static_cast<int64_t>(spanSizeInMs_) * ONE_MILLISECOND_DURATION * round;
     if (wakeUpTime - curTime > clientBufferDurationInMs + clientWriteCost) {
         Trace trace("BigWakeUpTime curTime[" + std::to_string(curTime) + "] target[" + std::to_string(wakeUpTime) +

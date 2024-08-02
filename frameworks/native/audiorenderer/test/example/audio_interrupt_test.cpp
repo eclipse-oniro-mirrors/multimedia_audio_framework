@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioInterruptTest"
+#endif
 
 #include <cstddef>
 #include <climits>
@@ -21,7 +22,7 @@
 #include <cstring>
 #include <unistd.h>
 #include "audio_interrupt_test.h"
-#include "audio_log.h"
+#include "audio_renderer_log.h"
 #include "pcm2wav.h"
 
 using namespace std;

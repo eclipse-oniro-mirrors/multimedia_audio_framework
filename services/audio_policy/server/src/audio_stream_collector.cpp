@@ -12,16 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "AudioStreamCollector"
+#endif
 
 #include "audio_stream_collector.h"
 
-#include "audio_errors.h"
 #include "audio_client_tracker_callback_proxy.h"
-#include "ipc_skeleton.h"
-#include "i_standard_client_tracker.h"
-#include "hisysevent.h"
 #include "audio_spatialization_service.h"
 
 #include "media_monitor_manager.h"
@@ -189,6 +186,20 @@ bool AudioStreamCollector::ExistStreamForPipe(AudioPipeType pipeType)
         return false;
     }
     return true;
+}
+
+int32_t AudioStreamCollector::GetRendererDeviceInfo(const int32_t sessionId, DeviceInfo &outputDeviceInfo)
+{
+    const auto &it = std::find_if(audioRendererChangeInfos_.begin(), audioRendererChangeInfos_.end(),
+        [&sessionId](const std::unique_ptr<AudioRendererChangeInfo> &changeInfo) {
+            return changeInfo->sessionId == sessionId;
+        });
+    if (it == audioRendererChangeInfos_.end()) {
+        AUDIO_WARNING_LOG("invalid session id: %{public}d", sessionId);
+        return ERROR;
+    }
+    outputDeviceInfo = (*it)->outputDeviceInfo;
+    return SUCCESS;
 }
 
 int32_t AudioStreamCollector::AddCapturerStream(AudioStreamChangeInfo &streamChangeInfo)
@@ -544,7 +555,7 @@ int32_t AudioStreamCollector::UpdateRendererPipeInfo(const int32_t sessionId, co
 
     for (auto it = audioRendererChangeInfos_.begin(); it != audioRendererChangeInfos_.end(); it++) {
         if ((*it)->sessionId == sessionId && (*it)->rendererInfo.pipeType != pipeType) {
-            AUDIO_DEBUG_LOG("sessionId %{public}d update pipeType: old %{public}d, new %{public}d",
+            AUDIO_INFO_LOG("sessionId %{public}d update pipeType: old %{public}d, new %{public}d",
                 sessionId, (*it)->rendererInfo.pipeType, pipeType);
             (*it)->rendererInfo.pipeType = pipeType;
             pipeTypeUpdated = true;

@@ -12,11 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "IpcStreamListenerStub"
+#endif
 
 #include "ipc_stream_listener_stub.h"
-#include "audio_log.h"
+#include "audio_service_log.h"
 #include "audio_errors.h"
 
 namespace OHOS {
@@ -42,7 +43,13 @@ int IpcStreamListenerStub::OnRemoteRequest(uint32_t code, MessageParcel &data, M
         AUDIO_WARNING_LOG("OnRemoteRequest unsupported request code:%{public}d.", code);
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
-    return (this->*funcList_[code])(data, reply);
+    switch (code) {
+        case ON_OPERATION_HANDLED:
+            return HandleOnOperationHandled(data, reply);
+        default:
+            AUDIO_WARNING_LOG("OnRemoteRequest unsupported request code:%{public}d.", code);
+            return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+    }
 }
 
 int32_t IpcStreamListenerStub::HandleOnOperationHandled(MessageParcel &data, MessageParcel &reply)

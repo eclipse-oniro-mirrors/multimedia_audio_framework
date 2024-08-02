@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef LOG_TAG
+#ifndef LOG_TAG
 #define LOG_TAG "OHAudioStreamBuilder"
+#endif
 
 #include <memory>
 #include "native_audiostreambuilder.h"
@@ -423,7 +424,7 @@ OH_AudioStream_Result OHAudioStreamBuilder::SetRendererCallback(OH_AudioRenderer
 {
     CHECK_AND_RETURN_RET_LOG(streamType_ != CAPTURER_TYPE, AUDIOSTREAM_ERROR_INVALID_PARAM,
         "SetRendererCallback Error, invalid type input");
-    writeDataCallbackType_ = CALLBACKS_ON_WRITE_DATA;
+    writeDataCallbackType_ = WRITE_DATA_CALLBACK_WITHOUT_RESULT;
     rendererCallbacks_.callbacks = callbacks;
     userData_ = userData;
     return AUDIOSTREAM_SUCCESS;
@@ -469,7 +470,6 @@ OH_AudioStream_Result OHAudioStreamBuilder::SetWriteDataWithMetadataCallback(
 {
     CHECK_AND_RETURN_RET_LOG(streamType_ != CAPTURER_TYPE, AUDIOSTREAM_ERROR_INVALID_PARAM,
         "SetRendererCallback Error, invalid type input");
-    writeDataCallbackType_ = WRITE_DATA_WITH_METADATA_CALLBACK;
     rendererCallbacks_.writeDataWithMetadataCallback = callback;
     metadataUserData_ = userData;
     return AUDIOSTREAM_SUCCESS;
@@ -480,7 +480,7 @@ OH_AudioStream_Result OHAudioStreamBuilder::SetRendererWriteDataCallback(
 {
     CHECK_AND_RETURN_RET_LOG(streamType_ != CAPTURER_TYPE, AUDIOSTREAM_ERROR_INVALID_PARAM,
         "Set renderer callback error, invalid type input.");
-    writeDataCallbackType_ = ON_WRITE_DATA_CALLBACK;
+    writeDataCallbackType_ = WRITE_DATA_CALLBACK_WITH_RESULT;
     rendererCallbacks_.onWriteDataCallback = callback;
     userData_ = userData;
     return AUDIOSTREAM_SUCCESS;
