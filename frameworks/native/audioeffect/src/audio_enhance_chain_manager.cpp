@@ -407,7 +407,7 @@ int32_t AudioEnhanceChainManager::ReleaseAudioEnhanceChainDynamic(const uint32_t
         sceneTypeToEnhanceChainCountMap_.erase(sceneKeyCode);
         sceneTypeToEnhanceChainMap_.erase(sceneKeyCode);
         return SUCCESS;
-    } 
+    }
     auto chainCountIter = sceneTypeToEnhanceChainCountMap_.find(sceneKeyCode);
     if (chainCountIter->second > 1) {
         chainCountIter->second--;

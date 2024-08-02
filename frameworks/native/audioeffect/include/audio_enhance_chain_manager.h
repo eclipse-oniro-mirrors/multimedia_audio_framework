@@ -57,8 +57,9 @@ public:
 	
     int32_t SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray);
     int32_t GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray);
-    void ResetInfo(); // use for unit test
-	int32_t ApplyAudioEnhanceChainDefault(const uint32_t captureId, uint32_t length);
+    void ResetInfo();  // use for unit test
+    int32_t ApplyAudioEnhanceChainDefault(const uint32_t captureId, uint32_t length);
+
 private:
     int32_t AddAudioEnhanceChainHandles(std::shared_ptr<AudioEnhanceChain> &audioEnhanceChain,
         const std::string &enhanceChain);

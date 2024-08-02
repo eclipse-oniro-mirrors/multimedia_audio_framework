@@ -183,6 +183,26 @@ static void StopAuxCapture(struct Userdata *u)
     }
 }
 
+static void FreeSceneMapsAndResampler(struct Userdata *u)
+{
+    if (u->sceneToCountMap) {
+        pa_hashmap_free(u->sceneToCountMap);
+    }
+    if (u->sceneToPreResamplerMap) {
+        pa_hashmap_free(u->sceneToPreResamplerMap);
+    }
+    if (u->sceneToEcResamplerMap) {
+        pa_hashmap_free(u->sceneToEcResamplerMap);
+    }
+    if (u->sceneToMicRefResamplerMap) {
+        pa_hashmap_free(u->sceneToMicRefResamplerMap);
+    }
+
+    if (u->defaultSceneResampler) {
+        pa_resampler_free(u->defaultSceneResampler);
+    }
+}
+
 static void UserdataFree(struct Userdata *u)
 {
     pa_assert(u);
@@ -227,22 +247,7 @@ static void UserdataFree(struct Userdata *u)
         u->bufferMicRef = NULL;
     }
 
-    if (u->sceneToCountMap) {
-        pa_hashmap_free(u->sceneToCountMap);
-    }
-    if (u->sceneToPreResamplerMap) {
-        pa_hashmap_free(u->sceneToPreResamplerMap);
-    }
-    if (u->sceneToEcResamplerMap) {
-        pa_hashmap_free(u->sceneToEcResamplerMap);
-    }
-    if (u->sceneToMicRefResamplerMap) {
-        pa_hashmap_free(u->sceneToMicRefResamplerMap);
-    }
-
-    if (u->defaultSceneResampler) {
-        pa_resampler_free(u->defaultSceneResampler);
-    }
+    FreeSceneMapsAndResampler(u);
 
     pa_xfree(u);
 }
@@ -1083,7 +1088,6 @@ static void PrepareEcCapture(struct Userdata *u)
         }
         u->requestBytesEc = CalculateFrameLen(u->ecSamplingRate, u->ecChannels, u->ecFormat);
         u->bufferEc = malloc(u->requestBytesEc);
-        
     }
 }
 

@@ -198,8 +198,10 @@ int32_t AudioEnhanceChain::UpdateAlgoConfig()
 
     algoCache_.input.resize(algoAttr_.byteLenPerFrame * algoAttr_.batchLen);
     algoCache_.output.resize(algoAttr_.byteLenPerFrame * algoSupportedConfig_.outNum);
-    AUDIO_INFO_LOG("micNum: %{public}u ecNum: %{public}u micRefNum: %{public}u outNum: %{public}u byteLenPerFrame: %{public}u",
-        algoSupportedConfig_.micNum, algoSupportedConfig_.ecNum, algoSupportedConfig_.micRefNum, algoSupportedConfig_.outNum, byteLenPerFrame);
+    AUDIO_INFO_LOG("micNum: %{public}u ecNum: %{public}u micRefNum: %{public}u outNum: %{public}u \
+        byteLenPerFrame: %{public}u",
+        algoSupportedConfig_.micNum, algoSupportedConfig_.ecNum, algoSupportedConfig_.micRefNum,
+        algoSupportedConfig_.outNum, byteLenPerFrame);
     return SUCCESS;
 }
 
@@ -264,13 +266,14 @@ int32_t AudioEnhanceChain::GetOneFrameInputData(std::unique_ptr<EnhanceBuffer> &
     CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "memcpy error in ec channel memcpy");
 
     offset += algoAttr_.byteLenPerFrame * deviceAttr_.ecChannels;
-    ret = DeinterleaverData(enhanceBuffer->micBufferIn.data(), deviceAttr_.micChannels, &algoCache_.input[offset], offset);
+    ret = DeinterleaverData(enhanceBuffer->micBufferIn.data(), deviceAttr_.micChannels, &algoCache_.input[offset],
+        offset);
     CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "memcpy error in mic channel memcpy");
 
     offset += algoAttr_.byteLenPerFrame * deviceAttr_.micChannels;
     ret = DeinterleaverData(enhanceBuffer->micRefBuffer.data(), deviceAttr_.micRefChannels, &algoCache_.input[offset],
         offset);
-    CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR,"memcpy error in mic ref channel memcpy");
+    CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "memcpy error in mic ref channel memcpy");
     return SUCCESS;
 }
 

@@ -180,6 +180,7 @@ private:
     int32_t CreateCapture(struct AudioPort &capturePort);
     int32_t InitAudioManager();
     void InitAttrsCapture(struct AudioSampleAttributes &attrs);
+    void InitEcCaptureParam(struct AudioSampleAttributes &param);
     AudioFormat ConvertToHdiFormat(HdiAdapterFormat format);
 
     int32_t UpdateUsbAttrs(const std::string &usbInfoStr);
@@ -659,6 +660,26 @@ AudioFormat AudioCapturerSourceInner::ConvertToHdiFormat(HdiAdapterFormat format
     return hdiFormat;
 }
 
+void AudioCapturerSourceInner::InitEcCaptureParam(struct AudioSampleAttributes &param)
+{
+    param.ecSampleAttributes.ecInterleaved = true;
+    param.ecSampleAttributes.ecFormat = ConvertToHdiFormat(attr_.formatEc);
+    param.ecSampleAttributes.ecSampleRate = attr_.sampleRateEc;
+    param.ecSampleAttributes.ecChannelCount = attr_.channelEc;
+    param.ecSampleAttributes.ecChannelLayout = GetChannelLayoutByCount(attr_.channelEc);
+    param.ecSampleAttributes.ecPeriod = DEEP_BUFFER_CAPTURE_PERIOD_SIZE;
+    param.ecSampleAttributes.ecFrameSize = PCM_16_BIT * param.ecSampleAttributes.ecChannelCount / PCM_8_BIT;
+    param.ecSampleAttributes.ecIsBigEndian = false;
+    param.ecSampleAttributes.ecIsSignedData = true;
+    param.ecSampleAttributes.ecStartThreshold =
+        DEEP_BUFFER_CAPTURE_PERIOD_SIZE / (param.ecSampleAttributes.ecFrameSize);
+    param.ecSampleAttributes.ecStopThreshold = INT_32_MAX;
+    param.ecSampleAttributes.ecSilenceThreshold = AUDIO_BUFF_SIZE;
+    AUDIO_INFO_LOG("Ec config rate:%{public}u channel:%{public}u format:%{public}u",
+        param.ecSampleAttributes.ecSampleRate, param.ecSampleAttributes.ecChannelCount,
+        param.ecSampleAttributes.ecFormat);
+}
+
 int32_t AudioCapturerSourceInner::CreateCapture(struct AudioPort &capturePort)
 {
     Trace trace("AudioCapturerSourceInner:CreateCapture");
@@ -677,22 +698,7 @@ int32_t AudioCapturerSourceInner::CreateCapture(struct AudioPort &capturePort)
     param.sourceType = static_cast<int32_t>(ConvertToHDIAudioInputType(attr_.sourceType));
 
     if (attr_.hasEcConfig || attr_.sourceType == SOURCE_TYPE_EC) {
-        param.ecSampleAttributes.ecInterleaved = true;
-        param.ecSampleAttributes.ecFormat = ConvertToHdiFormat(attr_.formatEc);
-        param.ecSampleAttributes.ecSampleRate = attr_.sampleRateEc;
-        param.ecSampleAttributes.ecChannelCount = attr_.channelEc;
-        param.ecSampleAttributes.ecChannelLayout = GetChannelLayoutByCount(attr_.channelEc);
-        param.ecSampleAttributes.ecPeriod = DEEP_BUFFER_CAPTURE_PERIOD_SIZE;
-        param.ecSampleAttributes.ecFrameSize = PCM_16_BIT * param.ecSampleAttributes.ecChannelCount / PCM_8_BIT;
-        param.ecSampleAttributes.ecIsBigEndian = false;
-        param.ecSampleAttributes.ecIsSignedData = true;
-        param.ecSampleAttributes.ecStartThreshold =
-            DEEP_BUFFER_CAPTURE_PERIOD_SIZE / (param.ecSampleAttributes.ecFrameSize);
-        param.ecSampleAttributes.ecStopThreshold = INT_32_MAX;
-        param.ecSampleAttributes.ecSilenceThreshold = AUDIO_BUFF_SIZE;
-        AUDIO_INFO_LOG("Ec config rate:%{public}u channel:%{public}u format:%{public}u",
-            param.ecSampleAttributes.ecSampleRate, param.ecSampleAttributes.ecChannelCount,
-            param.ecSampleAttributes.ecFormat);
+        InitEcCaptureParam(param);
     }
 
     struct AudioDeviceDescriptor deviceDesc;
@@ -705,7 +711,7 @@ int32_t AudioCapturerSourceInner::CreateCapture(struct AudioPort &capturePort)
     }
     deviceDesc.desc = (char *)"";
 
-    AUDIO_INFO_LOG("Create capture sourceName:%{public}s, hdisource:%{public}d, " \
+    AUDIO_INFO_LOG("sourceName:%{public}s, hdisource:%{public}d, " \
         "rate:%{public}u channel:%{public}u format:%{public}u, devicePin:%{public}u",
         halName_.c_str(), param.sourceType, param.sampleRate, param.channelCount, param.format, deviceDesc.pins);
     int32_t ret = audioAdapter_->CreateCapture(audioAdapter_, &deviceDesc, &param, &audioCapture_, &captureId_);

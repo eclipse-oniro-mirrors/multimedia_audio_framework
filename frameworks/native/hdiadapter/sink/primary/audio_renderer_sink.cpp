@@ -255,6 +255,7 @@ private:
     AudioPortPin GetAudioPortPin() const noexcept;
     int32_t SetAudioRoute(DeviceType outputDevice, AudioRoute route);
     int32_t SetAudioRouteInfoForEnhanceChain(const DeviceType &outputDevice);
+    void InitAudioSampleAttributes(struct AudioSampleAttributes &param);
 
     FILE *dumpFile_ = nullptr;
     DeviceType currentActiveDevice_ = DEVICE_TYPE_NONE;
@@ -628,13 +629,8 @@ AudioFormat AudioRendererSinkInner::ConvertToHdiFormat(HdiAdapterFormat format)
     return hdiFormat;
 }
 
-int32_t AudioRendererSinkInner::CreateRender(const struct AudioPort &renderPort)
+void AudioRendererSinkInner::InitAudioSampleAttributes(struct AudioSampleAttributes &param)
 {
-    Trace trace("AudioRendererSinkInner::CreateRender");
-
-    struct AudioSampleAttributes param;
-    struct AudioDeviceDescriptor deviceDesc;
-    InitAttrs(param);
     param.sampleRate = attr_.sampleRate;
     param.channelCount = attr_.channel;
     if (param.channelCount == MONO) {
@@ -654,8 +650,19 @@ int32_t AudioRendererSinkInner::CreateRender(const struct AudioPort &renderPort)
     param.format = ConvertToHdiFormat(attr_.format);
     param.frameSize = PcmFormatToBits(param.format) * param.channelCount / PCM_8_BIT;
     param.startThreshold = DEEP_BUFFER_RENDER_PERIOD_SIZE / (param.frameSize);
+}
+
+int32_t AudioRendererSinkInner::CreateRender(const struct AudioPort &renderPort)
+{
+    Trace trace("AudioRendererSinkInner::CreateRender");
+
+    struct AudioSampleAttributes param;
+    struct AudioDeviceDescriptor deviceDesc;
+    InitAttrs(param);
+    InitAudioSampleAttributes(param);
+
     deviceDesc.portId = renderPort.portId;
-    deviceDesc.desc = const_cast<char *>(attr_.address.c_str());
+    deviceDesc.desc = const_cast<char *>("");
     deviceDesc.pins = PIN_OUT_SPEAKER;
     currentActiveDevice_ = DEVICE_TYPE_SPEAKER;
     if (halName_ == "usb") {
@@ -669,8 +676,7 @@ int32_t AudioRendererSinkInner::CreateRender(const struct AudioPort &renderPort)
         currentActiveDevice_ = static_cast<DeviceType>(attr_.deviceType);
     }
 
-    AUDIO_INFO_LOG("Create render sinkName:%{public}s, rate:%{public}u channel:%{public}u format:%{public}u, " \
-        "devicePin:%{public}u",
+    AUDIO_INFO_LOG("sinkName:%{public}s rate:%{public}u channel:%{public}u format:%{public}u devicePin:%{public}u",
         halName_.c_str(), param.sampleRate, param.channelCount, param.format, deviceDesc.pins);
     int32_t ret = audioAdapter_->CreateRender(audioAdapter_, &deviceDesc, &param, &audioRender_, &renderId_);
     if (ret != 0 || audioRender_ == nullptr) {
