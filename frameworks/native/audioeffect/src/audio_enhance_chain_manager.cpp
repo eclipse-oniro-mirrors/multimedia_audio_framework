@@ -113,11 +113,9 @@ void AudioEnhanceChainManager::ResetInfo()
     isMute_ = false;
 }
 
-void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectChain> &enhanceChains,
+void AudioEnhanceChainManager::ConstructEnhanceChainMgrMaps(std::vector<EffectChain> &enhanceChains,
     const EffectChainManagerParam &managerParam, std::vector<std::shared_ptr<AudioEffectLibEntry>> &enhanceLibraryList)
 {
-    const std::unordered_map<std::string, std::string> &enhanceChainNameMap = managerParam.sceneTypeToChainNameMap;
-    std::lock_guard<std::mutex> lock(chainManagerMutex_);
     std::set<std::string> enhanceSet;
     for (EffectChain enhanceChain : enhanceChains) {
         for (std::string enhance : enhanceChain.apply) {
@@ -146,11 +144,24 @@ void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectCh
         enhanceChainToEnhancesMap_[key] = enhances;
     }
     // Construct sceneTypeAndModeToEnhanceChainNameMap_ that stores effectMode associated with the effectChainName
-    for (auto item = enhanceChainNameMap.begin(); item != enhanceChainNameMap.end(); item++) {
-        sceneTypeAndModeToEnhanceChainNameMap_[item->first] = item->second;
-    }
+    sceneTypeAndModeToEnhanceChainNameMap_ = managerParam.sceneTypeToChainNameMap;
     // Construct enhancePropertyMap_ that stores effect's property
     enhancePropertyMap_ = managerParam.effectDefaultProperty;
+}
+
+void AudioEnhanceChainManager::InitAudioEnhanceChainManager(std::vector<EffectChain> &enhanceChains,
+    const EffectChainManagerParam &managerParam, std::vector<std::shared_ptr<AudioEffectLibEntry>> &enhanceLibraryList)
+{
+    std::lock_guard<std::mutex> lock(chainManagerMutex_);
+    normalSceneLimit_ = managerParam.maxExtraNum;
+    priorSceneSet_.insert(managerParam.priorSceneList.begin(), managerParam.priorSceneList.end());
+    defaultScene_ = managerParam.defaultSceneName;
+    AUDIO_INFO_LOG("defaultSceneName is %{public}s", defaultScene_.c_str());
+    for (const auto &priorScene : priorSceneSet_) {
+        AUDIO_INFO_LOG("prioScene contains %{public}s", priorScene.c_str());
+    }
+    AUDIO_INFO_LOG("normalSceneLimit is %{public}u", normalSceneLimit_);
+    ConstructEnhanceChainMgrMaps(enhanceChains, managerParam, enhanceLibraryList);
 
     AUDIO_INFO_LOG("enhanceToLibraryEntryMap_ size %{public}zu \
         enhanceChainToEnhancesMap_ size %{public}zu \
@@ -166,39 +177,36 @@ int32_t AudioEnhanceChainManager::InitEnhanceBuffer()
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     uint32_t len = 0;
     uint32_t lenEc = 0;
-    uint32_t tempLen = 0;
-    uint32_t tempLenEc = 0;
-    // get max buffer length of ecBuffer and micBufferIn
-    for (auto &item : sceneTypeToEnhanceChainMap_) {
-        tempLen = item.second->GetAlgoBufferSize();
-        tempLenEc = item.second->GetAlgoBufferSizeEc();
-        if (tempLen > len) {
-            len = tempLen;
-        }
-        if (tempLenEc > lenEc) {
-            lenEc = tempLenEc;
+    uint32_t lenMicRef = 0;
+    for (auto &[scode, chain] : sceneTypeToEnhanceChainMap_) {
+        if (chain) {
+            len = std::max(len, chain->GetAlgoBufferSize());
+            lenEc = std::max(lenEc, chain->GetAlgoBufferSizeEc());
+            lenMicRef = std::max(lenMicRef, chain->GetAlgoBufferSizeMicRef());
         }
     }
     if (enhanceBuffer_ == nullptr) {
         enhanceBuffer_ = std::make_unique<EnhanceBuffer>();
-        enhanceBuffer_->ecBuffer.resize(lenEc);
         enhanceBuffer_->micBufferIn.resize(len);
         enhanceBuffer_->micBufferOut.resize(len);
-        enhanceBuffer_->length = len;
-        enhanceBuffer_->lengthEc = lenEc;
-        AUDIO_INFO_LOG("enhanceBuffer_ init len:%{public}u lenEc:%{public}u", len, lenEc);
+        enhanceBuffer_->ecBuffer.resize(lenEc);
+        enhanceBuffer_->micRefBuffer.resize(lenMicRef);
+        AUDIO_INFO_LOG("enhanceBuffer_ init len:%{public}u lenEc:%{public}u lenMicRef:%{public}u",
+            len, lenEc, lenMicRef);
         return SUCCESS;
     }
-    if ((len > enhanceBuffer_->length)) {
+    if ((len > enhanceBuffer_->micBufferIn.size())) {
         enhanceBuffer_->micBufferIn.resize(len);
         enhanceBuffer_->micBufferOut.resize(len);
-        enhanceBuffer_->length = len;
     }
-    if (lenEc > enhanceBuffer_->lengthEc) {
+    if (lenEc > enhanceBuffer_->ecBuffer.size()) {
         enhanceBuffer_->ecBuffer.resize(lenEc);
-        enhanceBuffer_->lengthEc = len;
     }
-    AUDIO_INFO_LOG("enhanceBuffer_ update len:%{public}u lenEc:%{public}u", len, lenEc);
+    if (lenMicRef > enhanceBuffer_->micRefBuffer.size()) {
+        enhanceBuffer_->micRefBuffer.resize(lenMicRef);
+    }
+    AUDIO_INFO_LOG("enhanceBuffer_ update len:%{public}u lenEc:%{public}u lenMicRef:%{public}u",
+        len, lenEc, lenMicRef);
     return SUCCESS;
 }
 
@@ -236,90 +244,123 @@ int32_t AudioEnhanceChainManager::ParseSceneKeyCode(const uint32_t sceneKeyCode,
     return SUCCESS;
 }
 
-int32_t AudioEnhanceChainManager::CreateAudioEnhanceChainDynamic(const uint32_t sceneKeyCode)
+int32_t AudioEnhanceChainManager::CreateAudioEnhanceChainDynamic(const uint32_t sceneKeyCode,
+    const AudioEnhanceDeviceAttr &deviceAttr)
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
 
+    std::shared_ptr<AudioEnhanceChain> audioEnhanceChain = nullptr;
+    auto it = sceneTypeToEnhanceChainMap_.find(sceneKeyCode);
+    if (it != sceneTypeToEnhanceChainMap_.end() && it->second != nullptr) {
+        sceneTypeToEnhanceChainCountMap_[sceneKeyCode]++;
+        audioEnhanceChain = it->second;
+        if (audioEnhanceChain->IsEmptyEnhanceHandles()) {
+            return ERROR;
+        }
+        return audioEnhanceChain->IsDefaultChain();
+    }
+    bool createFlag = false;
+    bool defaultFlag = false;
+    if (CreateEnhanceChainInner(audioEnhanceChain, sceneKeyCode, deviceAttr, createFlag, defaultFlag)) {
+        return ERROR;
+    }
+    // means map to default chain
+    if (!createFlag) {
+        return audioEnhanceChain->IsDefaultChain();
+    }
+    std::string effectChainName = GetEnhanceChainNameBySceneCode(sceneKeyCode, defaultFlag);
+    if (AddAudioEnhanceChainHandles(audioEnhanceChain, effectChainName) != SUCCESS) {
+        AUDIO_ERR_LOG("%{public}u create failed.", sceneKeyCode);
+        return ERROR;
+    }
+    AUDIO_INFO_LOG("%{public}u create success", sceneKeyCode);
+    return audioEnhanceChain->IsDefaultChain();
+}
+
+std::string AudioEnhanceChainManager::GetEnhanceChainNameBySceneCode(const uint32_t sceneKeyCode,
+    const bool defaultFlag)
+{
+    std::string enhanceNone = AUDIO_ENHANCE_SUPPORTED_SCENE_MODES.find(ENHANCE_NONE)->second;
+    std::string sceneType = "";
+    std::string capturerDevice = "";
+    std::string rendererDeivce = "";
+    if (ParseSceneKeyCode(sceneKeyCode, sceneType, capturerDevice, rendererDeivce)) {
+        return enhanceNone;
+    }
+    if (defaultFlag) {
+        AUDIO_INFO_LOG("sceneType %{public}s set to defaultScene %{public}s", sceneType.c_str(),
+            defaultScene_.c_str());
+        sceneType = defaultScene_;
+    }
+    // first check specific device, then check no device
+    std::string enhanceChainKey = sceneType + "_&_" + "ENHANCE_DEFAULT" + "_&_" + capturerDevice;
+    auto mapIter = sceneTypeAndModeToEnhanceChainNameMap_.find(enhanceChainKey);
+    if (mapIter == sceneTypeAndModeToEnhanceChainNameMap_.end()) {
+        enhanceChainKey = sceneType + "_&_" + "ENHANCE_DEFAULT";
+        mapIter = sceneTypeAndModeToEnhanceChainNameMap_.find(enhanceChainKey);
+    }
+    if (mapIter == sceneTypeAndModeToEnhanceChainNameMap_.end() ||
+        !enhanceChainToEnhancesMap_.count(mapIter->second)) {
+        AUDIO_ERR_LOG("EnhanceChain key [%{public}s] does not exist, auto set to %{public}s",
+            enhanceChainKey.c_str(), enhanceNone.c_str());
+        return enhanceNone;
+    } else {
+        return mapIter->second;
+    }
+}
+
+int32_t AudioEnhanceChainManager::CreateEnhanceChainInner(std::shared_ptr<AudioEnhanceChain> &audioEnhanceChain,
+    const uint32_t sceneKeyCode, const AudioEnhanceDeviceAttr &deviceAttr, bool &createFlag, bool &defaultFlag)
+{
     std::string sceneType = "";
     std::string capturerDevice = "";
     std::string rendererDeivce = "";
     if (ParseSceneKeyCode(sceneKeyCode, sceneType, capturerDevice, rendererDeivce)) {
         return ERROR;
     }
-    AudioEnhanceParam algoParam = {(uint32_t)isMute_, (uint32_t)(systemVol_ * VOLUME_FACTOR),
-        capturerDevice.c_str(), rendererDeivce.c_str()};
-
-    std::shared_ptr<AudioEnhanceChain> audioEnhanceChain = nullptr;
-    if (sceneTypeToEnhanceChainMap_.count(sceneKeyCode)) {
-        if ((!sceneTypeToEnhanceChainCountMap_.count(sceneKeyCode)) ||
-            (sceneTypeToEnhanceChainCountMap_[sceneKeyCode] < 1)) {
-            AUDIO_ERR_LOG("sceneTypeToEnhanceChainCountMap_ has wrong data with %{public}u",
-                sceneKeyCode);
-            sceneTypeToEnhanceChainCountMap_.erase(sceneKeyCode);
-            sceneTypeToEnhanceChainMap_.erase(sceneKeyCode);
-            return ERROR;
-        }
-        sceneTypeToEnhanceChainCountMap_[sceneKeyCode]++;
-        audioEnhanceChain = sceneTypeToEnhanceChainMap_[sceneKeyCode];
-        if (audioEnhanceChain->IsEmptyEnhanceHandles()) {
-            return ERROR;
-        }
-        return SUCCESS;
-    } else {
-        audioEnhanceChain = std::make_shared<AudioEnhanceChain>(sceneType, algoParam);
-        if (audioEnhanceChain == nullptr) {
-            AUDIO_ERR_LOG("AudioEnhanceChain construct failed.");
-            return ERROR;
-        }
-        sceneTypeToEnhanceChainMap_.insert(std::make_pair(sceneKeyCode, audioEnhanceChain));
-        if (!sceneTypeToEnhanceChainCountMap_.count(sceneKeyCode)) {
-            sceneTypeToEnhanceChainCountMap_.insert(std::make_pair(sceneKeyCode, 1));
+    uint32_t captureId = (sceneKeyCode & CAPTURER_ID_MASK) >> 8;
+    createFlag = true;
+    // normal scene
+    if (priorSceneSet_.find(sceneType) == priorSceneSet_.end()) {
+        // effect instance exceeded
+        if (captureId2SceneCount_[captureId] == normalSceneLimit_) {
+            // default enhance chain not exsist
+            if (captureId2DefaultChainCount_[captureId] != 0) {
+                createFlag = false;
+                audioEnhanceChain = captureId2DefaultChain_[captureId];
+                // add sceneType change after integration supported
+                AUDIO_INFO_LOG("captureId %{public}u defaultChainExsist", captureId);
+            } else {
+                AudioEnhanceParamAdapter algoParam = {(uint32_t)isMute_, (uint32_t)(systemVol_ * VOLUME_FACTOR),
+                    capturerDevice, rendererDeivce, defaultScene_};
+                audioEnhanceChain = std::make_shared<AudioEnhanceChain>(defaultScene_, algoParam, deviceAttr, 1);
+                captureId2DefaultChain_[captureId] = audioEnhanceChain;
+                AUDIO_INFO_LOG("captureId %{public}u defaultChain not exsist, create it", captureId);
+            }
+            captureId2DefaultChainCount_[captureId]++;
+            defaultFlag = true;
         } else {
-            AUDIO_ERR_LOG("sceneTypeToEnhanceChainCountMap_ has wrong data with %{public}u",
-                sceneKeyCode);
-            sceneTypeToEnhanceChainCountMap_[sceneKeyCode] = 1;
+            AudioEnhanceParamAdapter algoParam = {(uint32_t)isMute_, (uint32_t)(systemVol_ * VOLUME_FACTOR),
+                capturerDevice, rendererDeivce, sceneType};
+            audioEnhanceChain = std::make_shared<AudioEnhanceChain>(sceneType, algoParam, deviceAttr, 0);
+            captureId2SceneCount_[captureId]++;
+            AUDIO_INFO_LOG("captureId %{public}u create normal scene %{public}s", captureId, sceneType.c_str());
         }
+    } else {
+        AudioEnhanceParamAdapter algoParam = {(uint32_t)isMute_, (uint32_t)(systemVol_ * VOLUME_FACTOR),
+            capturerDevice, rendererDeivce, sceneType};
+        audioEnhanceChain = std::make_shared<AudioEnhanceChain>(sceneType, algoParam, deviceAttr, 0);
+        AUDIO_INFO_LOG("priorScene %{public}s chain created", sceneType.c_str());
     }
-    if (SetAudioEnhanceChainDynamic(sceneKeyCode, sceneType, capturerDevice) != SUCCESS) {
-        AUDIO_ERR_LOG("%{public}s create failed.", sceneType.c_str());
-        return ERROR;
-    }
-    AUDIO_INFO_LOG("%{public}s create success", sceneType.c_str());
+    CHECK_AND_RETURN_RET_LOG(audioEnhanceChain != nullptr, ERROR, "AudioEnhanceChain construct failed.");
+    sceneTypeToEnhanceChainMap_[sceneKeyCode] = audioEnhanceChain;
+    sceneTypeToEnhanceChainCountMap_[sceneKeyCode] = 1;
     return SUCCESS;
 }
 
-int32_t AudioEnhanceChainManager::SetAudioEnhanceChainDynamic(const uint32_t sceneKeyCode, std::string &sceneType,
-    std::string &capturerDevice)
+int32_t AudioEnhanceChainManager::AddAudioEnhanceChainHandles(std::shared_ptr<AudioEnhanceChain> &audioEnhanceChain,
+    const std::string &enhanceChain)
 {
-    CHECK_AND_RETURN_RET_LOG(sceneTypeToEnhanceChainMap_.count(sceneKeyCode), ERROR,
-        "SceneType [%{public}u] does not exist, fail to set.", sceneKeyCode);
-    
-    std::shared_ptr<AudioEnhanceChain> audioEnhanceChain = sceneTypeToEnhanceChainMap_[sceneKeyCode];
-
-    std::string enhanceChain;
-    std::string sceneMode = "ENHANCE_DEFAULT";
-    std::string enhanceChainAllKey = sceneType + "_&_" + sceneMode;
-    std::string enhanceNone = AUDIO_ENHANCE_SUPPORTED_SCENE_MODES.find(ENHANCE_NONE)->second;
-    
-    if (sceneTypeAndModeToEnhanceChainNameMap_.count(enhanceChainAllKey)) {
-        enhanceChain = sceneTypeAndModeToEnhanceChainNameMap_[enhanceChainAllKey];
-    } else {
-        std::string enhanceChainKey = sceneType + "_&_" + sceneMode + "_&_" + capturerDevice;
-        if (!sceneTypeAndModeToEnhanceChainNameMap_.count(enhanceChainKey)) {
-            AUDIO_ERR_LOG("EnhanceChain key [%{public}s] does not exist, auto set to %{public}s",
-                enhanceChainKey.c_str(), enhanceNone.c_str());
-            enhanceChain = enhanceNone;
-        } else {
-            enhanceChain = sceneTypeAndModeToEnhanceChainNameMap_[enhanceChainKey];
-        }
-    }
-
-    if (enhanceChain != enhanceNone && !enhanceChainToEnhancesMap_.count(enhanceChain)) {
-        AUDIO_ERR_LOG("EnhanceChain name [%{public}s] does not exist, auto set to %{public}s",
-            enhanceChain.c_str(), enhanceNone.c_str());
-            enhanceChain = enhanceNone;
-    }
-
     for (std::string enhance : enhanceChainToEnhancesMap_[enhanceChain]) {
         AudioEffectHandle handle = nullptr;
         AudioEffectDescriptor descriptor;
@@ -349,8 +390,7 @@ int32_t AudioEnhanceChainManager::FreeEnhanceBuffer()
         std::vector<uint8_t>().swap(enhanceBuffer_->ecBuffer);
         std::vector<uint8_t>().swap(enhanceBuffer_->micBufferIn);
         std::vector<uint8_t>().swap(enhanceBuffer_->micBufferOut);
-        enhanceBuffer_->length = 0;
-        enhanceBuffer_->lengthEc = 0;
+        std::vector<uint8_t>().swap(enhanceBuffer_->micRefBuffer);
         enhanceBuffer_ = nullptr;
         AUDIO_INFO_LOG("release EnhanceBuffer success");
     }
@@ -362,19 +402,53 @@ int32_t AudioEnhanceChainManager::ReleaseAudioEnhanceChainDynamic(const uint32_t
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     CHECK_AND_RETURN_RET_LOG(isInitialized_, ERROR, "has not been initialized");
 
-    if (!sceneTypeToEnhanceChainMap_.count(sceneKeyCode)) {
+    auto chainMapIter = sceneTypeToEnhanceChainMap_.find(sceneKeyCode);
+    if (chainMapIter == sceneTypeToEnhanceChainMap_.end() || chainMapIter->second == nullptr) {
         sceneTypeToEnhanceChainCountMap_.erase(sceneKeyCode);
+        sceneTypeToEnhanceChainMap_.erase(sceneKeyCode);
         return SUCCESS;
-    } else if (sceneTypeToEnhanceChainCountMap_.count(sceneKeyCode) &&
-        sceneTypeToEnhanceChainCountMap_[sceneKeyCode] > 1) {
-        sceneTypeToEnhanceChainCountMap_[sceneKeyCode]--;
+    } 
+    auto chainCountIter = sceneTypeToEnhanceChainCountMap_.find(sceneKeyCode);
+    if (chainCountIter->second > 1) {
+        chainCountIter->second--;
         return SUCCESS;
     }
-    sceneTypeToEnhanceChainCountMap_.erase(sceneKeyCode);
-    sceneTypeToEnhanceChainMap_.erase(sceneKeyCode);
+    if (DeleteEnhanceChainInner(chainMapIter->second, sceneKeyCode) != SUCCESS) {
+        return ERROR;
+    }
     AUDIO_INFO_LOG("release %{public}u", sceneKeyCode);
     if (sceneTypeToEnhanceChainMap_.size() == 0) {
         FreeEnhanceBuffer();
+    }
+    return SUCCESS;
+}
+
+int32_t AudioEnhanceChainManager::DeleteEnhanceChainInner(std::shared_ptr<AudioEnhanceChain> &audioEnhanceChain,
+    const uint32_t sceneKeyCode)
+{
+    std::string sceneType = "";
+    std::string capturerDevice = "";
+    std::string rendererDeivce = "";
+    if (ParseSceneKeyCode(sceneKeyCode, sceneType, capturerDevice, rendererDeivce)) {
+        return ERROR;
+    }
+    uint32_t captureId = (sceneKeyCode & CAPTURER_ID_MASK) >> 8;
+    sceneTypeToEnhanceChainCountMap_.erase(sceneKeyCode);
+    sceneTypeToEnhanceChainMap_.erase(sceneKeyCode);
+    // not prior scene
+    if (priorSceneSet_.find(sceneType) == priorSceneSet_.end()) {
+        // default chain
+        if (audioEnhanceChain->IsDefaultChain()) {
+            auto &defaultChainCount = captureId2DefaultChainCount_.find(captureId)->second;
+            defaultChainCount--;
+            // delete default chain
+            if (!defaultChainCount) {
+                captureId2DefaultChain_[captureId] = nullptr;
+                AUDIO_INFO_LOG("captureId %{public}u default chain release", captureId);
+            }
+        } else {
+            captureId2SceneCount_[captureId]--;
+        }
     }
     return SUCCESS;
 }
@@ -394,7 +468,7 @@ bool AudioEnhanceChainManager::ExistAudioEnhanceChain(const uint32_t sceneKeyCod
 }
 
 int32_t AudioEnhanceChainManager::AudioEnhanceChainGetAlgoConfig(const uint32_t sceneKeyCode,
-    AudioBufferConfig &config)
+    AudioBufferConfig &config, bool &needEcFlag, bool &needMicRefFlag)
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     CHECK_AND_RETURN_RET_LOG(isInitialized_, ERROR, "has not been initialized");
@@ -406,6 +480,7 @@ int32_t AudioEnhanceChainManager::AudioEnhanceChainGetAlgoConfig(const uint32_t 
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChain != nullptr, ERROR, "[%{public}u] get config faild",
         sceneKeyCode);
     audioEnhanceChain->GetAlgoConfig(config);
+    audioEnhanceChain->GetEcAndMicRefFlag(needEcFlag, needMicRefFlag);
     return SUCCESS;
 }
 
@@ -413,16 +488,12 @@ bool AudioEnhanceChainManager::IsEmptyEnhanceChain()
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
     CHECK_AND_RETURN_RET_LOG(isInitialized_, ERROR, "has not been initialized");
-    if (sceneTypeToEnhanceChainMap_.size() == 0) {
-        return true;
-    }
-    bool ret = true;
-    for (auto &item : sceneTypeToEnhanceChainMap_) {
-        if (!item.second->IsEmptyEnhanceHandles()) {
-            ret = false;
+    for (auto &[scode, chain] : sceneTypeToEnhanceChainMap_) {
+        if (chain != nullptr && !chain->IsEmptyEnhanceHandles()) {
+            return false;
         }
     }
-    return ret;
+    return true;
 }
 
 int32_t AudioEnhanceChainManager::CopyToEnhanceBuffer(void *data, uint32_t length)
@@ -431,10 +502,34 @@ int32_t AudioEnhanceChainManager::CopyToEnhanceBuffer(void *data, uint32_t lengt
     if (enhanceBuffer_ == nullptr) {
         return ERROR;
     }
-    AUDIO_DEBUG_LOG("length: %{public}u chunk length: %{public}u", length, enhanceBuffer_->length);
-    CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferIn.data(), enhanceBuffer_->length, data, length) == 0,
-        ERROR, "memcpy error in data to enhanceBuffer->micBufferIn");
-    memset_s(enhanceBuffer_->ecBuffer.data(), enhanceBuffer_->lengthEc, 0, enhanceBuffer_->lengthEc);
+    AUDIO_DEBUG_LOG("length: %{public}lu chunk length: %{public}u", enhanceBuffer_->micBufferIn.size(), length);
+    CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferIn.data(), enhanceBuffer_->micBufferIn.size(), data,
+        length) == 0, ERROR, "memcpy error in data to enhanceBuffer->micBufferIn");
+    return SUCCESS;
+}
+
+int32_t AudioEnhanceChainManager::CopyEcToEnhanceBuffer(void *data, uint32_t length)
+{
+    std::lock_guard<std::mutex> lock(chainManagerMutex_);
+    if (enhanceBuffer_ == nullptr) {
+        return ERROR;
+    }
+    AUDIO_DEBUG_LOG("lengthEc: %{public}lu chunkEc length: %{public}u", enhanceBuffer_->ecBuffer.size(), length);
+    CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->ecBuffer.data(), enhanceBuffer_->ecBuffer.size(), data,
+        length) == 0, ERROR, "memcpy error in data to enhanceBuffer->ecBuffer");
+    return SUCCESS;
+}
+
+int32_t AudioEnhanceChainManager::CopyMicRefToEnhanceBuffer(void *data, uint32_t length)
+{
+    std::lock_guard<std::mutex> lock(chainManagerMutex_);
+    if (enhanceBuffer_ == nullptr) {
+        return ERROR;
+    }
+    AUDIO_DEBUG_LOG("lengthMicRef: %{public}lu chunkMicRef length: %{public}u", enhanceBuffer_->micRefBuffer.size(),
+        length);
+    CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micRefBuffer.data(), enhanceBuffer_->micRefBuffer.size(),
+        data, length) == 0, ERROR, "memcpy error in data to enhanceBuffer->micBufferIn");
     return SUCCESS;
 }
 
@@ -444,7 +539,7 @@ int32_t AudioEnhanceChainManager::CopyFromEnhanceBuffer(void *data, uint32_t len
     if (enhanceBuffer_ == nullptr) {
         return ERROR;
     }
-    if (length > enhanceBuffer_->length) {
+    if (length > enhanceBuffer_->micBufferOut.size()) {
         return ERROR;
     }
     CHECK_AND_RETURN_RET_LOG(memcpy_s(data, length, enhanceBuffer_->micBufferOut.data(), length) == 0,
@@ -455,17 +550,14 @@ int32_t AudioEnhanceChainManager::CopyFromEnhanceBuffer(void *data, uint32_t len
 int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const uint32_t sceneKeyCode, uint32_t length)
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
-    if (!sceneTypeToEnhanceChainMap_.count(sceneKeyCode)) {
-        if (enhanceBuffer_ == nullptr) {
-            AUDIO_ERR_LOG("enhanceBuffer has not been initialized");
-            return ERROR;
-        }
-        CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferOut.data(), enhanceBuffer_->length,
+    auto chainMapIter = sceneTypeToEnhanceChainMap_.find(sceneKeyCode);
+    if (chainMapIter == sceneTypeToEnhanceChainMap_.end() || chainMapIter->second == nullptr) {
+        CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferOut.data(), enhanceBuffer_->micBufferOut.size(),
             enhanceBuffer_->micBufferIn.data(), length) == 0, ERROR, "memcpy error in apply enhance");
         AUDIO_ERR_LOG("Can not find %{public}u in sceneTypeToEnhanceChainMap_", sceneKeyCode);
         return ERROR;
     }
-    auto audioEnhanceChain = sceneTypeToEnhanceChainMap_[sceneKeyCode];
+    auto audioEnhanceChain = chainMapIter->second;
     if (audioEnhanceChain->ApplyEnhanceChain(enhanceBuffer_, length) != SUCCESS) {
         AUDIO_ERR_LOG("Apply %{public}u failed.", sceneKeyCode);
         return ERROR;
@@ -541,6 +633,25 @@ int32_t AudioEnhanceChainManager::GetAudioEnhanceProperty(AudioEnhancePropertyAr
         }
     }
     return AUDIO_OK;
+}
+
+int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChainDefault(const uint32_t captureId, uint32_t length)
+{
+    std::lock_guard<std::mutex> lock(chainManagerMutex_);
+    auto chainMapIter = captureId2DefaultChain_.find(captureId);
+    if (chainMapIter == captureId2DefaultChain_.end() || chainMapIter->second == nullptr) {
+        CHECK_AND_RETURN_RET_LOG(memcpy_s(enhanceBuffer_->micBufferOut.data(), enhanceBuffer_->micBufferOut.size(),
+            enhanceBuffer_->micBufferIn.data(), length) == 0, ERROR, "memcpy error in apply enhance");
+        AUDIO_ERR_LOG("Can not find %{public}u in captureId2DefaultChain_", captureId);
+        return ERROR;
+    }
+    auto audioEnhanceChain = chainMapIter->second;
+    if (audioEnhanceChain->ApplyEnhanceChain(enhanceBuffer_, length) != SUCCESS) {
+        AUDIO_ERR_LOG("Apply default chain failed with captureId %{public}u.", captureId);
+        return ERROR;
+    }
+    AUDIO_DEBUG_LOG("Apply default chain success with captureId %{public}u.", captureId);
+    return SUCCESS;
 }
 } // namespace AudioStandard
 } // namespace OHOS

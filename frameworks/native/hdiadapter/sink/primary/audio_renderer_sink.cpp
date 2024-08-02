@@ -631,7 +631,7 @@ AudioFormat AudioRendererSinkInner::ConvertToHdiFormat(HdiAdapterFormat format)
 int32_t AudioRendererSinkInner::CreateRender(const struct AudioPort &renderPort)
 {
     Trace trace("AudioRendererSinkInner::CreateRender");
-    int32_t ret;
+
     struct AudioSampleAttributes param;
     struct AudioDeviceDescriptor deviceDesc;
     InitAttrs(param);
@@ -654,26 +654,32 @@ int32_t AudioRendererSinkInner::CreateRender(const struct AudioPort &renderPort)
     param.format = ConvertToHdiFormat(attr_.format);
     param.frameSize = PcmFormatToBits(param.format) * param.channelCount / PCM_8_BIT;
     param.startThreshold = DEEP_BUFFER_RENDER_PERIOD_SIZE / (param.frameSize);
-    AUDIO_INFO_LOG("Create render halname: %{public}s format: %{public}d, sampleRate:%{public}u channel%{public}u",
-        halName_.c_str(), param.format, param.sampleRate, param.channelCount);
     deviceDesc.portId = renderPort.portId;
-    deviceDesc.desc = const_cast<char *>("");
+    deviceDesc.desc = const_cast<char *>(attr_.address.c_str());
     deviceDesc.pins = PIN_OUT_SPEAKER;
+    currentActiveDevice_ = DEVICE_TYPE_SPEAKER;
     if (halName_ == "usb") {
         deviceDesc.pins = PIN_OUT_USB_HEADSET;
+        currentActiveDevice_ = DEVICE_TYPE_USB_ARM_HEADSET;
     } else if (halName_ == "dp") {
         deviceDesc.pins = PIN_OUT_DP;
+        currentActiveDevice_ = DEVICE_TYPE_DP;
     } else {
         deviceDesc.pins = GetAudioPortPin();
+        currentActiveDevice_ = static_cast<DeviceType>(attr_.deviceType);
     }
-    ret = audioAdapter_->CreateRender(audioAdapter_, &deviceDesc, &param, &audioRender_, &renderId_);
+
+    AUDIO_INFO_LOG("Create render sinkName:%{public}s, rate:%{public}u channel:%{public}u format:%{public}u, " \
+        "devicePin:%{public}u",
+        halName_.c_str(), param.sampleRate, param.channelCount, param.format, deviceDesc.pins);
+    int32_t ret = audioAdapter_->CreateRender(audioAdapter_, &deviceDesc, &param, &audioRender_, &renderId_);
     if (ret != 0 || audioRender_ == nullptr) {
         AUDIO_ERR_LOG("AudioDeviceCreateRender failed.");
         audioManager_->UnloadAdapter(audioManager_, adapterDesc_.adapterName);
         adapterInited_ = false;
         return ERR_NOT_STARTED;
     }
-    AUDIO_INFO_LOG("Create success rendererid: %{public}u", renderId_);
+    AUDIO_INFO_LOG("Create success rendererid: %{public}u desc: %{public}s", renderId_, deviceDesc.desc);
     SetAudioRouteInfoForEnhanceChain(currentActiveDevice_);
 
     return 0;

@@ -133,6 +133,10 @@ int32_t IAudioCapturerSourceInit(void *wapper, const SourceAttr *attr)
     iAttr.deviceType = attr->deviceType;
     iAttr.sourceType = attr->sourceType;
     iAttr.channelLayout = attr->channelLayout;
+    iAttr.hasEcConfig = attr->hasEcConfig;
+    iAttr.formatEc = attr->formatEc;
+    iAttr.sampleRateEc = attr->sampleRateEc;
+    iAttr.channelEc = attr->channelEc;
     ret = iAudioCapturerSource->Init(iAttr);
 
     return ret;
