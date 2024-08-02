@@ -91,7 +91,7 @@ struct EffectBufferAttr {
 
 enum SceneTypeOperation {
     ADD_SCENE_TYPE = 0,
-    REMOVE_SCENE_TYPE = 0,
+    REMOVE_SCENE_TYPE = 1,
 };
 
 class AudioEffectChainManager {
