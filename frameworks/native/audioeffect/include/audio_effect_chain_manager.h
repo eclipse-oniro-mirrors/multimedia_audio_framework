@@ -166,17 +166,17 @@ private:
     int32_t EffectApRotationUpdate(std::shared_ptr<AudioEffectRotation> audioEffectRotation,
         const uint32_t rotationState);
 #endif
-    std::map<std::string, std::shared_ptr<AudioEffectLibEntry>> EffectToLibraryEntryMap_;
-    std::map<std::string, std::string> EffectToLibraryNameMap_;
-    std::map<std::string, std::vector<std::string>> EffectChainToEffectsMap_;
-    std::map<std::string, std::string> SceneTypeAndModeToEffectChainNameMap_;
-    std::map<std::string, std::shared_ptr<AudioEffectChain>> SceneTypeToEffectChainMap_;
-    std::map<std::string, int32_t> SceneTypeToEffectChainCountMap_;
-    std::set<std::string> SessionIDSet_;
-    std::map<std::string, std::set<std::string>> SceneTypeToSessionIDMap_;
-    std::map<std::string, SessionEffectInfo> SessionIDToEffectInfoMap_;
-    std::map<std::string, int32_t> SceneTypeToEffectChainCountBackupMap_;
-    std::set<std::string> SceneTypeToSpecialEffectSet_;
+    std::map<std::string, std::shared_ptr<AudioEffectLibEntry>> effectToLibraryEntryMap_;
+    std::map<std::string, std::string> effectToLibraryNameMap_;
+    std::map<std::string, std::vector<std::string>> effectChainToEffectsMap_;
+    std::map<std::string, std::string> sceneTypeAndModeToEffectChainNameMap_;
+    std::map<std::string, std::shared_ptr<AudioEffectChain>> sceneTypeToEffectChainMap_;
+    std::map<std::string, int32_t> sceneTypeToEffectChainCountMap_;
+    std::set<std::string> sessionIDSet_;
+    std::map<std::string, std::set<std::string>> sceneTypeToSessionIDMap_;
+    std::map<std::string, SessionEffectInfo> sessionIDToEffectInfoMap_;
+    std::map<std::string, int32_t> sceneTypeToEffectChainCountBackupMap_;
+    std::set<std::string> sceneTypeToSpecialEffectSet_;
     std::unordered_map<std::string, std::string> effectPropertyMap_;
     std::vector<std::string> priorSceneList_;
     std::vector<std::pair<std::string, int32_t>> sceneTypeCountList_;
