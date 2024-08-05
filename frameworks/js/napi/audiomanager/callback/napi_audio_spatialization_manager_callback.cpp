@@ -25,6 +25,8 @@
 
 namespace OHOS {
 namespace AudioStandard {
+int32_t NapiAudioSpatializationEnabledChangeCallback::onSpatializationEnabledChangeflag_;
+int32_t NapiAudioHeadTrackingEnabledChangeCallback::onHeadTrackingEnabledChangeflag_;
 using namespace std;
 NapiAudioSpatializationEnabledChangeCallback::NapiAudioSpatializationEnabledChangeCallback(napi_env env)
     : env_(env)

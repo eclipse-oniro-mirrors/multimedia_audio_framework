@@ -112,9 +112,13 @@ const char *g_audioPolicyCodeStrs[] = {
     "SET_AVAILABLE_DEVICE_CHANGE_CALLBACK",
     "UNSET_AVAILABLE_DEVICE_CHANGE_CALLBACK",
     "IS_SPATIALIZATION_ENABLED",
+    "IS_SPATIALIZATION_ENABLED_FOR_DEVICE",
     "SET_SPATIALIZATION_ENABLED",
+    "SET_SPATIALIZATION_ENABLED_FOR_DEVICE",
     "IS_HEAD_TRACKING_ENABLED",
+    "IS_HEAD_TRACKING_ENABLED_FOR_DEVICE",
     "SET_HEAD_TRACKING_ENABLED",
+    "SET_HEAD_TRACKING_ENABLED_FOR_DEVICE",
     "GET_SPATIALIZATION_STATE",
     "IS_SPATIALIZATION_SUPPORTED",
     "IS_SPATIALIZATION_SUPPORTED_FOR_DEVICE",
@@ -1060,7 +1064,7 @@ void AudioPolicyManagerStub::IsSpatializationEnabledInternal(MessageParcel &data
     reply.WriteBool(result);
 }
 
-void AudioPolicyManagerStub::IsSpatializationEnabledInternal(MessageParcel &data, MessageParcel &reply)
+void AudioPolicyManagerStub::IsSpatializationEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply)
 {
     std::string address = data.ReadString();
     bool result = IsSpatializationEnabled(address);
@@ -1074,7 +1078,7 @@ void AudioPolicyManagerStub::SetSpatializationEnabledInternal(MessageParcel &dat
     reply.WriteInt32(result);
 }
 
-void AudioPolicyManagerStub::SetSpatializationEnabledInternal(MessageParcel &data, MessageParcel &reply)
+void AudioPolicyManagerStub::SetSpatializationEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply)
 {
     std::string address = data.ReadString();
     bool enable = data.ReadBool();
@@ -1088,7 +1092,7 @@ void AudioPolicyManagerStub::IsHeadTrackingEnabledInternal(MessageParcel &data, 
     reply.WriteBool(result);
 }
 
-void AudioPolicyManagerStub::IsHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply)
+void AudioPolicyManagerStub::IsHeadTrackingEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply)
 {
     std::string address = data.ReadString();
     bool result = IsHeadTrackingEnabled(address);
@@ -1097,16 +1101,16 @@ void AudioPolicyManagerStub::IsHeadTrackingEnabledInternal(MessageParcel &data, 
 
 void AudioPolicyManagerStub::SetHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply)
 {
-    std::string address = data.ReadString();
     bool enable = data.ReadBool();
-    int32_t result = SetHeadTrackingEnabled(address, enable);
+    int32_t result = SetHeadTrackingEnabled(enable);
     reply.WriteInt32(result);
 }
 
-void AudioPolicyManagerStub::SetHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply)
+void AudioPolicyManagerStub::SetHeadTrackingEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply)
 {
+    std::string address = data.ReadString();
     bool enable = data.ReadBool();
-    int32_t result = SetHeadTrackingEnabled(enable);
+    int32_t result = SetHeadTrackingEnabled(address, enable);
     reply.WriteInt32(result);
 }
 

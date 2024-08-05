@@ -240,7 +240,7 @@ void AudioSpatializationService::HandleSpatializationEnabledChange(const std::st
     AUDIO_INFO_LOG("device %{public}s Spatialization enabled callback is triggered: state is %{public}d",
         address.c_str(), enabled);
     if (audioPolicyServerHandler_ != nullptr) {
-        audioPolicyServerHandler_->SendSpatializatonEnabledChangeEvent(address, enabled);
+        audioPolicyServerHandler_->SendSpatializatonEnabledChangeForDeviceEvent(address, enabled);
     }
 }
 
@@ -257,7 +257,7 @@ void AudioSpatializationService::HandleHeadTrackingEnabledChange(const std::stri
     AUDIO_INFO_LOG("device %{public}s Head tracking enabled callback is triggered: state is %{public}d",
         address.c_str(), enabled);
     if (audioPolicyServerHandler_ != nullptr) {
-        audioPolicyServerHandler_->SendHeadTrackingEnabledChangeEvent(address, enabled);
+        audioPolicyServerHandler_->SendHeadTrackingEnabledChangeForDeviceEvent(address, enabled);
     }
 }
 

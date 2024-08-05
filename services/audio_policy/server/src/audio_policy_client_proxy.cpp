@@ -411,10 +411,10 @@ void AudioPolicyClientProxy::OnSpatializationEnabledChange(const sptr<AudioDevic
         return;
     }
 
-    data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_DEVICE_ENABLED_CHANGE,));
+    data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_DEVICE_ENABLED_CHANGE));
 
     if (hasSystemPermission_) {
-        date.WriteString(deviceDescriptor->macAddress_);
+        data.WriteString(deviceDescriptor->macAddress_);
         data.WriteBool(enabled);
     } else {
         data.WriteBool(false);

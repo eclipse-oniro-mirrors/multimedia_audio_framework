@@ -52,7 +52,7 @@ private:
     std::mutex mutex_;
     napi_env env_ = nullptr;
     std::list<std::shared_ptr<AutoRef>> spatializationEnabledChangeCbList_;
-    int32_t onSpatializationEnabledChangeflag_;
+    static int32_t onSpatializationEnabledChangeflag_;
 };
 
 class NapiAudioHeadTrackingEnabledChangeCallback : public AudioHeadTrackingEnabledChangeCallback {
@@ -80,7 +80,7 @@ private:
     std::mutex mutex_;
     napi_env env_ = nullptr;
     std::list<std::shared_ptr<AutoRef>> headTrackingEnabledChangeCbList_;
-    int32_t onHeadTrackingEnabledChangeflag_ ;
+    static int32_t onHeadTrackingEnabledChangeflag_ ;
 };
 } // namespace AudioStandard
 } // namespace OHOS

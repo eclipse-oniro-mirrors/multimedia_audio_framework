@@ -237,9 +237,10 @@ napi_value NapiAudioSpatializationManager::SetSpatializationEnabled(napi_env env
         return NapiParamUtils::GetUndefinedValue(env);
     }
 
-    auto inputParser = [env, context](size_t argc, napi_value *argv) {
+    auto inputParser = [env, context, &requireArgc](size_t argc, napi_value *argv) {
         NAPI_CHECK_ARGS_RETURN_VOID(context, argc >= ARGS_ONE, "mandatory parameters are left unspecified",
             NAPI_ERR_INPUT_INVALID);
+            bool argTransFlag = true;
         if (argc == ARGS_ONE) {
             context->status = NapiParamUtils::GetValueBoolean(env, context->spatializationEnable, argv[PARAM0]);
             NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
@@ -247,7 +248,8 @@ napi_value NapiAudioSpatializationManager::SetSpatializationEnabled(napi_env env
         }
         else if (argc == ARGS_TWO) {
             requireArgc = ARGS_TWO;
-            context->status = NapiParamUtils::GetAudioDeviceDescriptor(env, context->deviceDescriptor, argv[PARAM0]);
+            context->status = NapiParamUtils::GetAudioDeviceDescriptor(env, context->deviceDescriptor, argTransFlag,
+                argv[PARAM0]);
             NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
                 "incorrect parameter types: The param of deviceDescriptor must be interface AudioDeviceDescriptor",
                 NAPI_ERR_INPUT_INVALID);
@@ -262,14 +264,14 @@ napi_value NapiAudioSpatializationManager::SetSpatializationEnabled(napi_env env
         return NapiParamUtils::GetUndefinedValue(env);
     }
 
-    updateSpatializationEnabled(env, requireArgc, context);
+    return updateSpatializationEnabled(env, requireArgc, context);
     
 }
 
-void NapiAudioSpatializationManager::updateSpatializationEnabled(napi_env env, const std::size_t argc,
+napi_value NapiAudioSpatializationManager::updateSpatializationEnabled(napi_env env, const std::size_t argc,
     std::shared_ptr<AudioSpatializationManagerAsyncContext> &context)
 {
-    auto executor = [context]() {
+    auto executor = [context, argc]() {
         CHECK_AND_RETURN_LOG(CheckContextStatus(context), "context object state is error.");
         auto obj = reinterpret_cast<NapiAudioSpatializationManager*>(context->native);
         ObjectRefMap objectGuard(obj);
@@ -354,9 +356,10 @@ napi_value NapiAudioSpatializationManager::SetHeadTrackingEnabled(napi_env env, 
         return NapiParamUtils::GetUndefinedValue(env);
     }
 
-    auto inputParser = [env, context](size_t argc, napi_value *argv) {
+    auto inputParser = [env, context, inputParser](size_t argc, napi_value *argv) {
         NAPI_CHECK_ARGS_RETURN_VOID(context, argc >= ARGS_ONE, "mandatory parameters are left unspecified",
             NAPI_ERR_INPUT_INVALID);
+        bool argTransFlag = true;
         if (argc == ARGS_ONE) {
             context->status = NapiParamUtils::GetValueBoolean(env, context->headTrackingEnable, argv[PARAM0]);
             NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
@@ -364,7 +367,8 @@ napi_value NapiAudioSpatializationManager::SetHeadTrackingEnabled(napi_env env, 
         }
         else if (argc == ARGS_TWO) {
             requireArgc = ARGS_TWO;
-            context->status = NapiParamUtils::GetAudioDeviceDescriptor(env, context->deviceDescriptor, argv[PARAM0]);
+            context->status = NapiParamUtils::GetAudioDeviceDescriptor(env, context->deviceDescriptor, argTransFlag,
+                argv[PARAM0]);
             NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
                 "incorrect parameter types: The param of deviceDescriptor must be interface AudioDeviceDescriptor",
                 NAPI_ERR_INPUT_INVALID);
@@ -379,13 +383,13 @@ napi_value NapiAudioSpatializationManager::SetHeadTrackingEnabled(napi_env env, 
         return NapiParamUtils::GetUndefinedValue(env);
     }
 
-    updateHeadTrackingEnabled(env, requireArgc, context);
+    return updateHeadTrackingEnabled(env, requireArgc, context);
 }
 
-void NapiAudioSpatializationManager::updateHeadTrackingEnabled(napi_env env, const std::size_t argc,
+napi_value NapiAudioSpatializationManager::updateHeadTrackingEnabled(napi_env env, const std::size_t argc,
     std::shared_ptr<AudioSpatializationManagerAsyncContext> &context)
 {
-    auto executor = [context]() {
+    auto executor = [context, argc]() {
         CHECK_AND_RETURN_LOG(CheckContextStatus(context), "context object state is error.");
         auto obj = reinterpret_cast<NapiAudioSpatializationManager*>(context->native);
         ObjectRefMap objectGuard(obj);

@@ -460,7 +460,8 @@ bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeEvent(const bool &e
     return ret;
 }
 
-bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeEvent(const std::string address, const bool &enabled)
+bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeForDeviceEvent(const std::string address,
+    const bool &enabled)
 {
     std::shared_ptr<EventContextObj> eventContextObj = std::make_shared<EventContextObj>();
     CHECK_AND_RETURN_RET_LOG(eventContextObj != nullptr, false, "EventContextObj get nullptr");
@@ -485,7 +486,8 @@ bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeEvent(const bool &en
     return ret;
 }
 
-bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeEvent(const std::string address, const bool &enabled)
+bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeForDeviceEvent(const std::string address,
+    const bool &enabled)
 {
     std::shared_ptr<EventContextObj> eventContextObj = std::make_shared<EventContextObj>();
     CHECK_AND_RETURN_RET_LOG(eventContextObj != nullptr, false, "EventContextObj get nullptr");
