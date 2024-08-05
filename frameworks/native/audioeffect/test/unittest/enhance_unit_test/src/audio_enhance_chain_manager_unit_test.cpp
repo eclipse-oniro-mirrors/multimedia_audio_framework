@@ -68,7 +68,7 @@ void AudioEnhanceChainManagerUnitTest::SetUpTestSuite(void)
         SAMPLE_RATE_48000, CHANNEL_4, SAMPLE_S16LE,
         NEED_FALG, SAMPLE_RATE_48000, CHANNEL_4, SAMPLE_S16LE,
         NEED_FALG, SAMPLE_RATE_48000, CHANNEL_4, SAMPLE_S16LE
-    }
+    };
     enhanceLibraryList_ = {};
 }
 
