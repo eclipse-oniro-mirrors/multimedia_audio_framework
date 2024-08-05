@@ -577,9 +577,11 @@ int32_t AudioEffectChainManager::EffectDspVolumeUpdate(std::shared_ptr<AudioEffe
         }
     }
     // send volume to dsp
-    if (audioEffectVolume->GetDspVolume() != volumeMax) {
+    if (static_cast<int32_t>(audioEffectVolume->GetDspVolume() * MAX_UINT_VOLUME_NUM) !=
+        static_cast<int32_t>(volumeMax * MAX_UINT_VOLUME_NUM)) {
         audioEffectVolume->SetDspVolume(volumeMax);
         effectHdiInput_[0] = HDI_VOLUME;
+        volumeMax = static_cast<int32_t>(volumeMax * MAX_UINT_VOLUME);
         int32_t ret = memcpy_s(&effectHdiInput_[1], SEND_HDI_COMMAND_LEN, &volumeMax, sizeof(uint32_t));
         CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "memcpy volume failed");
         AUDIO_INFO_LOG("set hdi volume: %{public}u", *(reinterpret_cast<uint32_t *>(&effectHdiInput_[1])));
