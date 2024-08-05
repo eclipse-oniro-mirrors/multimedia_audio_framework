@@ -417,10 +417,21 @@ void AudioSpatializationService::UpdateRendererInfo(
 
 int32_t AudioSpatializationService::UpdateSpatializationStateReal(bool outputDeviceChange, std::string preDeviceAddress)
 {
-    bool spatializationEnabled = addressToSpatialEnabledMap_[currentDeviceAddress_].spatializationEnabled &&
-        IsSpatializationSupported() && IsSpatializationSupportedForDevice(currentDeviceAddress_);
-    bool headTrackingEnabled = addressToSpatialEnabledMap_[currentDeviceAddress_].headTrackingEnabled &&
-        IsHeadTrackingSupported() && IsHeadTrackingSupportedForDevice(currentDeviceAddress_) && spatializationEnabled;
+    bool spatializationEnabled = false;
+    bool headTrackingEnabled = false;
+    if (preSettingSpatialAddress_ == "NO_PREVIOUS_SET_DEVICE") {
+        spatializationEnabled = spatializationStateFlag_.spatializationEnabled &&
+            IsSpatializationSupported() && IsSpatializationSupportedForDevice(currentDeviceAddress_);
+        headTrackingEnabled = spatializationStateFlag_.headTrackingEnabled && IsHeadTrackingSupported() &&
+            IsHeadTrackingSupportedForDevice(currentDeviceAddress_) && spatializationEnabled;
+    } else {
+        spatializationEnabled = addressToSpatialEnabledMap_[currentDeviceAddress_].spatializationEnabled &&
+            IsSpatializationSupported() && IsSpatializationSupportedForDevice(currentDeviceAddress_);
+        headTrackingEnabled = addressToSpatialEnabledMap_[currentDeviceAddress_].headTrackingEnabled && 
+            IsHeadTrackingSupported() && IsHeadTrackingSupportedForDevice(currentDeviceAddress_) && 
+            spatializationEnabled;
+    }
+
     if ((spatializationEnabledReal_ == spatializationEnabled) && (headTrackingEnabledReal_ == headTrackingEnabled)) {
         AUDIO_INFO_LOG("no need to update real spatialization state");
         UpdateHeadTrackingDeviceState(outputDeviceChange, preDeviceAddress);
