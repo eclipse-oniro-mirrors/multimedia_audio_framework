@@ -35,6 +35,7 @@
 #define VALID_BUFFER_SIZE 1000
 #define INVALID_BUFFER_SIZE 10000
 #define MAX_EXTRA_NUM 3
+#define NEED_FALG true
 
 using namespace std;
 using namespace testing::ext;
@@ -47,6 +48,7 @@ AudioEnhanceChainManager* AudioEnhanceChainManagerUnitTest::manager_ = nullptr;
 std::vector<EffectChain> AudioEnhanceChainManagerUnitTest::enhanceChains_;
 EffectChainManagerParam AudioEnhanceChainManagerUnitTest::managerParam_;
 std::vector<std::shared_ptr<AudioEffectLibEntry>> AudioEnhanceChainManagerUnitTest::enhanceLibraryList_;
+AudioEnhanceDeviceAttr AudioEnhanceChainManagerUnitTest::deviceAttr;
 
 void AudioEnhanceChainManagerUnitTest::SetUpTestSuite(void)
 {
@@ -62,6 +64,11 @@ void AudioEnhanceChainManagerUnitTest::SetUpTestSuite(void)
     managerParam_.effectDefaultProperty = {
         {"effect1", "property1"}, {"effect2", "property2"}, {"effect3", "property3"}
     };
+    deviceAttr = {
+        SAMPLE_RATE_48000, CHANNEL_4, SAMPLE_S16LE,
+        NEED_FALG, SAMPLE_RATE_48000, CHANNEL_4, SAMPLE_S16LE,
+        NEED_FALG, SAMPLE_RATE_48000, CHANNEL_4, SAMPLE_S16LE
+    }
     enhanceLibraryList_ = {};
 }
 
@@ -87,7 +94,7 @@ void AudioEnhanceChainManagerUnitTest::TearDown(void)
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CreateAudioEnhanceChainDynamic_001, TestSize.Level1)
 {
     uint32_t invalidKeyCode = INVALID_SCENEKEY_CODE;
-    int32_t result = manager_->CreateAudioEnhanceChainDynamic(invalidKeyCode);
+    int32_t result = manager_->CreateAudioEnhanceChainDynamic(invalidKeyCode, deviceAttr);
     EXPECT_EQ(result, ERROR);
 }
 
@@ -99,7 +106,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CreateAudioEnhanceChainDynamic_001, T
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CreateAudioEnhanceChainDynamic_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
 }
 
 
@@ -124,7 +131,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ReleaseAudioEnhanceChainDynamic_001, 
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ReleaseAudioEnhanceChainDynamic_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
 
     int32_t result = manager_->ReleaseAudioEnhanceChainDynamic(validKeyCode);
     EXPECT_EQ(result, SUCCESS);
@@ -141,7 +148,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ExistAudioEnhanceChain_001, TestSize.
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
     uint32_t invalidKeyCode = INVALID_SCENEKEY_CODE;
 
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
     bool result = manager_->ExistAudioEnhanceChain(invalidKeyCode);
     EXPECT_EQ(result, false);
 }
@@ -154,7 +161,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ExistAudioEnhanceChain_001, TestSize.
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ExistAudioEnhanceChain_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
     manager_->ExistAudioEnhanceChain(validKeyCode);
 }
 
@@ -166,11 +173,14 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ExistAudioEnhanceChain_002, TestSize.
 HWTEST_F(AudioEnhanceChainManagerUnitTest, AudioEnhanceChainGetAlgoConfig_001, TestSize.Level1)
 {
     AudioBufferConfig config;
+    bool needEcFlag;
+    bool needMicRefFlag;
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
     uint32_t invalidKeyCode = INVALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
 
-    int32_t result = manager_->AudioEnhanceChainGetAlgoConfig(invalidKeyCode, config);
+    int32_t result = manager_->AudioEnhanceChainGetAlgoConfig(invalidKeyCode, config, needEcFlag,
+        needMicRefFlag);
     EXPECT_EQ(result, ERROR);
 }
 
@@ -182,9 +192,12 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, AudioEnhanceChainGetAlgoConfig_001, T
 HWTEST_F(AudioEnhanceChainManagerUnitTest, AudioEnhanceChainGetAlgoConfig_002, TestSize.Level1)
 {
     AudioBufferConfig config;
+    bool needEcFlag;
+    bool needMicRefFlag;
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
-    manager_->AudioEnhanceChainGetAlgoConfig(VALID_SCENEKEY_CODE, config);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
+    manager_->AudioEnhanceChainGetAlgoConfig(VALID_SCENEKEY_CODE, config, needEcFlag,
+        needMicRefFlag);
 }
 
 /*
@@ -206,7 +219,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, IsEmptyEnhanceChain_001, TestSize.Lev
 HWTEST_F(AudioEnhanceChainManagerUnitTest, IsEmptyEnhanceChain_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
     manager_->IsEmptyEnhanceChain();
 }
 
@@ -219,7 +232,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, IsEmptyEnhanceChain_002, TestSize.Lev
 HWTEST_F(AudioEnhanceChainManagerUnitTest, InitEnhanceBuffer_001, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
     int32_t result = manager_->InitEnhanceBuffer();
     EXPECT_EQ(result, SUCCESS);
 }
@@ -232,7 +245,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, InitEnhanceBuffer_001, TestSize.Level
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyToEnhanceBuffer_001, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
     manager_->InitEnhanceBuffer();
 
     uint32_t bufferSize = VALID_BUFFER_SIZE;
@@ -262,7 +275,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyToEnhanceBuffer_002, TestSize.Lev
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyToEnhanceBuffer_003, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
     manager_->InitEnhanceBuffer();
 
     uint32_t bufferSize = INVALID_BUFFER_SIZE;
@@ -292,7 +305,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_001, TestSize.L
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_002, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
     manager_->InitEnhanceBuffer();
 
     uint32_t bufferSize = INVALID_BUFFER_SIZE;
@@ -309,7 +322,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_002, TestSize.L
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_003, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
     manager_->InitEnhanceBuffer();
 
     uint32_t bufferSize = VALID_BUFFER_SIZE;
@@ -326,7 +339,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_003, TestSize.L
 HWTEST_F(AudioEnhanceChainManagerUnitTest, CopyFromEnhanceBuffer_004, TestSize.Level1)
 {
     uint32_t validKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validKeyCode, deviceAttr);
     manager_->InitEnhanceBuffer();
 
     uint32_t bufferSize = VALID_BUFFER_SIZE;
@@ -350,7 +363,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_001, TestSize.
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
     uint32_t invalidSceneKeyCode = INVALID_SCENEKEY_CODE;
     uint32_t bufferSize = VALID_BUFFER_SIZE;
-    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode, deviceAttr);
     manager_->InitEnhanceBuffer();
 
     std::vector<uint8_t> dummyData(bufferSize, 0x00);
@@ -367,7 +380,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_001, TestSize.
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_002, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode, deviceAttr);
     manager_->InitEnhanceBuffer();
 
     uint32_t bufferSize = INVALID_BUFFER_SIZE;
@@ -384,7 +397,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_002, TestSize.
 HWTEST_F(AudioEnhanceChainManagerUnitTest, ApplyAudioEnhanceChain_003, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode, deviceAttr);
     manager_->InitEnhanceBuffer();
 
     uint32_t bufferSize = VALID_BUFFER_SIZE;
@@ -533,7 +546,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetStreamVolumeInfo_001, TestSize.Lev
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_001, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode, deviceAttr);
 
     AudioEnhancePropertyArray propertyArray;
     int32_t result = manager_->SetAudioEnhanceProperty(propertyArray);
@@ -548,7 +561,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_001, TestSize
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_002, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode, deviceAttr);
 
     AudioEnhancePropertyArray propertyArray;
     propertyArray.property.push_back({"record", "123"});
@@ -563,7 +576,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_002, TestSize
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_003, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode, deviceAttr);
 
     AudioEnhancePropertyArray propertyArray;
     propertyArray.property.push_back({"invalidEffect", "property1"});
@@ -579,7 +592,7 @@ HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_003, TestSize
 HWTEST_F(AudioEnhanceChainManagerUnitTest, SetAudioEnhanceProperty_004, TestSize.Level1)
 {
     uint32_t validSceneKeyCode = VALID_SCENEKEY_CODE;
-    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode);
+    manager_->CreateAudioEnhanceChainDynamic(validSceneKeyCode, deviceAttr);
 
     AudioEnhancePropertyArray propertyArray;
     propertyArray.property.push_back({"effect1", "property1"});
