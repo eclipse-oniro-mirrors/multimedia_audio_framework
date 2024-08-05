@@ -403,7 +403,7 @@ void AudioPolicyService::CreateRecoveryThread()
     if (RecoveryDevicesThread_ != nullptr) {
         RecoveryDevicesThread_->detach();
     }
-    RecoveryDevicesThread_ = std::make_unique<std::thread>(&AudioPolicyService::RecoveryPerferredDevices, this);
+    RecoveryDevicesThread_ = std::make_unique<std::thread>([this] { this->RecoveryPerferredDevices(); });
     pthread_setname_np(RecoveryDevicesThread_->native_handle(), "APSRecovery");
 }
 
@@ -821,6 +821,7 @@ void AudioPolicyService::OffloadStreamReleaseCheck(uint32_t sessionId)
         MoveToNewPipe(sessionId, normalPipe);
         streamCollector_.UpdateRendererPipeInfo(sessionId, normalPipe);
         offloadSessionID_.reset();
+        DynamicUnloadModule(PIPE_TYPE_OFFLOAD);
         AUDIO_DEBUG_LOG("sessionId[%{public}d] release offload stream", sessionId);
     } else {
         if (offloadSessionID_.has_value()) {
@@ -843,6 +844,7 @@ void AudioPolicyService::RemoteOffloadStreamRelease(uint32_t sessionId)
         MoveToNewPipe(sessionId, normalPipe);
         streamCollector_.UpdateRendererPipeInfo(sessionId, normalPipe);
         offloadSessionID_.reset();
+        DynamicUnloadModule(PIPE_TYPE_OFFLOAD);
         AUDIO_DEBUG_LOG("sessionId[%{public}d] release offload stream", sessionId);
     }
 }
@@ -2621,7 +2623,6 @@ void AudioPolicyService::FetchInputDevice(vector<unique_ptr<AudioCapturerChangeI
         MoveToNewInputDevice(capturerChangeInfo, desc);
         AddAudioCapturerMicrophoneDescriptor(capturerChangeInfo->sessionId, desc->deviceType_);
     }
-    BluetoothScoDisconectForRecongnition();
     if (isUpdateActiveDevice) {
         OnPreferredInputDeviceUpdated(currentActiveInputDevice_.deviceType_, currentActiveInputDevice_.networkId_);
     }
@@ -2635,7 +2636,7 @@ void AudioPolicyService::BluetoothScoFetch(unique_ptr<AudioDeviceDescriptor> &de
 {
     int32_t ret;
     if (sourceType == SOURCE_TYPE_VOICE_RECOGNITION) {
-        ret = ScoInputDeviceFetchedForRecongnition(true, desc->macAddress_);
+        ret = ScoInputDeviceFetchedForRecongnition(true, desc->macAddress_, desc->connectState_);
     } else {
         ret = HandleScoInputDeviceFetched(desc, capturerChangeInfos);
     }
@@ -2645,9 +2646,10 @@ void AudioPolicyService::BluetoothScoFetch(unique_ptr<AudioDeviceDescriptor> &de
 
 void AudioPolicyService::BluetoothScoDisconectForRecongnition()
 {
-    if (Bluetooth::AudioHfpManager::GetScoCategory() != Bluetooth::ScoCategory::SCO_RECOGNITION &&
-        currentActiveInputDevice_.deviceType_ != DEVICE_TYPE_BLUETOOTH_SCO && audioDeviceManager_.GetScoState()) {
-    int32_t ret = ScoInputDeviceFetchedForRecongnition(false, currentActiveInputDevice_.macAddress_);
+    if (Bluetooth::AudioHfpManager::GetScoCategory() == Bluetooth::ScoCategory::SCO_RECOGNITION &&
+        currentActiveInputDevice_.deviceType_ == DEVICE_TYPE_BLUETOOTH_SCO && audioDeviceManager_.GetScoState()) {
+    int32_t ret = ScoInputDeviceFetchedForRecongnition(false, currentActiveInputDevice_.macAddress_,
+        currentActiveInputDevice_.connectState_);
     CHECK_AND_RETURN_LOG(ret == SUCCESS, "sco [%{public}s] disconnected failed",
         GetEncryptAddr(currentActiveInputDevice_.macAddress_).c_str());
     }
@@ -3184,7 +3186,10 @@ int32_t AudioPolicyService::ActivateNormalNewDevice(DeviceType deviceType, bool 
                 "Invalid port %{public}s",
                 sinkPortName.c_str());
             audioPolicyManager_.SetSinkMute(sinkPortName, true);
-            std::thread switchThread(&AudioPolicyService::KeepPortMute, this, muteDuration, sinkPortName, deviceType);
+            auto switchFirThread = [this, muteDuration, sinkPortName, deviceType] {
+                this->KeepPortMute(muteDuration, sinkPortName, deviceType);
+            };
+            std::thread switchThread(switchFirThread);
             switchThread.detach();
             int32_t beforSwitchDelay = 300000; // 300 ms
             usleep(beforSwitchDelay);
@@ -4884,7 +4889,6 @@ int32_t AudioPolicyService::RegisterTracker(AudioMode &mode, AudioStreamChangeIn
 int32_t AudioPolicyService::UpdateTracker(AudioMode &mode, AudioStreamChangeInfo &streamChangeInfo)
 {
     std::lock_guard<std::shared_mutex> deviceLock(deviceStatusUpdateSharedMutex_);
-    AUDIO_INFO_LOG("Entered AudioPolicyService UpdateTracker");
 
     if (mode == AUDIO_MODE_RECORD) {
         if (streamChangeInfo.audioCapturerChangeInfo.capturerState == CAPTURER_RELEASED) {
@@ -4901,10 +4905,6 @@ int32_t AudioPolicyService::UpdateTracker(AudioMode &mode, AudioStreamChangeInfo
 
     if (rendererState == RENDERER_RELEASED && !streamCollector_.ExistStreamForPipe(PIPE_TYPE_MULTICHANNEL)) {
         DynamicUnloadModule(PIPE_TYPE_MULTICHANNEL);
-    }
-
-    if (rendererState == RENDERER_RELEASED && !streamCollector_.ExistStreamForPipe(PIPE_TYPE_OFFLOAD)) {
-        DynamicUnloadModule(PIPE_TYPE_OFFLOAD);
     }
 
     if (mode == AUDIO_MODE_PLAYBACK && (rendererState == RENDERER_STOPPED || rendererState == RENDERER_PAUSED)) {
@@ -5509,7 +5509,7 @@ int32_t AudioPolicyService::CheckActiveMusicTime()
 void AudioPolicyService::CreateCheckMusicActiveThread()
 {
     if (calculateLoopSafeTime_ == nullptr) {
-        calculateLoopSafeTime_ = std::make_unique<std::thread>(&AudioPolicyService::CheckActiveMusicTime, this);
+        calculateLoopSafeTime_ = std::make_unique<std::thread>([this] { this->CheckActiveMusicTime(); });
         pthread_setname_np(calculateLoopSafeTime_->native_handle(), "OS_AudioPolicySafe");
     }
 }
@@ -5527,7 +5527,7 @@ void AudioPolicyService::CreateSafeVolumeDialogThread()
     }
 
     AUDIO_INFO_LOG("create thread begin");
-    safeVolumeDialogThrd_ = std::make_unique<std::thread>(&AudioPolicyService::ShowDialog, this);
+    safeVolumeDialogThrd_ = std::make_unique<std::thread>([this] { this->ShowDialog(); });
     pthread_setname_np(safeVolumeDialogThrd_->native_handle(), "OS_AudioSafeDialog");
     isSafeVolumeDialogShowing_.store(true);
     AUDIO_INFO_LOG("create thread end");
@@ -6170,7 +6170,7 @@ bool AudioPolicyService::CheckStreamOffloadMode(int64_t activateSessionId, Audio
     }
 
     if (!streamCollector_.IsOffloadAllowed(activateSessionId)) {
-        AUDIO_INFO_LOG("Offload is not allowed, Skipped");
+        AUDIO_PRERELEASE_LOGI("Offload is not allowed, Skipped");
         return false;
     }
 
@@ -6353,7 +6353,8 @@ int32_t AudioPolicyService::DynamicUnloadModule(const AudioPipeType pipeType)
     switch (pipeType) {
         case PIPE_TYPE_OFFLOAD:
             if (isOffloadOpened_.load()) {
-                std::thread unloadOffloadThrd(&AudioPolicyService::UnloadOffloadModule, this);
+                auto unloadFirOffloadThrd = [this] { this->UnloadOffloadModule(); };
+                std::thread unloadOffloadThrd(unloadFirOffloadThrd);
                 unloadOffloadThrd.detach();
             }
             break;
@@ -6447,8 +6448,9 @@ const sptr<IStandardAudioService> RegisterBluetoothDeathCallback()
         // register death recipent
         sptr<AudioServerDeathRecipient> asDeathRecipient = new(std::nothrow) AudioServerDeathRecipient(getpid());
         if (asDeathRecipient != nullptr) {
-            asDeathRecipient->SetNotifyCb(std::bind(&AudioPolicyService::BluetoothServiceCrashedCallback,
-                std::placeholders::_1));
+            asDeathRecipient->SetNotifyCb([] (pid_t pid) {
+                AudioPolicyService::BluetoothServiceCrashedCallback(pid);
+            });
             bool result = object->AddDeathRecipient(asDeathRecipient);
             if (!result) {
                 AUDIO_ERR_LOG("failed to add deathRecipient");
@@ -6785,6 +6787,9 @@ void AudioPolicyService::OnCapturerSessionRemoved(uint64_t sessionID)
     }
 
     if (sessionWithNormalSourceType_.count(sessionID) > 0) {
+        if (sessionWithNormalSourceType_[sessionID].sourceType == SOURCE_TYPE_VOICE_RECOGNITION) {
+            BluetoothScoDisconectForRecongnition();
+        }
         sessionWithNormalSourceType_.erase(sessionID);
         if (!sessionWithNormalSourceType_.empty()) {
             return;
@@ -6939,12 +6944,33 @@ int32_t AudioPolicyService::OffloadStartPlaying(const std::vector<int32_t> &sess
 int32_t AudioPolicyService::OffloadStopPlaying(const std::vector<int32_t> &sessionIds)
 {
 #ifdef BLUETOOTH_ENABLE
-    AUDIO_INFO_LOG("OffloadStopPlaying, a2dpOffloadFlag_: %{public}d, sessionIds: %{public}zu",
+    AUDIO_PRERELEASE_LOGI("OffloadStopPlaying, a2dpOffloadFlag_: %{public}d, sessionIds: %{public}zu",
         a2dpOffloadFlag_, sessionIds.size());
     if (a2dpOffloadFlag_ != A2DP_OFFLOAD || sessionIds.size() == 0) {
         return SUCCESS;
     }
     return Bluetooth::AudioA2dpManager::OffloadStopPlaying(sessionIds);
+#else
+    return SUCCESS;
+#endif
+}
+
+int32_t AudioPolicyService::OffloadGetRenderPosition(uint32_t &delayValue, uint64_t &sendDataSize, uint32_t &timeStamp)
+{
+    Trace trace("AudioPolicyService::OffloadGetRenderPosition");
+#ifdef BLUETOOTH_ENABLE
+    AUDIO_DEBUG_LOG("GetRenderPosition, deviceType: %{public}d, a2dpOffloadFlag_: %{public}d",
+        a2dpOffloadFlag_, currentActiveDevice_.deviceType_);
+    int32_t ret = SUCCESS;
+    if (currentActiveDevice_.deviceType_ == DEVICE_TYPE_BLUETOOTH_A2DP &&
+        currentActiveDevice_.networkId_ == LOCAL_NETWORK_ID && a2dpOffloadFlag_ == A2DP_OFFLOAD) {
+        ret = Bluetooth::AudioA2dpManager::GetRenderPosition(delayValue, sendDataSize, timeStamp);
+    } else {
+        delayValue = 0;
+        sendDataSize = 0;
+        timeStamp = 0;
+    }
+    return ret;
 #else
     return SUCCESS;
 #endif
@@ -6998,7 +7024,7 @@ void AudioPolicyService::UpdateA2dpOffloadFlag(const std::vector<Bluetooth::A2dp
     DeviceType deviceType)
 {
     if (allActiveSessions.size() == 0) {
-        AUDIO_INFO_LOG("no active sessions");
+        AUDIO_PRERELEASE_LOGI("no active sessions");
         return;
     }
     auto receiveOffloadFlag = NO_A2DP_DEVICE;
@@ -7291,7 +7317,7 @@ void AudioPolicyService::CheckForA2dpSuspend(AudioDeviceDescriptor &desc)
 
 void AudioPolicyService::UpdateOffloadWhenActiveDeviceSwitchFromA2dp()
 {
-    AUDIO_INFO_LOG("a2dpOffloadFlag_ change from %{public}d to %{public}d", a2dpOffloadFlag_, NO_A2DP_DEVICE);
+    AUDIO_PRERELEASE_LOGI("a2dpOffloadFlag_ change from %{public}d to %{public}d", a2dpOffloadFlag_, NO_A2DP_DEVICE);
     std::vector<int32_t> allSessions;
     GetAllRunningStreamSession(allSessions);
     OffloadStopPlaying(allSessions);
@@ -8312,8 +8338,12 @@ void AudioPolicyService::UpdateEffectBtOffloadSupported(const bool &isSupported)
     return;
 }
 
-int32_t AudioPolicyService::ScoInputDeviceFetchedForRecongnition(bool handleFlag, const std::string &address)
+int32_t AudioPolicyService::ScoInputDeviceFetchedForRecongnition(bool handleFlag, const std::string &address,
+    ConnectState connectState)
 {
+    if (handleFlag && connectState != DEACTIVE_CONNECTED) {
+        return SUCCESS;
+    }
     Bluetooth::BluetoothRemoteDevice device = Bluetooth::BluetoothRemoteDevice(address);
     return Bluetooth::AudioHfpManager::HandleScoWithRecongnition(handleFlag, device);
 }
