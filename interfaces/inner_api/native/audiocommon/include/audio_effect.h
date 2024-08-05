@@ -49,7 +49,7 @@ constexpr int32_t HDI_BLUETOOTH_MODE = 4;
 constexpr int32_t HDI_DESTROY = 5;
 constexpr int32_t HDI_VOLUME = 7;
 constexpr int32_t HDI_ROTATION = 8;
-constexpr int32_t HDI_IPDATE_RSS_SCENE_TYPE = 6;
+constexpr int32_t HDI_EXTRA_SCENE_TYPE = 9;
 
 enum AudioSpatialDeviceType {
     EARPHONE_TYPE_NONE = 0,
