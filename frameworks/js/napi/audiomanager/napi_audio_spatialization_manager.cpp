@@ -204,7 +204,7 @@ napi_value NapiAudioSpatializationManager::IsSpatializationEnabled(napi_env env,
         napi_typeof(env, args[PARAM0], &valueType);
         CHECK_AND_RETURN_RET_LOG(valueType == napi_object, NapiAudioError::ThrowErrorAndReturn(env,
         NAPI_ERR_INPUT_INVALID, "incorrect parameter types: The type of deviceDescriptor must be object"),
-        "invalid valueType");
+            "invalid valueType");
 
         sptr<AudioDeviceDescriptor> selectedAudioDevice = new (std::nothrow) AudioDeviceDescriptor();
         NapiParamUtils::GetAudioDeviceDescriptor(env, selectedAudioDevice, argTransFlag, args[PARAM0]);
@@ -245,8 +245,7 @@ napi_value NapiAudioSpatializationManager::SetSpatializationEnabled(napi_env env
             context->status = NapiParamUtils::GetValueBoolean(env, context->spatializationEnable, argv[PARAM0]);
             NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
                 "incorrect parameter types: The type of enable must be boolean", NAPI_ERR_INPUT_INVALID);
-        }
-        else if (argc == ARGS_TWO) {
+        } else if (argc == ARGS_TWO) {
             requireArgc = ARGS_TWO;
             context->status = NapiParamUtils::GetAudioDeviceDescriptor(env, context->deviceDescriptor, argTransFlag,
                 argv[PARAM0]);
@@ -265,7 +264,6 @@ napi_value NapiAudioSpatializationManager::SetSpatializationEnabled(napi_env env
     }
 
     return updateSpatializationEnabled(env, requireArgc, context);
-    
 }
 
 napi_value NapiAudioSpatializationManager::updateSpatializationEnabled(napi_env env, const std::size_t argc,
@@ -281,8 +279,7 @@ napi_value NapiAudioSpatializationManager::updateSpatializationEnabled(napi_env 
         if (argc == ARGS_ONE) {
             context->intValue = napiAudioSpatializationManager->audioSpatializationMngr_->SetSpatializationEnabled(
                 context->spatializationEnable);
-        }
-        else if (argc == ARGS_TWO) {
+        } else if (argc == ARGS_TWO) {
             context->intValue = napiAudioSpatializationManager->audioSpatializationMngr_->SetSpatializationEnabled(
                 context->deviceDescriptor, context->spatializationEnable);
         }
@@ -323,7 +320,7 @@ napi_value NapiAudioSpatializationManager::IsHeadTrackingEnabled(napi_env env, n
         napi_typeof(env, args[PARAM0], &valueType);
         CHECK_AND_RETURN_RET_LOG(valueType == napi_object, NapiAudioError::ThrowErrorAndReturn(env,
         NAPI_ERR_INPUT_INVALID, "incorrect parameter types: The type of deviceDescriptor must be object"),
-        "invalid valueType");
+            "invalid valueType");
 
         sptr<AudioDeviceDescriptor> selectedAudioDevice = new (std::nothrow) AudioDeviceDescriptor();
         NapiParamUtils::GetAudioDeviceDescriptor(env, selectedAudioDevice, argTransFlag, args[PARAM0]);
@@ -356,7 +353,7 @@ napi_value NapiAudioSpatializationManager::SetHeadTrackingEnabled(napi_env env, 
         return NapiParamUtils::GetUndefinedValue(env);
     }
 
-    auto inputParser = [env, context, inputParser](size_t argc, napi_value *argv) {
+    auto inputParser = [env, context, &requireArgc](size_t argc, napi_value *argv) {
         NAPI_CHECK_ARGS_RETURN_VOID(context, argc >= ARGS_ONE, "mandatory parameters are left unspecified",
             NAPI_ERR_INPUT_INVALID);
         bool argTransFlag = true;
@@ -364,8 +361,7 @@ napi_value NapiAudioSpatializationManager::SetHeadTrackingEnabled(napi_env env, 
             context->status = NapiParamUtils::GetValueBoolean(env, context->headTrackingEnable, argv[PARAM0]);
             NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
                 "incorrect parameter types: The type of enable must be boolean", NAPI_ERR_INPUT_INVALID);
-        }
-        else if (argc == ARGS_TWO) {
+        } else if (argc == ARGS_TWO) {
             requireArgc = ARGS_TWO;
             context->status = NapiParamUtils::GetAudioDeviceDescriptor(env, context->deviceDescriptor, argTransFlag,
                 argv[PARAM0]);
@@ -399,8 +395,7 @@ napi_value NapiAudioSpatializationManager::updateHeadTrackingEnabled(napi_env en
         if (argc == ARGS_ONE) {
             context->intValue = napiAudioSpatializationManager->audioSpatializationMngr_->SetHeadTrackingEnabled(
                 context->spatializationEnable);
-        }
-        else if (argc == ARGS_TWO) {
+        } else if (argc == ARGS_TWO) {
             context->intValue = napiAudioSpatializationManager->audioSpatializationMngr_->SetHeadTrackingEnabled(
                 context->deviceDescriptor, context->spatializationEnable);
         }

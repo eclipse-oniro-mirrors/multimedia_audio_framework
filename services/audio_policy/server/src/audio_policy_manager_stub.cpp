@@ -1239,6 +1239,28 @@ void AudioPolicyManagerStub::ReleaseAudioInterruptZoneInternal(MessageParcel &da
     reply.WriteInt32(result);
 }
 
+void AudioPolicyManagerStub::OnMiddleNinRemoteRequest(
+    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
+{
+    switch (code) {
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_SPATIALIZATION_ENABLED_FOR_DEVICE):
+            IsHeadTrackingEnabledForDeviceInternal(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_SPATIALIZATION_ENABLED_FOR_DEVICE):
+            SetSpatializationEnabledForDeviceInternal(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_HEAD_TRACKING_ENABLED_FOR_DEVICE):
+            IsHeadTrackingEnabledForDeviceInternal(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_HEAD_TRACKING_ENABLED_FOR_DEVICE):
+            SetHeadTrackingEnabledForDeviceInternal(data, reply);
+            break;
+        default:
+            AUDIO_ERR_LOG("default case, need check AudioPolicyManagerStub");
+            IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+            break;
+    }
+}
 void AudioPolicyManagerStub::OnMiddleEigRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -1283,8 +1305,7 @@ void AudioPolicyManagerStub::OnMiddleEigRemoteRequest(
             InjectInterruptionInternal(data, reply);
             break;
         default:
-            AUDIO_ERR_LOG("default case, need check AudioPolicyManagerStub");
-            IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+            OnMiddleNinRemoteRequest(code, data, reply, option);
             break;
     }
 }
@@ -1412,26 +1433,14 @@ void AudioPolicyManagerStub::OnMiddleFifRemoteRequest(
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_SPATIALIZATION_ENABLED):
             IsSpatializationEnabledInternal(data, reply);
             break;
-        case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_SPATIALIZATION_ENABLED_FOR_DEVICE):
-            IsHeadTrackingEnabledForDeviceInternal(data, reply);
-            break;
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_SPATIALIZATION_ENABLED):
             SetSpatializationEnabledInternal(data, reply);
-            break;
-        case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_SPATIALIZATION_ENABLED_FOR_DEVICE):
-            SetSpatializationEnabledForDeviceInternal(data, reply);
             break;
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_HEAD_TRACKING_ENABLED):
             IsHeadTrackingEnabledInternal(data, reply);
             break;
-        case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_HEAD_TRACKING_ENABLED_FOR_DEVICE):
-            IsHeadTrackingEnabledForDeviceInternal(data, reply);
-            break;
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_HEAD_TRACKING_ENABLED):
             SetHeadTrackingEnabledInternal(data, reply);
-            break;
-        case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_HEAD_TRACKING_ENABLED_FOR_DEVICE):
-            SetHeadTrackingEnabledForDeviceInternal(data, reply);
             break;
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::GET_SPATIALIZATION_STATE):
             GetSpatializationStateInternal(data, reply);

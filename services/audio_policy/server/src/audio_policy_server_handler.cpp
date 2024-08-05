@@ -1021,6 +1021,12 @@ void AudioPolicyServerHandler::HandleOtherServiceEvent(const uint32_t &eventId,
         case EventAudioServerCmd::CONCURRENCY_EVENT_WITH_SESSIONID:
             HandleConcurrencyEventWithSessionID(event);
             break;
+        case EventAudioServerCmd::SPATIALIZATION_DEVICE_ENABLED_CHANGE:
+            HandleSpatializatonDeviceEnabledChangeEvent(event);
+            break;
+        case EventAudioServerCmd::HEAD_TRACKING_DEVICE_ENABLED_CHANGE:
+            HandleHeadTrackingDeviceEnabledChangeEvent(event);
+            break;
         default:
             break;
     }
@@ -1070,14 +1076,8 @@ void AudioPolicyServerHandler::ProcessEvent(const AppExecFwk::InnerEvent::Pointe
         case EventAudioServerCmd::SPATIALIZATION_ENABLED_CHANGE:
             HandleSpatializatonEnabledChangeEvent(event);
             break;
-        case EventAudioServerCmd::SPATIALIZATION_DEVICE_ENABLED_CHANGE:
-            HandleSpatializatonDeviceEnabledChangeEvent(event);
-            break;
         case EventAudioServerCmd::HEAD_TRACKING_ENABLED_CHANGE:
             HandleHeadTrackingEnabledChangeEvent(event);
-            break;
-        case EventAudioServerCmd::HEAD_TRACKING_DEVICE_ENABLED_CHANGE:
-            HandleHeadTrackingDeviceEnabledChangeEvent(event);
             break;
         default:
             break;

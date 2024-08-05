@@ -427,8 +427,8 @@ int32_t AudioSpatializationService::UpdateSpatializationStateReal(bool outputDev
     } else {
         spatializationEnabled = addressToSpatialEnabledMap_[currentDeviceAddress_].spatializationEnabled &&
             IsSpatializationSupported() && IsSpatializationSupportedForDevice(currentDeviceAddress_);
-        headTrackingEnabled = addressToSpatialEnabledMap_[currentDeviceAddress_].headTrackingEnabled && 
-            IsHeadTrackingSupported() && IsHeadTrackingSupportedForDevice(currentDeviceAddress_) && 
+        headTrackingEnabled = addressToSpatialEnabledMap_[currentDeviceAddress_].headTrackingEnabled &&
+            IsHeadTrackingSupported() && IsHeadTrackingSupportedForDevice(currentDeviceAddress_) &&
             spatializationEnabled;
     }
 

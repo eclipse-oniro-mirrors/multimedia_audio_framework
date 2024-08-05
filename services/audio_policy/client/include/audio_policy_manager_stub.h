@@ -162,6 +162,7 @@ private:
     void GetMicrophoneMutePersistentInternal(MessageParcel &data, MessageParcel &reply);
     void InjectInterruptionInternal(MessageParcel &data, MessageParcel &reply);
 
+    void OnMiddleNinRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleEigRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleSevRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleSixRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
