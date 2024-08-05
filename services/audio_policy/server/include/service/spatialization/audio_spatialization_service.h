@@ -116,7 +116,6 @@ private:
     bool headTrackingEnabledReal_ = false;
     bool isHeadTrackingDataRequested_ = false;
     bool isLoadedfromDb_ = false;
-    int32_t deviceCount_ = 0;
     AudioSpatializationState spatializationStateFlag_ = {false};
     std::unordered_map<std::string, AudioSpatializationState> addressToSpatialEnabledMap_;
     std::unordered_map<std::string, AudioSpatialStateDevice> audioSpatialDeviceStateMap_;
