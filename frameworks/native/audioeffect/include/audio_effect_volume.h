@@ -36,7 +36,7 @@ public:
     float GetStreamVolume(const std::string sessionID);
     int32_t StreamVolumeDelete(const std::string sessionID);
 private:
-    float dspVolume_;
+    float dspVolume_ = 1.0f;
     float systemVolume_;
     std::mutex volumeMutex_;
     std::map<std::string, float> SceneTypeToVolumeMap_;
