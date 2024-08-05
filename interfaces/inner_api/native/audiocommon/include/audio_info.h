@@ -31,6 +31,7 @@
 #include <audio_interrupt_info.h>
 #include <audio_stream_info.h>
 #include <audio_asr.h>
+#include <array>
 
 namespace OHOS {
 namespace AudioStandard {
