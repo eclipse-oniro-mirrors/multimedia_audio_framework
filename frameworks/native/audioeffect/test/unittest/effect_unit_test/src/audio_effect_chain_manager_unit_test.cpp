@@ -49,7 +49,7 @@ EffectChainManagerParam DEFAULT_EFFECT_CHAIN_MANAGER_PARAM{
     {},
     {{"SCENE_MOVIE_&_EFFECT_DEFAULT_&_DEVICE_TYPE_SPEAKER", "EFFECTCHAIN_SPK_MUSIC"},
         {"SCENE_MOVIE_&_EFFECT_DEFAULT_&_DEVICE_TYPE_BLUETOOTH_A2DP", "EFFECTCHAIN_BT_MUSIC"}},
-    {{"effect1", "property1"}, {"effect4", "property5"}, {"effect1", "property4"}}
+    {{"effect11", "property4"}, {"effect5", "property14"}}
 };
 
 AudioEffectPropertyArray DEFAULT_AUDIO_PROPERTY_ARRAY = { { {"effect19", "property19"}, {"effect8", "property10"} } };
