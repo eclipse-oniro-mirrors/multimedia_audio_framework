@@ -29,6 +29,7 @@
 
 #include "securec.h"
 #include "audio_log.h"
+#include "audio_hdiadapter_info.h"
 #include "audio_enhance_chain_adapter.h"
 #include "userdata.h"
 
@@ -117,22 +118,116 @@ static bool DecreaseScenekeyCount(pa_hashmap *sceneMap, const char *key)
     return false;
 }
 
-static void SetResampler(pa_source_output *so, const pa_sample_spec *algoConfig,
-    const char *sceneKey, pa_hashmap *resamplerMap)
+static void SetResampler(pa_source_output *so, const char *sceneKey,
+    const struct Userdata *u, const struct AlgoSettings *algoSettings)
 {
+    pa_hashmap *preResamplerMap = (pa_hashmap *)u->sceneToPreResamplerMap;
+    pa_hashmap *ecResamplerMap = (pa_hashmap *)u->sceneToEcResamplerMap;
+    pa_hashmap *micRefResamplerMap = (pa_hashmap *)u->sceneToMicRefResamplerMap;
     AUDIO_INFO_LOG("SOURCE rate = %{public}d ALGO rate = %{public}d ",
-        so->source->sample_spec.rate, algoConfig->rate);
-    if (!pa_sample_spec_equal(&so->source->sample_spec, algoConfig)) {
+        so->source->sample_spec.rate, algoSettings->algoSpec.rate);
+    if (!pa_sample_spec_equal(&so->source->sample_spec, &algoSettings->algoSpec)) {
         pa_resampler *preResampler = pa_resampler_new(so->source->core->mempool,
+            &so->source->sample_spec, &so->source->channel_map,
+            &algoSettings->algoSpec, &so->source->channel_map,
+            so->source->core->lfe_crossover_freq,
+            PA_RESAMPLER_AUTO,
+            PA_RESAMPLER_VARIABLE_RATE);
+        pa_hashmap_put(preResamplerMap, pa_xstrdup(sceneKey), preResampler);
+        pa_resampler_set_input_rate(so->thread_info.resampler, algoSettings->algoSpec.rate);
+    }
+    if ((algoSettings->needEcFlag) && ((u->ecType == EC_SAME_ADAPTER) || (u->ecType == EC_DIFFERENT_ADAPTER))) {
+        if (!pa_sample_spec_equal(&u->ecSpec, &algoSettings->algoSpec)) {
+            pa_resampler *ecResampler = pa_resampler_new(so->source->core->mempool,
+            &u->ecSpec, &so->source->channel_map,
+            &algoSettings->algoSpec, &so->source->channel_map,
+            so->source->core->lfe_crossover_freq,
+            PA_RESAMPLER_AUTO,
+            PA_RESAMPLER_VARIABLE_RATE);
+            pa_hashmap_put(ecResamplerMap, pa_xstrdup(sceneKey), ecResampler);
+        }
+    }
+    if ((algoSettings->needMicRefFlag) && (u->micRef == REF_ON)) {
+        if (!pa_sample_spec_equal(&u->micRefSpec, &algoSettings->algoSpec)) {
+            pa_resampler *micRefResampler = pa_resampler_new(so->source->core->mempool,
+            &u->micRefSpec, &so->source->channel_map,
+            &algoSettings->algoSpec, &so->source->channel_map,
+            so->source->core->lfe_crossover_freq,
+            PA_RESAMPLER_AUTO,
+            PA_RESAMPLER_VARIABLE_RATE);
+            pa_hashmap_put(micRefResamplerMap, pa_xstrdup(sceneKey), micRefResampler);
+        }
+    }
+}
+
+static void SetDefaultResampler(pa_source_output *so, const pa_sample_spec *algoConfig, struct Userdata *u)
+{
+    if (!pa_sample_spec_equal(&so->source->sample_spec, algoConfig)) {
+        if (u->defaultSceneResampler) {
+            pa_resampler_free(u->defaultSceneResampler);
+        }
+        u->defaultSceneResampler = pa_resampler_new(so->source->core->mempool,
             &so->source->sample_spec, &so->source->channel_map,
             algoConfig, &so->source->channel_map,
             so->source->core->lfe_crossover_freq,
             PA_RESAMPLER_AUTO,
             PA_RESAMPLER_VARIABLE_RATE);
-        pa_hashmap_put(resamplerMap, pa_xstrdup(sceneKey), preResampler);
         pa_resampler_set_input_rate(so->thread_info.resampler, algoConfig->rate);
     }
 }
+
+static uint32_t GetByteSizeByFormat(enum HdiAdapterFormat format)
+{
+    uint32_t byteSize = 0;
+    switch (format) {
+        case SAMPLE_U8:
+            byteSize = BYTE_SIZE_SAMPLE_U8;
+            break;
+        case SAMPLE_S16:
+            byteSize = BYTE_SIZE_SAMPLE_S16;
+            break;
+        case SAMPLE_S24:
+            byteSize = BYTE_SIZE_SAMPLE_S24;
+            break;
+        case SAMPLE_S32:
+            byteSize = BYTE_SIZE_SAMPLE_S32;
+            break;
+        default:
+            byteSize = BYTE_SIZE_SAMPLE_S16;
+            break;
+    }
+    return byteSize;
+}
+
+static void InitDeviceAttrAdapter(struct DeviceAttrAdapter *deviceAttrAdapter, struct Userdata *u)
+{
+    deviceAttrAdapter->micRate = u->attrs.sampleRate;
+    deviceAttrAdapter->micChannels = u->attrs.channel;
+    deviceAttrAdapter->micFormat = GetByteSizeByFormat(u->attrs.format);
+    deviceAttrAdapter->needEc = false;
+    deviceAttrAdapter->needMicRef = false;
+    if (u->ecType != EC_NONE) {
+        deviceAttrAdapter->needEc = true;
+        deviceAttrAdapter->ecRate = u->ecSamplingRate;
+        deviceAttrAdapter->ecChannels = u->ecChannels;
+        deviceAttrAdapter->ecFormat = GetByteSizeByFormat(u->ecFormat);
+    } else {
+        deviceAttrAdapter->ecRate = 0;
+        deviceAttrAdapter->ecChannels = 0;
+        deviceAttrAdapter->ecFormat = 0;
+    }
+    if (u->micRef == REF_ON) {
+        deviceAttrAdapter->needMicRef = true;
+        deviceAttrAdapter->micRefRate = u->micRefRate;
+        deviceAttrAdapter->micRefChannels = u->micRefChannels;
+        deviceAttrAdapter->micRefFormat = GetByteSizeByFormat(u->micRefFormat);
+    } else {
+        deviceAttrAdapter->micRefRate = 0;
+        deviceAttrAdapter->micRefChannels = 0;
+        deviceAttrAdapter->micRefFormat = 0;
+    }
+}
+
 
 static pa_hook_result_t HandleSourceOutputPut(pa_source_output *so, struct Userdata *u)
 {
@@ -146,25 +241,37 @@ static pa_hook_result_t HandleSourceOutputPut(pa_source_output *so, struct Userd
     }
     uint32_t sceneKeyCode = 0;
     sceneKeyCode = (sceneTypeCode << SCENE_TYPE_OFFSET) + (captureId << CAPTURER_ID_OFFSET) + renderId;
-    if (EnhanceChainManagerCreateCb(sceneKeyCode) != 0) {
+    struct DeviceAttrAdapter deviceAttrAdapter;
+    InitDeviceAttrAdapter(&deviceAttrAdapter, u);
+    int32_t ret = EnhanceChainManagerCreateCb(sceneKeyCode, deviceAttrAdapter);
+    if (ret < 0) {
         AUDIO_INFO_LOG("Create EnhanceChain failed, set to bypass");
         pa_proplist_sets(so->proplist, "scene.bypass", DEFAULT_SCENE_BYPASS);
         return PA_HOOK_OK;
     }
-    EnhanceChainManagerInitEnhanceBuffer();
-    char sceneKey[MAX_SCENE_NAME_LEN];
-    if (sprintf_s(sceneKey, sizeof(sceneKey), "%u", sceneKeyCode) < 0) {
-        AUDIO_ERR_LOG("sprintf from sceneKeyCode to sceneKey failed");
-        return PA_HOOK_OK;
-    }
-    IncreaseScenekeyCount(u->sceneToCountMap, sceneKey);
-    pa_sample_spec algoConfig;
-    pa_sample_spec_init(&algoConfig);
-    if (EnhanceChainManagerGetAlgoConfig(sceneKeyCode, &algoConfig) != 0) {
+    struct AlgoSettings algoSettings;
+    pa_sample_spec_init(&algoSettings.algoSpec);
+    algoSettings.needEcFlag = false;
+    algoSettings.needMicRefFlag = false;
+    if (EnhanceChainManagerGetAlgoConfig(sceneKeyCode, &algoSettings.algoSpec,
+        &algoSettings.needEcFlag, &algoSettings.needMicRefFlag) != 0) {
         AUDIO_ERR_LOG("Get algo config failed");
         return PA_HOOK_OK;
     }
-    SetResampler(so, &algoConfig, sceneKey, u->sceneToResamplerMap);
+    // default chain
+    if (ret > 0) {
+        SetDefaultResampler(so, &algoSettings.algoSpec, u);
+        pa_proplist_sets(so->proplist, "scene.default", "1");
+    } else {
+        char sceneKey[MAX_SCENE_NAME_LEN];
+        if (sprintf_s(sceneKey, sizeof(sceneKey), "%u", sceneKeyCode) < 0) {
+            AUDIO_ERR_LOG("sprintf from sceneKeyCode to sceneKey failed");
+            return PA_HOOK_OK;
+        }
+        IncreaseScenekeyCount(u->sceneToCountMap, sceneKey);
+        SetResampler(so, sceneKey, u, &algoSettings);
+    }
+    EnhanceChainManagerInitEnhanceBuffer();
     return PA_HOOK_OK;
 }
 
@@ -181,14 +288,16 @@ static pa_hook_result_t HandleSourceOutputUnlink(pa_source_output *so, struct Us
     uint32_t sceneKeyCode = 0;
     sceneKeyCode = (sceneTypeCode << SCENE_TYPE_OFFSET) + (captureId << CAPTURER_ID_OFFSET) + renderId;
     EnhanceChainManagerReleaseCb(sceneKeyCode);
-    
     char sceneKey[MAX_SCENE_NAME_LEN];
     if (sprintf_s(sceneKey, sizeof(sceneKey), "%u", sceneKeyCode) < 0) {
         AUDIO_ERR_LOG("sprintf from sceneKeyCode to sceneKey failed");
         return PA_HOOK_OK;
     }
-    if (DecreaseScenekeyCount(u->sceneToCountMap, sceneKey)) {
-        pa_hashmap_remove_and_free(u->sceneToResamplerMap, sceneKey);
+    if (!pa_safe_streq(pa_proplist_gets(so->proplist, "scene.default"), "1") &&
+        DecreaseScenekeyCount(u->sceneToCountMap, sceneKey)) {
+        pa_hashmap_remove_and_free(u->sceneToPreResamplerMap, sceneKey);
+        pa_hashmap_remove_and_free(u->sceneToEcResamplerMap, sceneKey);
+        pa_hashmap_remove_and_free(u->sceneToMicRefResamplerMap, sceneKey);
     }
     return PA_HOOK_OK;
 }

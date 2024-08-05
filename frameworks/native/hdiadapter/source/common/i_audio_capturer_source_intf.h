@@ -38,6 +38,10 @@ typedef struct {
     int32_t deviceType;
     int32_t sourceType;
     uint64_t channelLayout;
+    bool hasEcConfig;
+    enum HdiAdapterFormat formatEc;
+    uint32_t sampleRateEc;
+    uint32_t channelEc;
 } SourceAttr;
 
 struct CapturerSourceAdapter {

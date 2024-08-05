@@ -822,8 +822,8 @@ static void MarshallEffectChainMgrParam(const EffectChainManagerParam &effectCha
     data.WriteInt32(effectChainMgrParam.maxExtraNum);
     data.WriteString(effectChainMgrParam.defaultSceneName);
     data.WriteInt32(effectChainMgrParam.priorSceneList.size());
-    for (const auto &prioScene : effectChainMgrParam.priorSceneList) {
-        data.WriteString(prioScene);
+    for (const auto &priorScene : effectChainMgrParam.priorSceneList) {
+        data.WriteString(priorScene);
     }
 
     data.WriteInt32(effectChainMgrParam.sceneTypeToChainNameMap.size());

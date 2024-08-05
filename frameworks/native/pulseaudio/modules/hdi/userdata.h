@@ -31,6 +31,10 @@
 #define MAX_SCENE_NAME_LEN 100
 #define SCENE_TYPE_OFFSET 16
 #define CAPTURER_ID_OFFSET 8
+#define BYTE_SIZE_SAMPLE_U8 1
+#define BYTE_SIZE_SAMPLE_S16 2
+#define BYTE_SIZE_SAMPLE_S24 3
+#define BYTE_SIZE_SAMPLE_S32 4
 #define BASE_TEN 10
 
 struct Userdata {
@@ -51,14 +55,18 @@ struct Userdata {
     uint32_t ecSamplingRate;
     int32_t ecFormat;
     uint32_t ecChannels;
+    pa_sample_spec ecSpec;
     MicRefSwitch micRef;
     uint32_t micRefRate;
     int32_t micRefFormat;
     uint32_t micRefChannels;
+    pa_sample_spec micRefSpec;
     struct CapturerSourceAdapter *sourceAdapter;
     pa_usec_t delayTime;
     pa_hashmap *sceneToCountMap;
-    pa_hashmap *sceneToResamplerMap;
+    pa_hashmap *sceneToPreResamplerMap;
+    pa_hashmap *sceneToEcResamplerMap;
+    pa_hashmap *sceneToMicRefResamplerMap;
     HdiCaptureHandle *captureHandleEc;
     HdiCaptureHandle *captureHandleMicRef;
     uint64_t requestBytesEc;
@@ -67,6 +75,13 @@ struct Userdata {
     void *bufferMicRef;
     uint32_t captureId;
     uint32_t renderId;
+    pa_resampler *defaultSceneResampler;
+};
+
+struct AlgoSettings {
+    bool needEcFlag;
+    bool needMicRefFlag;
+    pa_sample_spec algoSpec;
 };
 
 #endif // USERDATA_H

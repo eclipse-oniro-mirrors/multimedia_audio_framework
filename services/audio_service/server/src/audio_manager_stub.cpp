@@ -442,7 +442,7 @@ static bool UnmarshallEffectChainMgrParam(EffectChainManagerParam &effectChainMg
 
     int32_t containSize = data.ReadInt32();
     CHECK_AND_RETURN_RET_LOG(containSize >= 0 && containSize <= AUDIO_EFFECT_PRIOR_SCENE_UPPER_LIMIT,
-        false, "Create audio effect prioscene failed, please check log");
+        false, "Create audio effect priorScene failed, please check log");
     while (containSize--) {
         effectChainMgrParam.priorSceneList.emplace_back(data.ReadString());
     }
