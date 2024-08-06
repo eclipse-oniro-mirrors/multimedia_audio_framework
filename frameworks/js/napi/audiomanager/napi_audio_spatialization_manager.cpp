@@ -394,10 +394,10 @@ napi_value NapiAudioSpatializationManager::updateHeadTrackingEnabled(napi_env en
             "audio spatialization manager state is error.");
         if (argc == ARGS_ONE) {
             context->intValue = napiAudioSpatializationManager->audioSpatializationMngr_->SetHeadTrackingEnabled(
-                context->spatializationEnable);
+                context->headTrackingEnable);
         } else if (argc == ARGS_TWO) {
             context->intValue = napiAudioSpatializationManager->audioSpatializationMngr_->SetHeadTrackingEnabled(
-                context->deviceDescriptor, context->spatializationEnable);
+                context->deviceDescriptor, context->headTrackingEnable);
         }
 
         if (context->intValue == ERR_PERMISSION_DENIED) {
