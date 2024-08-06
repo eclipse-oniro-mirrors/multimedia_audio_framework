@@ -1054,16 +1054,14 @@ void AudioEffectChainManager::UpdateExtraSceneType(const std::string &mainkey, c
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
     if (mainkey == "audio_effect" && subkey == "update_audio_effect_type") {
-
         AUDIO_INFO_LOG("Set scene type: %{public}s to hdi", extraSceneType.c_str());
         int32_t ret{ SUCCESS };
         effectHdiInput_[0] = HDI_EXTRA_SCENE_TYPE;
-        effectHdiInput_[1] = extraSceneType;
+        effectHdiInput_[1] = static_cast<int32_t>(extraSceneType);
         ret = audioEffectHdiParam_->UpdateHdiState(effectHdiInput_, DEVICE_TYPE_SPEAKER);
         if (ret != SUCCESS) {
             AUDIO_WARNING_LOG("set hdi update rss scene type failed");
         }
-    
         AUDIO_INFO_LOG("Set scene type: %{public}s to arm", extraSceneType.c_str());
         extraSceneType_ = extraSceneType;
         for (auto it = SceneTypeToEffectChainMap_.begin(); it != SceneTypeToEffectChainMap_.end(); ++it) {
@@ -1078,8 +1076,8 @@ void AudioEffectChainManager::UpdateExtraSceneType(const std::string &mainkey, c
             }
         }
     } else {
-        AUDIO_INFO_LOG("UpdateExtraSceneType failed, mainkey is %{public}s, subkey is %{public}s, 
-            extraSceneType is %{public}s",mainkey.c_str(), subkey.c_str(), extraSceneType.c_str())
+        AUDIO_INFO_LOG("UpdateExtraSceneType failed, mainkey is %{public}s, subkey is %{public}s, "
+            "extraSceneType is %{public}s", mainkey.c_str(), subkey.c_str(), extraSceneType.c_str())
         return;
     }
 }
