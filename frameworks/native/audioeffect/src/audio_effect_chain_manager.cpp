@@ -1057,7 +1057,7 @@ void AudioEffectChainManager::UpdateExtraSceneType(const std::string &mainkey, c
         AUDIO_INFO_LOG("Set scene type: %{public}s to hdi", extraSceneType.c_str());
         int32_t ret{ SUCCESS };
         effectHdiInput_[0] = HDI_EXTRA_SCENE_TYPE;
-        effectHdiInput_[1] = static_cast<int32_t>(extraSceneType);
+        effectHdiInput_[1] = static_cast<int32_t>(std::stoi(extraSceneType));
         ret = audioEffectHdiParam_->UpdateHdiState(effectHdiInput_, DEVICE_TYPE_SPEAKER);
         if (ret != SUCCESS) {
             AUDIO_WARNING_LOG("set hdi update rss scene type failed");
