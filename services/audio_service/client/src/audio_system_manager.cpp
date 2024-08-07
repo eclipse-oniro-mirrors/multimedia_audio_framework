@@ -854,7 +854,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
 {
     AUDIO_DEBUG_LOG("on callback Entered OnAudioFocusRequested %{public}s", __func__);
 
-    std::unique_lock<mutex> cbListLock(cbListMutex_);
+    lock_guard<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback).lock();
         cbListLock.unlock();
@@ -864,7 +864,6 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
         } else {
             AUDIO_ERR_LOG("OnAudioFocusRequested: callback is null");
         }
-        cbListLock.lock();
     }
     return;
 }
@@ -873,7 +872,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrup
 {
     AUDIO_DEBUG_LOG("on callback Entered OnAudioFocusAbandoned %{public}s", __func__);
 
-    std::unique_lock<mutex> cbListLock(cbListMutex_);
+    lock_guard<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback).lock();
         cbListLock.unlock();
@@ -883,7 +882,6 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrup
         } else {
             AUDIO_ERR_LOG("OnAudioFocusAbandoned: callback is null");
         }
-        cbListLock.lock();
     }
     return;
 }
@@ -1429,6 +1427,7 @@ void AudioDistributedRoutingRoleCallbackImpl::SaveCallback(
     const std::shared_ptr<AudioDistributedRoutingRoleCallback> &callback)
 {
     bool hasCallback = false;
+    lock_guard<mutex> cbListLock(cbListMutex_);
     for (auto it = callbackList_.begin(); it != callbackList_.end(); ++it) {
         if ((*it) == callback) {
             hasCallback = true;
@@ -1443,6 +1442,7 @@ void AudioDistributedRoutingRoleCallbackImpl::RemoveCallback(
     const std::shared_ptr<AudioDistributedRoutingRoleCallback> &callback)
 {
     AUDIO_INFO_LOG("Entered %{public}s", __func__);
+    lock_guard<mutex> cbListLock(cbListMutex_);
     callbackList_.remove_if([&callback](std::shared_ptr<AudioDistributedRoutingRoleCallback> &callback_) {
         return callback_ == callback;
     });
@@ -1451,6 +1451,7 @@ void AudioDistributedRoutingRoleCallbackImpl::RemoveCallback(
 void AudioDistributedRoutingRoleCallbackImpl::OnDistributedRoutingRoleChange(
     const AudioDeviceDescriptor *descriptor, const CastType type)
 {
+    lock_guard<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback);
         if (cb_ != nullptr) {
