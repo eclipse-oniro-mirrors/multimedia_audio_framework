@@ -843,7 +843,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusInfoChange(
             cb_->OnAudioFocusInfoChange(focusInfoList);
         } else {
             AUDIO_ERR_LOG("OnAudioFocusInfoChange: callback is null");
-        } 
+        }
     }
     return;
 }
