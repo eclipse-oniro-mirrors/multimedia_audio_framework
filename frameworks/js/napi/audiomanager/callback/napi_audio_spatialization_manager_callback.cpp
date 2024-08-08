@@ -303,10 +303,11 @@ void NapiAudioHeadTrackingEnabledChangeCallback::SaveHeadTrackingEnabledChangeCa
 }
 
 void NapiAudioHeadTrackingEnabledChangeCallback::RemoveHeadTrackingEnabledChangeCallbackReference(napi_env env,
-    napi_value args)
+    napi_value args, const std::string cbName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (onHeadTrackingEnabledChangeflag_ == ARGS_ONE) {
+    if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME)) {
+        onHeadTrackingEnabledChangeflag_ = ARGS_ONE;
         for (auto it = headTrackingEnabledChangeCbList_.begin(); it != headTrackingEnabledChangeCbList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             if (isSameCallback) {
@@ -317,7 +318,8 @@ void NapiAudioHeadTrackingEnabledChangeCallback::RemoveHeadTrackingEnabledChange
                 return;
             }
         }
-    } else if (onHeadTrackingEnabledChangeflag_ == ARGS_TWO) {
+    } else if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
+        onHeadTrackingEnabledChangeflag_ = ARGS_TWO;
         for (auto it = newheadTrackingEnabledChangeCbList_.begin(); it != newheadTrackingEnabledChangeCbList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             if (isSameCallback) {
@@ -332,16 +334,19 @@ void NapiAudioHeadTrackingEnabledChangeCallback::RemoveHeadTrackingEnabledChange
     AUDIO_INFO_LOG("RemoveHeadTrackingEnabledChangeCallbackReference: js callback no find");
 }
 
-void NapiAudioHeadTrackingEnabledChangeCallback::RemoveAllHeadTrackingEnabledChangeCallbackReference()
+void NapiAudioHeadTrackingEnabledChangeCallback::RemoveAllHeadTrackingEnabledChangeCallbackReference(const std::string
+    cbName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (onHeadTrackingEnabledChangeflag_ == ARGS_ONE) {
+    if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME)) {
+        onHeadTrackingEnabledChangeflag_ = ARGS_ONE;
         for (auto it = headTrackingEnabledChangeCbList_.begin(); it != headTrackingEnabledChangeCbList_.end(); ++it) {
             napi_delete_reference(env_, (*it)->cb_);
             (*it)->cb_ = nullptr;
         }
         headTrackingEnabledChangeCbList_.clear();
-    } else if (onHeadTrackingEnabledChangeflag_ == ARGS_TWO) {
+    } else if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
+        onHeadTrackingEnabledChangeflag_ = ARGS_TWO;
         for (auto it = newheadTrackingEnabledChangeCbList_.begin(); it != newheadTrackingEnabledChangeCbList_.end(); ++it) {
             napi_delete_reference(env_, (*it)->cb_);
             (*it)->cb_ = nullptr;

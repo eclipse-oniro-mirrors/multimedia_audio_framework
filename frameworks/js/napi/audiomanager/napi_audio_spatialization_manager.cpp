@@ -727,9 +727,13 @@ void NapiAudioSpatializationManager::UnRegisterCallback(napi_env env, napi_value
         "spatialization instance null.");
 
     if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME)) {
-        UnregisterSpatializationEnabledChangeCallback(env, args[PARAM1], napiAudioSpatializationManager);
+        UnregisterSpatializationEnabledChangeCallback(env, args[PARAM1], cbName, napiAudioSpatializationManager);
+    } else if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
+        UnregisterSpatializationEnabledChangeCallback(env, args[PARAM1], cbName, napiAudioSpatializationManager);
     } else if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME)) {
-        UnregisterHeadTrackingEnabledChangeCallback(env, args[PARAM1], napiAudioSpatializationManager);
+        UnregisterHeadTrackingEnabledChangeCallback(env, args[PARAM1], cbName, napiAudioSpatializationManager);
+    } else if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
+        UnregisterHeadTrackingEnabledChangeCallback(env, args[PARAM1], cbName, napiAudioSpatializationManager);
     } else {
         NapiAudioError::ThrowError(env, NAPI_ERR_INVALID_PARAM,
             "parameter verification failed: The param of type is not supported");
@@ -737,14 +741,14 @@ void NapiAudioSpatializationManager::UnRegisterCallback(napi_env env, napi_value
 }
 
 void NapiAudioSpatializationManager::UnregisterSpatializationEnabledChangeCallback(napi_env env, napi_value callback,
-    NapiAudioSpatializationManager *napiAudioSpatializationManager)
+    const std::string &cbName, NapiAudioSpatializationManager *napiAudioSpatializationManager)
 {
     if (napiAudioSpatializationManager->spatializationEnabledChangeCallbackNapi_ != nullptr) {
         std::shared_ptr<NapiAudioSpatializationEnabledChangeCallback> cb =
             std::static_pointer_cast<NapiAudioSpatializationEnabledChangeCallback>(
             napiAudioSpatializationManager->spatializationEnabledChangeCallbackNapi_);
         if (callback != nullptr) {
-            cb->RemoveSpatializationEnabledChangeCallbackReference(env, callback);
+            cb->RemoveSpatializationEnabledChangeCallbackReference(env, callback, cbName);
         }
         if (callback == nullptr || cb->GetSpatializationEnabledChangeCbListSize() == 0) {
             int32_t ret = napiAudioSpatializationManager->audioSpatializationMngr_->
@@ -752,7 +756,7 @@ void NapiAudioSpatializationManager::UnregisterSpatializationEnabledChangeCallba
             CHECK_AND_RETURN_LOG(ret == SUCCESS, "UnregisterSpatializationEnabledEventListener Failed");
             napiAudioSpatializationManager->spatializationEnabledChangeCallbackNapi_.reset();
             napiAudioSpatializationManager->spatializationEnabledChangeCallbackNapi_ = nullptr;
-            cb->RemoveAllSpatializationEnabledChangeCallbackReference();
+            cb->RemoveAllSpatializationEnabledChangeCallbackReference(cbName);
         }
     } else {
         AUDIO_ERR_LOG("UnregisterSpatializationEnabledChangeCb: spatializationEnabledChangeCallbackNapi_ is null");
@@ -760,14 +764,14 @@ void NapiAudioSpatializationManager::UnregisterSpatializationEnabledChangeCallba
 }
 
 void NapiAudioSpatializationManager::UnregisterHeadTrackingEnabledChangeCallback(napi_env env, napi_value callback,
-    NapiAudioSpatializationManager *napiAudioSpatializationManager)
+    const std::string &cbName, NapiAudioSpatializationManager *napiAudioSpatializationManager)
 {
     if (napiAudioSpatializationManager->headTrackingEnabledChangeCallbackNapi_ != nullptr) {
         std::shared_ptr<NapiAudioHeadTrackingEnabledChangeCallback> cb =
             std::static_pointer_cast<NapiAudioHeadTrackingEnabledChangeCallback>(
             napiAudioSpatializationManager->headTrackingEnabledChangeCallbackNapi_);
         if (callback != nullptr) {
-            cb->RemoveHeadTrackingEnabledChangeCallbackReference(env, callback);
+            cb->RemoveHeadTrackingEnabledChangeCallbackReference(env, callback, cbName);
         }
         if (callback == nullptr || cb->GetHeadTrackingEnabledChangeCbListSize() == 0) {
             int32_t ret = napiAudioSpatializationManager->audioSpatializationMngr_->
@@ -775,7 +779,7 @@ void NapiAudioSpatializationManager::UnregisterHeadTrackingEnabledChangeCallback
             CHECK_AND_RETURN_LOG(ret == SUCCESS, "UnregisterHeadTrackingEnabledEventListener Failed");
             napiAudioSpatializationManager->headTrackingEnabledChangeCallbackNapi_.reset();
             napiAudioSpatializationManager->headTrackingEnabledChangeCallbackNapi_ = nullptr;
-            cb->RemoveAllHeadTrackingEnabledChangeCallbackReference();
+            cb->RemoveAllHeadTrackingEnabledChangeCallbackReference(cbName);
         }
     } else {
         AUDIO_ERR_LOG("UnregisterHeadTrackingEnabledChangeCb: headTrackingEnabledChangeCallbackNapi_ is null");

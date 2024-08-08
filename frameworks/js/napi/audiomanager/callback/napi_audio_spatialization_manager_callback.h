@@ -36,8 +36,8 @@ public:
     explicit NapiAudioSpatializationEnabledChangeCallback(napi_env env);
     virtual ~NapiAudioSpatializationEnabledChangeCallback();
     void SaveSpatializationEnabledChangeCallbackReference(napi_value args, const std::string cbName);
-    void RemoveSpatializationEnabledChangeCallbackReference(napi_env env, napi_value args);
-    void RemoveAllSpatializationEnabledChangeCallbackReference();
+    void RemoveSpatializationEnabledChangeCallbackReference(napi_env env, napi_value args, const std::string cbName);
+    void RemoveAllSpatializationEnabledChangeCallbackReference(const std::string cbName);
     int32_t GetSpatializationEnabledChangeCbListSize();
     void OnSpatializationEnabledChange(const bool &enabled) override;
     void OnSpatializationEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
@@ -65,8 +65,8 @@ public:
     explicit NapiAudioHeadTrackingEnabledChangeCallback(napi_env env);
     virtual ~NapiAudioHeadTrackingEnabledChangeCallback();
     void SaveHeadTrackingEnabledChangeCallbackReference(napi_value args, const std::string cbName);
-    void RemoveHeadTrackingEnabledChangeCallbackReference(napi_env env, napi_value args);
-    void RemoveAllHeadTrackingEnabledChangeCallbackReference();
+    void RemoveHeadTrackingEnabledChangeCallbackReference(napi_env env, napi_value args, const std::string cbName);
+    void RemoveAllHeadTrackingEnabledChangeCallbackReference(const std::string cbName);
     int32_t GetHeadTrackingEnabledChangeCbListSize();
     void OnHeadTrackingEnabledChange(const bool &enabled) override;
     void OnHeadTrackingEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,

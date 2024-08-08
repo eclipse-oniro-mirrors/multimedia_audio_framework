@@ -72,9 +72,9 @@ struct AudioSpatializationManagerAsyncContext : public ContextBase {
     static void UnRegisterCallback(napi_env env, napi_value jsThis,
         napi_value *args, const std::string &cbName);
     static void UnregisterSpatializationEnabledChangeCallback(napi_env env, napi_value callback,
-        NapiAudioSpatializationManager *napiAudioSpatializationManager);
+        const std::string &cbName, NapiAudioSpatializationManager *napiAudioSpatializationManager);
     static void UnregisterHeadTrackingEnabledChangeCallback(napi_env env, napi_value callback,
-        NapiAudioSpatializationManager *napiAudioSpatializationManager);
+        const std::string &cbName, NapiAudioSpatializationManager *napiAudioSpatializationManager);
     static napi_value updateSpatializationEnabled(napi_env env, const std::size_t argc,
     std::shared_ptr<AudioSpatializationManagerAsyncContext> &context);
     static napi_value updateHeadTrackingEnabled(napi_env env, const std::size_t argc,
