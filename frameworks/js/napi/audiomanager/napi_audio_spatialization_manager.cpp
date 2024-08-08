@@ -615,7 +615,11 @@ void NapiAudioSpatializationManager::RegisterCallback(napi_env env, napi_value j
 
     if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME)) {
         RegisterSpatializationEnabledChangeCallback(env, args, cbName, napiAudioSpatializationManager);
+    } else if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
+        RegisterSpatializationEnabledChangeCallback(env, args, cbName, napiAudioSpatializationManager);
     } else if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME)) {
+        RegisterHeadTrackingEnabledChangeCallback(env, args, cbName, napiAudioSpatializationManager);
+    } else if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
         RegisterHeadTrackingEnabledChangeCallback(env, args, cbName, napiAudioSpatializationManager);
     } else {
         AUDIO_ERR_LOG("NapiAudioSpatializationManager::No such callback supported");
@@ -643,7 +647,7 @@ void NapiAudioSpatializationManager::RegisterSpatializationEnabledChangeCallback
     std::shared_ptr<NapiAudioSpatializationEnabledChangeCallback> cb =
         std::static_pointer_cast<NapiAudioSpatializationEnabledChangeCallback>
         (napiAudioSpatializationManager->spatializationEnabledChangeCallbackNapi_);
-    cb->SaveSpatializationEnabledChangeCallbackReference(args[PARAM1]);
+    cb->SaveSpatializationEnabledChangeCallbackReference(args[PARAM1], cbName);
 
     AUDIO_INFO_LOG("Register spatialization enabled callback is successful");
 }
@@ -667,7 +671,7 @@ void NapiAudioSpatializationManager::RegisterHeadTrackingEnabledChangeCallback(n
     std::shared_ptr<NapiAudioHeadTrackingEnabledChangeCallback> cb =
         std::static_pointer_cast<NapiAudioHeadTrackingEnabledChangeCallback>
         (napiAudioSpatializationManager->headTrackingEnabledChangeCallbackNapi_);
-    cb->SaveHeadTrackingEnabledChangeCallbackReference(args[PARAM1]);
+    cb->SaveHeadTrackingEnabledChangeCallbackReference(args[PARAM1], cbName);
 
     AUDIO_INFO_LOG("Register head tracking enabled callback is successful");
 }

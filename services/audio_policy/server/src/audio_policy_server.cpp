@@ -2399,7 +2399,8 @@ int32_t AudioPolicyServer::SetSpatializationEnabled(const bool enable)
     return audioSpatializationService_.SetSpatializationEnabled(enable);
 }
 
-int32_t AudioPolicyServer::SetSpatializationEnabled(const std::string address, const bool enable)
+int32_t AudioPolicyServer::SetSpatializationEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
+    const bool enable)
 {
     if (!VerifyPermission(MANAGE_SYSTEM_AUDIO_EFFECTS)) {
         AUDIO_ERR_LOG("MANAGE_SYSTEM_AUDIO_EFFECTS permission check failed");
@@ -2409,7 +2410,7 @@ int32_t AudioPolicyServer::SetSpatializationEnabled(const std::string address, c
     if (!hasSystemPermission) {
         return ERR_PERMISSION_DENIED;
     }
-    return audioSpatializationService_.SetSpatializationEnabled(address, enable);
+    return audioSpatializationService_.SetSpatializationEnabled(selectedAudioDevice, enable);
 }
 
 bool AudioPolicyServer::IsHeadTrackingEnabled()
@@ -2443,7 +2444,8 @@ int32_t AudioPolicyServer::SetHeadTrackingEnabled(const bool enable)
     return audioSpatializationService_.SetHeadTrackingEnabled(enable);
 }
 
-int32_t AudioPolicyServer::SetHeadTrackingEnabled(const std::string address, const bool enable)
+int32_t AudioPolicyServer::SetHeadTrackingEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
+    const bool enable)
 {
     if (!VerifyPermission(MANAGE_SYSTEM_AUDIO_EFFECTS)) {
         AUDIO_ERR_LOG("MANAGE_SYSTEM_AUDIO_EFFECTS permission check failed");
@@ -2453,7 +2455,7 @@ int32_t AudioPolicyServer::SetHeadTrackingEnabled(const std::string address, con
     if (!hasSystemPermission) {
         return ERR_PERMISSION_DENIED;
     }
-    return audioSpatializationService_.SetHeadTrackingEnabled(address, enable);
+    return audioSpatializationService_.SetHeadTrackingEnabled(selectedAudioDevice, enable);
 }
 
 AudioSpatializationState AudioPolicyServer::GetSpatializationState(const StreamUsage streamUsage)

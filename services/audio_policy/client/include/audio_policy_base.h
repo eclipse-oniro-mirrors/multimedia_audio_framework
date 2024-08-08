@@ -236,7 +236,8 @@ public:
 
     virtual int32_t SetSpatializationEnabled(const bool enable) = 0;
 
-    virtual int32_t SetSpatializationEnabled(const std::string address, const bool enable) = 0;
+    virtual int32_t SetSpatializationEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
+        const bool enable) = 0;
 
     virtual bool IsHeadTrackingEnabled() = 0;
 
@@ -244,7 +245,8 @@ public:
 
     virtual int32_t SetHeadTrackingEnabled(const bool enable) = 0;
 
-    virtual int32_t SetHeadTrackingEnabled(const std::string address, const bool enable) = 0;
+    virtual int32_t SetHeadTrackingEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
+        const bool enable) = 0;
 
     virtual AudioSpatializationState GetSpatializationState(const StreamUsage streamUsage) = 0;
 

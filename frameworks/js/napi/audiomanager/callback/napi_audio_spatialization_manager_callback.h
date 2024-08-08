@@ -26,12 +26,16 @@
 namespace OHOS {
 namespace AudioStandard {
 const std::string SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME = "spatializationEnabledChange";
+const std::string SPATIALIZATION_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME =
+    "spatializationEnabledChangeForAllDevice";
 const std::string HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME = "headTrackingEnabledChange";
+const std::string HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME =
+    "headTrackingEnabledChangeForAllDevice";
 class NapiAudioSpatializationEnabledChangeCallback : public AudioSpatializationEnabledChangeCallback {
 public:
     explicit NapiAudioSpatializationEnabledChangeCallback(napi_env env);
     virtual ~NapiAudioSpatializationEnabledChangeCallback();
-    void SaveSpatializationEnabledChangeCallbackReference(napi_value args);
+    void SaveSpatializationEnabledChangeCallbackReference(napi_value args, const std::string cbName);
     void RemoveSpatializationEnabledChangeCallbackReference(napi_env env, napi_value args);
     void RemoveAllSpatializationEnabledChangeCallbackReference();
     int32_t GetSpatializationEnabledChangeCbListSize();
@@ -52,6 +56,7 @@ private:
     std::mutex mutex_;
     napi_env env_ = nullptr;
     std::list<std::shared_ptr<AutoRef>> spatializationEnabledChangeCbList_;
+    std::list<std::shared_ptr<AutoRef>> newspatializationEnabledChangeCbList_;
     static int32_t onSpatializationEnabledChangeflag_;
 };
 
@@ -59,7 +64,7 @@ class NapiAudioHeadTrackingEnabledChangeCallback : public AudioHeadTrackingEnabl
 public:
     explicit NapiAudioHeadTrackingEnabledChangeCallback(napi_env env);
     virtual ~NapiAudioHeadTrackingEnabledChangeCallback();
-    void SaveHeadTrackingEnabledChangeCallbackReference(napi_value args);
+    void SaveHeadTrackingEnabledChangeCallbackReference(napi_value args, const std::string cbName);
     void RemoveHeadTrackingEnabledChangeCallbackReference(napi_env env, napi_value args);
     void RemoveAllHeadTrackingEnabledChangeCallbackReference();
     int32_t GetHeadTrackingEnabledChangeCbListSize();
@@ -80,6 +85,7 @@ private:
     std::mutex mutex_;
     napi_env env_ = nullptr;
     std::list<std::shared_ptr<AutoRef>> headTrackingEnabledChangeCbList_;
+    std::list<std::shared_ptr<AutoRef>> newheadTrackingEnabledChangeCbList_;
     static int32_t onHeadTrackingEnabledChangeflag_ ;
 };
 } // namespace AudioStandard

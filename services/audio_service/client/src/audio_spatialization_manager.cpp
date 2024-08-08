@@ -68,7 +68,7 @@ int32_t AudioSpatializationManager::SetSpatializationEnabled(const bool enable)
 int32_t AudioSpatializationManager::SetSpatializationEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
     const bool enable)
 {
-    return AudioPolicyManager::GetInstance().SetSpatializationEnabled(selectedAudioDevice->macAddress_, enable);
+    return AudioPolicyManager::GetInstance().SetSpatializationEnabled(selectedAudioDevice, enable);
 }
 
 bool AudioSpatializationManager::IsHeadTrackingEnabled()
@@ -89,7 +89,7 @@ int32_t AudioSpatializationManager::SetHeadTrackingEnabled(const bool enable)
 int32_t AudioSpatializationManager::SetHeadTrackingEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
     const bool enable)
 {
-    return AudioPolicyManager::GetInstance().SetHeadTrackingEnabled(selectedAudioDevice->macAddress_, enable);
+    return AudioPolicyManager::GetInstance().SetHeadTrackingEnabled(selectedAudioDevice, enable);
 }
 
 int32_t AudioSpatializationManager::RegisterSpatializationEnabledEventListener(

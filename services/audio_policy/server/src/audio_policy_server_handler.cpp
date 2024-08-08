@@ -460,13 +460,13 @@ bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeEvent(const bool &e
     return ret;
 }
 
-bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeForDeviceEvent(const std::string address,
-    const bool &enabled)
+bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeForDeviceEvent(const sptr<AudioDeviceDescriptor>
+    &selectedAudioDevice, const bool &enabled)
 {
     std::shared_ptr<EventContextObj> eventContextObj = std::make_shared<EventContextObj>();
     CHECK_AND_RETURN_RET_LOG(eventContextObj != nullptr, false, "EventContextObj get nullptr");
     eventContextObj->spatializationEnabled = enabled;
-    eventContextObj->descriptor->macAddress_ = address;
+    eventContextObj->descriptor = selectedAudioDevice;
     lock_guard<mutex> runnerlock(runnerMutex_);
     bool ret = SendEvent(AppExecFwk::InnerEvent::Get(EventAudioServerCmd::SPATIALIZATION_DEVICE_ENABLED_CHANGE,
         eventContextObj));
@@ -486,13 +486,14 @@ bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeEvent(const bool &en
     return ret;
 }
 
-bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeForDeviceEvent(const std::string address,
+bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeForDeviceEvent(const sptr<AudioDeviceDescriptor>
+    &selectedAudioDevice,
     const bool &enabled)
 {
     std::shared_ptr<EventContextObj> eventContextObj = std::make_shared<EventContextObj>();
     CHECK_AND_RETURN_RET_LOG(eventContextObj != nullptr, false, "EventContextObj get nullptr");
     eventContextObj->headTrackingEnabled = enabled;
-    eventContextObj->descriptor->macAddress_ = address;
+    eventContextObj->descriptor = selectedAudioDevice;
     lock_guard<mutex> runnerlock(runnerMutex_);
     bool ret = SendEvent(AppExecFwk::InnerEvent::Get(EventAudioServerCmd::HEAD_TRACKING_DEVICE_ENABLED_CHANGE,
         eventContextObj));

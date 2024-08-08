@@ -1756,7 +1756,8 @@ int32_t AudioPolicyProxy::SetSpatializationEnabled(const bool enable)
     return reply.ReadInt32();
 }
 
-int32_t AudioPolicyProxy::SetSpatializationEnabled(const std::string address, const bool enable)
+int32_t AudioPolicyProxy::SetSpatializationEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
+    const bool enable)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -1764,7 +1765,10 @@ int32_t AudioPolicyProxy::SetSpatializationEnabled(const std::string address, co
 
     bool ret = data.WriteInterfaceToken(GetDescriptor());
     CHECK_AND_RETURN_RET_LOG(ret, ERROR, "WriteInterfaceToken failed");
-    data.WriteString(address);
+
+    bool result = selectedAudioDevice->Marshalling(data);
+    CHECK_AND_RETURN_RET_LOG(result, -1, "SelectedAudioDevice Marshalling() failed");
+
     data.WriteBool(enable);
 
     int32_t error = Remote()->SendRequest(
@@ -1826,7 +1830,8 @@ int32_t AudioPolicyProxy::SetHeadTrackingEnabled(const bool enable)
     return reply.ReadInt32();
 }
 
-int32_t AudioPolicyProxy::SetHeadTrackingEnabled(const std::string address, const bool enable)
+int32_t AudioPolicyProxy::SetHeadTrackingEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
+    const bool enable)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -1834,7 +1839,9 @@ int32_t AudioPolicyProxy::SetHeadTrackingEnabled(const std::string address, cons
 
     bool ret = data.WriteInterfaceToken(GetDescriptor());
     CHECK_AND_RETURN_RET_LOG(ret, ERROR, "WriteInterfaceToken failed");
-    data.WriteString(address);
+
+    bool result = selectedAudioDevice->Marshalling(data);
+    CHECK_AND_RETURN_RET_LOG(result, -1, "SelectedAudioDevice Marshalling() failed");
     data.WriteBool(enable);
 
     int32_t error = Remote()->SendRequest(

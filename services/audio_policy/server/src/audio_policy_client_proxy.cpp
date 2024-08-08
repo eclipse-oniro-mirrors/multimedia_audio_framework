@@ -414,7 +414,8 @@ void AudioPolicyClientProxy::OnSpatializationEnabledChange(const sptr<AudioDevic
     data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_DEVICE_ENABLED_CHANGE));
 
     if (hasSystemPermission_) {
-        data.WriteString(deviceDescriptor->macAddress_);
+        sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
+        CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
         data.WriteBool(enabled);
     } else {
         data.WriteBool(false);
@@ -466,7 +467,8 @@ void AudioPolicyClientProxy::OnHeadTrackingEnabledChange(const sptr<AudioDeviceD
     data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_DEVICE_ENABLED_CHANGE));
 
     if (hasSystemPermission_) {
-        data.WriteString(deviceDescriptor->macAddress_);
+        sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
+        CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
         data.WriteBool(enabled);
     } else {
         data.WriteBool(false);

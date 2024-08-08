@@ -309,11 +309,10 @@ void AudioPolicyClientStub::HandleSpatializationEnabledChange(MessageParcel &dat
 
 void AudioPolicyClientStub::HandleSpatializationDeviceEnabledChange(MessageParcel &data, MessageParcel &reply)
 {
-    sptr<AudioDeviceDescriptor> deviceDescriptor = new(std::nothrow) AudioDeviceDescriptor();
-    std::string macAddress = data.ReadString();
-    deviceDescriptor->macAddress_ = macAddress;
+    sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
+    CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
     bool enabled = data.ReadBool();
-    OnSpatializationEnabledChange(deviceDescriptor, enabled);
+    OnSpatializationEnabledChange(audioDeviceDescriptor, enabled);
 }
 
 void AudioPolicyClientStub::HandleHeadTrackingEnabledChange(MessageParcel &data, MessageParcel &reply)
@@ -324,11 +323,10 @@ void AudioPolicyClientStub::HandleHeadTrackingEnabledChange(MessageParcel &data,
 
 void AudioPolicyClientStub::HandleHeadTrackingDeviceEnabledChange(MessageParcel &data, MessageParcel &reply)
 {
-    sptr<AudioDeviceDescriptor> deviceDescriptor = new(std::nothrow) AudioDeviceDescriptor();
-    std::string macAddress = data.ReadString();
-    deviceDescriptor->macAddress_ = macAddress;
+    sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
+    CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
     bool enabled = data.ReadBool();
-    OnHeadTrackingEnabledChange(deviceDescriptor, enabled);
+    OnHeadTrackingEnabledChange(audioDeviceDescriptor, enabled);
 }
 } // namespace AudioStandard
 } // namespace OHOS
