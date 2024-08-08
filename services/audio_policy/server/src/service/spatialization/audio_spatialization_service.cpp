@@ -243,7 +243,7 @@ void AudioSpatializationService::HandleSpatializationEnabledChange(const sptr<Au
     &selectedAudioDevice, const bool &enabled)
 {
     AUDIO_INFO_LOG("device %{public}s Spatialization enabled callback is triggered: state is %{public}d",
-        address.c_str(), enabled);
+        selectedAudioDevice->macAddress_.c_str(), enabled);
     if (audioPolicyServerHandler_ != nullptr) {
         audioPolicyServerHandler_->SendSpatializatonEnabledChangeForDeviceEvent(selectedAudioDevice, enabled);
     }
@@ -261,7 +261,7 @@ void AudioSpatializationService::HandleHeadTrackingEnabledChange(const sptr<Audi
     const bool &enabled)
 {
     AUDIO_INFO_LOG("device %{public}s Head tracking enabled callback is triggered: state is %{public}d",
-        address.c_str(), enabled);
+        selectedAudioDevice->macAddress_.c_str(), enabled);
     if (audioPolicyServerHandler_ != nullptr) {
         audioPolicyServerHandler_->SendHeadTrackingEnabledChangeForDeviceEvent(selectedAudioDevice, enabled);
     }

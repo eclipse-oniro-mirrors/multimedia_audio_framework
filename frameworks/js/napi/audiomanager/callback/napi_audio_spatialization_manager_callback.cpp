@@ -133,11 +133,8 @@ void NapiAudioSpatializationEnabledChangeCallback::RemoveAllSpatializationEnable
 int32_t NapiAudioSpatializationEnabledChangeCallback::GetSpatializationEnabledChangeCbListSize()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (onSpatializationEnabledChangeflag_ == ARGS_ONE) {
-        return spatializationEnabledChangeCbList_.size();
-    } else if (onSpatializationEnabledChangeflag_ == ARGS_TWO) {
-        return newspatializationEnabledChangeCbList_.size();
-    }
+    return (onSpatializationEnabledChangeflag_ == ARGS_ONE ? spatializationEnabledChangeCbList_.size():
+        newspatializationEnabledChangeCbList_.size());
 }
 
 void NapiAudioSpatializationEnabledChangeCallback::OnSpatializationEnabledChange(const bool &enabled)
@@ -357,11 +354,8 @@ void NapiAudioHeadTrackingEnabledChangeCallback::RemoveAllHeadTrackingEnabledCha
 int32_t NapiAudioHeadTrackingEnabledChangeCallback::GetHeadTrackingEnabledChangeCbListSize()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (onHeadTrackingEnabledChangeflag_ == ARGS_ONE) {
-        return headTrackingEnabledChangeCbList_.size();
-    } else if (onHeadTrackingEnabledChangeflag_ == ARGS_TWO) {
-        return newheadTrackingEnabledChangeCbList_.size();
-    }
+    return (onHeadTrackingEnabledChangeflag_ == ARGS_ONE ? headTrackingEnabledChangeCbList_.size():
+        newheadTrackingEnabledChangeCbList_.size());
 }
 
 void NapiAudioHeadTrackingEnabledChangeCallback::OnHeadTrackingEnabledChange(const bool &enabled)
