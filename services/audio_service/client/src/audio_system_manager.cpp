@@ -839,7 +839,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusInfoChange(
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
-        cb_ = (*callback);
+        cb_ = (*callback).lock();
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnAudioFocusInfoChange : Notify event to app complete");
             temp.push_back(cb_);
@@ -862,7 +862,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
-        cb_ = (*callback);
+        cb_ = (*callback).lock();
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnAudioFocusRequested : Notify event to app complete");
             temp.push_back(cb_);
@@ -885,9 +885,10 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrup
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
-        cb_ = (*callback)
+        cb_ = (*callback).lock();
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnAudioFocusAbandoned : Notify event to app complete");
+            cb_ = (*callback);
             temp.push_back(cb_);
         } else {
             AUDIO_ERR_LOG("OnAudioFocusAbandoned: callback is null");
