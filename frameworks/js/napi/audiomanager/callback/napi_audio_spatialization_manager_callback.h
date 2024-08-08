@@ -27,10 +27,10 @@ namespace OHOS {
 namespace AudioStandard {
 const std::string SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME = "spatializationEnabledChange";
 const std::string SPATIALIZATION_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME =
-    "spatializationEnabledChangeForAllDevice";
+    "spatializationEnabledChangeForAnyDevice";
 const std::string HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME = "headTrackingEnabledChange";
 const std::string HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME =
-    "headTrackingEnabledChangeForAllDevice";
+    "headTrackingEnabledChangeForAnyDevice";
 class NapiAudioSpatializationEnabledChangeCallback : public AudioSpatializationEnabledChangeCallback {
 public:
     explicit NapiAudioSpatializationEnabledChangeCallback(napi_env env);

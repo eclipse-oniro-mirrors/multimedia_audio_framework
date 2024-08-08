@@ -78,10 +78,11 @@ void NapiAudioSpatializationEnabledChangeCallback::SaveSpatializationEnabledChan
 }
 
 void NapiAudioSpatializationEnabledChangeCallback::RemoveSpatializationEnabledChangeCallbackReference(napi_env env,
-    napi_value args)
+    napi_value args, const std::string cbName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (onSpatializationEnabledChangeflag_ == ARGS_ONE) {
+    if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME)) {
+        onSpatializationEnabledChangeflag_ = ARGS_ONE;
         for (auto it = spatializationEnabledChangeCbList_.begin(); it != spatializationEnabledChangeCbList_.end(); ++it)
         {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
@@ -93,7 +94,8 @@ void NapiAudioSpatializationEnabledChangeCallback::RemoveSpatializationEnabledCh
                 return;
             }
         }
-    } else if (onSpatializationEnabledChangeflag_ == ARGS_TWO) {
+    } else if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
+        onSpatializationEnabledChangeflag_ = ARGS_TWO;
         for (auto it = newspatializationEnabledChangeCbList_.begin(); it != newspatializationEnabledChangeCbList_.end(); ++it)
         {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
@@ -109,7 +111,8 @@ void NapiAudioSpatializationEnabledChangeCallback::RemoveSpatializationEnabledCh
     AUDIO_INFO_LOG("RemoveSpatializationEnabledChangeCallbackReference: js callback no find");
 }
 
-void NapiAudioSpatializationEnabledChangeCallback::RemoveAllSpatializationEnabledChangeCallbackReference()
+void NapiAudioSpatializationEnabledChangeCallback::RemoveAllSpatializationEnabledChangeCallbackReference(
+    const std::string cbName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (onSpatializationEnabledChangeflag_ == ARGS_ONE) {
