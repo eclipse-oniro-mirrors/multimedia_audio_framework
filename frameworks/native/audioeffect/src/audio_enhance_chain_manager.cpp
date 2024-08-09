@@ -590,10 +590,9 @@ int32_t AudioEnhanceChainManager::SetInputDevice(const uint32_t &captureId, cons
     }
     for (auto &[sceneKeyCode, chain] : sceneTypeToEnhanceChainMap_) {
         uint32_t tempId = (sceneKeyCode & CAPTURER_ID_MASK) >> 8;
-        if (tempId == captureId) {
+        if ((tempId == captureId) && chain) {
             if (chain->SetInputDevice(inputDeviceStr) != SUCCESS) {
                 AUDIO_ERR_LOG("chain:%{public}u set input device failed", tempId);
-                continue;
             }
         }
     }

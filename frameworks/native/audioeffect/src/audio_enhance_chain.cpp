@@ -126,8 +126,9 @@ int32_t AudioEnhanceChain::SetInputDevice(const std::string &inputDevice)
     if (inputDevice.size() == 0) {
         return SUCCESS;
     }
-    std::lock_guard<std::mutex> lock(chainMutex_);
     algoParam_.preDevice = inputDevice;
+    AUDIO_INFO_LOG("update input device %{public}s", inputDevice.c_str());
+    std::lock_guard<std::mutex> lock(chainMutex_);
     int32_t size = standByEnhanceHandles_.size();
     AudioEffectTransInfo cmdInfo = {};
     AudioEffectTransInfo replyInfo = {};
@@ -135,7 +136,7 @@ int32_t AudioEnhanceChain::SetInputDevice(const std::string &inputDevice)
         auto &handle = standByEnhanceHandles_[index];
         CHECK_AND_RETURN_RET_LOG(SetEnhanceParamToHandle(handle) == SUCCESS, ERROR,
             "[%{public}s] effect EFFECT_CMD_SET_PARAM fail", sceneType_.c_str());
-        CHECK_AND_RETURN_LOG((*handle)->command(handle, EFFECT_CMD_INIT, &cmdInfo, &replyInfo) == 0,
+        CHECK_AND_RETURN_RET_LOG((*handle)->command(handle, EFFECT_CMD_INIT, &cmdInfo, &replyInfo) == 0, ERROR,
             "[%{public}s] effect EFFECT_CMD_INIT fail", sceneType_.c_str());
     }
     return SUCCESS;
