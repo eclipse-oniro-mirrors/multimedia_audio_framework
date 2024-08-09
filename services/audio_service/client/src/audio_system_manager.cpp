@@ -835,7 +835,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusInfoChange(
 {
     AUDIO_DEBUG_LOG("on callback Entered AudioFocusInfoChangeCallbackImpl %{public}s", __func__);
 
-    std::vector<std::shared_ptr<AudioDistributedRoutingRoleCallback>> temp;
+    std::vector<std::shared_ptr<OHOS::AudioStandard::AudioFocusInfoChangeCallback>> temp;
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
@@ -858,7 +858,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
 {
     AUDIO_DEBUG_LOG("on callback Entered OnAudioFocusRequested %{public}s", __func__);
 
-    std::vector<std::shared_ptr<AudioDistributedRoutingRoleCallback>> temp;
+    std::vector<shared_ptr<OHOS::AudioStandard::AudioFocusInfoChangeCallback>> temp;
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
@@ -880,8 +880,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
 void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrupt &abandonFocus)
 {
     AUDIO_DEBUG_LOG("on callback Entered OnAudioFocusAbandoned %{public}s", __func__);
-
-    std::vector<std::shared_ptr<AudioDistributedRoutingRoleCallback>> temp;
+    std::vector<std::shared_ptr<OHOS::AudioStandard::AudioFocusInfoChangeCallback>> temp;
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
