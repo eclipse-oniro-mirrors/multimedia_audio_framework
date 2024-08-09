@@ -347,8 +347,6 @@ public:
 private:
     std::list<std::weak_ptr<AudioFocusInfoChangeCallback>> callbackList_;
     std::shared_ptr<AudioFocusInfoChangeCallback> cb_;
-    // std::list<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
-    // std::shared_ptr<AudioFocusInfoChangeCallback> tp_;
     std::mutex cbListMutex_;
 };
 
