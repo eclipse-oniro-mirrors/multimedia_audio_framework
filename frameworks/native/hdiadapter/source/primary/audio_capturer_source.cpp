@@ -720,7 +720,6 @@ int32_t AudioCapturerSourceInner::CreateCapture(struct AudioPort &capturePort)
         currentActiveDevice_ = DEVICE_TYPE_INVALID;
         return ERR_NOT_STARTED;
     }
-    SetAudioRouteInfoForEnhanceChain(currentActiveDevice_);
 
     return 0;
 }
@@ -1150,17 +1149,17 @@ int32_t AudioCapturerSourceInner::SetInputRoute(DeviceType inputDevice, AudioPor
 {
     if (inputDevice == currentActiveDevice_) {
         AUDIO_INFO_LOG("SetInputRoute input device not change. currentActiveDevice %{public}d", currentActiveDevice_);
+        int32_t ret = SetAudioRouteInfoForEnhanceChain(currentActiveDevice_);
+        if (ret != SUCCESS) {
+            AUDIO_WARNING_LOG("SetAudioRouteInfoForEnhanceChain failed");
+        }
         return SUCCESS;
     }
-    currentActiveDevice_ = inputDevice;
-    int32_t ret = SetAudioRouteInfoForEnhanceChain(currentActiveDevice_);
-    if (ret != SUCCESS) {
-        AUDIO_WARNING_LOG("SetAudioRouteInfoForEnhanceChain failed");
-    }
+
     AudioRouteNode source = {};
     AudioRouteNode sink = {};
 
-    ret = SetInputPortPin(inputDevice, source);
+    int32_t ret = SetInputPortPin(inputDevice, source);
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "SetOutputRoute FAILED: %{public}d", ret);
 
     inputPortPin = source.ext.device.type;
@@ -1190,6 +1189,12 @@ int32_t AudioCapturerSourceInner::SetInputRoute(DeviceType inputDevice, AudioPor
 
     ret = audioAdapter_->UpdateAudioRoute(audioAdapter_, &route, &routeHandle_);
     CHECK_AND_RETURN_RET_LOG(ret == 0, ERR_OPERATION_FAILED, "UpdateAudioRoute failed");
+    
+    currentActiveDevice_ = inputDevice;
+    ret = SetAudioRouteInfoForEnhanceChain(currentActiveDevice_);
+    if (ret != SUCCESS) {
+        AUDIO_WARNING_LOG("SetAudioRouteInfoForEnhanceChain failed");
+    }
 
     return SUCCESS;
 }

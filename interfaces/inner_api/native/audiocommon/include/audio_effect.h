@@ -425,7 +425,7 @@ const std::unordered_map<std::string, uint8_t> EFFECT_CHAIN_TYPE_MAP {
     {"SCENE_GAME", 5},
     {"SCENE_SPEECH", 6},
     {"SCENE_RING", 7},
-    {"SCENE_VOIP", 8}
+    {"SCENE_VOIP_DOWN", 8}
 } ;
 
 struct AudioRendererInfoForSpatialization {
