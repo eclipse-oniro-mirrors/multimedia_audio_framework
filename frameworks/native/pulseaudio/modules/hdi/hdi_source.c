@@ -628,6 +628,7 @@ static int32_t EcResample(const char *sceneKey, struct Userdata *u)
     } else {
         CopyEcdataToEnhanceBufferAdapter(u->bufferEc, u->requestBytesEc);
     }
+    return SUCCESS;
 }
 
 static int32_t MicRefResample(const char *sceneKey, struct Userdata *u)
