@@ -606,11 +606,12 @@ static void PostDataDefault(pa_source *source, pa_memchunk *chunk, struct Userda
     }
 }
 
-static int32_t EcAndMicRefResampleAndCopy(const char *sceneKey, struct Userdata *u)
+static int32_t EcResample(const char *sceneKey, struct Userdata *u)
 {
     pa_resampler *ecResampler = (pa_resampler *)pa_hashmap_get(u->sceneToEcResamplerMap, sceneKey);
-    pa_resampler *micRefResampler = (pa_resampler *)pa_hashmap_get(u->sceneToMicRefResamplerMap, sceneKey);
-
+    if (ecResampler == NULL) {
+        return SUCCESS;
+    }
     CHECK_AND_RETURN_RET_LOG(u->bufferEc != NULL, ERROR, "bufferEc is null");
     CHECK_AND_RETURN_RET_LOG(u->requestBytesEc != 0, ERROR, "requestBytesEc is 0");
     if (ecResampler != NULL) {
@@ -627,7 +628,14 @@ static int32_t EcAndMicRefResampleAndCopy(const char *sceneKey, struct Userdata 
     } else {
         CopyEcdataToEnhanceBufferAdapter(u->bufferEc, u->requestBytesEc);
     }
+}
 
+static int32_t MicRefResample(const char *sceneKey, struct Userdata *u)
+{
+    pa_resampler *micRefResampler = (pa_resampler *)pa_hashmap_get(u->sceneToMicRefResamplerMap, sceneKey);
+    if (micRefResampler == NULL) {
+        return SUCCESS;
+    }
     CHECK_AND_RETURN_RET_LOG(u->bufferMicRef != NULL, ERROR, "bufferMicRef is null");
     CHECK_AND_RETURN_RET_LOG(u->requestBytesMicRef != 0, ERROR, "requestBytesMicRef is 0");
     if (micRefResampler != NULL) {
@@ -680,7 +688,8 @@ static int32_t GetCapturerFrameFromHdiAndProcess(pa_memchunk *chunk, struct User
         enhanceChunk.memblock = pa_memblock_new(u->core->mempool, enhanceChunk.length);
         pa_memchunk_memcpy(&enhanceChunk, chunk);
         SampleAlignment((char *)sceneKey, &enhanceChunk, &rChunk, u);
-        EcAndMicRefResampleAndCopy((char *)sceneKey, u);
+        EcResample((char *)sceneKey, u);
+        MicRefResample((char *)sceneKey, u);
         EnhanceProcessAndPost(u, sceneKeyCode, &rChunk);
         pa_memblock_unref(enhanceChunk.memblock);
         if (rChunk.memblock) {
