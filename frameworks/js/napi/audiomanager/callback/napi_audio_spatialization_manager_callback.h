@@ -38,7 +38,7 @@ public:
     void SaveSpatializationEnabledChangeCallbackReference(napi_value args, const std::string cbName);
     void RemoveSpatializationEnabledChangeCallbackReference(napi_env env, napi_value args, const std::string cbName);
     void RemoveAllSpatializationEnabledChangeCallbackReference(const std::string cbName);
-    int32_t GetSpatializationEnabledChangeCbListSize();
+    int32_t GetSpatializationEnabledChangeCbListSize(const std::string cbName);
     void OnSpatializationEnabledChange(const bool &enabled) override;
     void OnSpatializationEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) override;
@@ -56,8 +56,8 @@ private:
     std::mutex mutex_;
     napi_env env_ = nullptr;
     std::list<std::shared_ptr<AutoRef>> spatializationEnabledChangeCbList_;
-    std::list<std::shared_ptr<AutoRef>> newspatializationEnabledChangeCbList_;
-    static int32_t onSpatializationEnabledChangeflag_;
+    std::list<std::shared_ptr<AutoRef>> spatializationEnabledChangeCbForAnyDeviceList_;
+    bool onSpatializationEnabledChangeFlag_;
 };
 
 class NapiAudioHeadTrackingEnabledChangeCallback : public AudioHeadTrackingEnabledChangeCallback {
@@ -67,7 +67,7 @@ public:
     void SaveHeadTrackingEnabledChangeCallbackReference(napi_value args, const std::string cbName);
     void RemoveHeadTrackingEnabledChangeCallbackReference(napi_env env, napi_value args, const std::string cbName);
     void RemoveAllHeadTrackingEnabledChangeCallbackReference(const std::string cbName);
-    int32_t GetHeadTrackingEnabledChangeCbListSize();
+    int32_t GetHeadTrackingEnabledChangeCbListSize(const std::string cbName);
     void OnHeadTrackingEnabledChange(const bool &enabled) override;
     void OnHeadTrackingEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) override;
@@ -85,8 +85,8 @@ private:
     std::mutex mutex_;
     napi_env env_ = nullptr;
     std::list<std::shared_ptr<AutoRef>> headTrackingEnabledChangeCbList_;
-    std::list<std::shared_ptr<AutoRef>> newheadTrackingEnabledChangeCbList_;
-    static int32_t onHeadTrackingEnabledChangeflag_ ;
+    std::list<std::shared_ptr<AutoRef>> headTrackingEnabledChangeCbForAnyDeviceList_;
+    bool onHeadTrackingEnabledChangeFlag_;
 };
 } // namespace AudioStandard
 } // namespace OHOS

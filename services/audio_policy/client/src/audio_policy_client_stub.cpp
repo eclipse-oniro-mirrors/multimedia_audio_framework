@@ -71,13 +71,13 @@ void AudioPolicyClientStub::OnMaxRemoteRequest(uint32_t updateCode, MessageParce
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE):
             HandleSpatializationEnabledChange(data, reply);
             break;
-        case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_DEVICE_ENABLED_CHANGE):
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE):
             HandleSpatializationDeviceEnabledChange(data, reply);
             break;
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE):
             HandleHeadTrackingEnabledChange(data, reply);
             break;
-        case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_DEVICE_ENABLED_CHANGE):
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE):
             HandleHeadTrackingDeviceEnabledChange(data, reply);
             break;
         default:

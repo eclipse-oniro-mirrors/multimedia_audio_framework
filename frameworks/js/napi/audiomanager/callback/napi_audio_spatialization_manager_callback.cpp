@@ -47,8 +47,8 @@ void NapiAudioSpatializationEnabledChangeCallback::SaveSpatializationEnabledChan
     const int32_t refCount = ARGS_ONE;
 
     if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME)) {
-        onSpatializationEnabledChangeflag_ = ARGS_ONE;
-        for (auto it = spatializationEnabledChangeCbList_.begin(); it != spatializationEnabledChangeCbList_.end(); ++it) {
+        for (auto it = spatializationEnabledChangeCbList_.begin();
+            it != spatializationEnabledChangeCbList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: spatialization manager has same callback");
         }
@@ -61,8 +61,8 @@ void NapiAudioSpatializationEnabledChangeCallback::SaveSpatializationEnabledChan
         CHECK_AND_RETURN_LOG(cb != nullptr, "NapiAudioSpatializationEnabledChangeCallback: creating callback failed");
         spatializationEnabledChangeCbList_.push_back(cb);
     } else if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
-        onSpatializationEnabledChangeflag_ = ARGS_TWO;
-        for (auto it = newspatializationEnabledChangeCbList_.begin(); it != newspatializationEnabledChangeCbList_.end(); ++it) {
+        for (auto it = spatializationEnabledChangeCbForAnyDeviceList_.begin();
+            it != spatializationEnabledChangeCbForAnyDeviceList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: spatialization manager has same callback");
         }
@@ -73,7 +73,7 @@ void NapiAudioSpatializationEnabledChangeCallback::SaveSpatializationEnabledChan
 
         std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callback);
         CHECK_AND_RETURN_LOG(cb != nullptr, "NapiAudioSpatializationEnabledChangeCallback: creating callback failed");
-        newspatializationEnabledChangeCbList_.push_back(cb);
+        spatializationEnabledChangeCbForAnyDeviceList_.push_back(cb);
     }
 }
 
@@ -82,9 +82,8 @@ void NapiAudioSpatializationEnabledChangeCallback::RemoveSpatializationEnabledCh
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME)) {
-        onSpatializationEnabledChangeflag_ = ARGS_ONE;
-        for (auto it = spatializationEnabledChangeCbList_.begin(); it != spatializationEnabledChangeCbList_.end(); ++it)
-        {
+        for (auto it = spatializationEnabledChangeCbList_.begin();
+            it != spatializationEnabledChangeCbList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             if (isSameCallback) {
                 AUDIO_INFO_LOG("RemoveSpatializationEnabledChangeCallbackReference: find js callback, delete it");
@@ -95,15 +94,14 @@ void NapiAudioSpatializationEnabledChangeCallback::RemoveSpatializationEnabledCh
             }
         }
     } else if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
-        onSpatializationEnabledChangeflag_ = ARGS_TWO;
-        for (auto it = newspatializationEnabledChangeCbList_.begin(); it != newspatializationEnabledChangeCbList_.end(); ++it)
-        {
+        for (auto it = spatializationEnabledChangeCbForAnyDeviceList_.begin();
+            it != spatializationEnabledChangeCbForAnyDeviceList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             if (isSameCallback) {
                 AUDIO_INFO_LOG("RemoveSpatializationEnabledChangeCallbackReference: find js callback, delete it");
                 napi_delete_reference(env, (*it)->cb_);
                 (*it)->cb_ = nullptr;
-                newspatializationEnabledChangeCbList_.erase(it);
+                spatializationEnabledChangeCbForAnyDeviceList_.erase(it);
                 return;
             }
         }
@@ -115,29 +113,29 @@ void NapiAudioSpatializationEnabledChangeCallback::RemoveAllSpatializationEnable
     const std::string cbName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (onSpatializationEnabledChangeflag_ == ARGS_ONE) {
-        for (auto it = spatializationEnabledChangeCbList_.begin(); it != spatializationEnabledChangeCbList_.end(); ++it)
-        {
+    if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME)) {
+        for (auto it = spatializationEnabledChangeCbList_.begin();
+            it != spatializationEnabledChangeCbList_.end(); ++it) {
             napi_delete_reference(env_, (*it)->cb_);
             (*it)->cb_ = nullptr;
         }
         spatializationEnabledChangeCbList_.clear();
-    } else if (onSpatializationEnabledChangeflag_ == ARGS_TWO) {
-        for (auto it = newspatializationEnabledChangeCbList_.begin(); it != newspatializationEnabledChangeCbList_.end(); ++it)
-        {
+    } else if (!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
+        for (auto it = spatializationEnabledChangeCbForAnyDeviceList_.begin();
+            it != spatializationEnabledChangeCbForAnyDeviceList_.end(); ++it) {
             napi_delete_reference(env_, (*it)->cb_);
             (*it)->cb_ = nullptr;
         }
-        newspatializationEnabledChangeCbList_.clear();
+        spatializationEnabledChangeCbForAnyDeviceList_.clear();
     }
     AUDIO_INFO_LOG("RemoveAllSpatializationEnabledChangeCallbackReference: remove all js callbacks success");
 }
 
-int32_t NapiAudioSpatializationEnabledChangeCallback::GetSpatializationEnabledChangeCbListSize()
+int32_t NapiAudioSpatializationEnabledChangeCallback::GetSpatializationEnabledChangeCbListSize(const std::string cbName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return (onSpatializationEnabledChangeflag_ == ARGS_ONE ? spatializationEnabledChangeCbList_.size():
-        newspatializationEnabledChangeCbList_.size());
+    return ((!cbName.compare(SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME)) ? spatializationEnabledChangeCbList_.size():
+        spatializationEnabledChangeCbForAnyDeviceList_.size());
 }
 
 void NapiAudioSpatializationEnabledChangeCallback::OnSpatializationEnabledChange(const bool &enabled)
@@ -162,25 +160,25 @@ void NapiAudioSpatializationEnabledChangeCallback::OnSpatializationEnabledChange
     AUDIO_INFO_LOG("OnSpatializationEnabledChange by the speified device entered");
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (onSpatializationEnabledChangeflag_ == ARGS_ONE) {
-        for (auto it = spatializationEnabledChangeCbList_.begin(); it != spatializationEnabledChangeCbList_.end(); it++) {
-            std::unique_ptr<AudioSpatializationEnabledJsCallback> cb =
-                std::make_unique<AudioSpatializationEnabledJsCallback>();
-            CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
-            cb->callback = (*it);
-            cb->enabled = enabled;
-            OnJsCallbackSpatializationEnabled(cb);
-        }
-    } else if (onSpatializationEnabledChangeflag_ == ARGS_TWO) {
-        for (auto it = newspatializationEnabledChangeCbList_.begin(); it != newspatializationEnabledChangeCbList_.end(); it++) {
-            std::unique_ptr<AudioSpatializationEnabledJsCallback> cb =
-                std::make_unique<AudioSpatializationEnabledJsCallback>();
-            CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
-            cb->callback = (*it);
-            cb->deviceDescriptor = deviceDescriptor;
-            cb->enabled = enabled;
-            OnJsCallbackSpatializationEnabled(cb);
-        }
+    for (auto it = spatializationEnabledChangeCbList_.begin(); it != spatializationEnabledChangeCbList_.end(); it++) {
+        std::unique_ptr<AudioSpatializationEnabledJsCallback> cb =
+            std::make_unique<AudioSpatializationEnabledJsCallback>();
+        CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
+        cb->callback = (*it);
+        cb->enabled = enabled;
+        onSpatializationEnabledChangeFlag_ = true;
+        OnJsCallbackSpatializationEnabled(cb);
+    }
+    for (auto it = spatializationEnabledChangeCbForAnyDeviceList_.begin();
+        it != spatializationEnabledChangeCbForAnyDeviceList_.end(); it++) {
+        std::unique_ptr<AudioSpatializationEnabledJsCallback> cb =
+            std::make_unique<AudioSpatializationEnabledJsCallback>();
+        CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
+        cb->callback = (*it);
+        cb->deviceDescriptor = deviceDescriptor;
+        cb->enabled = enabled;
+        onSpatializationEnabledChangeFlag_ = false;
+        OnJsCallbackSpatializationEnabled(cb);
     }
 
     return;
@@ -211,14 +209,14 @@ void NapiAudioSpatializationEnabledChangeCallback::WorkCallbackInterruptDone(uv_
         NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM0]);
         CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr, "fail to convert to jsobj");
 
-        if (onSpatializationEnabledChangeflag_ == ARGS_ONE) {
+        if (onSpatializationEnabledChangeFlag_) {
             napi_value args[ARGS_ONE] = { nullptr };
             NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM0]);
             CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr, "fail to convert to jsobj");
             const size_t argCount = ARGS_ONE;
             napi_value result = nullptr;
             nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
-        } else if (onSpatializationEnabledChangeflag_ == ARGS_TWO) {
+        } else {
             napi_value args[ARGS_TWO] = { nullptr };
             NapiParamUtils::SetDeviceDescriptor(env, event->deviceDescriptor, args[PARAM0]);
             NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM1]);
@@ -273,7 +271,6 @@ void NapiAudioHeadTrackingEnabledChangeCallback::SaveHeadTrackingEnabledChangeCa
     napi_ref callback = nullptr;
     const int32_t refCount = ARGS_ONE;
     if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME)) {
-        onHeadTrackingEnabledChangeflag_ = ARGS_ONE;
         for (auto it = headTrackingEnabledChangeCbList_.begin(); it != headTrackingEnabledChangeCbList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: spatialization manager has same callback");
@@ -288,8 +285,8 @@ void NapiAudioHeadTrackingEnabledChangeCallback::SaveHeadTrackingEnabledChangeCa
 
         headTrackingEnabledChangeCbList_.push_back(cb);
     } else if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
-        onHeadTrackingEnabledChangeflag_ = ARGS_TWO;
-        for (auto it = newheadTrackingEnabledChangeCbList_.begin(); it != newheadTrackingEnabledChangeCbList_.end(); ++it) {
+        for (auto it = headTrackingEnabledChangeCbForAnyDeviceList_.begin();
+            it != headTrackingEnabledChangeCbForAnyDeviceList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: spatialization manager has same callback");
         }
@@ -301,7 +298,7 @@ void NapiAudioHeadTrackingEnabledChangeCallback::SaveHeadTrackingEnabledChangeCa
         std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callback);
         CHECK_AND_RETURN_LOG(cb != nullptr, "NapiAudioHeadTrackingEnabledChangeCallback: creating callback failed");
 
-        newheadTrackingEnabledChangeCbList_.push_back(cb);
+        headTrackingEnabledChangeCbForAnyDeviceList_.push_back(cb);
     }
 }
 
@@ -310,7 +307,6 @@ void NapiAudioHeadTrackingEnabledChangeCallback::RemoveHeadTrackingEnabledChange
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME)) {
-        onHeadTrackingEnabledChangeflag_ = ARGS_ONE;
         for (auto it = headTrackingEnabledChangeCbList_.begin(); it != headTrackingEnabledChangeCbList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             if (isSameCallback) {
@@ -322,14 +318,14 @@ void NapiAudioHeadTrackingEnabledChangeCallback::RemoveHeadTrackingEnabledChange
             }
         }
     } else if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
-        onHeadTrackingEnabledChangeflag_ = ARGS_TWO;
-        for (auto it = newheadTrackingEnabledChangeCbList_.begin(); it != newheadTrackingEnabledChangeCbList_.end(); ++it) {
+        for (auto it = headTrackingEnabledChangeCbForAnyDeviceList_.begin();
+            it != headTrackingEnabledChangeCbForAnyDeviceList_.end(); ++it) {
             bool isSameCallback = NapiAudioManagerCallback::IsSameCallback(env_, args, (*it)->cb_);
             if (isSameCallback) {
                 AUDIO_INFO_LOG("RemoveHeadTrackingEnabledChangeCallbackReference: find js callback, delete it");
                 napi_delete_reference(env, (*it)->cb_);
                 (*it)->cb_ = nullptr;
-                newheadTrackingEnabledChangeCbList_.erase(it);
+                headTrackingEnabledChangeCbForAnyDeviceList_.erase(it);
                 return;
             }
         }
@@ -342,28 +338,27 @@ void NapiAudioHeadTrackingEnabledChangeCallback::RemoveAllHeadTrackingEnabledCha
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME)) {
-        onHeadTrackingEnabledChangeflag_ = ARGS_ONE;
         for (auto it = headTrackingEnabledChangeCbList_.begin(); it != headTrackingEnabledChangeCbList_.end(); ++it) {
             napi_delete_reference(env_, (*it)->cb_);
             (*it)->cb_ = nullptr;
         }
         headTrackingEnabledChangeCbList_.clear();
     } else if (!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME)) {
-        onHeadTrackingEnabledChangeflag_ = ARGS_TWO;
-        for (auto it = newheadTrackingEnabledChangeCbList_.begin(); it != newheadTrackingEnabledChangeCbList_.end(); ++it) {
+        for (auto it = headTrackingEnabledChangeCbForAnyDeviceList_.begin();
+            it != headTrackingEnabledChangeCbForAnyDeviceList_.end(); ++it) {
             napi_delete_reference(env_, (*it)->cb_);
             (*it)->cb_ = nullptr;
         }
-        newheadTrackingEnabledChangeCbList_.clear();
+        headTrackingEnabledChangeCbForAnyDeviceList_.clear();
     }
     AUDIO_INFO_LOG("RemoveAllHeadTrackingEnabledChangeCallbackReference: remove all js callbacks success");
 }
 
-int32_t NapiAudioHeadTrackingEnabledChangeCallback::GetHeadTrackingEnabledChangeCbListSize()
+int32_t NapiAudioHeadTrackingEnabledChangeCallback::GetHeadTrackingEnabledChangeCbListSize(const std::string cbName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return (onHeadTrackingEnabledChangeflag_ == ARGS_ONE ? headTrackingEnabledChangeCbList_.size():
-        newheadTrackingEnabledChangeCbList_.size());
+    return ((!cbName.compare(HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME)) ? headTrackingEnabledChangeCbList_.size():
+        headTrackingEnabledChangeCbForAnyDeviceList_.size());
 }
 
 void NapiAudioHeadTrackingEnabledChangeCallback::OnHeadTrackingEnabledChange(const bool &enabled)
@@ -389,25 +384,25 @@ void NapiAudioHeadTrackingEnabledChangeCallback::OnHeadTrackingEnabledChange(
     AUDIO_INFO_LOG("OnHeadTrackingEnabledChange by the specified device entered");
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (onHeadTrackingEnabledChangeflag_ == ARGS_ONE) {
-        for (auto it = headTrackingEnabledChangeCbList_.begin(); it != headTrackingEnabledChangeCbList_.end(); it++) {
-            std::unique_ptr<AudioHeadTrackingEnabledJsCallback> cb =
-                std::make_unique<AudioHeadTrackingEnabledJsCallback>();
-            CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
-            cb->callback = (*it);
-            cb->enabled = enabled;
-            OnJsCallbackHeadTrackingEnabled(cb);
-        }
-    } else if (onHeadTrackingEnabledChangeflag_ == ARGS_TWO) {
-        for (auto it = newheadTrackingEnabledChangeCbList_.begin(); it != newheadTrackingEnabledChangeCbList_.end(); it++) {
-            std::unique_ptr<AudioHeadTrackingEnabledJsCallback> cb =
-                std::make_unique<AudioHeadTrackingEnabledJsCallback>();
-            CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
-            cb->callback = (*it);
-            cb->deviceDescriptor = deviceDescriptor;
-            cb->enabled = enabled;
-            OnJsCallbackHeadTrackingEnabled(cb);
-        }
+    for (auto it = headTrackingEnabledChangeCbList_.begin(); it != headTrackingEnabledChangeCbList_.end(); it++) {
+        std::unique_ptr<AudioHeadTrackingEnabledJsCallback> cb =
+            std::make_unique<AudioHeadTrackingEnabledJsCallback>();
+        CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
+        cb->callback = (*it);
+        cb->enabled = enabled;
+        onHeadTrackingEnabledChangeFlag_ = true;
+        OnJsCallbackHeadTrackingEnabled(cb);
+    }
+    for (auto it = headTrackingEnabledChangeCbForAnyDeviceList_.begin();
+        it != headTrackingEnabledChangeCbForAnyDeviceList_.end(); it++) {
+        std::unique_ptr<AudioHeadTrackingEnabledJsCallback> cb =
+            std::make_unique<AudioHeadTrackingEnabledJsCallback>();
+        CHECK_AND_RETURN_LOG(cb != nullptr, "No memory!!");
+        cb->callback = (*it);
+        cb->deviceDescriptor = deviceDescriptor;
+        cb->enabled = enabled;
+        onHeadTrackingEnabledChangeFlag_ = false;
+        OnJsCallbackHeadTrackingEnabled(cb);
     }
 
     return;
@@ -435,14 +430,14 @@ void NapiAudioHeadTrackingEnabledChangeCallback::WorkCallbackInterruptDone(uv_wo
         napi_status nstatus = napi_get_reference_value(env, callback, &jsCallback);
         CHECK_AND_BREAK_LOG(nstatus == napi_ok && jsCallback != nullptr, "callback get reference value fail");
 
-        if (onHeadTrackingEnabledChangeflag_ == ARGS_ONE) {
+        if (onHeadTrackingEnabledChangeFlag_) {
             napi_value args[ARGS_ONE] = { nullptr };
             NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM0]);
             CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr, "fail to convert to jsobj");
             const size_t argCount = ARGS_ONE;
             napi_value result = nullptr;
             nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
-        } else if (onHeadTrackingEnabledChangeflag_ == ARGS_TWO) {
+        } else {
             napi_value args[ARGS_TWO] = { nullptr };
             NapiParamUtils::SetDeviceDescriptor(env, event->deviceDescriptor, args[PARAM0]);
             NapiParamUtils::SetValueBoolean(env, event->enabled, args[PARAM1]);

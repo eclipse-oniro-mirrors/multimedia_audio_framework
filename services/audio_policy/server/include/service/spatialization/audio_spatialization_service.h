@@ -110,7 +110,6 @@ private:
     std::shared_ptr<AudioPolicyServerHandler> audioPolicyServerHandler_;
     std::string currentDeviceAddress_ = "";
     std::string preSettingSpatialAddress_ = "NO_PREVIOUS_SET_DEVICE";
-    std::string currSettingHeadTrackingAddress_ = "";
     bool isSpatializationSupported_ = false;
     bool isHeadTrackingSupported_ = false;
     bool spatializationEnabledReal_ = false;

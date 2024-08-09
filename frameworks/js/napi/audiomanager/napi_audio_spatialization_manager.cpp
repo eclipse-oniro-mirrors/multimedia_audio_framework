@@ -246,15 +246,20 @@ napi_value NapiAudioSpatializationManager::SetSpatializationEnabled(napi_env env
             NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
                 "incorrect parameter types: The type of enable must be boolean", NAPI_ERR_INPUT_INVALID);
         } else if (argc == ARGS_TWO) {
-            requireArgc = ARGS_TWO;
-            context->status = NapiParamUtils::GetAudioDeviceDescriptor(env, context->deviceDescriptor, argTransFlag,
-                argv[PARAM0]);
-            NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
-                "incorrect parameter types: The param of deviceDescriptor must be interface AudioDeviceDescriptor",
-                NAPI_ERR_INPUT_INVALID);
-            context->status = NapiParamUtils::GetValueBoolean(env, context->spatializationEnable, argv[PARAM1]);
-            NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
-                "incorrect parameter types: The type of enable must be boolean", NAPI_ERR_INPUT_INVALID);
+            context->status = NapiParamUtils::GetValueBoolean(env, context->spatializationEnable, argv[PARAM0]);
+            if (context->status == napi_ok) {
+                requireArgc = ARGS_ONE;
+            } else {
+                requireArgc = ARGS_TWO;
+                context->status = NapiParamUtils::GetAudioDeviceDescriptor(env, context->deviceDescriptor, argTransFlag,
+                    argv[PARAM0]);
+                NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
+                    "incorrect parameter types: The param of deviceDescriptor must be interface AudioDeviceDescriptor",
+                    NAPI_ERR_INPUT_INVALID);
+                context->status = NapiParamUtils::GetValueBoolean(env, context->spatializationEnable, argv[PARAM1]);
+                NAPI_CHECK_ARGS_RETURN_VOID(context, context->status == napi_ok,
+                    "incorrect parameter types: The type of enable must be boolean", NAPI_ERR_INPUT_INVALID);
+            }
         }
     };
     context->GetCbInfo(env, info, inputParser);
@@ -773,7 +778,7 @@ void NapiAudioSpatializationManager::UnregisterHeadTrackingEnabledChangeCallback
         if (callback != nullptr) {
             cb->RemoveHeadTrackingEnabledChangeCallbackReference(env, callback, cbName);
         }
-        if (callback == nullptr || cb->GetHeadTrackingEnabledChangeCbListSize() == 0) {
+        if (callback == nullptr || cb->GetHeadTrackingEnabledChangeCbListSize(cbName) == 0) {
             int32_t ret = napiAudioSpatializationManager->audioSpatializationMngr_->
                 UnregisterHeadTrackingEnabledEventListener();
             CHECK_AND_RETURN_LOG(ret == SUCCESS, "UnregisterHeadTrackingEnabledEventListener Failed");
