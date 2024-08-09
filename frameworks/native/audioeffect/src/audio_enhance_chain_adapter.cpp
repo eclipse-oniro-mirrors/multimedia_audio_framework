@@ -41,18 +41,22 @@ int32_t EnhanceChainManagerCreateCb(const uint32_t sceneKeyCode, struct DeviceAt
     AudioEnhanceChainManager *audioEnhanceChainMananger = AudioEnhanceChainManager::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEnhanceChainMananger != nullptr,
         ERR_INVALID_HANDLE, "null audioEnhanceChainManager");
-    AudioEnhanceDeviceAttr deviceAttr;
+    AudioEnhanceDeviceAttr deviceAttr = {};
     deviceAttr.micRate = adapter.micRate;
     deviceAttr.micChannels = adapter.micChannels;
     deviceAttr.micFormat = adapter.micFormat;
-    deviceAttr.needEc = adapter.needEc;
-    deviceAttr.ecRate = adapter.ecRate;
-    deviceAttr.ecChannels = adapter.ecChannels;
-    deviceAttr.ecFormat = adapter.ecFormat;
-    deviceAttr.needMicRef = adapter.needMicRef;
-    deviceAttr.micRefRate = adapter.micRefRate;
-    deviceAttr.micRefChannels = adapter.micRefChannels;
-    deviceAttr.micRefFormat = adapter.micRefFormat;
+    if (adapter.needEc) {
+        deviceAttr.needEc = adapter.needEc;
+        deviceAttr.ecRate = adapter.ecRate;
+        deviceAttr.ecChannels = adapter.ecChannels;
+        deviceAttr.ecFormat = adapter.ecFormat;
+    }
+    if (adapter.needMicRef) {
+        deviceAttr.needMicRef = adapter.needMicRef;
+        deviceAttr.micRefRate = adapter.micRefRate;
+        deviceAttr.micRefChannels = adapter.micRefChannels;
+        deviceAttr.micRefFormat = adapter.micRefFormat;
+    }
     return audioEnhanceChainMananger->CreateAudioEnhanceChainDynamic(sceneKeyCode, deviceAttr);
 }
 

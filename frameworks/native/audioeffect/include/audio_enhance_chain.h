@@ -91,6 +91,7 @@ public:
     int32_t SetEnhanceProperty(const std::string &effect, const std::string &property);
     int32_t SetEnhanceParamToHandle(AudioEffectHandle handle);
     bool IsDefaultChain();
+    int32_t SetInputDevice(const std::string &inputDevice);
 
 private:
     void InitAudioEnhanceChain();

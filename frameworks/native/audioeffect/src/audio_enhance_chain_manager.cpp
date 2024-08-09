@@ -569,7 +569,33 @@ int32_t AudioEnhanceChainManager::ApplyAudioEnhanceChain(const uint32_t sceneKey
 int32_t AudioEnhanceChainManager::SetInputDevice(const uint32_t &captureId, const DeviceType &inputDevice)
 {
     std::lock_guard<std::mutex> lock(chainManagerMutex_);
-    captureIdToDeviceMap_.insert_or_assign(captureId, inputDevice);
+    auto item = captureIdToDeviceMap_.find(captureId);
+    if (item == captureIdToDeviceMap_.end()) {
+        captureIdToDeviceMap_[captureId] = inputDevice;
+        AUDIO_INFO_LOG("set new inputdevice, captureId: %{public}d, inputDevice: %{public}d", captureId, inputDevice);
+        return SUCCESS;
+    }
+    if (item->second == inputDevice) {
+        AUDIO_INFO_LOG("set same device, captureId: %{public}d, inputDevice: %{public}d", captureId, inputDevice);
+        return SUCCESS;
+    }
+    // item->second != inputDevice
+    captureIdToDeviceMap_[captureId] = inputDevice;
+    std::string inputDeviceStr = "";
+    auto deviceItem = SUPPORTED_DEVICE_TYPE.find(inputDevice);
+    if (deviceItem != SUPPORTED_DEVICE_TYPE.end()) {
+        inputDeviceStr = deviceItem->second;
+    } else {
+        return ERROR;
+    }
+    for (auto &[sceneKeyCode, chain] : sceneTypeToEnhanceChainMap_) {
+        uint32_t tempId = (sceneKeyCode & CAPTURER_ID_MASK) >> 8;
+        if ((tempId == captureId) && chain) {
+            if (chain->SetInputDevice(inputDeviceStr) != SUCCESS) {
+                AUDIO_ERR_LOG("chain:%{public}u set input device failed", tempId);
+            }
+        }
+    }
     AUDIO_INFO_LOG("success, captureId: %{public}d, inputDevice: %{public}d", captureId, inputDevice);
     return SUCCESS;
 }
