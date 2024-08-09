@@ -121,6 +121,30 @@ void AudioEnhanceChain::ReleaseEnhanceChain()
     enhanceLibHandles_.clear();
 }
 
+int32_t AudioEnhanceChain::SetInputDeivce(const std::string &inputDevice)
+{
+    std::lock_guard<std::mutex> lock(chainMutex_);
+
+    algoParam_.preDevice = inputDevice;
+
+    AudioEffectTransInfo cmdInfo = {};
+    AudioEffectTransInfo replyInfo = {};
+
+    AudioEnhanceParam setParam = {algoParam_.muteInfo, algoParam_.volumeInfo, algoParam_.preDevice.c_str(),
+        algoParam_.postDevice.c_str(), algoParam_.sceneType.c_str()};
+
+    cmdInfo.data = static_cast<void *>(&setParam);
+    cmdInfo.size = sizeof(setParam);
+
+    for (AudioEffectHandle handle : standByEnhanceHandles_) {
+        int32_t ret = (*handle)->command(handle, EFFECT_CMD_SET_PARAM, &cmdInfo, &replyInfo);
+        CHECK_AND_CONTINUE_LOG(ret == 0, "[%{publc}s] either one of libs process fail", sceneType_.c_str());
+        ret = (*handle)->command(handle, EFFECT_CMD_INIT, &cmdInfo, &replyInfo);
+        CHECK_AND_RETURN_LOG(ret == 0, "[%{public}s], either one of libs EFFECT_CMD_INIT fail", sceneType_.c_str());
+    }
+    return SUCCESS;
+}
+
 int32_t AudioEnhanceChain::SetEnhanceParamToHandle(AudioEffectHandle handle)
 {
     AudioEffectTransInfo cmdInfo = {};
