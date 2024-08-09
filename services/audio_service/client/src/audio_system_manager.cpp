@@ -839,7 +839,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusInfoChange(
     std::shared_ptr<AudioFocusInfoChangeCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
-        cb_ = (*callback).lock();
+        cb_ = (*callback);
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnAudioFocusInfoChange : Notify event to app complete");
             temp_.push_back(cb_);
@@ -862,7 +862,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
     std::shared_ptr<AudioFocusInfoChangeCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
-        cb_ = (*callback).lock();
+        cb_ = (*callback);
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnAudioFocusRequested : Notify event to app complete");
             temp_.push_back(cb_);
@@ -884,7 +884,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrup
     std::shared_ptr<AudioFocusInfoChangeCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
-        cb_ = (*callback).lock();
+        cb_ = (*callback);
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnAudioFocusAbandoned : Notify event to app complete");
             temp_.push_back(cb_);
