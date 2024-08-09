@@ -881,7 +881,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrup
 {
     AUDIO_DEBUG_LOG("on callback Entered OnAudioFocusAbandoned %{public}s", __func__);
     std::list<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
-    std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
+    std::shared_ptr<AudioFocusInfoChangeCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback).lock();
