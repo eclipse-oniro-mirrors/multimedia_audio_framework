@@ -835,20 +835,20 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusInfoChange(
 {
     AUDIO_DEBUG_LOG("on callback Entered AudioFocusInfoChangeCallbackImpl %{public}s", __func__);
 
-    std::vector<std::shared_ptr<OHOS::AudioStandard::AudioFocusInfoChangeCallback>> temp;
+    std::vector<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback).lock();
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnAudioFocusInfoChange : Notify event to app complete");
-            temp.push_back(cb_);
+            temp_.push_back(cb_);
         } else {
             AUDIO_ERR_LOG("OnAudioFocusInfoChange: callback is null");
         }
     }
     cbListLock.unlock();
-    for (auto tp_ = temp.begin(); tp_ != temp.end(); ++tp_) {
+    for (auto tp_ = temp_.begin(); tp_ != temp_.end(); ++tp_) {
         tp_->OnAudioFocusInfoChange(focusInfoList);
     }
     return;
@@ -858,20 +858,20 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
 {
     AUDIO_DEBUG_LOG("on callback Entered OnAudioFocusRequested %{public}s", __func__);
 
-    std::vector<shared_ptr<OHOS::AudioStandard::AudioFocusInfoChangeCallback>> temp;
+    std::vector<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback).lock();
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnAudioFocusRequested : Notify event to app complete");
-            temp.push_back(cb_);
+            temp_.push_back(cb_);
         } else {
             AUDIO_ERR_LOG("OnAudioFocusRequested: callback is null");
         }
     }
     cbListLock.unlock();
-    for (auto tp_ = temp.begin(); tp_ != temp.end(); ++tp_) {
+    for (auto tp_ = temp_.begin(); tp_ != temp_.end(); ++tp_) {
         tp_->OnAudioFocusRequested(requestFocus);
     }
     return;
@@ -880,7 +880,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
 void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrupt &abandonFocus)
 {
     AUDIO_DEBUG_LOG("on callback Entered OnAudioFocusAbandoned %{public}s", __func__);
-    std::vector<std::shared_ptr<OHOS::AudioStandard::AudioFocusInfoChangeCallback>> temp;
+    std::vector<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
@@ -888,13 +888,13 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrup
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnAudioFocusAbandoned : Notify event to app complete");
             cb_ = (*callback);
-            temp.push_back(cb_);
+            temp_.push_back(cb_);
         } else {
             AUDIO_ERR_LOG("OnAudioFocusAbandoned: callback is null");
         }
     }
     cbListLock.unlock();
-    for (auto tp_ = temp.begin(); tp_ != temp.end(); ++tp_) {
+    for (auto tp_ = temp_.begin(); tp_ != temp_.end(); ++tp_) {
         tp_->OnAudioFocusAbandoned(abandonFocus);
     }
     return;
@@ -1465,20 +1465,20 @@ void AudioDistributedRoutingRoleCallbackImpl::RemoveCallback(
 void AudioDistributedRoutingRoleCallbackImpl::OnDistributedRoutingRoleChange(
     const AudioDeviceDescriptor *descriptor, const CastType type)
 {
-    std::vector<std::shared_ptr<AudioDistributedRoutingRoleCallback>> temp;
+    std::vector<std::shared_ptr<AudioDistributedRoutingRoleCallback>> temp_;
     std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback);
         if (cb_ != nullptr) {
             AUDIO_DEBUG_LOG("OnDistributedRoutingRoleChange : Notify event to app complete");
-            temp.push_back(cb_);
+            temp_.push_back(cb_);
         } else {
             AUDIO_ERR_LOG("OnDistributedRoutingRoleChange: callback is null");
         }
     }
     cbListLock.unlock();
-    for (auto tp_ = temp.begin(); tp_ != temp.end(); ++tp_) {
+    for (auto tp_ = temp_.begin(); tp_ != temp_.end(); ++tp_) {
         tp_->OnDistributedRoutingRoleChange(descriptor, type);
     }
     return;
