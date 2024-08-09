@@ -834,9 +834,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusInfoChange(
     const std::list<std::pair<AudioInterrupt, AudioFocuState>> &focusInfoList)
 {
     AUDIO_DEBUG_LOG("on callback Entered AudioFocusInfoChangeCallbackImpl %{public}s", __func__);
-
-    std::list<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
-    std::shared_ptr<AudioFocusInfoChangeCallback> tp_;
+    std::vector<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback).lock();
@@ -848,8 +846,8 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusInfoChange(
         }
     }
     cbListLock.unlock();
-    for (auto tp_ = temp_.begin(); tp_ != temp_.end(); ++tp_) {
-        tp_->OnAudioFocusInfoChange(focusInfoList);
+    for (uint32_t i = 0; i < temp_.size(); i++) {
+        temp_[i]->OnAudioFocusInfoChange(focusInfoList);
     }
     return;
 }
@@ -858,8 +856,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
 {
     AUDIO_DEBUG_LOG("on callback Entered OnAudioFocusRequested %{public}s", __func__);
 
-    std::list<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
-    std::shared_ptr<AudioFocusInfoChangeCallback> tp_;
+    std::vector<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback).lock();
@@ -871,8 +868,8 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
         }
     }
     cbListLock.unlock();
-    for (auto tp_ = temp_.begin(); tp_ != temp_.end(); ++tp_) {
-        tp_->OnAudioFocusRequested(requestFocus);
+    for (uint32_t i = 0; i < temp_.size(); i++) {
+        temp_[i]->OnAudioFocusRequested(requestFocus);
     }
     return;
 }
@@ -880,8 +877,7 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusRequested(const AudioInterrup
 void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrupt &abandonFocus)
 {
     AUDIO_DEBUG_LOG("on callback Entered OnAudioFocusAbandoned %{public}s", __func__);
-    std::list<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
-    std::shared_ptr<AudioFocusInfoChangeCallback> tp_;
+    std::vector<std::shared_ptr<AudioFocusInfoChangeCallback>> temp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback).lock();
@@ -893,8 +889,8 @@ void AudioFocusInfoChangeCallbackImpl::OnAudioFocusAbandoned(const AudioInterrup
         }
     }
     cbListLock.unlock();
-    for (auto tp_ = temp_.begin(); tp_ != temp_.end(); ++tp_) {
-        tp_->OnAudioFocusAbandoned(abandonFocus);
+    for (uint32_t i = 0; i < temp_.size(); i++) {
+        temp_[i]->OnAudioFocusAbandoned(abandonFocus);
     }
     return;
 }
@@ -1464,8 +1460,7 @@ void AudioDistributedRoutingRoleCallbackImpl::RemoveCallback(
 void AudioDistributedRoutingRoleCallbackImpl::OnDistributedRoutingRoleChange(
     const AudioDeviceDescriptor *descriptor, const CastType type)
 {
-    std::list<std::shared_ptr<AudioDistributedRoutingRoleCallback>> temp_;
-    std::shared_ptr<AudioDistributedRoutingRoleCallback> tp_;
+    std::vector<std::shared_ptr<AudioDistributedRoutingRoleCallback>> temp_;
     std::unique_lock<mutex> cbListLock(cbListMutex_);
     for (auto callback = callbackList_.begin(); callback != callbackList_.end(); ++callback) {
         cb_ = (*callback);
@@ -1477,8 +1472,8 @@ void AudioDistributedRoutingRoleCallbackImpl::OnDistributedRoutingRoleChange(
         }
     }
     cbListLock.unlock();
-    for (auto tp_ = temp_.begin(); tp_ != temp_.end(); ++tp_) {
-        tp_->OnDistributedRoutingRoleChange(descriptor, type);
+    for (uint32_t i = 0; i < temp_.size(); i++) {
+        temp_[i]->OnDistributedRoutingRoleChange(descriptor, type);
     }
     return;
 }
