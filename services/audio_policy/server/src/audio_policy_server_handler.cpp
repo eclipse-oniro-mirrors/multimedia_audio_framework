@@ -468,7 +468,7 @@ bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeForAnyDeviceEvent(c
     eventContextObj->spatializationEnabled = enabled;
     eventContextObj->descriptor = selectedAudioDevice;
     lock_guard<mutex> runnerlock(runnerMutex_);
-    bool ret = SendEvent(AppExecFwk::InnerEvent::Get(EventAudioServerCmd::SPATIALIZATION_DEVICE_ENABLED_CHANGE,
+    bool ret = SendEvent(AppExecFwk::InnerEvent::Get(EventAudioServerCmd::SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE,
         eventContextObj));
     CHECK_AND_RETURN_RET_LOG(ret, ret, "Send SPATIALIZATION_ENABLED_CHANGE event failed");
     return ret;
@@ -495,7 +495,7 @@ bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeForAnyDeviceEvent(co
     eventContextObj->headTrackingEnabled = enabled;
     eventContextObj->descriptor = selectedAudioDevice;
     lock_guard<mutex> runnerlock(runnerMutex_);
-    bool ret = SendEvent(AppExecFwk::InnerEvent::Get(EventAudioServerCmd::HEAD_TRACKING_DEVICE_ENABLED_CHANGE,
+    bool ret = SendEvent(AppExecFwk::InnerEvent::Get(EventAudioServerCmd::HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE,
         eventContextObj));
     CHECK_AND_RETURN_RET_LOG(ret, ret, "Send HEAD_TRACKING_ENABLED_CHANGE event failed");
     return ret;
