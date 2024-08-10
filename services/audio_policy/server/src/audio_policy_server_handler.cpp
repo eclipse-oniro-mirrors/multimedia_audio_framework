@@ -460,7 +460,7 @@ bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeEvent(const bool &e
     return ret;
 }
 
-bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeForDeviceEvent(const sptr<AudioDeviceDescriptor>
+bool AudioPolicyServerHandler::SendSpatializatonEnabledChangeForAnyDeviceEvent(const sptr<AudioDeviceDescriptor>
     &selectedAudioDevice, const bool &enabled)
 {
     std::shared_ptr<EventContextObj> eventContextObj = std::make_shared<EventContextObj>();
@@ -486,7 +486,7 @@ bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeEvent(const bool &en
     return ret;
 }
 
-bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeForDeviceEvent(const sptr<AudioDeviceDescriptor>
+bool AudioPolicyServerHandler::SendHeadTrackingEnabledChangeForAnyDeviceEvent(const sptr<AudioDeviceDescriptor>
     &selectedAudioDevice,
     const bool &enabled)
 {
@@ -898,7 +898,7 @@ void AudioPolicyServerHandler::HandleSpatializatonEnabledChangeEvent(const AppEx
     }
 }
 
-void AudioPolicyServerHandler::HandleSpatializatonDeviceEnabledChangeEvent(const AppExecFwk::InnerEvent::Pointer &event)
+void AudioPolicyServerHandler::HandleSpatializatonEnabledChangeForAnyDeviceEvent(const AppExecFwk::InnerEvent::Pointer &event)
 {
     std::shared_ptr<EventContextObj> eventContextObj = event->GetSharedObject<EventContextObj>();
     CHECK_AND_RETURN_LOG(eventContextObj != nullptr, "EventContextObj get nullptr");
@@ -929,7 +929,7 @@ void AudioPolicyServerHandler::HandleHeadTrackingEnabledChangeEvent(const AppExe
     }
 }
 
-void AudioPolicyServerHandler::HandleHeadTrackingDeviceEnabledChangeEvent(const AppExecFwk::InnerEvent::Pointer &event)
+void AudioPolicyServerHandler::HandleHeadTrackingEnabledChangeForAnyDeviceEvent(const AppExecFwk::InnerEvent::Pointer &event)
 {
     std::shared_ptr<EventContextObj> eventContextObj = event->GetSharedObject<EventContextObj>();
     CHECK_AND_RETURN_LOG(eventContextObj != nullptr, "EventContextObj get nullptr");
@@ -1022,10 +1022,10 @@ void AudioPolicyServerHandler::HandleOtherServiceEvent(const uint32_t &eventId,
         case EventAudioServerCmd::CONCURRENCY_EVENT_WITH_SESSIONID:
             HandleConcurrencyEventWithSessionID(event);
             break;
-        case EventAudioServerCmd::SPATIALIZATION_DEVICE_ENABLED_CHANGE:
+        case EventAudioServerCmd::SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE:
             HandleSpatializatonDeviceEnabledChangeEvent(event);
             break;
-        case EventAudioServerCmd::HEAD_TRACKING_DEVICE_ENABLED_CHANGE:
+        case EventAudioServerCmd::HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE:
             HandleHeadTrackingDeviceEnabledChangeEvent(event);
             break;
         default:

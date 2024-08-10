@@ -464,7 +464,7 @@ void AudioPolicyClientProxy::OnHeadTrackingEnabledChange(const sptr<AudioDeviceD
         return;
     }
 
-    data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_DEVICE_ENABLED_CHANGE));
+    data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE));
 
     if (hasSystemPermission_) {
         sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);

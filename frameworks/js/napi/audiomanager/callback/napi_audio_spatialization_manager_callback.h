@@ -26,10 +26,10 @@
 namespace OHOS {
 namespace AudioStandard {
 const std::string SPATIALIZATION_ENABLED_CHANGE_CALLBACK_NAME = "spatializationEnabledChange";
-const std::string SPATIALIZATION_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME =
+const std::string SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICES_CALLBACK_NAME =
     "spatializationEnabledChangeForAnyDevice";
 const std::string HEAD_TRACKING_ENABLED_CHANGE_CALLBACK_NAME = "headTrackingEnabledChange";
-const std::string HEAD_TRACKING_ENABLED_CHANGE_FOR_ALL_DEVICES_CALLBACK_NAME =
+const std::string HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICES_CALLBACK_NAME =
     "headTrackingEnabledChangeForAnyDevice";
 class NapiAudioSpatializationEnabledChangeCallback : public AudioSpatializationEnabledChangeCallback {
 public:
@@ -57,7 +57,7 @@ private:
     napi_env env_ = nullptr;
     std::list<std::shared_ptr<AutoRef>> spatializationEnabledChangeCbList_;
     std::list<std::shared_ptr<AutoRef>> spatializationEnabledChangeCbForAnyDeviceList_;
-    bool onSpatializationEnabledChangeFlag_;
+    static bool onSpatializationEnabledChangeFlag_;
 };
 
 class NapiAudioHeadTrackingEnabledChangeCallback : public AudioHeadTrackingEnabledChangeCallback {
@@ -86,7 +86,7 @@ private:
     napi_env env_ = nullptr;
     std::list<std::shared_ptr<AutoRef>> headTrackingEnabledChangeCbList_;
     std::list<std::shared_ptr<AutoRef>> headTrackingEnabledChangeCbForAnyDeviceList_;
-    bool onHeadTrackingEnabledChangeFlag_;
+    static bool onHeadTrackingEnabledChangeFlag_;
 };
 } // namespace AudioStandard
 } // namespace OHOS

@@ -72,13 +72,13 @@ void AudioPolicyClientStub::OnMaxRemoteRequest(uint32_t updateCode, MessageParce
             HandleSpatializationEnabledChange(data, reply);
             break;
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE):
-            HandleSpatializationDeviceEnabledChange(data, reply);
+            HandleSpatializationEnabledChangeForAnyDevice(data, reply);
             break;
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE):
             HandleHeadTrackingEnabledChange(data, reply);
             break;
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE):
-            HandleHeadTrackingDeviceEnabledChange(data, reply);
+            HandleHeadTrackingEnabledChangeForAnyDevice(data, reply);
             break;
         default:
             break;
@@ -307,7 +307,7 @@ void AudioPolicyClientStub::HandleSpatializationEnabledChange(MessageParcel &dat
     OnSpatializationEnabledChange(enabled);
 }
 
-void AudioPolicyClientStub::HandleSpatializationDeviceEnabledChange(MessageParcel &data, MessageParcel &reply)
+void AudioPolicyClientStub::HandleSpatializationEnabledChangeForAnyDevice(MessageParcel &data, MessageParcel &reply)
 {
     sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
     CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
@@ -321,7 +321,7 @@ void AudioPolicyClientStub::HandleHeadTrackingEnabledChange(MessageParcel &data,
     OnHeadTrackingEnabledChange(enabled);
 }
 
-void AudioPolicyClientStub::HandleHeadTrackingDeviceEnabledChange(MessageParcel &data, MessageParcel &reply)
+void AudioPolicyClientStub::HandleHeadTrackingEnabledChangeForAnyDevice(MessageParcel &data, MessageParcel &reply)
 {
     sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
     CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");

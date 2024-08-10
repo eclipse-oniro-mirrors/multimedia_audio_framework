@@ -46,9 +46,9 @@ private:
     void HandleRecreateCapturerStreamEvent(MessageParcel &data, MessageParcel &reply);
     void HandleHeadTrackingDeviceChange(MessageParcel &data, MessageParcel &reply);
     void HandleSpatializationEnabledChange(MessageParcel &data, MessageParcel &reply);
-    void HandleSpatializationDeviceEnabledChange(MessageParcel &data, MessageParcel &reply);
+    void HandleSpatializationEnabledChangeForAnyDevice(MessageParcel &data, MessageParcel &reply);
     void HandleHeadTrackingEnabledChange(MessageParcel &data, MessageParcel &reply);
-    void HandleHeadTrackingDeviceEnabledChange(MessageParcel &data, MessageParcel &reply);
+    void HandleHeadTrackingEnabledChangeForAnyDevice(MessageParcel &data, MessageParcel &reply);
 
     void OnMaxRemoteRequest(uint32_t updateCode, MessageParcel &data, MessageParcel &reply);
 };

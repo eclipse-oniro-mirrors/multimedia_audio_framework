@@ -69,9 +69,9 @@ public:
         RECREATE_CAPTURER_STREAM_EVENT,
         HEAD_TRACKING_DEVICE_CHANGE,
         SPATIALIZATION_ENABLED_CHANGE,
-        SPATIALIZATION_DEVICE_ENABLED_CHANGE,
+        SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE,
         HEAD_TRACKING_ENABLED_CHANGE,
-        HEAD_TRACKING_DEVICE_ENABLED_CHANGE,
+        HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE,
         PIPE_STREAM_CLEAN_EVENT,
         CONCURRENCY_EVENT_WITH_SESSIONID,
     };
@@ -169,10 +169,10 @@ public:
     void AddAudioDeviceRefinerCb(const sptr<IStandardAudioRoutingManagerListener> &callback);
     int32_t RemoveAudioDeviceRefinerCb();
     bool SendSpatializatonEnabledChangeEvent(const bool &enabled);
-    bool SendSpatializatonEnabledChangeForDeviceEvent(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
+    bool SendSpatializatonEnabledChangeForAnyDeviceEvent(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
         const bool &enabled);
     bool SendHeadTrackingEnabledChangeEvent(const bool &enabled);
-    bool SendHeadTrackingEnabledChangeForDeviceEvent(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
+    bool SendHeadTrackingEnabledChangeForAnyDeviceEvent(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
     const bool &enabled);
     bool SendPipeStreamCleanEvent(AudioPipeType pipeType);
     bool SendConcurrencyEventWithSessionIDCallback(const uint32_t sessionID);
@@ -208,9 +208,9 @@ private:
     void HandleSendRecreateCapturerStreamEvent(const AppExecFwk::InnerEvent::Pointer &event);
     void HandleHeadTrackingDeviceChangeEvent(const AppExecFwk::InnerEvent::Pointer &event);
     void HandleSpatializatonEnabledChangeEvent(const AppExecFwk::InnerEvent::Pointer &event);
-    void HandleSpatializatonDeviceEnabledChangeEvent(const AppExecFwk::InnerEvent::Pointer &event);
+    void HandleSpatializatonEnabledChangeForAnyDeviceEvent(const AppExecFwk::InnerEvent::Pointer &event);
     void HandleHeadTrackingEnabledChangeEvent(const AppExecFwk::InnerEvent::Pointer &event);
-    void HandleHeadTrackingDeviceEnabledChangeEvent(const AppExecFwk::InnerEvent::Pointer &event);
+    void HandleHeadTrackingEnabledChangeForAnyDeviceEvent(const AppExecFwk::InnerEvent::Pointer &event);
     void HandlePipeStreamCleanEvent(const AppExecFwk::InnerEvent::Pointer &event);
     void HandleConcurrencyEventWithSessionID(const AppExecFwk::InnerEvent::Pointer &event);
 
