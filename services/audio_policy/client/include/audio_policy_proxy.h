@@ -228,7 +228,8 @@ public:
 
     int32_t SetSpatializationEnabled(const bool enable) override;
 
-    int32_t SetSpatializationEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice, const bool enable) override;
+    int32_t SetSpatializationEnabled(const sptr<AudioDeviceDescriptor> &selectedAudioDevice,
+        const bool enable) override;
 
     bool IsHeadTrackingEnabled() override;
 

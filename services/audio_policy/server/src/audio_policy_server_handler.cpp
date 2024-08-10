@@ -898,7 +898,8 @@ void AudioPolicyServerHandler::HandleSpatializatonEnabledChangeEvent(const AppEx
     }
 }
 
-void AudioPolicyServerHandler::HandleSpatializatonEnabledChangeForAnyDeviceEvent(const AppExecFwk::InnerEvent::Pointer &event)
+void AudioPolicyServerHandler::HandleSpatializatonEnabledChangeForAnyDeviceEvent(
+    const AppExecFwk::InnerEvent::Pointer &event)
 {
     std::shared_ptr<EventContextObj> eventContextObj = event->GetSharedObject<EventContextObj>();
     CHECK_AND_RETURN_LOG(eventContextObj != nullptr, "EventContextObj get nullptr");
@@ -929,7 +930,8 @@ void AudioPolicyServerHandler::HandleHeadTrackingEnabledChangeEvent(const AppExe
     }
 }
 
-void AudioPolicyServerHandler::HandleHeadTrackingEnabledChangeForAnyDeviceEvent(const AppExecFwk::InnerEvent::Pointer &event)
+void AudioPolicyServerHandler::HandleHeadTrackingEnabledChangeForAnyDeviceEvent(
+    const AppExecFwk::InnerEvent::Pointer &event)
 {
     std::shared_ptr<EventContextObj> eventContextObj = event->GetSharedObject<EventContextObj>();
     CHECK_AND_RETURN_LOG(eventContextObj != nullptr, "EventContextObj get nullptr");
@@ -1023,10 +1025,10 @@ void AudioPolicyServerHandler::HandleOtherServiceEvent(const uint32_t &eventId,
             HandleConcurrencyEventWithSessionID(event);
             break;
         case EventAudioServerCmd::SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE:
-            HandleSpatializatonDeviceEnabledChangeEvent(event);
+            HandleSpatializatonEnabledChangeForAnyDeviceEvent(event);
             break;
         case EventAudioServerCmd::HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE:
-            HandleHeadTrackingDeviceEnabledChangeEvent(event);
+            HandleHeadTrackingEnabledChangeForAnyDeviceEvent(event);
             break;
         default:
             break;
