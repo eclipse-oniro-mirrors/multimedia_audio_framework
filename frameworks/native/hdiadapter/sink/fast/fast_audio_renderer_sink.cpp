@@ -893,13 +893,11 @@ int32_t FastAudioRendererSinkInner::Flush(void)
 
 void FastAudioRendererSinkInner::ResetOutputRouteForDisconnect(DeviceType device)
 {
-    AUDIO_WARNING_LOG("not supported.");
 }
 
 int32_t FastAudioRendererSinkInner::UpdateAppsUid(const int32_t appsUid[MAX_MIX_CHANNELS],
     const size_t size)
 {
-    AUDIO_WARNING_LOG("not supported.");
     return SUCCESS;
 }
 

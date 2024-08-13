@@ -374,7 +374,7 @@ bool TonePlayerImpl::AudioToneSequenceGen(BufferDesc &bufDesc)
         totalSample_ += reqSamples;
         if (CheckToneStopped()) {
             // in plan: do smooth works
-            AUDIO_INFO_LOG("CheckToneStopped true toneType_ %{public}d", toneType_);
+            AUDIO_PRERELEASE_LOGI("CheckToneStopped true toneType_ %{public}d", toneType_);
             if (toneState_ == TONE_STOPPING) {
                 toneState_ = TONE_STOPPED;
                 totalBufAvailable = 0;

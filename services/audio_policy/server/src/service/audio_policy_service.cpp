@@ -393,7 +393,6 @@ void AudioPolicyService::RecoveryPreferredDevices()
     while (result != SUCCESS && tryCounter-- > 0) {
         Media::MediaMonitor::MediaMonitorManager::GetInstance().GetAudioRouteMsg(preferredDevices);
         if (preferredDevices.size() == 0) {
-            AUDIO_ERR_LOG("The length of preferredDevices is 0 and does not need to be set.");
             continue;
         }
         for (auto iter = preferredDevices.begin(); iter != preferredDevices.end(); ++iter) {
@@ -697,9 +696,6 @@ int32_t AudioPolicyService::GetSystemVolumeLevel(AudioStreamType streamType) con
             if (configInfoPos != connectedA2dpDeviceMap_.end()
                 && configInfoPos->second.absVolumeSupport) {
                 return configInfoPos->second.mute ? 0 : configInfoPos->second.volumeLevel;
-            } else {
-                AUDIO_WARNING_LOG("Get absolute volume failed for activeBTDevice :[%{public}s]",
-                    GetEncryptAddr(activeBTDevice_).c_str());
             }
         }
     }
@@ -1929,8 +1925,6 @@ std::vector<sptr<AudioDeviceDescriptor>> AudioPolicyService::GetPreferredOutputD
             audioRouterCenter_.FetchOutputDevices(rendererInfo.streamUsage, -1);
         for (size_t i = 0; i < descs.size(); i++) {
             sptr<AudioDeviceDescriptor> devDesc = new(std::nothrow) AudioDeviceDescriptor(*descs[i]);
-            AUDIO_PRERELEASE_LOGI("streamUsage %{public}d fetch desc[%{public}zu]-device:%{public}d",
-                rendererInfo.streamUsage, i, descs[i]->deviceType_);
             deviceList.push_back(devDesc);
         }
     } else {
@@ -2127,7 +2121,6 @@ void AudioPolicyService::MoveToNewInputDevice(unique_ptr<AudioCapturerChangeInfo
 
 void AudioPolicyService::FetchOutputDeviceWhenNoRunningStream()
 {
-    AUDIO_PRERELEASE_LOGI("In");
     vector<std::unique_ptr<AudioDeviceDescriptor>> descs =
         audioRouterCenter_.FetchOutputDevices(STREAM_USAGE_MEDIA, -1);
     CHECK_AND_RETURN_LOG(!descs.empty(), "descs is empty");
@@ -2146,7 +2139,6 @@ void AudioPolicyService::FetchOutputDeviceWhenNoRunningStream()
 
 void AudioPolicyService::FetchInputDeviceWhenNoRunningStream()
 {
-    AUDIO_PRERELEASE_LOGI("In");
     unique_ptr<AudioDeviceDescriptor> desc = audioRouterCenter_.FetchInputDevice(SOURCE_TYPE_MIC, -1);
     if (desc->deviceType_ == DEVICE_TYPE_NONE || IsSameDevice(desc, currentActiveInputDevice_)) {
         AUDIO_DEBUG_LOG("input device is not change");
@@ -2581,7 +2573,7 @@ int32_t AudioPolicyService::HandleScoInputDeviceFetched(unique_ptr<AudioDeviceDe
 void AudioPolicyService::FetchInputDevice(vector<unique_ptr<AudioCapturerChangeInfo>> &capturerChangeInfos,
     const AudioStreamDeviceChangeReasonExt reason)
 {
-    AUDIO_INFO_LOG("Start for %{public}zu stream, connected %{public}s",
+    AUDIO_PRERELEASE_LOGI("Start for %{public}zu stream, connected %{public}s",
         capturerChangeInfos.size(), audioDeviceManager_.GetConnDevicesStr().c_str());
     bool needUpdateActiveDevice = true;
     bool isUpdateActiveDevice = false;
@@ -3466,8 +3458,6 @@ bool AudioPolicyService::IsConfigurationUpdated(DeviceType deviceType, const Aud
 void AudioPolicyService::UpdateConnectedDevicesWhenConnectingForOutputDevice(
     const AudioDeviceDescriptor &updatedDesc, std::vector<sptr<AudioDeviceDescriptor>> &descForCb)
 {
-    AUDIO_INFO_LOG("Filling output device for %{public}d", updatedDesc.deviceType_);
-
     sptr<AudioDeviceDescriptor> audioDescriptor = new(std::nothrow) AudioDeviceDescriptor(updatedDesc);
     audioDescriptor->deviceRole_ = OUTPUT_DEVICE;
     // Use speaker streaminfo for all output devices cap
@@ -3499,8 +3489,6 @@ void AudioPolicyService::UpdateConnectedDevicesWhenConnectingForOutputDevice(
 void AudioPolicyService::UpdateConnectedDevicesWhenConnectingForInputDevice(
     const AudioDeviceDescriptor &updatedDesc, std::vector<sptr<AudioDeviceDescriptor>> &descForCb)
 {
-    AUDIO_INFO_LOG("Filling input device for %{public}d", updatedDesc.deviceType_);
-
     sptr<AudioDeviceDescriptor> audioDescriptor = new(std::nothrow) AudioDeviceDescriptor(updatedDesc);
     audioDescriptor->deviceRole_ = INPUT_DEVICE;
     // Use mic streaminfo for all input devices cap
@@ -3632,7 +3620,6 @@ void AudioPolicyService::UpdateLocalGroupInfo(bool isConnected, const std::strin
 
 int32_t AudioPolicyService::HandleLocalDeviceConnected(AudioDeviceDescriptor &updatedDesc)
 {
-    AUDIO_INFO_LOG("macAddress:[%{public}s]", GetEncryptAddr(updatedDesc.macAddress_).c_str());
     {
         std::lock_guard<std::mutex> lock(a2dpDeviceMapMutex_);
         if (updatedDesc.deviceType_ == DEVICE_TYPE_BLUETOOTH_A2DP) {
@@ -4113,7 +4100,6 @@ void AudioPolicyService::SetDisplayName(const std::string &deviceName, bool isLo
 void AudioPolicyService::RegisterRemoteDevStatusCallback()
 {
 #ifdef FEATURE_DEVICE_MANAGER
-    AUDIO_INFO_LOG("Start");
     std::shared_ptr<DistributedHardware::DmInitCallback> initCallback = std::make_shared<DeviceInitCallBack>();
     int32_t ret = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(AUDIO_SERVICE_PKG, initCallback);
     CHECK_AND_RETURN_LOG(ret == SUCCESS, "Init device manage failed");
@@ -8318,7 +8304,7 @@ void AudioPolicyService::DealAudioSceneOutputDevices(const AudioScene &audioScen
             }
             break;
         default:
-            AUDIO_INFO_LOG("No ringing scene:%{public}d", audioScene);
+            AUDIO_PRERELEASE_LOGI("No ringing scene:%{public}d", audioScene);
             break;
     }
 

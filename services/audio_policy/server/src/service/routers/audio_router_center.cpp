@@ -99,7 +99,6 @@ bool AudioRouterCenter::HasScoDevice()
 std::vector<std::unique_ptr<AudioDeviceDescriptor>> AudioRouterCenter::FetchOutputDevices(StreamUsage streamUsage,
     int32_t clientUID)
 {
-    AUDIO_PRERELEASE_LOGI("streamUsage %{public}d clientUID %{public}d start fetch device", streamUsage, clientUID);
     vector<unique_ptr<AudioDeviceDescriptor>> descs;
     RouterType routerType = ROUTER_TYPE_NONE;
     if (renderConfigMap_[streamUsage] == MEDIA_RENDER_ROUTERS ||
@@ -180,7 +179,6 @@ void AudioRouterCenter::DealRingRenderRouters(std::vector<std::unique_ptr<AudioD
 
 unique_ptr<AudioDeviceDescriptor> AudioRouterCenter::FetchInputDevice(SourceType sourceType, int32_t clientUID)
 {
-    AUDIO_PRERELEASE_LOGI("sourceType %{public}d clientUID %{public}d start fetch input device", sourceType, clientUID);
     unique_ptr<AudioDeviceDescriptor> desc = make_unique<AudioDeviceDescriptor>();
     RouterType routerType = ROUTER_TYPE_NONE;
     if (capturerConfigMap_[sourceType] == "RecordCaptureRouters") {

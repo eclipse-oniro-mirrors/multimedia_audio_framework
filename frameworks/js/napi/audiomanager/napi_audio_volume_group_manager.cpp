@@ -411,7 +411,6 @@ napi_value NapiAudioVolumeGroupManager::GetMaxVolume(napi_env env, napi_callback
 
 napi_value NapiAudioVolumeGroupManager::GetMaxVolumeSync(napi_env env, napi_callback_info info)
 {
-    AUDIO_PRERELEASE_LOGI("GetMaxVolumeSync");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value args[ARGS_ONE] = {};
