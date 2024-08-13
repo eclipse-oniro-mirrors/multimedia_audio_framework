@@ -14,6 +14,7 @@
  */
 #include <cstdio>
 #include <iostream>
+#include <unistd.h>
 
 #include "audio_capturer.h"
 #include "audio_errors.h"
@@ -43,6 +44,8 @@ enum AudioOptCode : int32_t {
     SWITCH_MIC = 10,
     RELEASE_MIC = 11,
     EXIT_DEMO = 12,
+    SATELLITE_ON = 13,
+    SATELLITE_OFF = 14,
 };
 
 std::map<int32_t, std::string> g_OptStrMap = {
@@ -59,9 +62,13 @@ std::map<int32_t, std::string> g_OptStrMap = {
     {STOP_MIC, "call stop mic process"},
     {SWITCH_MIC, "call switch mic device process"},
     {RELEASE_MIC, "release mic process"},
+    {SATELLITE_ON, "call create audio process when isSatellite is true"},
+    {SATELLITE_OFF, "call create audio process when isSatellite is false"},
 
     {EXIT_DEMO, "exit interactive run test"},
 };
+
+constexpr int32_t UID_FOUNDATION_SA = 5523;
 
 class PlaybackTest : public AudioRendererWriteCallback,
     public AudioCapturerReadCallback,
@@ -86,6 +93,7 @@ public:
     bool GetSpkRemote();
     void SetMicRemote(bool isRemote);
     bool GetMicRemote();
+    int32_t InitSatelliteProcess(bool satellite);
 
 private:
     int32_t SwitchOutputDevice();
@@ -205,6 +213,39 @@ int32_t PlaybackTest::InitRenderer(bool isFast)
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "Client test save data callback fail, ret %{public}d.", ret);
     AUDIO_INFO_LOG("Audio renderer create success.");
     isSpkFast_ = isFast;
+    return 0;
+}
+
+int32_t PlaybackTest::InitSatelliteProcess(bool satellite)
+{
+    AudioStandard::AudioRendererOptions rendererOptions = {
+        {
+            AudioStandard::AudioSamplingRate::SAMPLE_RATE_48000,
+            AudioStandard::AudioEncodingType::ENCODING_PCM,
+            AudioStandard::AudioSampleFormat::SAMPLE_S16LE,
+            AudioStandard::AudioChannel::STEREO,
+        },
+        {
+            AudioStandard::ContentType::CONTENT_TYPE_UNKNOWN,
+            AudioStandard::StreamUsage::STREAM_USAGE_GAME,
+        }
+    };
+    rendererOptions.rendererInfo.isSatellite = satellite;
+    rendererOptions.rendererInfo.streamUsage = STREAM_USAGE_VOICE_MODEM_COMMUNICATION;
+    setuid(UID_FOUNDATION_SA);
+    AUDIO_ERR_LOG("Satellite process uid: %{public}d", static_cast<int32_t>(getuid()));
+    audioRenderer_ = AudioStandard::AudioRenderer::Create(rendererOptions);
+    if (audioRenderer_ == nullptr) {
+        AUDIO_ERR_LOG("Satellite process create failed.");
+        return -1;
+    }
+    std::string path = "/data/test.wav";
+    OpenSpkFile(path);
+    int32_t ret = audioRenderer_->SetRenderMode(RENDER_MODE_CALLBACK);
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "Set render mode callback fail, ret %{public}d.", ret);
+    ret = audioRenderer_->SetRendererWriteCallback(shared_from_this());
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "Client test save data callback fail, ret %{public}d.", ret);
+    AUDIO_INFO_LOG("Satellite process create success.");
     return 0;
 }
 
@@ -512,6 +553,8 @@ void PrintUsage()
     cout << "  10: Switch record device between local and remote." << endl;
     cout << "  11: Release mic." << endl;
     cout << "  12: exit demo." << endl;
+    cout << "  13: Init satellite process with isSatellite is true." << endl;
+    cout << "  14: Init satellite process with isSatellite is false." << endl;
     cout << " Please input your choice: " << endl;
 }
 
@@ -646,6 +689,21 @@ int32_t ReleaseMic(std::shared_ptr<PlaybackTest> playTest)
     return 0;
 }
 
+int32_t InitSatelliteProcess(std::shared_ptr<PlaybackTest> playTest, bool satellite)
+{
+    if (playTest == nullptr) {
+        cout << "Play test is nullptr" << endl;
+        return -1;
+    }
+    int32_t ret = playTest->InitSatelliteProcess(satellite);
+    if (ret != 0) {
+        cout << "Start satellite error!" << endl;
+        return -1;
+    }
+    cout << "Start satellite process." << endl << endl;
+    return 0;
+}
+
 int32_t StartCapture(std::shared_ptr<PlaybackTest> playTest)
 {
     if (playTest == nullptr) {
@@ -724,6 +782,12 @@ void Loop(std::shared_ptr<PlaybackTest> playTest)
                 break;
             case INIT_REMOTE_MIC:
                 InitMic(playTest, true, false);
+                break;
+            case SATELLITE_ON:
+                InitSatelliteProcess(playTest, true);
+                break;
+            case SATELLITE_OFF:
+                InitSatelliteProcess(playTest, false);
                 break;
             case EXIT_DEMO:
                 ReleasePlayback(playTest);
