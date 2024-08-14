@@ -8434,6 +8434,28 @@ void AudioPolicyService::UpdateSessionConnectionState(const int32_t &sessionID, 
     IPCSkeleton::SetCallingIdentity(identity);
 }
 
+int32_t  AudioPolicyService::LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId)
+{
+    AUDIO_INFO_LOG("start audio stream split, the split args is %{public}s", splitArgs.c_str());
+    
+    std::string moduleName = GetRemoteModuleName(netWorkId, OUTPUT_DEVICE);
+    
+    auto iter = IOHandles_.find(moduleName);
+    CHECK_AND_RETURN_RET_LOG(iter != IOHandles_.end(), -1, "not this module name, close fail");
+
+    int32_t closeRet = audioPolicyManager_.CloseAudioPort(iter->second);
+    CHECK_AND_RETURN_RET_LOG(closeRet == 0, closeRet, "close fail, CloseAudioPort ret: %{public}d", closeRet);
+
+    AudioModuleInfo moudleInfo = ConstructRemoteAudioModuleInfo(netWorkId, OUTPUT_DEVICE, DEVICE_TYPE_SPEAKER);
+    moudleInfo.extra = splitArgs;
+    //  todo 确认moduleName 问题，so包名字的那个不要了吗？怎么才能识别到 --- 找彪哥
+    int32_t openRet = OpenPortAndInsertIOHandle(moduleName, moudleInfo);
+    if (openRet != 0) {
+        AUDIO_ERR_LOG("open fail, OpenPortAndInsertIOHandle ret: %{public}d", openRet);
+    }
+    return openRet;
+}
+
 void AudioA2dpOffloadManager::OnA2dpPlayingStateChanged(const std::string &deviceAddress, int32_t playingState)
 {
     AUDIO_INFO_LOG("Current A2dpOffload MacAddr:%{public}s, incoming MacAddr:%{public}s, state:%{public}d",
