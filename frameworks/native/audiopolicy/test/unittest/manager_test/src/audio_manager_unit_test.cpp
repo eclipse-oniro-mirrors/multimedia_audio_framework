@@ -889,6 +889,20 @@ HWTEST(AudioManagerUnitTest, GetPinValueFromType_016, TestSize.Level1)
 }
 
 /**
+* @tc.name   : Test GetPinValueFromType API
+* @tc.number : GetPinValueFromType_017
+* @tc.desc   : Test GetPinValueFromType interface. deviceType set to AUDIO_PIN_OUT_DP,
+* deviceRole set to INPUT_DEVICE
+*/
+HWTEST(AudioManagerUnitTest, GetPinValueFromType_017, TestSize.Level1)
+{
+    DeviceType deviceType = DeviceType::DEVICE_TYPE_DP;
+    DeviceRole deviceRole = DeviceRole::INPUT_DEVICE;
+    AudioPin ret = AudioSystemManager::GetInstance()->GetPinValueFromType(deviceType, deviceRole);
+    EXPECT_EQ(ret, AUDIO_PIN_OUT_DP);
+}
+
+/**
 * @tc.name   : Test GetTypeValueFromPin API
 * @tc.number : GetTypeValueFromPin_001
 * @tc.desc   : Test GetTypeValueFromPin interface. pin set to AUDIO_PIN_NONE
@@ -1125,6 +1139,10 @@ HWTEST(AudioManagerUnitTest, IsStreamActive_001, TestSize.Level1)
     isActive = AudioSystemManager::GetInstance()->IsStreamActive(AudioVolumeType::STREAM_VOICE_CALL);
     EXPECT_FALSE(isActive);
     isActive = AudioSystemManager::GetInstance()->IsStreamActive(AudioVolumeType::STREAM_VOICE_ASSISTANT);
+    EXPECT_FALSE(isActive);
+    isActive = AudioSystemManager::GetInstance()->IsStreamActive(AudioVolumeType::STREAM_ULTRASONIC);
+    EXPECT_FALSE(isActive);
+    isActive = AudioSystemManager::GetInstance()->IsStreamActive(AudioVolumeType::STREAM_ALL);
     EXPECT_FALSE(isActive);
 }
 
