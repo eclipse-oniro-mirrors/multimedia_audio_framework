@@ -2750,6 +2750,10 @@ static void PaInputStateChangeCb(pa_sink_input *i, pa_sink_input_state_t state)
     }
     pa_assert_se(u = i->sink->userdata);
 
+    if (state == PA_SINK_INPUT_RUNNING) {
+        u->primary.sinkAdapter->RendererSinkSetPriPaPower(u->primary.sinkAdapter);
+    }
+
     char str[SPRINTF_STR_LEN] = {0};
     GetSinkInputName(i, str, SPRINTF_STR_LEN);
     AUDIO_INFO_LOG(
@@ -2773,13 +2777,8 @@ static void PaInputStateChangeCb(pa_sink_input *i, pa_sink_input_state_t state)
     const bool starting = i->thread_info.state == PA_SINK_INPUT_CORKED && state == PA_SINK_INPUT_RUNNING;
     const bool stopping = state == PA_SINK_INPUT_UNLINKED;
 
-    if (corking) {
-        pa_atomic_store(&i->isFirstReaded, 0);
-    }
-
-    if (starting) {
-        pa_atomic_store(&i->isFirstReaded, 1);
-    }
+    corking ? pa_atomic_store(&i->isFirstReaded, 0) : (void)0;
+    starting ? pa_atomic_store(&i->isFirstReaded, 1) : (void)0;
 
     if (!corking && !starting && !stopping) {
         AUDIO_WARNING_LOG("PaInputStateChangeCb, input state change: invalid");
