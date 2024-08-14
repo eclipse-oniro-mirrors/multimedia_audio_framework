@@ -1511,5 +1511,11 @@ int32_t AudioSystemManager::InjectInterruption(const std::string networkId, Inte
 {
     return AudioPolicyManager::GetInstance().InjectInterruption(networkId, event);
 }
+
+int32_t AudioSystemManager::LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId)
+{
+    return AudioPolicyManager::GetInstance().LoadSplitModule(splitArgs, netWorkId);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

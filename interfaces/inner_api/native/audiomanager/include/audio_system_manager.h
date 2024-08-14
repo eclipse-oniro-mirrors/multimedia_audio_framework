@@ -1259,6 +1259,18 @@ public:
      */
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event);
 
+
+    /**
+    * @brief Load the split module for audio stream separation.
+    *
+    * @param splitArgs Specifies the types of audio to be split into different streams.
+    * @param netWorkId The network identifier of the output device.
+    * @return Returns {@link SUCCESS} if the module is loaded successfully; otherwise, returns an error code defined
+    * in {@link audio_errors.h}.
+    * @since 12
+    */
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId);
+
 private:
     class WakeUpCallbackImpl : public WakeUpSourceCallback {
     public:

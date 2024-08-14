@@ -328,6 +328,8 @@ public:
 
     virtual int32_t InjectInterruption(const std::string networkId, InterruptEvent &event) = 0;
 
+    virtual int32_t LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId) = 0;
+
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"IAudioPolicy");
 };

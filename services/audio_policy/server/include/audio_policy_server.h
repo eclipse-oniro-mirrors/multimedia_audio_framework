@@ -399,6 +399,8 @@ public:
 
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event) override;
 
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId) override;
+
     class RemoteParameterCallback : public AudioParameterCallback {
     public:
         RemoteParameterCallback(sptr<AudioPolicyServer> server);
@@ -447,6 +449,8 @@ public:
     void XmlParsedDataMapDump(std::string &dumpString);
     void EffectManagerInfoDump(std::string &dumpString);
     void MicrophoneMuteInfoDump(std::string &dumpString);
+
+
 
 protected:
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;

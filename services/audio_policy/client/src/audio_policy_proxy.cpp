@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "audio_log.h"
+#include "ipc_types.h"
 #ifndef LOG_TAG
 #define LOG_TAG "AudioPolicyProxy"
 #endif
@@ -563,6 +565,22 @@ int32_t AudioPolicyProxy::SetDeviceActive(InternalDeviceType deviceType, bool ac
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_DEVICE_ACTIVE), data, reply, option);
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "set device active failed, error: %d", error);
+    return reply.ReadInt32();
+}
+
+int32_t AudioPolicyProxy::LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, -1, "WriteInterfaceToken failed");
+    data.WriteString(splitArgs);
+    data.WriteString(netWorkId);
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::LOAD_SPLIT_MODULE), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "load split module failed, error: %{public}d", error);
     return reply.ReadInt32();
 }
 
