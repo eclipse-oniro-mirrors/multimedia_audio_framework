@@ -320,8 +320,7 @@ void RendererInClientInner::InitDirectPipeType()
         if (type == AUDIO_DIRECT_MANAGER_TYPE) {
             rendererInfo_.pipeType = (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT) ? 
                 PIPE_TYPE_DIRECT_VOIP : PIPE_TYPE_DIRECT_MUSIC;
-        }
-        else if (originType == PIPE_TYPE_DIRECT_MUSIC) {
+        } else if (originType == PIPE_TYPE_DIRECT_MUSIC) {
             rendererInfo_.pipeType = PIPE_TYPE_NORMAL_OUT;
         }
     }
