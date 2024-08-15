@@ -1298,19 +1298,21 @@ std::list<std::pair<AudioInterrupt, AudioFocuState>> AudioInterruptService::Simu
         std::list<std::pair<AudioInterrupt, AudioFocuState>> tmpAudioFocuInfoList = newAudioFocuInfoList;
         for (auto iter = newAudioFocuInfoList.begin(); iter != newAudioFocuInfoList.end(); ++iter) {
             AudioInterrupt inprocessing = iter->first;
-            if (iter->second == PAUSE || IsSameAppInShareMode(incoming, inprocessing)) {
+            if (iter->second == PAUSE || IsSameAppInShareMode(incoming, inprocessing) || iter->second == PLACEHOLDER) {
                 continue;
             }
-            AudioFocusType activeFocusType = inprocessing.audioFocusType;
-            AudioFocusType incomingFocusType = incoming.audioFocusType;
             std::pair<AudioFocusType, AudioFocusType> audioFocusTypePair =
-                std::make_pair(activeFocusType, incomingFocusType);
+                std::make_pair(inprocessing.audioFocusType, incoming.audioFocusType);
             if (focusCfgMap_.find(audioFocusTypePair) == focusCfgMap_.end()) {
                 AUDIO_WARNING_LOG("focus type is invalid");
                 incomingState = iterActive->second;
                 break;
             }
             AudioFocusEntry focusEntry = focusCfgMap_[audioFocusTypePair];
+            if (CanMixForSession(incoming, inprocessing, focusEntry)) {
+                continue;
+            }
+            UpdateHintTypeForExistingSession(incoming, focusEntry);
             auto pos = HINT_STATE_MAP.find(focusEntry.hintType);
             if (pos == HINT_STATE_MAP.end()) {
                 continue;
@@ -1325,6 +1327,9 @@ std::list<std::pair<AudioInterrupt, AudioFocuState>> AudioInterruptService::Simu
 
         if (incomingState == PAUSE) {
             newAudioFocuInfoList = tmpAudioFocuInfoList;
+        }
+        if (iterActive->second == PLACEHOLDER) {
+            incomingState = PLACEHOLDER;
         }
         newAudioFocuInfoList.emplace_back(std::make_pair(incoming, incomingState));
     }
