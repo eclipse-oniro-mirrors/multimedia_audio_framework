@@ -268,6 +268,7 @@ int32_t RendererInClientInner::SetAudioStreamInfo(const AudioStreamParams info,
         AUDIO_ERR_LOG("Unsupported audio parameter");
         return ERR_NOT_SUPPORTED;
     }
+    
     streamParams_ = curStreamParams_ = info; // keep it for later use
     if (curStreamParams_.encoding == ENCODING_AUDIOVIVID) {
         ConverterConfig cfg = AudioPolicyManager::GetInstance().GetConverterConfig();
@@ -278,6 +279,7 @@ int32_t RendererInClientInner::SetAudioStreamInfo(const AudioStreamParams info,
         }
         converter_->ConverterChannels(curStreamParams_.channels, curStreamParams_.channelLayout);
     }
+
     if (!IsPlaybackChannelRelatedInfoValid(curStreamParams_.channels, curStreamParams_.channelLayout)) {
         return ERR_NOT_SUPPORTED;
     }
@@ -298,9 +300,11 @@ int32_t RendererInClientInner::SetAudioStreamInfo(const AudioStreamParams info,
     // eg: 100005_44100_2_1_client_out.pcm
     dumpOutFile_ = std::to_string(sessionId_) + "_" + std::to_string(curStreamParams_.samplingRate) + "_" +
         std::to_string(curStreamParams_.channels) + "_" + std::to_string(curStreamParams_.format) + "_client_out.pcm";
+    
     DumpFileUtil::OpenDumpFile(DUMP_CLIENT_PARA, dumpOutFile_, &dumpOutFd_);
     logUtilsTag_ = "IpcClientPlay::" + std::to_string(sessionId_);
     InitDirectPipeType();
+
     proxyObj_ = proxyObj;
     RegisterTracker(proxyObj);
     RegisterSpatializationStateEventListener();
@@ -309,13 +313,16 @@ int32_t RendererInClientInner::SetAudioStreamInfo(const AudioStreamParams info,
 
 void RendererInClientInner::InitDirectPipeType()
 {
-if (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT || IsHighResolution()) {
+    if (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT || IsHighResolution())
+    {
         AudioPipeType originType = rendererInfo_.pipeType;
         int32_t type = ipcStream_->GetStreamManagerType();
-        if (type == AUDIO_DIRECT_MANAGER_TYPE) {
-            rendererInfo_.pipeType = (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT) ?
-                PIPE_TYPE_DIRECT_VOIP : PIPE_TYPE_DIRECT_MUSIC;
-        } else if (originType == PIPE_TYPE_DIRECT_MUSIC) {
+        if (type == AUDIO_DIRECT_MANAGER_TYPE)
+        {
+            rendererInfo_.pipeType = (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT) ? PIPE_TYPE_DIRECT_VOIP : PIPE_TYPE_DIRECT_MUSIC;
+        }
+        else if (originType == PIPE_TYPE_DIRECT_MUSIC)
+        {
             rendererInfo_.pipeType = PIPE_TYPE_NORMAL_OUT;
         }
     }
