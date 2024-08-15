@@ -54,7 +54,7 @@ void HeadTracker::HeadPostureDataProcCb(SensorEvent *event)
     headPostureData_.y = headPostureDataTmp->y;
     headPostureData_.z = headPostureDataTmp->z;
     if (headPostureData_.order % HP_DATA_PRINT_COUNT == ORDER_ONE) {
-        AUDIO_INFO_LOG("Head posture data of order %{public}d received", headPostureData_.order);
+        AUDIO_DEBUG_LOG("Head posture data of order %{public}d received", headPostureData_.order);
     }
 }
 
