@@ -2517,7 +2517,6 @@ static void StartOffloadHdi(struct Userdata *u, pa_sink_input *i)
             OffloadLock(u);
             u->offload.sessionID = sessionID;
             OffloadSetHdiVolume(i);
-            OffloadSetHdiBufferSize(i);
         }
     }
 }
