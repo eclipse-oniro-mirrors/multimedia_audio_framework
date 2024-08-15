@@ -1269,7 +1269,7 @@ void AudioInterruptService::UpdateAudioSceneFromInterrupt(const AudioScene audio
     }
     AudioScene currentAudioScene = policyServer_->GetAudioScene();
 
-    AUDIO_INFO_LOG("currentScene: %{public}d, targetScene: %{public}d, changeType: %{public}d",
+    AUDIO_PRERELEASE_LOGI("currentScene: %{public}d, targetScene: %{public}d, changeType: %{public}d",
         currentAudioScene, audioScene, changeType);
 
     switch (changeType) {

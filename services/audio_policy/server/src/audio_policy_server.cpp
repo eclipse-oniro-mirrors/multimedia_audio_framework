@@ -1367,8 +1367,7 @@ bool AudioPolicyServer::VerifyBluetoothPermission()
     uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
 
     int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(tokenId, USE_BLUETOOTH_PERMISSION);
-    CHECK_AND_RETURN_RET_PRELOG(res == Security::AccessToken::PermissionState::PERMISSION_GRANTED,
-        false, "Permission denied [%{public}s]", USE_BLUETOOTH_PERMISSION.c_str());
+    CHECK_AND_RETURN_RET(res == Security::AccessToken::PermissionState::PERMISSION_GRANTED, false);
 
     return true;
 }
