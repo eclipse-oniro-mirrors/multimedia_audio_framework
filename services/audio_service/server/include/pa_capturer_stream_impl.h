@@ -27,7 +27,7 @@ public:
     ~PaCapturerStreamImpl();
     int32_t InitParams();
     int32_t Start() override;
-    int32_t Pause() override;
+    int32_t Pause(bool isStandby = false) override;
     int32_t Flush() override;
     int32_t Drain() override { return 0; };
     int32_t Stop() override;

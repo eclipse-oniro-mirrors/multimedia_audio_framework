@@ -169,7 +169,7 @@ int32_t PaRendererStreamImpl::Start()
     return SUCCESS;
 }
 
-int32_t PaRendererStreamImpl::Pause()
+int32_t PaRendererStreamImpl::Pause(bool isStandby)
 {
     AUDIO_INFO_LOG("Enter");
     pa_threaded_mainloop_lock(mainloop_);
@@ -200,7 +200,7 @@ int32_t PaRendererStreamImpl::Pause()
         }
         pa_threaded_mainloop_lock(mainloop_);
     }
-
+    isStandbyPause_ = isStandby;
     operation = pa_stream_cork(paStream_, 1, PAStreamPauseSuccessCb, reinterpret_cast<void *>(this));
     pa_operation_unref(operation);
     pa_threaded_mainloop_unlock(mainloop_);
@@ -766,7 +766,7 @@ void PaRendererStreamImpl::PAStreamPauseSuccessCb(pa_stream *stream, int32_t suc
     CHECK_AND_RETURN_LOG(streamImpl, "PAStreamWriteCb: userdata is null");
 
     streamImpl->state_ = PAUSED;
-    if (streamImpl->offloadEnable_) {
+    if (streamImpl->offloadEnable_ && !streamImpl->isStandbyPause_) {
         streamImpl->offloadTsLast_ = 0;
         streamImpl->ResetOffload();
     }

@@ -296,7 +296,7 @@ void RendererInServer::StandByCheck()
     standByEnable_ = true;
     // PaAdapterManager::PauseRender will hold mutex, may cause dead lock with pa_lock
     if (managerType_ == PLAYBACK) {
-        stream_->Pause();
+        stream_->Pause(true);
     } else if (managerType_ == DIRECT_PLAYBACK) {
         IStreamManager::GetPlaybackManager(managerType_).PauseRender(streamIndex_);
     }

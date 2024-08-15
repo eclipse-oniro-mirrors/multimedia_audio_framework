@@ -28,7 +28,7 @@ public:
     ~PaRendererStreamImpl();
     int32_t InitParams();
     int32_t Start() override;
-    int32_t Pause() override;
+    int32_t Pause(bool isStandby = false) override;
     int32_t Flush() override;
     int32_t Drain() override;
     int32_t Stop() override;
@@ -124,6 +124,7 @@ private:
     int32_t privacyType_ = 0;
 
     float powerVolumeFactor_ = 1.0f;
+    bool isStandbyPause_ = false;
 
     static constexpr float MAX_STREAM_VOLUME_LEVEL = 1.0f;
     static constexpr float MIN_STREAM_VOLUME_LEVEL = 0.0f;
