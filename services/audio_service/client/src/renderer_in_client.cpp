@@ -300,7 +300,16 @@ int32_t RendererInClientInner::SetAudioStreamInfo(const AudioStreamParams info,
         std::to_string(curStreamParams_.channels) + "_" + std::to_string(curStreamParams_.format) + "_client_out.pcm";
     DumpFileUtil::OpenDumpFile(DUMP_CLIENT_PARA, dumpOutFile_, &dumpOutFd_);
     logUtilsTag_ = "IpcClientPlay::" + std::to_string(sessionId_);
-    if (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT || IsHighResolution()) {
+    InitDirectPipeType();
+    proxyObj_ = proxyObj;
+    RegisterTracker(proxyObj);
+    RegisterSpatializationStateEventListener();
+    return SUCCESS;
+}
+
+void RendererInClientInner::InitDirectPipeType()
+{
+if (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT || IsHighResolution()) {
         AudioPipeType originType = rendererInfo_.pipeType;
         int32_t type = ipcStream_->GetStreamManagerType();
         if (type == AUDIO_DIRECT_MANAGER_TYPE) {
@@ -310,10 +319,6 @@ int32_t RendererInClientInner::SetAudioStreamInfo(const AudioStreamParams info,
             rendererInfo_.pipeType = PIPE_TYPE_NORMAL_OUT;
         }
     }
-    proxyObj_ = proxyObj;
-    RegisterTracker(proxyObj);
-    RegisterSpatializationStateEventListener();
-    return SUCCESS;
 }
 
 std::mutex g_serverProxyMutex;
