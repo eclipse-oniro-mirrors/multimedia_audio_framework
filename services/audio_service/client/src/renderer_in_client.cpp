@@ -263,12 +263,13 @@ int32_t RendererInClientInner::SetAudioStreamInfo(const AudioStreamParams info,
     AUDIO_INFO_LOG("AudioStreamInfo, Sampling rate: %{public}d, channels: %{public}d, format: %{public}d,"
         " stream type: %{public}d, encoding type: %{public}d", info.samplingRate, info.channels, info.format,
         eStreamType_, info.encoding);
+
     AudioXCollie guard("RendererInClientInner::SetAudioStreamInfo", CREATE_TIMEOUT_IN_SECOND);
     if (!IsFormatValid(info.format) || !IsSamplingRateValid(info.samplingRate) || !IsEncodingTypeValid(info.encoding)) {
         AUDIO_ERR_LOG("Unsupported audio parameter");
         return ERR_NOT_SUPPORTED;
     }
-    
+
     streamParams_ = curStreamParams_ = info; // keep it for later use
     if (curStreamParams_.encoding == ENCODING_AUDIOVIVID) {
         ConverterConfig cfg = AudioPolicyManager::GetInstance().GetConverterConfig();
@@ -300,7 +301,7 @@ int32_t RendererInClientInner::SetAudioStreamInfo(const AudioStreamParams info,
     // eg: 100005_44100_2_1_client_out.pcm
     dumpOutFile_ = std::to_string(sessionId_) + "_" + std::to_string(curStreamParams_.samplingRate) + "_" +
         std::to_string(curStreamParams_.channels) + "_" + std::to_string(curStreamParams_.format) + "_client_out.pcm";
-    
+
     DumpFileUtil::OpenDumpFile(DUMP_CLIENT_PARA, dumpOutFile_, &dumpOutFd_);
     logUtilsTag_ = "IpcClientPlay::" + std::to_string(sessionId_);
     InitDirectPipeType();
