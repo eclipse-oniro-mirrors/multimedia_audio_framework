@@ -2541,6 +2541,7 @@ static void PaInputStateChangeCbOffload(struct Userdata *u, pa_sink_input *i, pa
     }
 }
 
+// call from IO thread(OS_ProcessData)
 static void PaInputStateChangeCbPrimary(struct Userdata *u, pa_sink_input *i, pa_sink_input_state_t state)
 {
     const bool starting = i->thread_info.state == PA_SINK_INPUT_CORKED && state == PA_SINK_INPUT_RUNNING;
@@ -2562,8 +2563,8 @@ static void PaInputStateChangeCbPrimary(struct Userdata *u, pa_sink_input *i, pa
         }
         AUDIO_INFO_LOG("PaInputStateChangeCb, Restart with rate:%{public}d,channels:%{public}d, format:%{public}d",
             u->ss.rate, u->ss.channels, (int)pa_sample_size_of_format(u->format));
-        if (u->primary.sinkAdapter->RendererSinkStart(u->primary.sinkAdapter)) {
-            AUDIO_ERR_LOG("PaInputStateChangeCb, audiorenderer control start failed!");
+        if (pa_asyncmsgq_send(u->primary.dq, NULL, HDI_START, NULL, 0, NULL)) {
+            AUDIO_ERR_LOG("audiorenderer control start failed!");
             u->primary.sinkAdapter->RendererSinkDeInit(u->primary.sinkAdapter);
         } else {
             u->primary.isHDISinkStarted = true;
@@ -2579,6 +2580,7 @@ static void PaInputStateChangeCbPrimary(struct Userdata *u, pa_sink_input *i, pa
     }
 }
 
+// call from IO thread(OS_ProcessData)
 static void StartPrimaryHdiIfRunning(struct Userdata *u)
 {
     AUTO_CTRACE("hdi_sink::StartPrimaryHdiIfRunning");
@@ -2594,8 +2596,8 @@ static void StartPrimaryHdiIfRunning(struct Userdata *u)
         return;
     }
 
-    if (u->primary.sinkAdapter->RendererSinkStart(u->primary.sinkAdapter)) {
-        AUDIO_ERR_LOG("StartPrimaryHdiIfRunning, audiorenderer control start failed!");
+    if (pa_asyncmsgq_send(u->primary.dq, NULL, HDI_START, NULL, 0, NULL)) {
+        AUDIO_ERR_LOG("audiorenderer control start failed!");
         u->primary.sinkAdapter->RendererSinkDeInit(u->primary.sinkAdapter);
     } else {
         u->primary.isHDISinkStarted = true;
@@ -3241,6 +3243,26 @@ static void ThreadFuncWriteHDIMultiChannel(void *userdata)
     UnscheduleThreadInServer(getpid(), gettid());
 }
 
+static void ProcessHdiRendererPrimary(struct Userdata *u, pa_memchunk *pChunk)
+{
+    pa_usec_t now = pa_rtclock_now();
+    if (!u->primary.isHDISinkStarted && now - u->timestampLastLog > USEC_PER_SEC) {
+        u->timestampLastLog = now;
+        const char *deviceClass = GetDeviceClass(u->primary.sinkAdapter->deviceClass);
+        AUDIO_DEBUG_LOG("HDI not started, skip RenderWrite, wait sink[%s] suspend", deviceClass);
+        pa_memblock_unref(pChunk->memblock);
+    } else if (!u->primary.isHDISinkStarted) {
+        pa_memblock_unref(pChunk->memblock);
+    } else if (RenderWrite(u->primary.sinkAdapter, pChunk) < 0) {
+        u->bytes_dropped += pChunk->length;
+        AUDIO_ERR_LOG("RenderWrite failed");
+    }
+    if (pa_atomic_load(&u->primary.dflag) == 1) {
+        pa_atomic_sub(&u->primary.dflag, 1);
+    }
+    u->primary.writeTime = pa_rtclock_now() - now;
+}
+
 static void ThreadFuncWriteHDI(void *userdata)
 {
     // set audio thread priority
@@ -3258,24 +3280,23 @@ static void ThreadFuncWriteHDI(void *userdata)
         CHECK_AND_RETURN_LOG(u->primary.dq != NULL, "u->primary.dq is NULL");
         pa_assert_se(pa_asyncmsgq_get(u->primary.dq, NULL, &code, NULL, NULL, &chunk, 1) == 0);
 
+        int ret = 0;
+        AUTO_CTRACE("hdi_sink::ThreadFuncWriteHDI code: %d", code);
         switch (code) {
             case HDI_RENDER: {
-                pa_usec_t now = pa_rtclock_now();
-                if (!u->primary.isHDISinkStarted && now - u->timestampLastLog > USEC_PER_SEC) {
-                    u->timestampLastLog = now;
-                    const char *deviceClass = GetDeviceClass(u->primary.sinkAdapter->deviceClass);
-                    AUDIO_DEBUG_LOG("HDI not started, skip RenderWrite, wait sink[%s] suspend", deviceClass);
-                    pa_memblock_unref(chunk.memblock);
-                } else if (!u->primary.isHDISinkStarted) {
-                    pa_memblock_unref(chunk.memblock);
-                } else if (RenderWrite(u->primary.sinkAdapter, &chunk) < 0) {
-                    u->bytes_dropped += chunk.length;
-                    AUDIO_ERR_LOG("RenderWrite failed");
+                ProcessHdiRendererPrimary(u, &chunk);
+                break;
+            }
+            case HDI_STOP: {
+                if (u->primary.isHDISinkStarted) {
+                    u->primary.sinkAdapter->RendererSinkStop(u->primary.sinkAdapter);
+                    AUDIO_INFO_LOG("Stopped HDI renderer");
+                    u->primary.isHDISinkStarted = false;
                 }
-                if (pa_atomic_load(&u->primary.dflag) == 1) {
-                    pa_atomic_sub(&u->primary.dflag, 1);
-                }
-                u->primary.writeTime = pa_rtclock_now() - now;
+                break;
+            }
+            case HDI_START: {
+                ret = u->primary.sinkAdapter->RendererSinkStart(u->primary.sinkAdapter);
                 break;
             }
             case QUIT:
@@ -3284,7 +3305,8 @@ static void ThreadFuncWriteHDI(void *userdata)
             default:
                 break;
         }
-        pa_asyncmsgq_done(u->primary.dq, 0);
+        AUTO_CTRACE("hdi_sink::ThreadFuncWriteHDI done ret: %d", ret);
+        pa_asyncmsgq_done(u->primary.dq, ret);
     } while (!quit);
     UnscheduleThreadInServer(getpid(), gettid());
 }
@@ -3418,6 +3440,7 @@ static char *GetInputStateInfo(pa_sink_input_state_t state)
     }
 }
 
+// call from IO thread(OS_ProcessData)
 static int32_t RemoteSinkStateChange(pa_sink *s, pa_sink_state_t newState)
 {
     struct Userdata *u = s->userdata;
@@ -3440,7 +3463,7 @@ static int32_t RemoteSinkStateChange(pa_sink *s, pa_sink_state_t newState)
             return 0;
         }
 
-        if (u->primary.sinkAdapter->RendererSinkStart(u->primary.sinkAdapter)) {
+        if (pa_asyncmsgq_send(u->primary.dq, NULL, HDI_START, NULL, 0, NULL)) {
             AUDIO_ERR_LOG("audiorenderer control start failed!");
         } else {
             u->primary.isHDISinkStarted = true;
@@ -3459,15 +3482,14 @@ static int32_t RemoteSinkStateChange(pa_sink *s, pa_sink_state_t newState)
         }
 
         if (u->primary.isHDISinkStarted) {
-            u->primary.sinkAdapter->RendererSinkStop(u->primary.sinkAdapter);
-            AUDIO_INFO_LOG("Stopped HDI renderer");
-            u->primary.isHDISinkStarted = false;
+            pa_asyncmsgq_post(u->primary.dq, NULL, HDI_STOP, NULL, 0, NULL, NULL);
         }
     }
 
     return 0;
 }
 
+// call from IO thread(OS_ProcessData)
 static int32_t SinkSetStateInIoThreadCbStartPrimary(struct Userdata *u, pa_sink_state_t newState)
 {
     if (!PA_SINK_IS_OPENED(newState)) {
@@ -3484,7 +3506,7 @@ static int32_t SinkSetStateInIoThreadCbStartPrimary(struct Userdata *u, pa_sink_
         return 0;
     }
 
-    if (u->primary.sinkAdapter->RendererSinkStart(u->primary.sinkAdapter)) {
+    if (pa_asyncmsgq_send(u->primary.dq, NULL, HDI_START, NULL, 0, NULL)) {
         AUDIO_ERR_LOG("audiorenderer control start failed!");
         u->primary.sinkAdapter->RendererSinkDeInit(u->primary.sinkAdapter);
     } else {
@@ -3579,9 +3601,7 @@ static int32_t SinkSetStateInIoThreadCb(pa_sink *s, pa_sink_state_t newState, pa
         }
 
         if (u->primary.isHDISinkStarted) {
-            u->primary.sinkAdapter->RendererSinkStop(u->primary.sinkAdapter);
-            AUDIO_INFO_LOG("Stopped HDI renderer");
-            u->primary.isHDISinkStarted = false;
+            pa_asyncmsgq_post(u->primary.dq, NULL, HDI_STOP, NULL, 0, NULL, NULL);
         }
 
         if (u->multiChannel.isHDISinkStarted) {
