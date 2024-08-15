@@ -29,6 +29,7 @@ ohos_unittest("audio_renderer_unit_test") {
   cflags = [
     "-Wall",
     "-Werror",
+    "-fno-access-control",
   ]
 
   sources = [ "src/audio_renderer_unit_test.cpp" ]
