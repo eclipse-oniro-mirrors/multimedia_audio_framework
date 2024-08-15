@@ -52,6 +52,7 @@ constexpr uid_t UID_BLUETOOTH_SA = 1002;
 constexpr uid_t UID_RESOURCE_SCHEDULE_SERVICE = 1096;
 constexpr int64_t OFFLOAD_NO_SESSION_ID = -1;
 constexpr unsigned int GET_BUNDLE_TIME_OUT_SECONDS = 10;
+constexpr uid_t UID_CAR_DISTRIBUTED_ENGINE_SA = 65872;
 
 REGISTER_SYSTEM_ABILITY_BY_ID(AudioPolicyServer, AUDIO_POLICY_SERVICE_ID, true)
 
@@ -2826,6 +2827,11 @@ bool AudioPolicyServer::IsAudioSessionActivated()
 
 int32_t AudioPolicyServer::LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId)
 {
+    auto callerUid = IPCSkeleton::GetCallingUid();
+    if (callerUid != UID_CAR_DISTRIBUTED_ENGINE_SA) {
+        AUDIO_ERR_LOG("callerUid %{public}d is not allow LoadSplitModule", callerUid);
+        return ERR_PERMISSION_DENIED;
+    }
     return audioPolicyService_.LoadSplitModule(splitArgs, netWorkId);
 }
 
