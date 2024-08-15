@@ -24,6 +24,8 @@
 
 namespace OHOS {
 namespace AudioStandard {
+const std::string AUDIOSESSION_CALLBACK_NAME = "audioSessionDeactivated";
+
 class NapiAudioSessionMgr {
 public:
     NapiAudioSessionMgr();

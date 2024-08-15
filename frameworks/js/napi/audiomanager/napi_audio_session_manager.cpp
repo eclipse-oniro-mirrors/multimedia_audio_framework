@@ -164,8 +164,9 @@ napi_value NapiAudioSessionMgr::ActivateAudioSession(napi_env env, napi_callback
         ObjectRefMap objectGuard(obj);
         auto *napiSessionMgr = objectGuard.GetPtr();
         context->intValue = napiSessionMgr->audioSessionMngr_->ActivateAudioSession(context->audioSessionStrategy);
-        NAPI_CHECK_ARGS_RETURN_VOID(context, context->intValue == SUCCESS, "ActivateAudioSession failed",
-            NAPI_ERR_SYSTEM);
+        if (context->intValue != SUCCESS) {
+            context->SignError(NAPI_ERR_SYSTEM);
+        }
     };
 
     auto complete = [env, context](napi_value &output) {
@@ -190,8 +191,9 @@ napi_value NapiAudioSessionMgr::DeactivateAudioSession(napi_env env, napi_callba
         ObjectRefMap objectGuard(obj);
         auto *napiSessionMgr = objectGuard.GetPtr();
         context->intValue = napiSessionMgr->audioSessionMngr_->DeactivateAudioSession();
-        NAPI_CHECK_ARGS_RETURN_VOID(context, context->intValue == SUCCESS, "DeactivateAudioSession failed",
-            NAPI_ERR_SYSTEM);
+        if (context->intValue != SUCCESS) {
+            context->SignError(NAPI_ERR_SYSTEM);
+        }
     };
 
     auto complete = [env, context](napi_value &output) {
@@ -223,11 +225,17 @@ napi_value NapiAudioSessionMgr::IsAudioSessionActivated(napi_env env, napi_callb
 void NapiAudioSessionMgr::RegisterCallback(napi_env env, napi_value jsThis,
     napi_value *args, const std::string &cbName)
 {
-    NapiAudioSessionMgr *napiSessionMgr = nullptr;
-    napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void **>(&napiSessionMgr));
-    CHECK_AND_RETURN_LOG((status == napi_ok) && (napiSessionMgr != nullptr) &&
-        (napiSessionMgr->audioSessionMngr_ != nullptr), "Failed to retrieve session mgr napi instance.");
-    RegisterAudioSessionCallback(env, args, cbName, napiSessionMgr);
+    if (!cbName.compare(AUDIOSESSION_CALLBACK_NAME)) {
+        NapiAudioSessionMgr *napiSessionMgr = nullptr;
+        napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void **>(&napiSessionMgr));
+        CHECK_AND_RETURN_LOG((status == napi_ok) && (napiSessionMgr != nullptr) &&
+            (napiSessionMgr->audioSessionMngr_ != nullptr), "Failed to retrieve session mgr napi instance.");
+        RegisterAudioSessionCallback(env, args, cbName, napiSessionMgr);
+    } else {
+        AUDIO_ERR_LOG("NapiAudioSessionMgr::No such callback supported");
+        NapiAudioError::ThrowError(env, NAPI_ERR_INVALID_PARAM,
+            "parameter verification failed: The param of type is not supported");
+    }
 }
 
 void NapiAudioSessionMgr::RegisterAudioSessionCallback(napi_env env, napi_value *args,
@@ -343,13 +351,18 @@ napi_value NapiAudioSessionMgr::Off(napi_env env, napi_callback_info info)
     CHECK_AND_RETURN_RET_LOG(eventType == napi_string, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
         "incorrect parameter types: The type of eventType must be string"), "event error");
     std::string callbackName = NapiParamUtils::GetStringArgument(env, args[PARAM0]);
-
-    napi_valuetype handler = napi_undefined;
-    napi_typeof(env, args[PARAM1], &handler);
-    if (handler == napi_function) {
-        UnregisterCallbackCarryParam(env, jsThis, args);
+    if (!callbackName.compare(AUDIOSESSION_CALLBACK_NAME)) {
+        napi_valuetype handler = napi_undefined;
+        napi_typeof(env, args[PARAM1], &handler);
+        if (handler == napi_function) {
+            UnregisterCallbackCarryParam(env, jsThis, args);
+        } else {
+            UnregisterCallback(env, jsThis);
+        }
     } else {
-        UnregisterCallback(env, jsThis);
+        AUDIO_ERR_LOG("NapiAudioSessionMgr::No such callback supported");
+        NapiAudioError::ThrowError(env, NAPI_ERR_INVALID_PARAM,
+            "parameter verification failed: The param of type is not supported");
     }
     return undefinedResult;
 }
