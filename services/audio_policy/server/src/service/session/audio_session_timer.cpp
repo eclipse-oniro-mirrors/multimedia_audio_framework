@@ -35,11 +35,11 @@ AudioSessionTimer::~AudioSessionTimer()
 
 void AudioSessionTimer::StartTimer(const int32_t callerPid)
 {
-    AUDIO_INFO_LOG("StartTimer: callerPid %{public}d", callerPid);
+    AUDIO_INFO_LOG("Audio session state change: StartTimer for pid %{public}d", callerPid);
     std::lock_guard<std::mutex> lock(sessionTimerMutex_);
     if (timerMap_.count(callerPid) != 0) {
         AUDIO_INFO_LOG("StartTimer: timer of callerPid %{public}d is already running", callerPid);
-        // the time point will not be updated.  待确认！！！！
+        // the time point will not be updated.
         return;
     }
     std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -61,7 +61,7 @@ void AudioSessionTimer::StartTimer(const int32_t callerPid)
 
 void AudioSessionTimer::StopTimer(const int32_t callerPid)
 {
-    AUDIO_INFO_LOG("StopTimer: callerPid %{public}d", callerPid);
+    AUDIO_INFO_LOG("Audio session state change: StopTimer for pid %{public}d", callerPid);
     std::lock_guard<std::mutex> lock(sessionTimerMutex_);
     if (timerMap_.count(callerPid) == 0) {
         AUDIO_WARNING_LOG("StopTimer: timer of callerPid %{public}d is already stopped", callerPid);
@@ -94,7 +94,7 @@ void AudioSessionTimer::TimerLoopFunc()
             AUDIO_INFO_LOG("The audio session timer map is empty. Exit.");
             break;
         }
-    
+
         std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         auto iter = timerMap_.begin();
         while (iter != timerMap_.end()) {

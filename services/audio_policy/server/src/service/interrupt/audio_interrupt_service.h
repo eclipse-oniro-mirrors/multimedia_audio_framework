@@ -202,6 +202,8 @@ private:
     void UpdateHintTypeForExistingSession(const AudioInterrupt &incomingInterrupt, AudioFocusEntry &focusEntry);
     void HandleSessionTimeOutEvent(const int32_t pid);
     void HandleLowPriorityEvent(const int32_t pid, const uint32_t streamId);
+    void SendSessionTimeOutStopEvent(const int32_t zoneId, const AudioInterrupt &audioInterrupt,
+        const std::list<std::pair<AudioInterrupt, AudioFocuState>> &audioFocusInfoList);
 
     // interrupt members
     sptr<AudioPolicyServer> policyServer_;

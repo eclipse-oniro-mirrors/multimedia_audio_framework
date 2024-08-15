@@ -30,6 +30,7 @@ static const std::unordered_map<AudioStreamType, AudioSessionType> SESSION_TYPE_
     {STREAM_GAME, AudioSessionType::MEDIA},
     {STREAM_SPEECH, AudioSessionType::MEDIA},
     {STREAM_NAVIGATION, AudioSessionType::MEDIA},
+    {STREAM_VOICE_MESSAGE, AudioSessionType::MEDIA},
     {STREAM_VOICE_CALL, AudioSessionType::CALL},
     {STREAM_VOICE_CALL_ASSISTANT, AudioSessionType::CALL},
     {STREAM_VOICE_COMMUNICATION, AudioSessionType::VOIP},
@@ -73,16 +74,18 @@ int32_t AudioSessionService::ActivateAudioSession(const int32_t callerPid, const
     AUDIO_INFO_LOG("ActivateAudioSession: callerPid %{public}d, concurrencyMode %{public}d",
         callerPid, static_cast<int32_t>(strategy.concurrencyMode));
     std::lock_guard<std::mutex> lock(sessionServiceMutex_);
-    if (sessionMap_.count(callerPid) != 0) {
-        // The audio session of the callerPid is already created. The strategy can not be modified.
-        AUDIO_ERR_LOG("The audio seesion of pid %{public}d has already been created!", callerPid);
-        return ERR_ILLEGAL_STATE;
+    if (sessionMap_.count(callerPid) != 0 && sessionMap_[callerPid] != nullptr) {
+        // The audio session of the callerPid is already created. The strategy will be updated.
+        AUDIO_INFO_LOG("The audio seesion of pid %{public}d has already been created! Update strategy.", callerPid);
+        sessionMap_[callerPid]->SetSessionStrategy(strategy);
+    } else {
+        sessionMap_[callerPid] = std::make_shared<AudioSession>(callerPid, strategy, sessionTimer_);
+        sessionMap_[callerPid]->Activate();
     }
 
-    sessionMap_[callerPid] = std::make_shared<AudioSession>(callerPid, strategy, sessionTimer_);
-    sessionMap_[callerPid]->Activate();
-
-    sessionTimer_->StartTimer(callerPid);
+    if (sessionMap_[callerPid]->IsAudioSessionEmpty()) {
+        sessionTimer_->StartTimer(callerPid);
+    }
 
     return SUCCESS;
 }
