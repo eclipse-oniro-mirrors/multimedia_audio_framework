@@ -39,33 +39,41 @@ AudioSession::~AudioSession()
 
 int32_t AudioSession::Activate()
 {
-    AUDIO_INFO_LOG("Activate: pid %{public}d", callerPid_);
     std::lock_guard<std::mutex> lock(sessionMutex_);
     state_ = AudioSessionState::SESSION_ACTIVE;
+    AUDIO_INFO_LOG("Audio session state change: pid %{public}d, state %{public}d",
+        callerPid_, static_cast<int32_t>(state_));
     return SUCCESS;
 }
 
 int32_t AudioSession::Deactivate()
 {
-    AUDIO_INFO_LOG("Deactivate: pid %{public}d", callerPid_);
     std::lock_guard<std::mutex> lock(sessionMutex_);
     state_ = AudioSessionState::SESSION_DEACTIVE;
     interruptMap_.clear();
+    AUDIO_INFO_LOG("Audio session state change: pid %{public}d, state %{public}d",
+        callerPid_, static_cast<int32_t>(state_));
     return SUCCESS;
 }
 
 AudioSessionState AudioSession::GetSessionState()
 {
-    AUDIO_INFO_LOG("GetSessionState: pid %{public}d, state %{public}d", callerPid_, state_);
     std::lock_guard<std::mutex> lock(sessionMutex_);
+    AUDIO_INFO_LOG("pid %{public}d, state %{public}d", callerPid_, static_cast<int32_t>(state_));
     return state_;
+}
+
+void AudioSession::SetSessionStrategy(const AudioSessionStrategy strategy)
+{
+    std::lock_guard<std::mutex> lock(sessionMutex_);
+    strategy_ = strategy;
 }
 
 AudioSessionStrategy AudioSession::GetSessionStrategy()
 {
+    std::lock_guard<std::mutex> lock(sessionMutex_);
     AUDIO_INFO_LOG("GetSessionStrategy: pid %{public}d, strategy_.concurrencyMode %{public}d",
         callerPid_, static_cast<int32_t>(strategy_.concurrencyMode));
-    std::lock_guard<std::mutex> lock(sessionMutex_);
     return strategy_;
 }
 
