@@ -8442,7 +8442,7 @@ int32_t  AudioPolicyService::LoadSplitModule(const std::string &splitArgs, const
     ClosePortAndEraseIOHandle(moduleName);
 
     AudioModuleInfo moudleInfo = ConstructRemoteAudioModuleInfo(netWorkId, OUTPUT_DEVICE, DEVICE_TYPE_SPEAKER);
-    moudleInfo.lib = "libmodule_hdi_split_sink.z.so";
+    moudleInfo.lib = "libmodule-split-stream-sink.z.so";
     moudleInfo.extra = splitArgs;
     
     int32_t openRet = OpenPortAndInsertIOHandle(moduleName, moudleInfo);
