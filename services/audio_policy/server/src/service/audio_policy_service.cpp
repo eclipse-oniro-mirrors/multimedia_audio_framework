@@ -2437,7 +2437,8 @@ bool AudioPolicyService::NotifyRecreateDirectStream(std::unique_ptr<AudioRendere
         TriggerRecreateRendererStreamCallback(rendererChangeInfo->callerPid, rendererChangeInfo->sessionId,
             AUDIO_FLAG_DIRECT, reason);
         return true;
-    } else if (IsDirectSupportedDevice(currentActiveDevice_.deviceType_)) {
+    } else if (IsDirectSupportedDevice(currentActiveDevice_.deviceType_) &&
+        rendererChangeInfo->rendererInfo.pipeType != PIPE_TYPE_DIRECT_MUSIC) {
         if (isArmUsbDevice_) {
             AUDIO_INFO_LOG("current device is arm usb");
             return false;

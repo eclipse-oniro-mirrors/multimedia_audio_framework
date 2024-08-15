@@ -1368,6 +1368,8 @@ void AudioRendererPrivate::SetSwitchInfo(IAudioStream::SwitchInfo info, std::sha
     audioStream->SetPrivacyType(info.privacyType);
     audioStream->SetRendererInfo(info.rendererInfo);
     audioStream->SetCapturerInfo(info.capturerInfo);
+    IAudioStream::StreamClass streamClass = GetPreferredStreamClass(info.params);
+    ActivateAudioConcurrency(info.params, info.eStreamType, streamClass);
     audioStream->SetAudioStreamInfo(info.params, rendererProxyObj_);
     audioStream->SetRenderMode(info.renderMode);
     audioStream->SetAudioEffectMode(info.effectMode);
