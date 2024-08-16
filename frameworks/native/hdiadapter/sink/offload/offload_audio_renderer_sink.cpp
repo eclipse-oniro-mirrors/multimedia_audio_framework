@@ -696,6 +696,7 @@ float OffloadAudioRendererSinkInner::GetMaxAmplitude()
 int32_t OffloadAudioRendererSinkInner::Start(void)
 {
     Trace trace("OffloadSink::Start");
+    AUDIO_INFO_LOG("Start");
     InitLatencyMeasurement();
     if (started_) {
         if (isFlushing_) {
@@ -847,9 +848,7 @@ int32_t OffloadAudioRendererSinkInner::Drain(AudioDrainType type)
 int32_t OffloadAudioRendererSinkInner::Stop(void)
 {
     Trace trace("OffloadSink::Stop");
-
-    OffloadRunningLockUnlock();
-
+    AUDIO_INFO_LOG("Stop");
     CHECK_AND_RETURN_RET_LOG(audioRender_ != nullptr, ERR_INVALID_HANDLE,
         "failed audio render null");
 
@@ -867,6 +866,8 @@ int32_t OffloadAudioRendererSinkInner::Stop(void)
             return ERR_OPERATION_FAILED;
         }
     }
+    OffloadRunningLockUnlock();
+    AUDIO_WARNING_LOG("Stop duplicate");
 
     return SUCCESS;
 }
