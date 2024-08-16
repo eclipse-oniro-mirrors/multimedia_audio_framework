@@ -849,6 +849,7 @@ int32_t OffloadAudioRendererSinkInner::Stop(void)
 {
     Trace trace("OffloadSink::Stop");
     AUDIO_INFO_LOG("Stop");
+
     CHECK_AND_RETURN_RET_LOG(audioRender_ != nullptr, ERR_INVALID_HANDLE,
         "failed audio render null");
 
