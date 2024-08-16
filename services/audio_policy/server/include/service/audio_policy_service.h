@@ -540,6 +540,7 @@ public:
     void SetRotationToEffect(const uint32_t rotate);
     void FetchStreamForA2dpOffload(const bool &requireReset);
     void UpdateSessionConnectionState(const int32_t &sessionID, const int32_t &state);
+    bool getFastControlParam();
 
 private:
     AudioPolicyService()
@@ -1002,6 +1003,7 @@ private:
     bool enableDualHalToneState_ = false;
     int32_t enableDualHalToneSessionId_ = -1;
     int32_t shouldUpdateDeviceDueToDualTone_ = false;
+    bool isFastControlled_ = false;
 
     std::unordered_map<std::string, DeviceType> spatialDeviceMap_;
 

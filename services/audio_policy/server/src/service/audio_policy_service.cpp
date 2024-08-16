@@ -314,6 +314,7 @@ bool AudioPolicyService::Init(void)
     CHECK_AND_RETURN_RET_LOG(ret, false, "Audio Policy Config Load Configuration failed");
     ret = audioPolicyConfigParser_.Parse();
     isPolicyConfigParsered_ = true;
+    isFastControlled_ = getFastControlParam();
     if (!ret) {
         WriteServiceStartupError("Audio Config Parse failed");
     }
@@ -5730,6 +5731,16 @@ uint32_t AudioPolicyService::GetSinkLatencyFromXml() const
     return sinkLatencyInMsec_;
 }
 
+bool AudioPolicyService::getFastControlParam()
+{
+    int32_t fastControlFlag = 0;
+    GetSysPara("persist.multimedia.audioflag.fastcontrolled", fastControlFlag);
+    if (fastControlFlag == 1) {
+        isFastControlled_ = true;
+    }
+    return isFastControlled_;
+}
+
 int32_t AudioPolicyService::GetPreferredOutputStreamType(AudioRendererInfo &rendererInfo, const std::string &bundleName)
 {
     // Use GetPreferredOutputDeviceDescriptors instead of currentActiveDevice, if prefer != current, recreate stream
@@ -5740,7 +5751,7 @@ int32_t AudioPolicyService::GetPreferredOutputStreamType(AudioRendererInfo &rend
 
     int32_t flag = GetPreferredOutputStreamTypeInner(rendererInfo.streamUsage, preferredDeviceList[0]->deviceType_,
         rendererInfo.rendererFlags, preferredDeviceList[0]->networkId_);
-    if (flag == AUDIO_FLAG_MMAP || flag == AUDIO_FLAG_VOIP_FAST) {
+    if (isFastControlled_ && (flag == AUDIO_FLAG_MMAP || flag == AUDIO_FLAG_VOIP_FAST)) {
         std::string bundleNamePre = CHECK_FAST_BLOCK_PREFIX + bundleName;
         if (g_adProxy == nullptr) {
             AUDIO_ERR_LOG("Invalid g_adProxy");

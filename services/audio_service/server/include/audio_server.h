@@ -214,6 +214,7 @@ private:
     std::mutex audioParameterMutex_;
     std::mutex audioSceneMutex_;
     std::unique_ptr<AudioEffectServer> audioEffectServer_;
+    bool isFastControlled_ = false;
 };
 } // namespace AudioStandard
 } // namespace OHOS
