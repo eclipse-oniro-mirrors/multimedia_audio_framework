@@ -848,6 +848,8 @@ int32_t OffloadAudioRendererSinkInner::Stop(void)
 {
     Trace trace("OffloadSink::Stop");
 
+    OffloadRunningLockUnlock();
+
     CHECK_AND_RETURN_RET_LOG(audioRender_ != nullptr, ERR_INVALID_HANDLE,
         "failed audio render null");
 
@@ -865,8 +867,6 @@ int32_t OffloadAudioRendererSinkInner::Stop(void)
             return ERR_OPERATION_FAILED;
         }
     }
-    OffloadRunningLockUnlock();
-    AUDIO_WARNING_LOG("Stop duplicate");
 
     return SUCCESS;
 }
