@@ -190,7 +190,7 @@ int32_t ProRendererStreamImpl::Start()
     return SUCCESS;
 }
 
-int32_t ProRendererStreamImpl::Pause()
+int32_t ProRendererStreamImpl::Pause(bool isStandby)
 {
     Trace trace("ProRendererStreamImpl::Pause");
     AUDIO_INFO_LOG("Enter");

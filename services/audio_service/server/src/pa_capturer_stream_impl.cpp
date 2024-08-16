@@ -134,7 +134,7 @@ int32_t PaCapturerStreamImpl::Start()
     return SUCCESS;
 }
 
-int32_t PaCapturerStreamImpl::Pause()
+int32_t PaCapturerStreamImpl::Pause(bool isStandby)
 {
     AUDIO_INFO_LOG("Enter PaCapturerStreamImpl::Pause");
     PaLockGuard lock(mainloop_);
