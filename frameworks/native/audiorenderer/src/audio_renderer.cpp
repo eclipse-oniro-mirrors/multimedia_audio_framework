@@ -1434,6 +1434,9 @@ bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
             info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_DIRECT;
             info.rendererInfo.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
             info.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
+        } else if (rendererInfo_.rendererFlags == AUDIO_FLAG_DIRECT) {
+            info.rendererInfo.pipeType = PIPE_TYPE_DIRECT_MUSIC;
+            info.rendererFlags = AUDIO_FLAG_DIRECT;
         }
         if (targetClass == AUDIO_FLAG_MMAP) {
             switchResult = audioStream_->ReleaseAudioStream();
@@ -1501,6 +1504,9 @@ void AudioRendererPrivate::SwitchStream(const uint32_t sessionId, const int32_t 
             rendererInfo_.rendererFlags = (isDirectVoipSupported_ && audioRenderMode_ == RENDER_MODE_CALLBACK) ?
                 AUDIO_FLAG_VOIP_DIRECT : AUDIO_FLAG_NORMAL;
             targetClass = IAudioStream::PA_STREAM;
+            break;
+        case AUDIO_FLAG_DIRECT:
+            rendererInfo_.rendererFlags = AUDIO_FLAG_DIRECT;
             break;
     }
     if (rendererInfo_.originalFlag == AUDIO_FLAG_FORCED_NORMAL) {

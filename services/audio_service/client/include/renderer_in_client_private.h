@@ -245,6 +245,8 @@ private:
     void ProcessWriteInner(BufferDesc &bufferDesc);
 
     void ResetRingerModeMute();
+
+    void InitDirectPipeType();
 private:
     AudioStreamType eStreamType_ = AudioStreamType::STREAM_DEFAULT;
     int32_t appUid_ = 0;
