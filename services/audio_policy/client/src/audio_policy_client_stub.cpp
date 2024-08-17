@@ -71,9 +71,14 @@ void AudioPolicyClientStub::OnMaxRemoteRequest(uint32_t updateCode, MessageParce
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE):
             HandleSpatializationEnabledChange(data, reply);
             break;
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE):
+            HandleSpatializationEnabledChangeForAnyDevice(data, reply);
+            break;
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE):
             HandleHeadTrackingEnabledChange(data, reply);
             break;
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE):
+            HandleHeadTrackingEnabledChangeForAnyDevice(data, reply);
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_AUDIO_SESSION_DEACTIVE):
             HandleAudioSessionCallback(data, reply);
             break;
@@ -304,10 +309,26 @@ void AudioPolicyClientStub::HandleSpatializationEnabledChange(MessageParcel &dat
     OnSpatializationEnabledChange(enabled);
 }
 
+void AudioPolicyClientStub::HandleSpatializationEnabledChangeForAnyDevice(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
+    CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
+    bool enabled = data.ReadBool();
+    OnSpatializationEnabledChangeForAnyDevice(audioDeviceDescriptor, enabled);
+}
+
 void AudioPolicyClientStub::HandleHeadTrackingEnabledChange(MessageParcel &data, MessageParcel &reply)
 {
     bool enabled = data.ReadBool();
     OnHeadTrackingEnabledChange(enabled);
+}
+
+void AudioPolicyClientStub::HandleHeadTrackingEnabledChangeForAnyDevice(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
+    CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
+    bool enabled = data.ReadBool();
+    OnHeadTrackingEnabledChangeForAnyDevice(audioDeviceDescriptor, enabled);
 }
 
 void AudioPolicyClientStub::HandleAudioSessionCallback(MessageParcel &data, MessageParcel &reply)

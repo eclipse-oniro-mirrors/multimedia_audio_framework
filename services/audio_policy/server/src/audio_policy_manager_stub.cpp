@@ -112,9 +112,13 @@ const char *g_audioPolicyCodeStrs[] = {
     "SET_AVAILABLE_DEVICE_CHANGE_CALLBACK",
     "UNSET_AVAILABLE_DEVICE_CHANGE_CALLBACK",
     "IS_SPATIALIZATION_ENABLED",
+    "IS_SPATIALIZATION_ENABLED_FOR_DEVICE",
     "SET_SPATIALIZATION_ENABLED",
+    "SET_SPATIALIZATION_ENABLED_FOR_DEVICE",
     "IS_HEAD_TRACKING_ENABLED",
+    "IS_HEAD_TRACKING_ENABLED_FOR_DEVICE",
     "SET_HEAD_TRACKING_ENABLED",
+    "SET_HEAD_TRACKING_ENABLED_FOR_DEVICE",
     "GET_SPATIALIZATION_STATE",
     "IS_SPATIALIZATION_SUPPORTED",
     "IS_SPATIALIZATION_SUPPORTED_FOR_DEVICE",
@@ -1064,10 +1068,26 @@ void AudioPolicyManagerStub::IsSpatializationEnabledInternal(MessageParcel &data
     reply.WriteBool(result);
 }
 
+void AudioPolicyManagerStub::IsSpatializationEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply)
+{
+    std::string address = data.ReadString();
+    bool result = IsSpatializationEnabled(address);
+    reply.WriteBool(result);
+}
+
 void AudioPolicyManagerStub::SetSpatializationEnabledInternal(MessageParcel &data, MessageParcel &reply)
 {
     bool enable = data.ReadBool();
     int32_t result = SetSpatializationEnabled(enable);
+    reply.WriteInt32(result);
+}
+
+void AudioPolicyManagerStub::SetSpatializationEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
+    CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
+    bool enable = data.ReadBool();
+    int32_t result = SetSpatializationEnabled(audioDeviceDescriptor, enable);
     reply.WriteInt32(result);
 }
 
@@ -1077,10 +1097,26 @@ void AudioPolicyManagerStub::IsHeadTrackingEnabledInternal(MessageParcel &data, 
     reply.WriteBool(result);
 }
 
+void AudioPolicyManagerStub::IsHeadTrackingEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply)
+{
+    std::string address = data.ReadString();
+    bool result = IsHeadTrackingEnabled(address);
+    reply.WriteBool(result);
+}
+
 void AudioPolicyManagerStub::SetHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply)
 {
     bool enable = data.ReadBool();
     int32_t result = SetHeadTrackingEnabled(enable);
+    reply.WriteInt32(result);
+}
+
+void AudioPolicyManagerStub::SetHeadTrackingEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
+    CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
+    bool enable = data.ReadBool();
+    int32_t result = SetHeadTrackingEnabled(audioDeviceDescriptor, enable);
     reply.WriteInt32(result);
 }
 
@@ -1229,6 +1265,28 @@ void AudioPolicyManagerStub::ReleaseAudioInterruptZoneInternal(MessageParcel &da
     reply.WriteInt32(result);
 }
 
+void AudioPolicyManagerStub::OnMiddleNinRemoteRequest(
+    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
+{
+    switch (code) {
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_SPATIALIZATION_ENABLED_FOR_DEVICE):
+            IsSpatializationEnabledForDeviceInternal(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_SPATIALIZATION_ENABLED_FOR_DEVICE):
+            SetSpatializationEnabledForDeviceInternal(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_HEAD_TRACKING_ENABLED_FOR_DEVICE):
+            IsHeadTrackingEnabledForDeviceInternal(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_HEAD_TRACKING_ENABLED_FOR_DEVICE):
+            SetHeadTrackingEnabledForDeviceInternal(data, reply);
+            break;
+        default:
+            AUDIO_ERR_LOG("default case, need check AudioPolicyManagerStub");
+            IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+            break;
+    }
+}
 void AudioPolicyManagerStub::OnMiddleEigRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -1276,8 +1334,7 @@ void AudioPolicyManagerStub::OnMiddleEigRemoteRequest(
             IsAudioSessionActivatedInternal(data, reply);
             break;
         default:
-            AUDIO_ERR_LOG("default case, need check AudioPolicyManagerStub");
-            IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+            OnMiddleNinRemoteRequest(code, data, reply, option);
             break;
     }
 }

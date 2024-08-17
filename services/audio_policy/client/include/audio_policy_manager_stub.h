@@ -114,9 +114,13 @@ private:
     void SetAvailableDeviceChangeCallbackInternal(MessageParcel &data, MessageParcel &reply);
     void UnsetAvailableDeviceChangeCallbackInternal(MessageParcel &data, MessageParcel &reply);
     void IsSpatializationEnabledInternal(MessageParcel &data, MessageParcel &reply);
+    void IsSpatializationEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply);
     void SetSpatializationEnabledInternal(MessageParcel &data, MessageParcel &reply);
+    void SetSpatializationEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply);
     void IsHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply);
+    void IsHeadTrackingEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply);
     void SetHeadTrackingEnabledInternal(MessageParcel &data, MessageParcel &reply);
+    void SetHeadTrackingEnabledForDeviceInternal(MessageParcel &data, MessageParcel &reply);
     void GetSpatializationStateInternal(MessageParcel &data, MessageParcel &reply);
     void IsSpatializationSupportedInternal(MessageParcel &data, MessageParcel &reply);
     void IsSpatializationSupportedForDeviceInternal(MessageParcel &data, MessageParcel &reply);
@@ -161,6 +165,7 @@ private:
     void DeactivateAudioSessionInternal(MessageParcel &data, MessageParcel &reply);
     void IsAudioSessionActivatedInternal(MessageParcel &data, MessageParcel &reply);
 
+    void OnMiddleNinRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleEigRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleSevRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleSixRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
