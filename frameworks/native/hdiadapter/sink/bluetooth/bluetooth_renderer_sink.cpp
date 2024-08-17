@@ -70,6 +70,8 @@ const uint32_t PCM_32_BIT = 32;
 const uint32_t STEREO_CHANNEL_COUNT = 2;
 constexpr uint32_t BIT_TO_BYTES = 8;
 constexpr int64_t STAMP_THRESHOLD_MS = 20;
+const unsigned int BUFFER_CALC_20MS = 20;
+const unsigned int BUFFER_CALC_1000MS = 1000;
 #ifdef FEATURE_POWER_MANAGER
 constexpr int32_t RUNNINGLOCK_LOCK_TIMEOUTMS_LASTING = -1;
 #endif
@@ -123,6 +125,8 @@ public:
         const size_t size) final;
     int32_t UpdateAppsUid(const std::vector<int32_t> &appsUid) final;
 
+    int32_t SetRenderEmpty(int32_t durationUs) final;
+
     explicit BluetoothRendererSinkInner(bool isBluetoothLowLatency = false);
     ~BluetoothRendererSinkInner();
 private:
@@ -145,6 +149,9 @@ private:
     int32_t initCount_ = 0;
     int32_t logMode_ = 0;
     AudioSampleFormat audioSampleFormat_ = SAMPLE_S16LE;
+
+    // for device switch
+    std::atomic<int32_t> renderEmptyFrameCount_ = 0;
 
     // Low latency
     int32_t PrepareMmapBuffer();
@@ -498,12 +505,8 @@ int32_t BluetoothRendererSinkInner::RenderFrame(char &data, uint64_t len, uint64
     int32_t ret = SUCCESS;
     CHECK_AND_RETURN_RET_LOG(audioRender_ != nullptr, ERR_INVALID_HANDLE, "Bluetooth Render Handle is nullptr!");
 
-    if (audioMonoState_) {
-        AdjustStereoToMono(&data, len);
-    }
-    if (audioBalanceState_) {
-        AdjustAudioBalance(&data, len);
-    }
+    if (audioMonoState_) { AdjustStereoToMono(&data, len); }
+    if (audioBalanceState_) { AdjustAudioBalance(&data, len); }
 
     CheckLatencySignal(reinterpret_cast<uint8_t*>(&data), len);
     DumpFileUtil::WriteDumpFile(dumpFile_, static_cast<void *>(&data), len);
@@ -514,11 +517,17 @@ int32_t BluetoothRendererSinkInner::RenderFrame(char &data, uint64_t len, uint64
             static_cast<void *>(&data), len);
     }
     CheckUpdateState(&data, len);
-    if (suspend_) {
-        return ret;
-    }
+    if (suspend_) { return ret; }
 
     Trace trace("BluetoothRendererSinkInner::RenderFrame");
+    if (renderEmptyFrameCount_ > 0) {
+        Trace traceEmpty("BluetoothRendererSinkInner::RenderFrame::renderEmpty");
+        if (memset_s(reinterpret_cast<void*>(&data), static_cast<size_t>(len), 0,
+            static_cast<size_t>(len)) != EOK) {
+            AUDIO_WARNING_LOG("call memset_s failed");
+        }
+        renderEmptyFrameCount_--;
+    }
     while (true) {
         Trace::CountVolume("BluetoothRendererSinkInner::RenderFrame", static_cast<uint8_t>(data));
         Trace trace("audioRender_->RenderFrame");
@@ -1135,6 +1144,14 @@ int32_t BluetoothRendererSinkInner::UpdateAppsUid(const std::vector<int32_t> &ap
     runningLockManager_->UpdateAppsUidToPowerMgr();
 #endif
 
+    return SUCCESS;
+}
+
+int32_t BluetoothRendererSinkInner::SetRenderEmpty(int32_t durationUs)
+{
+    int32_t emptyCount = durationUs / BUFFER_CALC_1000MS / BUFFER_CALC_20MS; // 1000 us->ms
+    AUDIO_INFO_LOG("a2dp render %{public}d empty", emptyCount);
+    CasWithCompare(renderEmptyFrameCount_, emptyCount, std::less<int32_t>());
     return SUCCESS;
 }
 } // namespace AudioStandard
