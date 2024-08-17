@@ -44,7 +44,7 @@
 
 #include "securec.h"
 
-#include "audio_log.h"
+#include "audio_hdi_log.h"
 #include "audio_schedule.h"
 #include "audio_utils_c.h"
 #include "audio_hdiadapter_info.h"
@@ -1103,7 +1103,6 @@ static void SinkRenderMultiChannelInputsDrop(pa_sink *si, pa_mix_info *infoIn, u
 
 static void silenceData(pa_mix_info *infoIn, pa_sink *si)
 {
-    AUDIO_INFO_LOG("silenceData.");
     pa_memchunk_make_writable(&infoIn->chunk, 0);
     void *tmpdata = pa_memblock_acquire_chunk(&infoIn->chunk);
     memset_s(tmpdata, infoIn->chunk.length, 0, infoIn->chunk.length);
@@ -1165,14 +1164,14 @@ static void PreparePrimaryFading(pa_sink_input *sinkIn, pa_mix_info *infoIn, pa_
     const char *sinkFadeoutPause = pa_proplist_gets(sinkIn->proplist, "fadeoutPause");
     if (pa_safe_streq(sinkFadeoutPause, "2") && (sinkIn->thread_info.state == PA_SINK_INPUT_RUNNING)) {
         silenceData(infoIn, si);
-        AUDIO_INFO_LOG("after pause fadeout done, silenceData");
+        AUDIO_PRERELEASE_LOGI("after pause fadeout done, silenceData");
         return;
     }
 
     if (pa_atomic_load(&u->primary.fadingFlagForPrimary) == 1 &&
         u->primary.primarySinkInIndex == (int32_t)sinkIn->index) {
         if (pa_memblock_is_silence(infoIn->chunk.memblock)) {
-            AUDIO_INFO_LOG("pa_memblock_is_silence");
+            AUDIO_PRERELEASE_LOGI("pa_memblock_is_silence");
             return;
         }
         //do fading in
@@ -1300,6 +1299,7 @@ static void PrepareMultiChannelFading(pa_sink_input *sinkIn, pa_mix_info *infoIn
     const char *sinkFadeoutPause = pa_proplist_gets(sinkIn->proplist, "fadeoutPause");
     if (pa_safe_streq(sinkFadeoutPause, "2")) {
         silenceData(infoIn, si);
+        AUDIO_PRERELEASE_LOGI("silenceData.");
         return;
     }
 
@@ -2517,7 +2517,6 @@ static void StartOffloadHdi(struct Userdata *u, pa_sink_input *i)
             OffloadLock(u);
             u->offload.sessionID = sessionID;
             OffloadSetHdiVolume(i);
-            OffloadSetHdiBufferSize(i);
         }
     }
 }
@@ -3033,7 +3032,9 @@ static void ProcessNormalData(struct Userdata *u)
     }
 
     if (flag) {
-        pa_usec_t blockTime = pa_bytes_to_usec(u->sink->thread_info.max_request, &u->sink->sample_spec);
+        pa_usec_t frameUsec = pa_bytes_to_usec(u->sink->thread_info.max_request, &u->sink->sample_spec);
+        pa_usec_t blockTime = u->primary.timestamp + frameUsec - now;
+        if (blockTime > frameUsec) { blockTime = frameUsec; }
         if (pa_atomic_load(&u->primary.dflag) == 1) {
             sleepForUsec = (int64_t)blockTime -
                 ((int64_t)pa_rtclock_now() - (int64_t)(u->primary.lastProcessDataTime));
@@ -4079,6 +4080,7 @@ static void UserdataFreeOffload(struct Userdata *u)
     }
 
     if (u->offload.sinkAdapter) {
+        OffloadUnlock(u);
         u->offload.sinkAdapter->RendererSinkStop(u->offload.sinkAdapter);
         u->offload.sinkAdapter->RendererSinkDeInit(u->offload.sinkAdapter);
         UnLoadSinkAdapter(u->offload.sinkAdapter);

@@ -67,8 +67,8 @@ private:
     void ReconfigureAudioChannelInternal(MessageParcel &data, MessageParcel &reply);
     void GetAudioLatencyFromXmlInternal(MessageParcel &data, MessageParcel &reply);
     void GetSinkLatencyFromXmlInternal(MessageParcel &data, MessageParcel &reply);
-    void GetPerferredOutputStreamTypeInternal(MessageParcel &data, MessageParcel &reply);
-    void GetPerferredInputStreamTypeInternal(MessageParcel &data, MessageParcel &reply);
+    void GetPreferredOutputStreamTypeInternal(MessageParcel &data, MessageParcel &reply);
+    void GetPreferredInputStreamTypeInternal(MessageParcel &data, MessageParcel &reply);
     void RegisterTrackerInternal(MessageParcel &data, MessageParcel &reply);
     void UpdateTrackerInternal(MessageParcel &data, MessageParcel &reply);
     void GetRendererChangeInfosInternal(MessageParcel &data, MessageParcel &reply);
@@ -161,6 +161,9 @@ private:
     void SetMicrophoneMutePersistentInternal(MessageParcel &data, MessageParcel &reply);
     void GetMicrophoneMutePersistentInternal(MessageParcel &data, MessageParcel &reply);
     void InjectInterruptionInternal(MessageParcel &data, MessageParcel &reply);
+    void ActivateAudioSessionInternal(MessageParcel &data, MessageParcel &reply);
+    void DeactivateAudioSessionInternal(MessageParcel &data, MessageParcel &reply);
+    void IsAudioSessionActivatedInternal(MessageParcel &data, MessageParcel &reply);
 
     void OnMiddleNinRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleEigRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);

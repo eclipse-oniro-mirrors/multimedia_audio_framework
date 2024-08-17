@@ -25,7 +25,7 @@
 #include <string>
 #include "audio_utils_c.h"
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_common_log.h"
 #ifdef FEATURE_HITRACE_METER
 #include "hitrace_meter.h"
 #endif
@@ -225,7 +225,7 @@ bool PermissionUtil::VerifyIsSystemApp()
     bool tmp = Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
     CHECK_AND_RETURN_RET(!tmp, true);
 
-    AUDIO_ERR_LOG("Check system app permission reject");
+    AUDIO_PRERELEASE_LOGE("Check system app permission reject");
     return false;
 }
 
@@ -258,7 +258,7 @@ bool PermissionUtil::VerifySystemPermission()
     bool tmp = VerifyIsSystemApp();
     CHECK_AND_RETURN_RET(!tmp, true);
 
-    AUDIO_ERR_LOG("Check system permission reject");
+    AUDIO_PRERELEASE_LOGE("Check system permission reject");
     return false;
 }
 
@@ -1189,6 +1189,48 @@ const std::string AudioInfoDumpUtils::GetDeviceVolumeTypeName(DeviceVolumeType d
     return deviceTypeName;
 }
 
+std::unordered_map<AudioStreamType, AudioVolumeType> VolumeUtils::defaultVolumeMap_ = {
+    {STREAM_VOICE_CALL, STREAM_VOICE_CALL},
+    {STREAM_VOICE_MESSAGE, STREAM_VOICE_CALL},
+    {STREAM_VOICE_COMMUNICATION, STREAM_VOICE_CALL},
+    {STREAM_VOICE_CALL_ASSISTANT, STREAM_VOICE_CALL},
+
+    {STREAM_RING, STREAM_RING},
+    {STREAM_SYSTEM, STREAM_RING},
+    {STREAM_NOTIFICATION, STREAM_RING},
+    {STREAM_SYSTEM_ENFORCED, STREAM_RING},
+    {STREAM_DTMF, STREAM_RING},
+    {STREAM_VOICE_RING, STREAM_RING},
+
+    {STREAM_MUSIC, STREAM_MUSIC},
+    {STREAM_MEDIA, STREAM_MUSIC},
+    {STREAM_MOVIE, STREAM_MUSIC},
+    {STREAM_GAME, STREAM_MUSIC},
+    {STREAM_SPEECH, STREAM_MUSIC},
+    {STREAM_NAVIGATION, STREAM_MUSIC},
+
+    {STREAM_VOICE_ASSISTANT, STREAM_VOICE_ASSISTANT},
+    {STREAM_ALARM, STREAM_ALARM},
+    {STREAM_ACCESSIBILITY, STREAM_ACCESSIBILITY},
+    {STREAM_ULTRASONIC, STREAM_ULTRASONIC},
+    {STREAM_ALL, STREAM_ALL},
+};
+
+std::unordered_map<AudioStreamType, AudioVolumeType>& VolumeUtils::GetVolumeMap()
+{
+    return defaultVolumeMap_;
+}
+
+AudioVolumeType VolumeUtils::GetVolumeTypeFromStreamType(AudioStreamType streamType)
+{
+    std::unordered_map<AudioStreamType, AudioVolumeType> map = GetVolumeMap();
+    auto it = map.find(streamType);
+    if (it != map.end()) {
+        return it->second;
+    }
+    return STREAM_MUSIC;
+}
+
 std::string GetEncryptStr(const std::string &src)
 {
     if (src.empty()) {
@@ -1212,6 +1254,15 @@ std::string GetEncryptStr(const std::string &src)
     }
 
     return dst;
+}
+
+std::string ConvertNetworkId(const std::string &networkId)
+{
+    if (!networkId.empty() && networkId != LOCAL_NETWORK_ID) {
+        return REMOTE_NETWORK_ID;
+    }
+
+    return networkId;
 }
 
 AudioDump& AudioDump::GetInstance()

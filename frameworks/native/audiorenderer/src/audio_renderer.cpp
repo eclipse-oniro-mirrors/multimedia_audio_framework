@@ -1230,7 +1230,7 @@ bool AudioRendererPrivate::GetSilentModeAndMixWithOthers()
 
 int32_t AudioRendererPrivate::SetParallelPlayFlag(bool parallelPlayFlag)
 {
-    AUDIO_INFO_LOG("parallelPlayFlag %{public}d", parallelPlayFlag);
+    AUDIO_PRERELEASE_LOGI("parallelPlayFlag %{public}d", parallelPlayFlag);
     audioInterrupt_.parallelPlayFlag = parallelPlayFlag;
     return SUCCESS;
 }
@@ -1247,7 +1247,7 @@ float AudioRendererPrivate::GetLowPowerVolume() const
 
 int32_t AudioRendererPrivate::SetOffloadAllowed(bool isAllowed)
 {
-    AUDIO_INFO_LOG("offload allowed: %{public}d", isAllowed);
+    AUDIO_PRERELEASE_LOGI("offload allowed: %{public}d", isAllowed);
     rendererInfo_.isOffloadAllowed = isAllowed;
     audioStream_->SetRendererInfo(rendererInfo_);
     return SUCCESS;
@@ -1374,18 +1374,8 @@ void AudioRendererPrivate::SetSwitchInfo(IAudioStream::SwitchInfo info, std::sha
     audioStream->SetVolume(info.volume);
     audioStream->SetUnderflowCount(info.underFlowCount);
 
-    if (info.renderMode == RENDER_MODE_CALLBACK) {
-        size_t sizePerFrameInByte = 0;
-        IAudioStream::GetByteSizePerFrame(info.params, sizePerFrameInByte);
-        size_t bufferSize = 0;
-        audioStream_->GetBufferSize(bufferSize);
-        
-        if (bufferSize > 0 && sizePerFrameInByte > 0) {
-            audioStream->SetPreferredFrameSize(bufferSize / sizePerFrameInByte);
-        } else {
-            AUDIO_ERR_LOG("param err sizePerFrameInByte: %{public}zu bufferSize: %{public}zu",
-                sizePerFrameInByte, bufferSize);
-        }
+    if (info.userSettedPreferredFrameSize.has_value()) {
+        audioStream->SetPreferredFrameSize(info.userSettedPreferredFrameSize.value());
     }
 
     // set callback
@@ -1444,6 +1434,9 @@ bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
             info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_DIRECT;
             info.rendererInfo.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
             info.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
+        } else if (rendererInfo_.rendererFlags == AUDIO_FLAG_DIRECT) {
+            info.rendererInfo.pipeType = PIPE_TYPE_DIRECT_MUSIC;
+            info.rendererFlags = AUDIO_FLAG_DIRECT;
         }
         if (targetClass == AUDIO_FLAG_MMAP) {
             switchResult = audioStream_->ReleaseAudioStream();
@@ -1512,6 +1505,9 @@ void AudioRendererPrivate::SwitchStream(const uint32_t sessionId, const int32_t 
                 AUDIO_FLAG_VOIP_DIRECT : AUDIO_FLAG_NORMAL;
             targetClass = IAudioStream::PA_STREAM;
             break;
+        case AUDIO_FLAG_DIRECT:
+            rendererInfo_.rendererFlags = AUDIO_FLAG_DIRECT;
+            break;
     }
     if (rendererInfo_.originalFlag == AUDIO_FLAG_FORCED_NORMAL) {
         rendererInfo_.rendererFlags = AUDIO_FLAG_NORMAL;
@@ -1533,12 +1529,10 @@ void OutputDeviceChangeWithInfoCallbackImpl::OnDeviceChangeWithInfo(
 {
     AUDIO_INFO_LOG("OnRendererStateChange");
     std::vector<std::shared_ptr<AudioRendererOutputDeviceChangeCallback>> callbacks;
-    std::shared_ptr<AudioRendererDeviceChangeCallback> oldCb;
 
     {
         std::lock_guard<std::mutex> lock(callbackMutex_);
         callbacks = callbacks_;
-        oldCb = oldCallback_;
     }
 
     for (auto &cb : callbacks) {
@@ -1549,12 +1543,6 @@ void OutputDeviceChangeWithInfoCallbackImpl::OnDeviceChangeWithInfo(
 
     AUDIO_INFO_LOG("sessionId: %{public}u, deviceType: %{public}d reason: %{public}d size: %{public}zu",
         sessionId, static_cast<int>(deviceInfo.deviceType), static_cast<int>(reason), callbacks.size());
-
-    if (oldCb != nullptr) {
-        AUDIO_INFO_LOG("sessionId: %{public}u, deviceType: %{public}d",
-            sessionId, static_cast<int>(deviceInfo.deviceType));
-        oldCb->OnStateChange(deviceInfo);
-    }
 }
 
 void OutputDeviceChangeWithInfoCallbackImpl::OnRecreateStreamEvent(const uint32_t sessionId, const int32_t streamFlag,
@@ -1588,6 +1576,7 @@ int32_t AudioRendererPrivate::SetVolumeWithRamp(float volume, int32_t duration)
 
 void AudioRendererPrivate::SetPreferredFrameSize(int32_t frameSize)
 {
+    std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
     audioStream_->SetPreferredFrameSize(frameSize);
 }
 

@@ -403,12 +403,12 @@ void AudioDeviceManager::RemoveMatchDeviceInArray(const AudioDeviceDescriptor &d
             devDesc.networkId_ == desc->networkId_;
     };
 
-    auto itr = find_if(descArray.begin(), descArray.end(), isPresent);
-    if (itr != descArray.end()) {
-        descArray.erase(itr);
-        AUDIO_INFO_LOG("Remove from %{public}s list, and then %{public}s",
-            logName.c_str(), GetConnDevicesStr(descArray).c_str());
-    }
+    auto removeBeginIt = std::remove_if(descArray.begin(), descArray.end(), isPresent);
+    size_t deleteNum = static_cast<uint32_t>(descArray.end() - removeBeginIt);
+    descArray.erase(removeBeginIt, descArray.end());
+
+    AUDIO_INFO_LOG("Remove %{public}zu desc from %{public}s list, and then %{public}s", deleteNum,
+        logName.c_str(), GetConnDevicesStr(descArray).c_str());
 }
 
 void AudioDeviceManager::RemoveNewDevice(const sptr<AudioDeviceDescriptor> &devDesc)
@@ -469,6 +469,18 @@ vector<unique_ptr<AudioDeviceDescriptor>> AudioDeviceManager::GetCommRenderPubli
         descs.push_back(make_unique<AudioDeviceDescriptor>(*desc));
     }
     return descs;
+}
+
+vector<unique_ptr<AudioDeviceDescriptor>> AudioDeviceManager::GetCommRenderBTCarDevices()
+{
+    vector<unique_ptr<AudioDeviceDescriptor>> carDescs;
+    for (const auto &desc : commRenderPublicDevices_) {
+        if (desc == nullptr || desc->deviceCategory_ != BT_CAR) {
+            continue;
+        }
+        carDescs.push_back(make_unique<AudioDeviceDescriptor>(*desc));
+    }
+    return carDescs;
 }
 
 vector<unique_ptr<AudioDeviceDescriptor>> AudioDeviceManager::GetCommCapturePrivacyDevices()
@@ -1023,7 +1035,6 @@ bool AudioDeviceManager::IsDeviceConnected(sptr<AudioDeviceDescriptor> &audioDev
                 && connectedDevices_[i]->deviceType_ == audioDeviceDescriptors->deviceType_
                 && connectedDevices_[i]->networkId_ == audioDeviceDescriptors->networkId_
                 && connectedDevices_[i]->macAddress_ == audioDeviceDescriptors->macAddress_
-                && connectedDevices_[i]->interruptGroupId_ == audioDeviceDescriptors->interruptGroupId_
                 && connectedDevices_[i]->volumeGroupId_ == audioDeviceDescriptors->volumeGroupId_) {
                 return true;
             }

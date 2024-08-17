@@ -37,7 +37,7 @@
 #include "v4_0/iaudio_manager.h"
 
 #include "audio_errors.h"
-#include "audio_log.h"
+#include "audio_hdi_log.h"
 #include "audio_utils.h"
 
 using namespace std;
@@ -204,7 +204,6 @@ void FastAudioRendererSinkInner::DeInit()
 #ifdef FEATURE_POWER_MANAGER
     KeepRunningUnlock();
 
-    runningLockManager_ = nullptr;
 #endif
 
     started_ = false;
@@ -894,13 +893,11 @@ int32_t FastAudioRendererSinkInner::Flush(void)
 
 void FastAudioRendererSinkInner::ResetOutputRouteForDisconnect(DeviceType device)
 {
-    AUDIO_WARNING_LOG("not supported.");
 }
 
 int32_t FastAudioRendererSinkInner::UpdateAppsUid(const int32_t appsUid[MAX_MIX_CHANNELS],
     const size_t size)
 {
-    AUDIO_WARNING_LOG("not supported.");
     return SUCCESS;
 }
 

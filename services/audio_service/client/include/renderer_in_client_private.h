@@ -15,6 +15,8 @@
 #ifndef RENDERER_IN_CLIENT_PRIVATE_H
 #define RENDERER_IN_CLIENT_PRIVATE_H
 
+#include <optional>
+
 #include "bundle_mgr_interface.h"
 #include "bundle_mgr_proxy.h"
 
@@ -243,6 +245,8 @@ private:
     void ProcessWriteInner(BufferDesc &bufferDesc);
 
     void ResetRingerModeMute();
+
+    void InitDirectPipeType();
 private:
     AudioStreamType eStreamType_ = AudioStreamType::STREAM_DEFAULT;
     int32_t appUid_ = 0;
@@ -401,6 +405,9 @@ private:
         HANDLER_PARAM_RUNNING_FROM_SYSTEM,
         HANDLER_PARAM_PAUSED_FROM_SYSTEM,
     };
+
+    std::mutex setPreferredFrameSizeMutex_;
+    std::optional<int32_t> userSettedPreferredFrameSize_ = std::nullopt;
 };
 
 class SpatializationStateChangeCallbackImpl : public AudioSpatializationStateChangeCallback {

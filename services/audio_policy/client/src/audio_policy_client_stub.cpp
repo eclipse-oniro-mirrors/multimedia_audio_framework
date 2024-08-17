@@ -79,6 +79,8 @@ void AudioPolicyClientStub::OnMaxRemoteRequest(uint32_t updateCode, MessageParce
             break;
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE):
             HandleHeadTrackingEnabledChangeForAnyDevice(data, reply);
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_AUDIO_SESSION_DEACTIVE):
+            HandleAudioSessionCallback(data, reply);
             break;
         default:
             break;
@@ -327,6 +329,14 @@ void AudioPolicyClientStub::HandleHeadTrackingEnabledChangeForAnyDevice(MessageP
     CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
     bool enabled = data.ReadBool();
     OnHeadTrackingEnabledChangeForAnyDevice(audioDeviceDescriptor, enabled);
+}
+
+void AudioPolicyClientStub::HandleAudioSessionCallback(MessageParcel &data, MessageParcel &reply)
+{
+    AUDIO_INFO_LOG("HandleAudioSessionCallback");
+    AudioSessionDeactiveEvent deactiveEvent;
+    deactiveEvent.deactiveReason = static_cast<AudioSessionDeactiveReason>(data.ReadInt32());
+    OnAudioSessionDeactive(deactiveEvent);
 }
 } // namespace AudioStandard
 } // namespace OHOS

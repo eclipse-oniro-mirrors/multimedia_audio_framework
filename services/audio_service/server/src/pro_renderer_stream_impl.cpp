@@ -190,7 +190,7 @@ int32_t ProRendererStreamImpl::Start()
     return SUCCESS;
 }
 
-int32_t ProRendererStreamImpl::Pause()
+int32_t ProRendererStreamImpl::Pause(bool isStandby)
 {
     Trace trace("ProRendererStreamImpl::Pause");
     AUDIO_INFO_LOG("Enter");
@@ -675,7 +675,7 @@ void ProRendererStreamImpl::ConvertFloatToDes(int32_t writeIndex)
 float ProRendererStreamImpl::GetStreamVolume()
 {
     float volume = 1.0f;
-    AudioVolumeType volumeType = PolicyHandler::GetInstance().GetVolumeTypeFromStreamType(processConfig_.streamType);
+    AudioVolumeType volumeType = VolumeUtils::GetVolumeTypeFromStreamType(processConfig_.streamType);
     DeviceType currentOutputDevice = PolicyHandler::GetInstance().GetActiveOutPutDevice();
     Volume vol = {true, 1.0f, 0};
     if (PolicyHandler::GetInstance().GetSharedVolume(volumeType, currentOutputDevice, vol)) {

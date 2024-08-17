@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <string>
 #include <map>
+#include <unordered_map>
 #include <mutex>
 #include <ctime>
 #include <sys/time.h>
@@ -139,6 +140,7 @@ void ConvertFromFloatTo24Bit(unsigned n, const float *a, uint8_t *b);
 void ConvertFromFloatTo32Bit(unsigned n, const float *a, int32_t *b);
 
 std::string GetEncryptStr(const std::string &str);
+std::string ConvertNetworkId(const std::string &networkId);
 
 enum ConvertHdiFormat {
     SAMPLE_U8_C = 0,
@@ -227,6 +229,15 @@ public:
     static const std::string GetConnectTypeName(ConnectType connectType);
     static const std::string GetSourceName(SourceType sourceType);
     static const std::string GetDeviceVolumeTypeName(DeviceVolumeType deviceType);
+};
+
+class VolumeUtils {
+public:
+    static AudioVolumeType GetVolumeTypeFromStreamType(AudioStreamType streamType);
+
+private:
+    static std::unordered_map<AudioStreamType, AudioVolumeType> defaultVolumeMap_;
+    static std::unordered_map<AudioStreamType, AudioVolumeType>& GetVolumeMap();
 };
 
 template<typename T>
@@ -521,6 +532,17 @@ public:
         cvNotFull_.notify_all();
 
         return true;
+    }
+
+    std::queue<T> PopAllNotWait()
+    {
+        std::queue<T> retQueue = {};
+        std::unique_lock<std::mutex> lock(mutexLock_);
+        retQueue.swap(queueT_);
+
+        cvNotFull_.notify_all();
+
+        return retQueue;
     }
 
     unsigned int Size()

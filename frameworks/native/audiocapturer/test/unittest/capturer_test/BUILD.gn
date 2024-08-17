@@ -28,6 +28,8 @@ ohos_unittest("audio_capturer_unit_test") {
   cflags = [
     "-Wall",
     "-Werror",
+    "-Wno-macro-redefined",
+    "-fno-access-control",
   ]
 
   cflags_cc = cflags
@@ -40,6 +42,7 @@ ohos_unittest("audio_capturer_unit_test") {
   ]
 
   sources = [
+    "src/audio_capturer_extra_plus_unit_test.cpp",
     "src/audio_capturer_extra_unit_test.cpp",
     "src/audio_capturer_unit_test.cpp",
   ]

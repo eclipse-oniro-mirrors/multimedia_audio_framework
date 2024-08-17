@@ -347,7 +347,6 @@ napi_value NapiAudioStreamMgr::IsStreamActive(napi_env env, napi_callback_info i
 
 napi_value NapiAudioStreamMgr::IsStreamActiveSync(napi_env env, napi_callback_info info)
 {
-    AUDIO_INFO_LOG("IsStreamActiveSync");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value args[ARGS_ONE] = {};

@@ -231,7 +231,7 @@ bool AudioEndpointSeparate::Config(const DeviceInfo &deviceInfo)
     }
 
     Volume vol = {true, 1.0f, 0};
-    AudioVolumeType volumeType = PolicyHandler::GetInstance().GetVolumeTypeFromStreamType(streamType_);
+    AudioVolumeType volumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType_);
     DeviceType deviceType = PolicyHandler::GetInstance().GetActiveOutPutDevice();
     PolicyHandler::GetInstance().GetSharedVolume(volumeType, deviceType, vol);
     fastSink_->SetVolume(vol.volumeFloat, vol.volumeFloat);
@@ -286,12 +286,12 @@ int32_t AudioEndpointSeparate::PrepareDeviceBuffer(const DeviceInfo &deviceInfo)
     }
     dstAudioBuffer_ = OHAudioBuffer::CreateFromRemote(dstTotalSizeInframe_, dstSpanSizeInframe_, dstByteSizePerFrame_,
         AUDIO_SERVER_INDEPENDENT, dstBufferFd_, OHAudioBuffer::INVALID_BUFFER_FD);
-    if (dstAudioBuffer_ == nullptr) {
+    if (dstAudioBuffer_ == nullptr || (dstAudioBuffer_->GetStreamStatus() == nullptr)) {
         AUDIO_ERR_LOG("%{public}s create buffer from remote fail.", __func__);
         return ERR_ILLEGAL_STATE;
     }
-    dstAudioBuffer_->GetStreamStatus()->store(StreamStatus::STREAM_IDEL);
 
+    dstAudioBuffer_->GetStreamStatus()->store(StreamStatus::STREAM_IDEL);
     // clear data buffer
     ret = memset_s(dstAudioBuffer_->GetDataBase(), dstAudioBuffer_->GetDataSize(), 0, dstAudioBuffer_->GetDataSize());
     if (ret != EOK) {
