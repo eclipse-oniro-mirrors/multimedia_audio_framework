@@ -579,7 +579,7 @@ void AudioPolicyClientStubImpl::OnSpatializationEnabledChangeForAnyDevice(const 
 {
     std::lock_guard<std::mutex> lockCbMap(spatializationEnabledChangeMutex_);
     for (const auto &callback : spatializationEnabledChangeCallbackList_) {
-        if(callback->useNewApiFlag) {
+        if (callback->useNewApiFlag) {
             callback->OnSpatializationEnabledChangeForAnyDevice(deviceDescriptor, enabled);
         } else {
             callback->OnSpatializationEnabledChange(enabled);
@@ -615,7 +615,7 @@ void AudioPolicyClientStubImpl::OnHeadTrackingEnabledChangeForAnyDevice(const sp
 {
     std::lock_guard<std::mutex> lockCbMap(headTrackingEnabledChangeMutex_);
     for (const auto &callback : headTrackingEnabledChangeCallbackList_) {
-        if(callback->useNewApiFlag) {
+        if (callback->useNewApiFlag) {
             callback->OnHeadTrackingEnabledChangeForAnyDevice(deviceDescriptor, enabled);
         } else {
             callback->OnHeadTrackingEnabledChange(enabled);
