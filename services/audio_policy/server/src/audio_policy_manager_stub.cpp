@@ -1270,7 +1270,7 @@ void AudioPolicyManagerStub::OnMiddleNinRemoteRequest(
 {
     switch (code) {
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_SPATIALIZATION_ENABLED_FOR_DEVICE):
-            IsHeadTrackingEnabledForDeviceInternal(data, reply);
+            IsSpatializationEnabledForDeviceInternal(data, reply);
             break;
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_SPATIALIZATION_ENABLED_FOR_DEVICE):
             SetSpatializationEnabledForDeviceInternal(data, reply);
