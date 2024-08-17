@@ -48,8 +48,10 @@ public:
      * @param enabled the spatialization enabled state.
      * @since 12
      */
-    virtual void OnSpatializationEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+    virtual void OnSpatializationEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) = 0;
+
+    bool useNewApiFlag = false;
 };
 
 class AudioHeadTrackingEnabledChangeCallback {
@@ -70,8 +72,10 @@ public:
      * @param enabled the head tracking enabled state.
      * @since 12
      */
-    virtual void OnHeadTrackingEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+    virtual void OnHeadTrackingEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) = 0;
+
+    bool useNewApiFlag = false;
 };
 
 class AudioSpatializationStateChangeCallback {

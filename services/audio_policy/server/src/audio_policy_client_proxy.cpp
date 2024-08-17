@@ -400,8 +400,8 @@ void AudioPolicyClientProxy::OnSpatializationEnabledChange(const bool &enabled)
     reply.ReadInt32();
 }
 
-void AudioPolicyClientProxy::OnSpatializationEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
-    const bool &enabled)
+void AudioPolicyClientProxy::OnSpatializationEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor>
+    &deviceDescriptor, const bool &enabled)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -414,8 +414,7 @@ void AudioPolicyClientProxy::OnSpatializationEnabledChange(const sptr<AudioDevic
     data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE));
 
     if (hasSystemPermission_) {
-        sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
-        CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
+        deviceDescriptor->Marshalling(data);
         data.WriteBool(enabled);
     } else {
         data.WriteBool(false);
@@ -453,8 +452,8 @@ void AudioPolicyClientProxy::OnHeadTrackingEnabledChange(const bool &enabled)
     reply.ReadInt32();
 }
 
-void AudioPolicyClientProxy::OnHeadTrackingEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
-    const bool &enabled)
+void AudioPolicyClientProxy::OnHeadTrackingEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor>
+    &deviceDescriptor, const bool &enabled)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -467,8 +466,7 @@ void AudioPolicyClientProxy::OnHeadTrackingEnabledChange(const sptr<AudioDeviceD
     data.WriteInt32(static_cast<int32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE));
 
     if (hasSystemPermission_) {
-        sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
-        CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
+        deviceDescriptor->Marshalling(data);
         data.WriteBool(enabled);
     } else {
         data.WriteBool(false);

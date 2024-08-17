@@ -910,7 +910,7 @@ void AudioPolicyServerHandler::HandleSpatializatonEnabledChangeForAnyDeviceEvent
             AUDIO_ERR_LOG("spatializationEnabledChangeCb : nullptr for client : %{public}d", it->first);
             continue;
         }
-        spatializationEnabledChangeCb->OnSpatializationEnabledChange(eventContextObj->descriptor,
+        spatializationEnabledChangeCb->OnSpatializationEnabledChangeForAnyDevice(eventContextObj->descriptor,
             eventContextObj->spatializationEnabled);
     }
 }
@@ -942,7 +942,7 @@ void AudioPolicyServerHandler::HandleHeadTrackingEnabledChangeForAnyDeviceEvent(
             AUDIO_ERR_LOG("headTrackingEnabledChangeCb : nullptr for client : %{public}d", it->first);
             continue;
         }
-        headTrackingEnabledChangeCb->OnHeadTrackingEnabledChange(eventContextObj->descriptor,
+        headTrackingEnabledChangeCb->OnHeadTrackingEnabledChangeForAnyDevice(eventContextObj->descriptor,
             eventContextObj->headTrackingEnabled);
     }
 }

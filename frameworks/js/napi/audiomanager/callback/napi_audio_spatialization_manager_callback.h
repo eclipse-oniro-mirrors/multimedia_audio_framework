@@ -40,13 +40,13 @@ public:
     void RemoveAllSpatializationEnabledChangeCallbackReference(const std::string cbName);
     int32_t GetSpatializationEnabledChangeCbListSize(const std::string cbName);
     void OnSpatializationEnabledChange(const bool &enabled) override;
-    void OnSpatializationEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+    void OnSpatializationEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) override;
 
 private:
     struct AudioSpatializationEnabledJsCallback {
         std::shared_ptr<AutoRef> callback = nullptr;
-        sptr<AudioDeviceDescriptor> deviceDescriptor = new(std::nothrow) AudioDeviceDescriptor();
+        sptr<AudioDeviceDescriptor> deviceDescriptor;
         bool enabled;
     };
 
@@ -69,13 +69,13 @@ public:
     void RemoveAllHeadTrackingEnabledChangeCallbackReference(const std::string cbName);
     int32_t GetHeadTrackingEnabledChangeCbListSize(const std::string cbName);
     void OnHeadTrackingEnabledChange(const bool &enabled) override;
-    void OnHeadTrackingEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+    void OnHeadTrackingEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) override;
 
 private:
     struct AudioHeadTrackingEnabledJsCallback {
         std::shared_ptr<AutoRef> callback = nullptr;
-        sptr<AudioDeviceDescriptor> deviceDescriptor = new(std::nothrow) AudioDeviceDescriptor();
+        sptr<AudioDeviceDescriptor> deviceDescriptor;
         bool enabled;
     };
 

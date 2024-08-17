@@ -87,17 +87,6 @@ private:
         WRITE_SPATIALIZATION_SCENE = 1,
     };
 
-    struct AudioSpatialStateDevice {
-        std::string address;
-        bool isSpatializationEnabled;
-        bool isHeadTrackingEnabled;
-        bool isSpatializationSupported;
-        bool isHeadTrackingSupported;
-        AudioSpatialDeviceType spatialDeviceType;
-        int32_t index;
-        std::string time;
-    };
-
     int32_t UpdateSpatializationStateReal(bool outputDeviceChange, std::string preDeviceAddress = "");
     int32_t UpdateSpatializationState();
     int32_t UpdateSpatializationSceneType();
@@ -118,7 +107,6 @@ private:
     bool isLoadedfromDb_ = false;
     AudioSpatializationState spatializationStateFlag_ = {false};
     std::unordered_map<std::string, AudioSpatializationState> addressToSpatialEnabledMap_;
-    std::unordered_map<std::string, AudioSpatialStateDevice> audioSpatialDeviceStateMap_;
     AudioSpatializationSceneType spatializationSceneType_ = SPATIALIZATION_SCENE_TYPE_DEFAULT;
     AudioSpatialDeviceType currSpatialDeviceType_{ EARPHONE_TYPE_OTHERS };
     std::vector<AudioRendererInfoForSpatialization> spatializationRendererInfoList_;

@@ -312,7 +312,7 @@ void AudioPolicyClientStub::HandleSpatializationEnabledChangeForAnyDevice(Messag
     sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
     CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
     bool enabled = data.ReadBool();
-    OnSpatializationEnabledChange(audioDeviceDescriptor, enabled);
+    OnSpatializationEnabledChangeForAnyDevice(audioDeviceDescriptor, enabled);
 }
 
 void AudioPolicyClientStub::HandleHeadTrackingEnabledChange(MessageParcel &data, MessageParcel &reply)
@@ -326,7 +326,7 @@ void AudioPolicyClientStub::HandleHeadTrackingEnabledChangeForAnyDevice(MessageP
     sptr<AudioDeviceDescriptor> audioDeviceDescriptor = AudioDeviceDescriptor::Unmarshalling(data);
     CHECK_AND_RETURN_LOG(audioDeviceDescriptor != nullptr, "Unmarshalling fail.");
     bool enabled = data.ReadBool();
-    OnHeadTrackingEnabledChange(audioDeviceDescriptor, enabled);
+    OnHeadTrackingEnabledChangeForAnyDevice(audioDeviceDescriptor, enabled);
 }
 } // namespace AudioStandard
 } // namespace OHOS

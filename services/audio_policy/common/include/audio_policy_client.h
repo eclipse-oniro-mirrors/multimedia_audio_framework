@@ -75,10 +75,10 @@ public:
         const AudioStreamDeviceChangeReasonExt reason) = 0;
     virtual void OnHeadTrackingDeviceChange(const std::unordered_map<std::string, bool> &changeInfo) = 0;
     virtual void OnSpatializationEnabledChange(const bool &enabled) = 0;
-    virtual void OnSpatializationEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+    virtual void OnSpatializationEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) = 0;
     virtual void OnHeadTrackingEnabledChange(const bool &enabled) = 0;
-    virtual void OnHeadTrackingEnabledChange(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+    virtual void OnHeadTrackingEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) = 0;
 
     bool hasBTPermission_ = true;
