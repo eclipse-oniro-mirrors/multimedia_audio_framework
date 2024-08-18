@@ -1949,16 +1949,24 @@ int32_t AudioServer::SetSystemVolumeToEffect(const AudioStreamType streamType, f
 {
     std::string sceneType;
 
-    if (streamType == STREAM_RING || streamType == STREAM_ALARM) {
-        sceneType = "SCENE_RING";
-    } else if (streamType == STREAM_VOICE_ASSISTANT) {
-        sceneType = "SCENE_SPEECH";
-    } else if (streamType == STREAM_MUSIC) {
-        sceneType = "SCENE_MUSIC";
-    } else if (streamType == STREAM_ACCESSIBILITY) {
-        sceneType = "SCENE_OTHERS";
-    } else {
-        return SUCCESS;
+    switch (streamType) {
+
+        case STREAM_RING:
+
+        case STREAM_ALARM:
+            sceneType = "SCENE_RING";
+            break;
+        case STREAM_VOICE_ASSISTANT:
+            sceneType = "SCENE_SPEECH";
+            break;
+        case STREAM_MUSIC:
+            sceneType = "SCENE_MUSIC";
+            break;
+        case STREAM_ACCESSIBILITY:
+            sceneType = "SCENE_OTHERS";
+            break;
+        default:
+            return SUCCESS;
     }
 
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
