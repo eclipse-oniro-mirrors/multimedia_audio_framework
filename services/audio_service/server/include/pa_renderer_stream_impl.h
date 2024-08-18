@@ -93,6 +93,7 @@ private:
     void ResetOffload();
     int32_t OffloadUpdatePolicyInWrite();
     // offload end
+    int32_t UpdateEffectSessionInfo();
     uint32_t GetEffectChainLatency();
     uint32_t GetA2dpOffloadLatency();
 
@@ -139,6 +140,7 @@ private:
     // offload end
     std::mutex fadingMutex_;
     std::condition_variable fadingCondition_;
+    float clientVolume_ = 1.0f;
 
     static inline std::atomic<int32_t> bufferNullCount_ = 0;
 
