@@ -552,21 +552,24 @@ int32_t AudioEffectChainManager::EffectDspVolumeUpdate(std::shared_ptr<AudioEffe
     // update dsp volume
     AUDIO_DEBUG_LOG("send volume to dsp.");
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
-    float systemVolume = audioEffectVolume->GetSystemVolume();
     float volumeMax = 0;
     for (auto it = SceneTypeToSessionIDMap_.begin(); it != SceneTypeToSessionIDMap_.end(); it++) {
         std::set<std::string> sessions = SceneTypeToSessionIDMap_[it->first];
         for (auto s = sessions.begin(); s != sessions.end(); s++) {
             float streamVolumeTemp = audioEffectVolume->GetStreamVolume(*s);
-            volumeMax = (streamVolumeTemp * systemVolume) > volumeMax ?
-                (streamVolumeTemp * systemVolume) : volumeMax;
+            float systemVolumeTemp = audioEffectVolume->GetSystemVolume(it->first);
++            volumeMax = (streamVolumeTemp * systemVolumeTemp) > volumeMax ?
++                (streamVolumeTemp * systemVolumeTemp) : volumeMax;
         }
     }
     // send volume to dsp
     if (audioEffectVolume->GetDspVolume() != volumeMax) {
         audioEffectVolume->SetDspVolume(volumeMax);
         effectHdiInput_[0] = HDI_VOLUME;
-        int32_t ret = memcpy_s(&effectHdiInput_[1], SEND_HDI_COMMAND_LEN, &volumeMax, sizeof(uint32_t));
+        AUDIO_INFO_LOG("finalVolume change to %{public}f", volumeMax);
+        int32_t dspVolumeMax = static_cast<int32_t>(volumeMax * MAX_UINT_DSP_VOLUME);
+        int32_t ret = memcpy_s(&effectHdiInput_[1], SEND_HDI_COMMAND_LEN - sizeof(int8_t),
+            &dspVolumeMax, sizeof(int32_t));
         CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "memcpy volume failed");
         AUDIO_INFO_LOG("set hdi volume: %{public}u", *(reinterpret_cast<uint32_t *>(&effectHdiInput_[1])));
         ret = audioEffectHdiParam_->UpdateHdiState(effectHdiInput_);
@@ -580,14 +583,14 @@ int32_t AudioEffectChainManager::EffectApVolumeUpdate(std::shared_ptr<AudioEffec
     // send to ap
     AUDIO_DEBUG_LOG("send volume to ap.");
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
-    float systemVolume = audioEffectVolume->GetSystemVolume();
     for (auto it = SceneTypeToSessionIDMap_.begin(); it != SceneTypeToSessionIDMap_.end(); it++) {
         float volumeMax = 0;
         std::set<std::string> sessions = it->second;
         for (auto s = sessions.begin(); s != sessions.end(); s++) {
             float streamVolumeTemp = audioEffectVolume->GetStreamVolume(*s);
-            volumeMax = (streamVolumeTemp * systemVolume) > volumeMax ?
-               (streamVolumeTemp * systemVolume) : volumeMax;
+            float systemVolumeTemp = audioEffectVolume->GetSystemVolume(it->first);
+            volumeMax = (streamVolumeTemp * systemVolumeTemp) > volumeMax ?
+                (streamVolumeTemp * systemVolumeTemp) : volumeMax;
         }
         std::string sceneTypeAndDeviceKey = it->first + "_&_" + GetDeviceTypeName();
         auto audioEffectChain = SceneTypeToEffectChainMap_[sceneTypeAndDeviceKey];
@@ -612,21 +615,15 @@ int32_t AudioEffectChainManager::EffectApVolumeUpdate(std::shared_ptr<AudioEffec
             audioEffectChain->SetEffectCurrSceneType(currSceneType);
             int32_t ret = audioEffectChain->UpdateEffectParam();
             CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "set ap volume failed");
-            AUDIO_INFO_LOG("The delay of SceneType %{public}s is %{public}u, volume changed to %{public}u",
+            AUDIO_INFO_LOG("The delay of SceneType %{public}s is %{public}u, finalVolume changed to %{public}f",
                 it->first.c_str(), audioEffectChain->GetLatency(), volumeMax);
         }
     }
     return SUCCESS;
 }
 
-int32_t AudioEffectChainManager::EffectVolumeUpdate(const std::string sessionIDString, const uint32_t volume)
+int32_t AudioEffectChainManager::EffectVolumeUpdate(std::shared_ptr<AudioEffectVolume> audioEffectVolume)
 {
-    std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-    // update session info
-    if (SessionIDToEffectInfoMap_.count(sessionIDString)) {
-        SessionIDToEffectInfoMap_[sessionIDString].volume = volume;
-    }
-    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
     int32_t ret;
     if (((deviceType_ == DEVICE_TYPE_SPEAKER) && (spkOffloadEnabled_)) ||
         ((deviceType_ == DEVICE_TYPE_BLUETOOTH_A2DP) && (btOffloadEnabled_))) {
@@ -640,7 +637,7 @@ int32_t AudioEffectChainManager::EffectVolumeUpdate(const std::string sessionIDS
 int32_t AudioEffectChainManager::StreamVolumeUpdate(const std::string sessionIDString, const float streamVolume)
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-    // update streamVolume
+    // update session info
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     audioEffectVolume->SetStreamVolume(sessionIDString, streamVolume);
@@ -650,16 +647,16 @@ int32_t AudioEffectChainManager::StreamVolumeUpdate(const std::string sessionIDS
     return ret;
 }
 
-int32_t AudioEffectChainManager::SetSceneTypeSystemVolume(const std::string sceneType, const float systemVolume)
+int32_t AudioEffectChainManager::SystemVolumeUpdate(const float systemVolume)
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-    // set systemVolume by sceneType
+    // update session info
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
-    audioEffectVolume->SetSystemVolume(sceneType, systemVolume);
-    AUDIO_INFO_LOG("systemVolume is %{public}f", audioEffectVolume->GetSystemVolume(sceneType));
-
-    return SUCCESS;
+    audioEffectVolume->SetSystemVolume(systemVolume);
+    AUDIO_INFO_LOG("systemVolume is %{public}f", audioEffectVolume->GetSystemVolume());
+    int32_t ret = EffectVolumeUpdate(audioEffectVolume);
+    return ret;
 }
 
 #ifdef WINDOW_MANAGER_ENABLE
@@ -782,12 +779,6 @@ int32_t AudioEffectChainManager::UpdateSpatializationState(AudioSpatializationSt
         headTrackingEnabled_ = spatializationState.headTrackingEnabled;
         UpdateSensorState();
     }
-
-    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
-    CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
-    EffectVolumeUpdate(audioEffectVolume);
-    AUDIO_INFO_LOG("systemVolume prepare change");
-
     return SUCCESS;
 }
 

@@ -36,16 +36,10 @@ public:
     int32_t StreamVolumeDelete(const std::string sessionID);
 private:
     float dspVolume_ = 1.0f;
-    float systemVolume_;
     std::mutex volumeMutex_;
     std::map<std::string, float> SceneTypeToVolumeMap_;
     std::map<std::string, float> SessionIDToVolumeMap_;
-    std::map<std::string, float> SceneTypeToSystemVolumeMap_ = {
-        {"SCENE_RING", 1.0f},
-        {"SCENE_SPEECH", 1.0f},
-        {"SCENE_MUSIC", 1.0f},
-        {"SCENE_OTHERS", 1.0f},
-    };
+    std::map<std::string, float> SceneTypeToSystemVolumeMap_;
 };
 }  // namespace AudioStandard
 }  // namespace OHOS

@@ -25,7 +25,12 @@ AudioEffectVolume::AudioEffectVolume()
 {
     AUDIO_DEBUG_LOG("created!");
     SceneTypeToVolumeMap_.clear();
-    dspVolume_ = 0;
+    SceneTypeToSystemVolumeMap_ = {
+        {"SCENE_RING", 1.0f},
+        {"SCENE_SPEECH", 1.0f},
+        {"SCENE_MUSIC", 1.0f},
+        {"SCENE_OTHERS", 1.0f},
+    };
 }
 
 AudioEffectVolume::~AudioEffectVolume()

@@ -58,6 +58,7 @@ const uint32_t HDI_ROOM_MODE_INDEX_TWO = 2;
 const uint32_t DEFAULT_NUM_EFFECT_INSTANCES = 1;
 const std::string COMMON_SCENE_TYPE = "SCENE_MUSIC";
 const uint32_t MAX_UINT_VOLUME_NUM = 10000;
+const uint32_t MAX_UINT_DSP_VOLUME = 65535;
 
 struct SessionEffectInfo {
     std::string sceneMode;
@@ -122,7 +123,6 @@ public:
     int32_t EffectRotationUpdate(const uint32_t rotationState);
     int32_t EffectVolumeUpdate(std::shared_ptr<AudioEffectVolume> audioEffectVolume);
     int32_t StreamVolumeUpdate(const std::string sessionIDString, const float streamVolume);
-    int32_t SystemVolumeUpdate(const float systemVolume);
     uint32_t GetLatency(const std::string &sessionId);
     int32_t SetSpatializationSceneType(AudioSpatializationSceneType spatializationSceneType);
     int32_t SetSceneTypeSystemVolume(const std::string sceneType, const float systemVolume);
