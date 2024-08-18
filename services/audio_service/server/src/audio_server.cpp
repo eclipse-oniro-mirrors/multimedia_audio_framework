@@ -1948,9 +1948,7 @@ int32_t AudioServer::NotifyStreamVolumeChanged(AudioStreamType streamType, float
 int32_t AudioServer::SetSystemVolumeToEffect(const AudioStreamType streamType, float volume)
 {
     std::string sceneType;
-
     switch (streamType) {
-
         case STREAM_RING:
 
         case STREAM_ALARM:
