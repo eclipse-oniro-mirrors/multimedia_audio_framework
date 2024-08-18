@@ -637,7 +637,7 @@ int32_t AudioEffectChainManager::EffectVolumeUpdate(std::shared_ptr<AudioEffectV
 int32_t AudioEffectChainManager::StreamVolumeUpdate(const std::string sessionIDString, const float streamVolume)
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-    // update session info
+    // update streamVolume
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     audioEffectVolume->SetStreamVolume(sessionIDString, streamVolume);
@@ -647,16 +647,16 @@ int32_t AudioEffectChainManager::StreamVolumeUpdate(const std::string sessionIDS
     return ret;
 }
 
-int32_t AudioEffectChainManager::SystemVolumeUpdate(const float systemVolume)
+int32_t AudioEffectChainManager::SetSceneTypeSystemVolume(const std::string sceneType, const float systemVolume)
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-    // update session info
+    // set systemVolume by sceneType
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
-    audioEffectVolume->SetSystemVolume(systemVolume);
-    AUDIO_INFO_LOG("systemVolume is %{public}f", audioEffectVolume->GetSystemVolume());
-    int32_t ret = EffectVolumeUpdate(audioEffectVolume);
-    return ret;
+    audioEffectVolume->SetSystemVolume(sceneType, systemVolume);
+    AUDIO_INFO_LOG("systemVolume is %{public}f", audioEffectVolume->GetSystemVolume(sceneType));
+
+    return SUCCESS;
 }
 
 #ifdef WINDOW_MANAGER_ENABLE
@@ -779,6 +779,12 @@ int32_t AudioEffectChainManager::UpdateSpatializationState(AudioSpatializationSt
         headTrackingEnabled_ = spatializationState.headTrackingEnabled;
         UpdateSensorState();
     }
+
+    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
+    EffectVolumeUpdate(audioEffectVolume);
+    AUDIO_INFO_LOG("systemVolume prepare change");
+
     return SUCCESS;
 }
 
