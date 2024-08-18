@@ -56,7 +56,7 @@ float AudioEffectVolume::GetSystemVolume(const std::string sceneType)
     std::lock_guard<std::mutex> lock(volumeMutex_);
     auto it = SceneTypeToSystemVolumeMap_.find(sceneType);
     if (it == SceneTypeToSystemVolumeMap_.end()) {
-        return 1.0f;
+        return 1.0;
     } else {
         return SceneTypeToSystemVolumeMap_[sceneType];
     }

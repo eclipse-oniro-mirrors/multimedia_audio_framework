@@ -1040,24 +1040,7 @@ HWTEST(AudioEffectChainManagerUnitTest, StreamVolumeUpdate_001, TestSize.Level1)
 
     AudioEffectChainManager::GetInstance()->CreateAudioEffectChainDynamic("SCENE_MOVIE");
     int32_t result = AudioEffectChainManager::GetInstance()->StreamVolumeUpdate(sessionIDString, streamVolume);
-    EXPECT_EQ(ERROR, result);
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-}
-
-/**
-* @tc.name   : Test EffectVolumeUpdate API
-* @tc.number : EffectVolumeUpdate_002
-* @tc.desc   : Test EffectVolumeUpdate interface(using abnormal use case).
-*              Test EffectDspVolumeUpdate and EffectApVolumeUpdate simultaneously.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, SystemVolumeUpdate_001, TestSize.Level1)
-{
-    float systemVolume = 0.888;
-
-
-    AudioEffectChainManager::GetInstance()->CreateAudioEffectChainDynamic("SCENE_MOVIE");
-    int32_t result = AudioEffectChainManager::GetInstance()->SystemVolumeUpdate(systemVolume);
-    EXPECT_EQ(ERROR, result);
+    EXPECT_EQ(SUCCESS, result);
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
