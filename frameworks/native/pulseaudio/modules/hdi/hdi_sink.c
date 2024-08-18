@@ -3079,6 +3079,10 @@ static void ProcessMCHData(struct Userdata *u)
         pa_sink_process_rewind(u->sink, 0);
     }
 
+    if (!ThreadFuncRendererTimerMultiChannelFlagJudge(u)) {
+        return;
+    }
+
     if (u->multiChannel.timestamp <= now + pw && pa_atomic_load(&u->multiChannel.dflag) == 0) {
         pa_atomic_add(&u->multiChannel.dflag, 1);
         ProcessRenderUseTimingMultiChannel(u, now);
