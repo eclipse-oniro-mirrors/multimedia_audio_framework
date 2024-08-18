@@ -1981,33 +1981,6 @@ int32_t AudioServer::SetSystemVolumeToEffect(const AudioStreamType streamType, f
     return SUCCESS;
 }
 
-int32_t AudioServer::SetSystemVolumeToEffect(const AudioStreamType streamType, float volume)
-{
-    std::string sceneType;
-    if (streamType == STREAM_RING || streamType == STREAM_ALARM) {
-        sceneType = "SCENE_RING";
-    } else if (streamType == STREAM_VOICE_ASSISTANT) {
-        sceneType = "SCENE_SPEECH";
-    } else if (streamType == STREAM_MUSIC) {
-        sceneType = "SCENE_MUSIC";
-    } else if (streamType == STREAM_ACCESSIBILITY) {
-        sceneType = "SCENE_OTHERS";
-    } else {
-        return SUCCESS;
-    }
-
-    AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
-    CHECK_AND_RETURN_RET_LOG(audioEffectChainManager != nullptr, ERROR, "audioEffectChainManager is nullptr");
-    AUDIO_INFO_LOG("streamType : %{public}d , systemVolume : %{public}f", streamType, volume);
-    audioEffectChainManager->SetSceneTypeSystemVolume(sceneType, volume);
-    
-    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
-    CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
-    audioEffectChainManager->EffectVolumeUpdate(audioEffectVolume);
-
-    return SUCCESS;
-}
-
 int32_t AudioServer::SetSpatializationSceneType(AudioSpatializationSceneType spatializationSceneType)
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
