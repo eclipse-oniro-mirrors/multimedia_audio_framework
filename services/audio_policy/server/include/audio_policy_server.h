@@ -126,6 +126,8 @@ public:
 
     float GetSystemVolumeInDb(AudioVolumeType volumeType, int32_t volumeLevel, DeviceType deviceType) override;
 
+    bool IsArmUsbDevice(const AudioDeviceDescriptor &desc) override;
+
     int32_t SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
         std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors) override;
 

@@ -845,7 +845,7 @@ bool AudioPolicyService::CheckActiveOutputDeviceSupportOffload()
     }
 
     return dev == DEVICE_TYPE_SPEAKER || (dev == DEVICE_TYPE_BLUETOOTH_A2DP && a2dpOffloadFlag_ == A2DP_OFFLOAD) ||
-        (dev == DEVICE_TYPE_USB_HEADSET && !isArmUsbDevice_);
+        dev == DEVICE_TYPE_USB_HEADSET;
 }
 
 void AudioPolicyService::SetOffloadAvailableFromXML(AudioModuleInfo &moduleInfo)
@@ -1060,6 +1060,13 @@ void AudioPolicyService::NotifyRemoteRenderState(std::string networkId, std::str
     UpdateTrackerDeviceChange(desc);
     OnPreferredOutputDeviceUpdated(currentActiveDevice_);
     AUDIO_DEBUG_LOG("Success");
+}
+
+bool AudioPolicyService::IsArmUsbDevice(const AudioDeviceDescriptor &desc)
+{
+    std::shared_lock deviceLock(deviceStatusUpdateSharedMutex_);
+
+    return audioDeviceManager_.IsArmUsbDevice(desc);
 }
 
 bool AudioPolicyService::IsDeviceConnected(sptr<AudioDeviceDescriptor> &audioDeviceDescriptors) const
@@ -1589,9 +1596,6 @@ DistributedRoutingInfo& AudioPolicyService::GetDistributedRoutingRoleInfo()
 std::string AudioPolicyService::GetSinkPortName(InternalDeviceType deviceType, AudioPipeType pipeType)
 {
     std::string portName = PORT_NONE;
-    if (deviceType == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
-        deviceType = DEVICE_TYPE_USB_ARM_HEADSET;
-    }
     switch (deviceType) {
         case InternalDeviceType::DEVICE_TYPE_BLUETOOTH_A2DP:
             if (a2dpOffloadFlag_ == A2DP_OFFLOAD && IsA2dpOffloadConnected()) {
@@ -1643,9 +1647,6 @@ std::string AudioPolicyService::GetSinkPortName(InternalDeviceType deviceType, A
 std::string AudioPolicyService::GetSourcePortName(InternalDeviceType deviceType)
 {
     std::string portName = PORT_NONE;
-    if (deviceType == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
-        deviceType = DEVICE_TYPE_USB_ARM_HEADSET;
-    }
     switch (deviceType) {
         case InternalDeviceType::DEVICE_TYPE_MIC:
             portName = PRIMARY_MIC;
@@ -2022,9 +2023,6 @@ void AudioPolicyService::UpdateActiveDeviceRoute(InternalDeviceType deviceType, 
 {
     Trace trace("AudioPolicyService::UpdateActiveDeviceRoute DeviceType:" + std::to_string(deviceType));
     AUDIO_INFO_LOG("Active route with type[%{public}d]", deviceType);
-    if (deviceType == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
-        deviceType = DEVICE_TYPE_USB_ARM_HEADSET;
-    }
     std::vector<std::pair<InternalDeviceType, DeviceFlag>> activeDevices;
     activeDevices.push_back(make_pair(deviceType, deviceFlag));
     UpdateActiveDevicesRoute(activeDevices);
@@ -2038,9 +2036,6 @@ void AudioPolicyService::UpdateActiveDevicesRoute(std::vector<std::pair<Internal
     auto ret = SUCCESS;
     std::string deviceTypesInfo = "";
     for (size_t i = 0; i < activeDevices.size(); i++) {
-        if (activeDevices[i].first == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
-            activeDevices[i].first = DEVICE_TYPE_USB_ARM_HEADSET;
-        }
         deviceTypesInfo = deviceTypesInfo + " " + std::to_string(activeDevices[i].first);
         AUDIO_INFO_LOG("update active devices, device type info:[%{public}s]",
             std::to_string(activeDevices[i].first).c_str());
@@ -2447,8 +2442,7 @@ bool AudioPolicyService::NotifyRecreateRendererStream(std::unique_ptr<AudioDevic
     CHECK_AND_RETURN_RET_LOG(rendererChangeInfo->rendererInfo.originalFlag != AUDIO_FLAG_NORMAL &&
         rendererChangeInfo->rendererInfo.originalFlag != AUDIO_FLAG_FORCED_NORMAL, false, "original flag is normal");
     // Switch between old and new stream as they have different hals
-    std::string oldDevicePortName = rendererChangeInfo->outputDeviceInfo.isArmUsbDevice ?
-        USB_SPEAKER : GetSinkPortName(rendererChangeInfo->outputDeviceInfo.deviceType);
+    std::string oldDevicePortName = GetSinkPortName(rendererChangeInfo->outputDeviceInfo.deviceType);
     bool isOldDeviceLocal = rendererChangeInfo->outputDeviceInfo.networkId == "" ||
         rendererChangeInfo->outputDeviceInfo.networkId == LOCAL_NETWORK_ID;
     bool isNewDeviceLocal = desc->networkId_ == "" || desc->networkId_ == LOCAL_NETWORK_ID;
@@ -2469,7 +2463,7 @@ bool AudioPolicyService::NotifyRecreateDirectStream(std::unique_ptr<AudioRendere
     AUDIO_INFO_LOG("current pipe type is:%{public}d", rendererChangeInfo->rendererInfo.pipeType);
     if (!IsDirectSupportedDevice(currentActiveDevice_.deviceType_) &&
         rendererChangeInfo->rendererInfo.pipeType == PIPE_TYPE_DIRECT_MUSIC) {
-        if (rendererChangeInfo->outputDeviceInfo.isArmUsbDevice) {
+        if (rendererChangeInfo->outputDeviceInfo.deviceType == DEVICE_TYPE_USB_ARM_HEADSET) {
             AUDIO_INFO_LOG("old device is arm usb");
             return false;
         }
@@ -2479,10 +2473,6 @@ bool AudioPolicyService::NotifyRecreateDirectStream(std::unique_ptr<AudioRendere
         return true;
     } else if (IsDirectSupportedDevice(currentActiveDevice_.deviceType_) &&
         rendererChangeInfo->rendererInfo.pipeType != PIPE_TYPE_DIRECT_MUSIC) {
-        if (isArmUsbDevice_) {
-            AUDIO_INFO_LOG("current device is arm usb");
-            return false;
-        }
         AudioRendererInfo info = rendererChangeInfo->rendererInfo;
         if (info.streamUsage == STREAM_USAGE_MUSIC && info.rendererFlags == AUDIO_FLAG_NORMAL &&
             info.samplingRate >= SAMPLE_RATE_48000 && info.format >= SAMPLE_S24LE) {
@@ -2717,8 +2707,7 @@ bool AudioPolicyService::NotifyRecreateCapturerStream(bool isUpdateActiveDevice,
     CHECK_AND_RETURN_RET_LOG(capturerChangeInfo->capturerInfo.originalFlag == AUDIO_FLAG_MMAP, false,
         "original flag is false");
     // Switch between old and new stream as they have different hals
-    std::string oldDevicePortName = capturerChangeInfo->inputDeviceInfo.isArmUsbDevice ?
-        USB_SPEAKER : GetSourcePortName(capturerChangeInfo->inputDeviceInfo.deviceType);
+    std::string oldDevicePortName = GetSourcePortName(capturerChangeInfo->inputDeviceInfo.deviceType);
     if ((strcmp(oldDevicePortName.c_str(), GetSourcePortName(currentActiveDevice_.deviceType_).c_str())) ||
         ((capturerChangeInfo->inputDeviceInfo.networkId == LOCAL_NETWORK_ID) ^
         (currentActiveDevice_.networkId_ == LOCAL_NETWORK_ID))) {
@@ -3046,9 +3035,6 @@ int32_t AudioPolicyService::HandleActiveDevice(DeviceType deviceType)
     if (GetVolumeGroupType(currentActiveDevice_.deviceType_) != GetVolumeGroupType(deviceType)) {
         SetVolumeForSwitchDevice(deviceType);
     }
-    if (deviceType == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
-        deviceType = DEVICE_TYPE_USB_ARM_HEADSET;
-    }
     if (isUpdateRouteSupported_) {
         UpdateActiveDeviceRoute(deviceType, DeviceFlag::OUTPUT_DEVICES_FLAG);
     }
@@ -3075,7 +3061,7 @@ int32_t AudioPolicyService::HandleArmUsbDevice(DeviceType deviceType, DeviceRole
 {
     Trace trace("AudioPolicyService::HandleArmUsbDevice");
 
-    if (deviceType == DEVICE_TYPE_USB_HEADSET) {
+    if (deviceType == DEVICE_TYPE_USB_ARM_HEADSET) {
         string deviceInfo = "";
         if (g_adProxy != nullptr) {
             std::string identity = IPCSkeleton::ResetCallingIdentity();
@@ -3116,12 +3102,8 @@ int32_t AudioPolicyService::RehandlePnpDevice(DeviceType deviceType, DeviceRole 
 
         ret = HandleSpecialDeviceType(deviceType, isConnected, address);
         CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "Rehandle special device type failed");
-        if (deviceType == DEVICE_TYPE_USB_HEADSET && !isArmUsbDevice_) {
-            AUDIO_INFO_LOG("rehandle device is not arm usb device, nothing to do");
-            return SUCCESS;
-        }
-
-        if (deviceType == DEVICE_TYPE_USB_HEADSET) {
+        CHECK_AND_RETURN_RET_LOG(deviceType != DEVICE_TYPE_USB_HEADSET, ret, "Hifi device, don't load module");
+        if (deviceType == DEVICE_TYPE_USB_ARM_HEADSET) {
             if (HandleArmUsbDevice(deviceType, deviceRole, address) == SUCCESS) {
                 return SUCCESS;
             }
@@ -3519,10 +3501,10 @@ void AudioPolicyService::UpdateConnectedDevicesWhenConnecting(const AudioDeviceD
     std::vector<sptr<AudioDeviceDescriptor>> &descForCb)
 {
     AUDIO_INFO_LOG("UpdateConnectedDevicesWhenConnecting In, deviceType: %{public}d", updatedDesc.deviceType_);
-    if (IsOutputDevice(updatedDesc.deviceType_, updatedDesc.deviceRole_, isArmUsbDevice_)) {
+    if (IsOutputDevice(updatedDesc.deviceType_, updatedDesc.deviceRole_)) {
         UpdateConnectedDevicesWhenConnectingForOutputDevice(updatedDesc, descForCb);
     }
-    if (IsInputDevice(updatedDesc.deviceType_, updatedDesc.deviceRole_, isArmUsbDevice_)) {
+    if (IsInputDevice(updatedDesc.deviceType_, updatedDesc.deviceRole_)) {
         UpdateConnectedDevicesWhenConnectingForInputDevice(updatedDesc, descForCb);
     }
 }
@@ -3630,7 +3612,7 @@ int32_t AudioPolicyService::HandleLocalDeviceConnected(AudioDeviceDescriptor &up
         }
     }
 
-    if (isArmUsbDevice_ && updatedDesc.deviceType_ == DEVICE_TYPE_USB_HEADSET) {
+    if (updatedDesc.deviceType_ == DEVICE_TYPE_USB_ARM_HEADSET) {
         int32_t loadOutputResult = HandleArmUsbDevice(updatedDesc.deviceType_, OUTPUT_DEVICE, updatedDesc.macAddress_);
         if (loadOutputResult != SUCCESS) {
             loadOutputResult = RehandlePnpDevice(updatedDesc.deviceType_, OUTPUT_DEVICE, updatedDesc.macAddress_);
@@ -3640,7 +3622,8 @@ int32_t AudioPolicyService::HandleLocalDeviceConnected(AudioDeviceDescriptor &up
             loadInputResult = RehandlePnpDevice(updatedDesc.deviceType_, INPUT_DEVICE, updatedDesc.macAddress_);
         }
         if (loadOutputResult != SUCCESS && loadInputResult != SUCCESS) {
-            isArmUsbDevice_ = false;
+            hasArmUsbDevice_ = false;
+            updatedDesc.deviceType_ = DEVICE_TYPE_USB_HEADSET;
             AUDIO_ERR_LOG("Load usb failed, set arm usb flag to false");
             return ERROR;
         }
@@ -3674,7 +3657,7 @@ int32_t AudioPolicyService::HandleLocalDeviceDisconnected(const AudioDeviceDescr
         UpdateActiveA2dpDeviceWhenDisconnecting(updatedDesc.macAddress_);
     }
 
-    if (updatedDesc.deviceType_ == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
+    if (updatedDesc.deviceType_ == DEVICE_TYPE_USB_ARM_HEADSET) {
         ClosePortAndEraseIOHandle(USB_SPEAKER);
         ClosePortAndEraseIOHandle(USB_MIC);
     }
@@ -3725,16 +3708,32 @@ DeviceType AudioPolicyService::FindConnectedHeadset()
 int32_t AudioPolicyService::HandleSpecialDeviceType(DeviceType &devType, bool &isConnected, const std::string &address)
 {
     // usb device needs to be distinguished form arm or hifi
-    if (devType == DEVICE_TYPE_USB_HEADSET && isConnected) {
-        if (g_adProxy == nullptr) {
-            return ERROR;
-        }
+    if (devType == DEVICE_TYPE_USB_HEADSET) {
+        CHECK_AND_RETURN_RET_LOG(g_adProxy != nullptr, ERROR, "Audio server Proxy is null");
+        AUDIO_INFO_LOG("has hifi:%{public}d, has arm:%{public}d", hasHifiUsbDevice_, hasArmUsbDevice_);
         std::string identity = IPCSkeleton::ResetCallingIdentity();
         const std::string value = g_adProxy->GetAudioParameter("need_change_usb_device");
         IPCSkeleton::SetCallingIdentity(identity);
         AUDIO_INFO_LOG("get value %{public}s  from hal when usb device connect", value.c_str());
-        if (value == "false") {
-            isArmUsbDevice_ = true;
+        if (isConnected) {
+            bool isArmConnect = (value == "false" || hasHifiUsbDevice_);
+            if (isArmConnect) {
+                hasArmUsbDevice_ = true;
+                devType = DEVICE_TYPE_USB_ARM_HEADSET;
+                CHECK_AND_RETURN_RET_LOG(!hasHifiUsbDevice_, ERROR, "Hifi device already exists, ignore this one.");
+            } else {
+                hasHifiUsbDevice_ = true;
+                CHECK_AND_RETURN_RET_LOG(!hasArmUsbDevice_, ERROR, "Arm device already exists, ignore this one.");
+            }
+        } else {
+            bool isArmDisconnect = ((hasArmUsbDevice_ && !hasHifiUsbDevice_) ||
+                                    (hasArmUsbDevice_ && hasHifiUsbDevice_ && value == "true"));
+            if (isArmDisconnect) {
+                devType = DEVICE_TYPE_USB_ARM_HEADSET;
+                hasArmUsbDevice_ = false;
+            } else {
+                hasHifiUsbDevice_ = false;
+            }
         }
     }
 
@@ -3758,7 +3757,7 @@ void AudioPolicyService::ResetToSpeaker(DeviceType devType)
     if (devType != currentActiveDevice_.deviceType_) {
         return;
     }
-    if (devType == DEVICE_TYPE_BLUETOOTH_SCO || (devType == DEVICE_TYPE_USB_HEADSET && !isArmUsbDevice_) ||
+    if (devType == DEVICE_TYPE_BLUETOOTH_SCO || devType == DEVICE_TYPE_USB_HEADSET ||
         devType == DEVICE_TYPE_WIRED_HEADSET || devType == DEVICE_TYPE_WIRED_HEADPHONES) {
         UpdateActiveDeviceRoute(DEVICE_TYPE_SPEAKER, DeviceFlag::OUTPUT_DEVICES_FLAG);
     }
@@ -3770,9 +3769,6 @@ void AudioPolicyService::OnDeviceStatusUpdated(DeviceType devType, bool isConnec
     // Pnp device status update
     std::lock_guard<std::shared_mutex> deviceLock(deviceStatusUpdateSharedMutex_);
 
-    AUDIO_INFO_LOG("Device connection state updated | TYPE[%{public}d] STATUS[%{public}d], address[%{public}s]",
-        devType, isConnected, GetEncryptStr(macAddress).c_str());
-
     AudioStreamDeviceChangeReasonExt reason = AudioStreamDeviceChangeReasonExt::ExtEnum::UNKNOWN;
     // fill device change action for callback
     std::vector<sptr<AudioDeviceDescriptor>> descForCb = {};
@@ -3780,6 +3776,10 @@ void AudioPolicyService::OnDeviceStatusUpdated(DeviceType devType, bool isConnec
     int32_t result = ERROR;
     result = HandleSpecialDeviceType(devType, isConnected, macAddress);
     CHECK_AND_RETURN_LOG(result == SUCCESS, "handle special deviceType failed.");
+
+    AUDIO_INFO_LOG("Device connection state updated | TYPE[%{public}d] STATUS[%{public}d], address[%{public}s]",
+        devType, isConnected, GetEncryptStr(macAddress).c_str());
+
     AudioDeviceDescriptor updatedDesc(devType, GetDeviceRole(devType));
     UpdateLocalGroupInfo(isConnected, macAddress, deviceName, streamInfo, updatedDesc);
 
@@ -3803,9 +3803,6 @@ void AudioPolicyService::OnDeviceStatusUpdated(DeviceType devType, bool isConnec
         reason = AudioStreamDeviceChangeReason::OLD_DEVICE_UNAVALIABLE;
         FetchDevice(true, reason); // fix pop, fetch device before unload module
         result = HandleLocalDeviceDisconnected(updatedDesc);
-        if (devType == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
-            isArmUsbDevice_ = false;
-        }
         CHECK_AND_RETURN_LOG(result == SUCCESS, "Disconnect local device failed.");
     }
 
@@ -4838,7 +4835,6 @@ void AudioPolicyService::UpdateDeviceInfo(DeviceInfo &deviceInfo, const sptr<Aud
     deviceInfo.channelIndexMasks = desc->channelIndexMasks_;
     deviceInfo.displayName = desc->displayName_;
     deviceInfo.connectState = desc->connectState_;
-    deviceInfo.isArmUsbDevice = isArmUsbDevice_;
 
     if (deviceInfo.deviceType == DEVICE_TYPE_BLUETOOTH_A2DP) {
         deviceInfo.a2dpOffloadFlag = a2dpOffloadFlag_;
@@ -6040,7 +6036,6 @@ int32_t AudioPolicyService::GetProcessDeviceInfo(const AudioProcessConfig &confi
         deviceInfo.networkId = LOCAL_NETWORK_ID;
         deviceInfo.deviceType = currentActiveDevice_.deviceType_;
         deviceInfo.deviceRole = OUTPUT_DEVICE;
-        deviceInfo.isArmUsbDevice = isArmUsbDevice_;
     } else {
         if (config.capturerInfo.sourceType == SOURCE_TYPE_VOICE_COMMUNICATION) {
             return GetVoipRecordDeviceInfo(config, deviceInfo);
@@ -8260,11 +8255,7 @@ bool AudioPolicyService::IsA2dpOrArmUsbDevice(const InternalDeviceType &deviceTy
         case DEVICE_TYPE_USB_ARM_HEADSET:
             return true;
         default: {
-            if (deviceType == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
-                return true;
-            } else {
-                return false;
-            }
+            return false;
         }
     }
 }
@@ -8280,15 +8271,6 @@ bool AudioPolicyService::SelectRingerOrAlarmDevices(const vector<std::unique_ptr
     std::vector<std::pair<InternalDeviceType, DeviceFlag>> activeDevices;
     for (size_t i = 0; i < descs.size(); i++) {
         if (IsRingerOrAlarmerDualDevicesRange(descs[i]->deviceType_)) {
-            if (descs.front()->deviceType_ == DEVICE_TYPE_USB_HEADSET &&
-                descs[i]->deviceType_ == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
-                descs[i]->deviceType_ = DEVICE_TYPE_USB_ARM_HEADSET;
-                AUDIO_INFO_LOG("usb headset is arm device, set it to arm, and just only add it, "
-                    "devicetype[%{public}zu]:%{public}d", i, descs[i]->deviceType_);
-                activeDevices.push_back(make_pair(descs[i]->deviceType_, DeviceFlag::OUTPUT_DEVICES_FLAG));
-                break;
-            }
-
             activeDevices.push_back(make_pair(descs[i]->deviceType_, DeviceFlag::OUTPUT_DEVICES_FLAG));
             AUDIO_INFO_LOG("select ringer/alarm devices devicetype[%{public}zu]:%{public}d", i, descs[i]->deviceType_);
         } else {
@@ -8344,7 +8326,7 @@ void AudioPolicyService::DealAudioSceneOutputDevices(const AudioScene &audioScen
 
     if (!descs.empty()) {
         for (size_t i = 0; i < descs.size(); i++) {
-            if (descs[i]->getType() == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
+            if (descs[i]->getType() == DEVICE_TYPE_USB_ARM_HEADSET) {
                 AUDIO_INFO_LOG("usb headset is arm device.");
                 activeOutputDevices.push_back(DEVICE_TYPE_USB_ARM_HEADSET);
                 haveArmUsbDevice = true;
@@ -8353,7 +8335,7 @@ void AudioPolicyService::DealAudioSceneOutputDevices(const AudioScene &audioScen
             }
         }
     } else {
-        if (currentActiveDevice_.deviceType_ == DEVICE_TYPE_USB_HEADSET && isArmUsbDevice_) {
+        if (currentActiveDevice_.deviceType_ == DEVICE_TYPE_USB_ARM_HEADSET) {
             activeOutputDevices.push_back(DEVICE_TYPE_USB_ARM_HEADSET);
             haveArmUsbDevice = true;
         } else {

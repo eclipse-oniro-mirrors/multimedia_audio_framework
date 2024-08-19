@@ -120,6 +120,8 @@ public:
 
     void NotifyUserSelectionEventToBt(sptr<AudioDeviceDescriptor> audioDeviceDescriptor);
 
+    bool IsArmUsbDevice(const AudioDeviceDescriptor &desc);
+
     int32_t SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
         std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors);
     int32_t SelectFastOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
@@ -1086,7 +1088,8 @@ private:
 
     mutable std::shared_mutex deviceStatusUpdateSharedMutex_;
 
-    bool isArmUsbDevice_ = false;
+    bool hasArmUsbDevice_ = false;
+    bool hasHifiUsbDevice_ = false; // Only the first usb device is supported now, hifi or arm.
     bool hasDpDevice_ = false; // Only the first dp device is supported.
 
     AudioDeviceManager &audioDeviceManager_;
