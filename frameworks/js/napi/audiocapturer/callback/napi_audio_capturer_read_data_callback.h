@@ -41,8 +41,8 @@ private:
         NapiCapturerReadDataCallback *readDataCallbackPtr;
     };
 
-    static void WorkCallbackCapturerReadData(uv_work_t *work, int status);
-    static void WorkCallbackCapturerReadDataInner(uv_work_t *work, int status);
+    static void WorkCallbackCapturerReadData(CapturerReadDataJsCallback *event);
+    static void WorkCallbackCapturerReadDataInner(CapturerReadDataJsCallback *event);
     void OnJsCapturerReadDataCallback(std::unique_ptr<CapturerReadDataJsCallback> &jsCb);
 
     std::mutex mutex_;

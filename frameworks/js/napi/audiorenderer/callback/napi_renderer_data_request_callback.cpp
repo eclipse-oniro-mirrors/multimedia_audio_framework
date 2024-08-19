@@ -83,71 +83,50 @@ void NapiRendererDataRequestCallback::OnWriteData(size_t length)
     return OnJsRendererDataRequestCallback(cb);
 }
 
-void NapiRendererDataRequestCallback::WorkCallbackRendererDataRequest(uv_work_t *work, int status)
-{
-    // Js Thread
-    std::shared_ptr<RendererDataRequestJsCallback> context(
-        static_cast<RendererDataRequestJsCallback*>(work->data),
-        [work](RendererDataRequestJsCallback* ptr) {
-            delete ptr;
-            delete work;
-    });
-    CHECK_AND_RETURN_LOG(work != nullptr, "WorkCallbackRendererDataRequest work is nullptr");
-    RendererDataRequestJsCallback *event = reinterpret_cast<RendererDataRequestJsCallback *>(work->data);
-    CHECK_AND_RETURN_LOG(event != nullptr, "WorkCallbackRendererDataRequest event is nullptr");
-    std::string request = event->callbackName;
-
-    CHECK_AND_RETURN_LOG(event->callback != nullptr, "event->callback is nullptr");
-    napi_env env = event->callback->env_;
-    napi_ref callback = event->callback->cb_;
-
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env, &scope);
-    CHECK_AND_RETURN_LOG(scope != nullptr, "scope is nullptr");
-    AUDIO_DEBUG_LOG("JsCallBack %{public}s, uv_queue_work_with_qos start", request.c_str());
-    do {
-        CHECK_AND_BREAK_LOG(status != UV_ECANCELED, "%{public}s canceled", request.c_str());
-
-        napi_value jsCallback = nullptr;
-        napi_status nstatus = napi_get_reference_value(env, callback, &jsCallback);
-        CHECK_AND_BREAK_LOG(nstatus == napi_ok && jsCallback != nullptr, "%{public}s get reference value fail",
-            request.c_str());
-
-        napi_value args[ARGS_ONE] = { nullptr };
-        NapiParamUtils::SetNativeAudioRendererDataInfo(env, event->audioRendererDataInfo, args[0]);
-        CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr,
-            "%{public}s fail to create position callback", request.c_str());
-        const size_t argCount = 1;
-        napi_value result = nullptr;
-        nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
-        event->rendererNapiObj->audioRenderer_->Enqueue(event->bufDesc_);
-            CHECK_AND_BREAK_LOG(nstatus == napi_ok, "%{public}s fail to call position callback", request.c_str());
-    } while (0);
-    napi_close_handle_scope(env, scope);
-}
-
 void NapiRendererDataRequestCallback::OnJsRendererDataRequestCallback(
     std::unique_ptr<RendererDataRequestJsCallback> &jsCb)
 {
-    uv_loop_s *loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_AND_RETURN_LOG(loop != nullptr, "loop is nullptr fail");
-
-    uv_work_t *work = new(std::nothrow) uv_work_t;
-    CHECK_AND_RETURN_LOG(work != nullptr, "OnJsRendererPeriodPositionCallback: No memory");
-
     if (jsCb.get() == nullptr) {
-        AUDIO_ERR_LOG("OnJsRendererPeriodPositionCallback: jsCb.get() is null");
-        delete work;
+        AUDIO_ERR_LOG("OnJsRendererDataRequestCallback: jsCb.get() is null");
         return;
     }
-    work->data = reinterpret_cast<void *>(jsCb.get());
+    RendererDataRequestJsCallback *event = jsCb.get();
+    auto task = [event]() {
+        std::shared_ptr<RendererDataRequestJsCallback> context(
+            static_cast<RendererDataRequestJsCallback*>(event),
+            [](RendererDataRequestJsCallback* ptr) {
+                delete ptr;
+        });
+        CHECK_AND_RETURN_LOG(event != nullptr, "WorkCallbackRendererDataRequest event is nullptr");
+        std::string request = event->callbackName;
 
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t *work) {},
-        WorkCallbackRendererDataRequest, uv_qos_default);
-    if (ret != 0) {
-        AUDIO_ERR_LOG("Failed to execute libuv work queue");
-        delete work;
+        CHECK_AND_RETURN_LOG(event->callback != nullptr, "event->callback is nullptr");
+        napi_env env = event->callback->env_;
+        napi_ref callback = event->callback->cb_;
+
+        napi_handle_scope scope = nullptr;
+        napi_open_handle_scope(env, &scope);
+        CHECK_AND_RETURN_LOG(scope != nullptr, "scope is nullptr");
+        do {
+            napi_value jsCallback = nullptr;
+            napi_status nstatus = napi_get_reference_value(env, callback, &jsCallback);
+            CHECK_AND_BREAK_LOG(nstatus == napi_ok && jsCallback != nullptr, "%{public}s get reference value fail",
+                request.c_str());
+
+            napi_value args[ARGS_ONE] = { nullptr };
+            NapiParamUtils::SetNativeAudioRendererDataInfo(env, event->audioRendererDataInfo, args[0]);
+            CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr,
+                "%{public}s fail to create position callback", request.c_str());
+            const size_t argCount = 1;
+            napi_value result = nullptr;
+            nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
+            event->rendererNapiObj->audioRenderer_->Enqueue(event->bufDesc_);
+                CHECK_AND_BREAK_LOG(nstatus == napi_ok, "%{public}s fail to call position callback", request.c_str());
+        } while (0);
+        napi_close_handle_scope(env, scope);
+    };
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        AUDIO_ERR_LOG("OnJsRendererDataRequestCallback: Failed to SendEvent");
     } else {
         jsCb.release();
     }
