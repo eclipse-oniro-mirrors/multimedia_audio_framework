@@ -448,7 +448,6 @@ void AudioSpatializationService::UpdateRendererInfo(
 
 int32_t AudioSpatializationService::UpdateSpatializationStateReal(bool outputDeviceChange, std::string preDeviceAddress)
 {
-    std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     bool spatializationEnabled = false;
     bool headTrackingEnabled = false;
     if (preSettingSpatialAddress_ == "NO_PREVIOUS_SET_DEVICE") {
