@@ -1950,7 +1950,6 @@ int32_t AudioServer::SetSystemVolumeToEffect(const AudioStreamType streamType, f
     std::string sceneType;
     switch (streamType) {
         case STREAM_RING:
-
         case STREAM_ALARM:
             sceneType = "SCENE_RING";
             break;
