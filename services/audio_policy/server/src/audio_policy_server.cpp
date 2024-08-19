@@ -1730,6 +1730,9 @@ void AudioPolicyServer::RegisteredStreamListenerClientDied(pid_t pid)
         AUDIO_INFO_LOG("Cliet died and reset non-persist mute state");
         audioPolicyService_.SetMicrophoneMute(false);
     }
+    if (interruptService_ != nullptr && interruptService_->IsAudioSessionActivated(pid)) {
+        interruptService_->DeactivateAudioSession(pid);
+    }
     audioPolicyService_.ReduceAudioPolicyClientProxyMap(pid);
 }
 
