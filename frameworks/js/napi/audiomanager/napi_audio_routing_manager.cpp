@@ -98,8 +98,10 @@ napi_value NapiAudioRoutingManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getPreferOutputDeviceForRendererInfo", GetPreferOutputDeviceForRendererInfo),
         DECLARE_NAPI_FUNCTION("getPreferredOutputDeviceForRendererInfoSync",
             GetPreferredOutputDeviceForRendererInfoSync),
+        DECLARE_NAPI_FUNCTION("getPreferredOutputDeviceByFilter", GetPreferredOutputDeviceByFilter),
         DECLARE_NAPI_FUNCTION("getPreferredInputDeviceForCapturerInfo", GetPreferredInputDeviceForCapturerInfo),
         DECLARE_NAPI_FUNCTION("getPreferredInputDeviceForCapturerInfoSync", GetPreferredInputDeviceForCapturerInfoSync),
+        DECLARE_NAPI_FUNCTION("getPreferredInputDeviceByFilter", GetPreferredInputDeviceByFilter),
         DECLARE_NAPI_FUNCTION("getAvailableMicrophones", GetAvailableMicrophones),
         DECLARE_NAPI_FUNCTION("getAvailableDevices", GetAvailableDevices),
         DECLARE_NAPI_FUNCTION("on", On),
@@ -629,6 +631,56 @@ napi_value NapiAudioRoutingManager::GetPreferredOutputDeviceForRendererInfoSync(
     return result;
 }
 
+
+napi_value NapiAudioRoutingManager::GetPreferredOutputDeviceByFilter(napi_env env, napi_callback_info info)
+{
+    AUDIO_INFO_LOG("GetPreferredOutputDeviceByFilter");
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {};
+    auto *napiAudioRoutingManager = GetParamWithSync(env, info, argc, argv);
+    CHECK_AND_RETURN_RET_LOG(argc >= ARGS_ONE, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "mandatory parameters are left unspecified"), "argCount invalid");
+
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[PARAM0], &valueType);
+    CHECK_AND_RETURN_RET_LOG(valueType == napi_object, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of filter must be object"),
+        "valueType invalid");
+
+    bool bArgTransFlag = true;
+    sptr<AudioRendererFilter> rendererFilter = nullptr;
+    if (NapiParamUtils::GetAudioRendererFilter(env, rendererFilter, bArgTransFlag, argv[PARAM0]) != napi_ok) {
+        NapiAudioError::ThrowError(env, NAPI_ERR_INPUT_INVALID,
+            "incorrect parameter types: The type of filter must be interface AudioRendererFilter");
+        return result;
+    }
+    CHECK_AND_RETURN_RET_LOG(rendererFilter != nullptr, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of filter must be AudioRendererFilter"),
+        "valueType invalid");
+
+    AudioRendererInfo rendererInfo = rendererFilter->rendererInfo;
+
+    if (rendererInfo.streamUsage == StreamUsage::STREAM_USAGE_INVALID) {
+        NapiAudioError::ThrowError(env, NAPI_ERR_INVALID_PARAM,
+            "parameter verification failed: The param of usage invalid");
+        return result;
+    }
+
+    vector<sptr<AudioDeviceDescriptor>> outDeviceDescriptors;
+    CHECK_AND_RETURN_RET_LOG(napiAudioRoutingManager != nullptr && 
+        napiAudioRoutingManager->audioRoutingMngr_ != nullptr,
+        NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_ILLEGAL_STATE,
+        "GetPreferredOutputDeviceByFilter napiAudioRoutingManager or audioRoutingMngr is nullptr"),
+        "GetPreferredOutputDeviceByFilter napiAudioRoutingManager or audioRoutingMngr is nullptr");
+    napiAudioRoutingManager->audioRoutingMngr_->GetPreferredOutputDeviceForRendererInfo(
+        rendererInfo, outDeviceDescriptors);
+
+    NapiParamUtils::SetDeviceDescriptors(env, outDeviceDescriptors, result);
+
+    return result;
+}
+
 napi_value NapiAudioRoutingManager::GetPreferredInputDeviceForCapturerInfo(napi_env env, napi_callback_info info)
 {
     auto context = std::make_shared<AudioRoutingManagerAsyncContext>();
@@ -703,6 +755,48 @@ napi_value NapiAudioRoutingManager::GetPreferredInputDeviceForCapturerInfoSync(n
     CHECK_AND_RETURN_RET_LOG(napiAudioRoutingManager != nullptr, result, "napiAudioRoutingManager is nullptr");
     CHECK_AND_RETURN_RET_LOG(napiAudioRoutingManager->audioRoutingMngr_ != nullptr, result,
         "audioRoutingMngr_ nullptr");
+    napiAudioRoutingManager->audioRoutingMngr_->GetPreferredInputDeviceForCapturerInfo(
+        capturerInfo, outDeviceDescriptors);
+
+    NapiParamUtils::SetDeviceDescriptors(env, outDeviceDescriptors, result);
+
+    return result;
+}
+
+napi_value NapiAudioRoutingManager::GetPreferredInputDeviceByFilter(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {};
+    auto *napiAudioRoutingManager = GetParamWithSync(env, info, argc, argv);
+    CHECK_AND_RETURN_RET_LOG(argc >= ARGS_ONE, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "mandatory parameters are left unspecified"), "argCount invalid");
+
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[PARAM0], &valueType);
+    CHECK_AND_RETURN_RET_LOG(valueType == napi_object,
+        NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of capturerInfo must be object"), "valueType invalid");
+
+    sptr<AudioCapturerFilter> capturerFilter = nullptr;
+    napi_status status = NapiParamUtils::GetAudioCapturerFilter(env, capturerFilter, argv[PARAM0]);
+    CHECK_AND_RETURN_RET_LOG((capturerFilter != nullptr) && (status == napi_ok),
+        NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INVALID_PARAM,
+        "parameter verification failed: The param of capturerFilter must be interface AudioCapturerFilter"),
+        "sourceType invalid");
+    
+    AudioCapturerInfo capturerInfo = capturerFilter->capturerInfo;
+    CHECK_AND_RETURN_RET_LOG(capturerInfo.sourceType != SourceType::SOURCE_TYPE_INVALID,
+        NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INVALID_PARAM,
+        "parameter verification failed: The param of capturerFilter.capturerInfo must be interface AudioCapturerInfo"),
+        "sourceType invalid");
+
+    vector<sptr<AudioDeviceDescriptor>> outDeviceDescriptors;
+    CHECK_AND_RETURN_RET_LOG(napiAudioRoutingManager != nullptr && 
+        napiAudioRoutingManager->audioRoutingMngr_ != nullptr,
+        NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_ILLEGAL_STATE,
+        "GetPreferredInputDeviceByFilter napiAudioRoutingManager or audioRoutingMngr is nullptr"),
+        "GetPreferredInputDeviceByFilter napiAudioRoutingManager or audioRoutingMngr is nullptr");
     napiAudioRoutingManager->audioRoutingMngr_->GetPreferredInputDeviceForCapturerInfo(
         capturerInfo, outDeviceDescriptors);
 
