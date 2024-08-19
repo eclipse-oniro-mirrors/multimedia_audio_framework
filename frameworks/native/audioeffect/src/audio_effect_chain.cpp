@@ -172,10 +172,11 @@ int32_t AudioEffectChain::SetEffectParamToHandle(AudioEffectHandle handle, int32
 #else
     data[3] = 0; // 3:rotation index
 #endif
-    AUDIO_DEBUG_LOG("set ap integration rotation: %{public}d", data[3]); // 3:rotation index
-    AUDIO_DEBUG_LOG("set ap integration sceneType_ : %{public}s finalVolume_ : %{publix}f",
-        sceneType_.c_str(), finalVolume_);
+    // 3:rotation index
+    AUDIO_DEBUG_LOG("set ap integration rotation: %{public}d, set ap integration sceneType_ : 
+        %{public}s finalVolume_ : %{publix}f", data[3], sceneType_.c_str(), finalVolume_);
     data[4] = static_cast<int32_t>(finalVolume_ * MAX_UINT_VOLUME); // 4:volume index
+    AUDIO_DEBUG_LOG("set ap integration volume: %{public}d", data[4]);
     data[5] = static_cast<int32_t>(extraEffectChainType_); // 5:extra effect chain type index
     AUDIO_DEBUG_LOG("set extra effect chain type: %{public}d", extraEffectChainType_);
     data[6] = spatialDeviceType_; // 6:spatial device type index
