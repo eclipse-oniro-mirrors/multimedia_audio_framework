@@ -48,9 +48,9 @@ public:
     void IsAudioSessionActivated();
     void RegisterAndActive(OH_AudioSession_DeactivatedCallback callback, OH_AudioSession_Strategy strategy);
     int32_t MyCallbackFunction(OH_AudioSession_DeactivatedEvent event);
-    OH_AduioRenderer* StartPlay();
-    void StopPlay(OH_AduioRenderer* audioRenderer);
-    OH_AduioRenderer* PlayMusic(OH_AudioSession_DeactivatedCallback callback
+    OH_AudioRenderer* StartPlay();
+    void StopPlay(OH_AudioRenderer* audioRenderer);
+    OH_AudioRenderer* PlayMusic(OH_AudioSession_DeactivatedCallback callback,
         OH_AudioSession_ConcurrencyMode mode);
     void LogicPathCheck(int operate, OH_AudioSession_DeactivatedCallback callback);
     void PlayCheck(int operate, OH_AudioSession_DeactivatedCallback callback);
@@ -89,7 +89,7 @@ const int CASE_DEFAULT_PLAY = 10;
 const int CASE_STOP_PLAY = 100;
 
 // audio renderer
-OH_AduioRenderer* audioRenderer;
+OH_AudioRenderer* audioRenderer;
 std::string g_filePath = "/data/data/oh_test_audio_session.pcm";
 FILE* g_file = nullptr;
 bool g_readEnd = false;
@@ -210,7 +210,7 @@ void SessionNdkTest::RegisterAndActive(OH_AudioSession_DeactivatedCallback callb
     ActivateAudioSession(strategy);
 }
 
-OH_AduioRenderer* SessionNdkTest::StartPlay()
+OH_AudioRenderer* SessionNdkTest::StartPlay()
 {
     OH_AudioStream_Result ret;
 
@@ -240,7 +240,6 @@ OH_AduioRenderer* SessionNdkTest::StartPlay()
     std::cout << "[Renderer] set buffer size, ret: " << ret << std::endl;
 
     // 3. create OH_AudioRenderer
-    OH_AudioRenderer* audioRenderer;
     ret = OH_AudioStreamBuilder_GenerateRenderer(builder, &audioRenderer);
     std::cout << "[Renderer] create renderer client, ret: " << ret << std::endl;
 
@@ -258,7 +257,7 @@ OH_AduioRenderer* SessionNdkTest::StartPlay()
     return audioRenderer;
 }
 
-void SessionNdkTest::StopPlay(OH_AduioRenderer* audioRenderer)
+void SessionNdkTest::StopPlay(OH_AudioRenderer* audioRenderer)
 {
     DeActivateAudioSession();
     OH_AudioStream_Result ret = OH_AudioRenderer_Stop(audioRenderer);
@@ -267,8 +266,8 @@ void SessionNdkTest::StopPlay(OH_AduioRenderer* audioRenderer)
     std::cout << "[Renderer] release ret: " << ret << std::endl;
 }
 
-OH_AduioRenderer* SessionNdkTest::PlayMusic(OH_AudioSession_DeactivatedCallback callback
-        OH_AudioSession_ConcurrencyMode mode)
+OH_AudioRenderer* SessionNdkTest::PlayMusic(OH_AudioSession_DeactivatedCallback callback,
+    OH_AudioSession_ConcurrencyMode mode)
 {
     event.reason = DEACTIVATED_LOWER_PRIORITY;
     callback(event);
