@@ -71,8 +71,13 @@ vector<unique_ptr<AudioDeviceDescriptor>> AudioRouterCenter::FetchRingRenderDevi
             return descs;
         }
     }
+    AudioRingerMode curRingerMode = AudioPolicyService::GetAudioPolicyService().GetRingerMode();
     vector<unique_ptr<AudioDeviceDescriptor>> descs;
-    descs.push_back(AudioDeviceManager::GetAudioDeviceManager().GetRenderDefaultDevice());
+    if (curRingerMode == RINGER_MODE_NORMAL) {
+        descs.push_back(AudioDeviceManager::GetAudioDeviceManager().GetRenderDefaultDevice());
+    } else {
+        descs.push_back(make_unique<AudioDeviceDescriptor>());
+    }
     return descs;
 }
 
