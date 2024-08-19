@@ -71,6 +71,7 @@ public:
     int32_t AddAudioSessionCallback(const std::shared_ptr<AudioSessionCallback> &cb);
     int32_t RemoveAudioSessionCallback();
     int32_t RemoveAudioSessionCallback(const std::shared_ptr<AudioSessionCallback> &cb);
+    size_t GetAudioSessionCallbackSize() const;
 
     void OnRecreateRendererStreamEvent(const uint32_t sessionId, const int32_t streamFlag,
         const AudioStreamDeviceChangeReasonExt reason) override;
@@ -136,7 +137,7 @@ private:
     std::mutex headTrackingDataRequestedChangeMutex_;
     std::mutex spatializationEnabledChangeMutex_;
     std::mutex headTrackingEnabledChangeMutex_;
-    std::mutex audioSessionMutex_;
+    mutable std::mutex audioSessionMutex_;
 };
 } // namespace AudioStandard
 } // namespace OHOS

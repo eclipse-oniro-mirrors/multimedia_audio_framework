@@ -602,7 +602,11 @@ void AudioPolicyServerHandler::HandleAudioSessionDeactiveCallback(const AppExecF
     if (iterator == audioPolicyClientProxyAPSCbsMap_.end()) {
         AUDIO_ERR_LOG("AudioSessionDeactiveCallback: no client callback for client pid %{public}d", clientPid);
         return;
-    } else {
+    }
+    if (clientCallbacksMap_.count(iterator->first) > 0 &&
+        clientCallbacksMap_[iterator->first].count(CALLBACK_AUDIO_SESSION) > 0 &&
+        clientCallbacksMap_[iterator->first][CALLBACK_AUDIO_SESSION]) {
+        // the client has registered audio session callback.
         sptr<IAudioPolicyClient> audioSessionCb = iterator->second;
         if (audioSessionCb == nullptr) {
             AUDIO_ERR_LOG("AudioSessionDeactiveCallback: nullptr for client pid %{public}d", clientPid);
@@ -610,6 +614,8 @@ void AudioPolicyServerHandler::HandleAudioSessionDeactiveCallback(const AppExecF
         }
         AUDIO_INFO_LOG("Trigger AudioSessionDeactiveCallback for client pid : %{public}d", clientPid);
         audioSessionCb->OnAudioSessionDeactive(eventContextObj->sessionDeactivePair.second);
+    } else {
+        AUDIO_ERR_LOG("AudioSessionDeactiveCallback: no registered callback for pid %{public}d", clientPid);
     }
 }
 

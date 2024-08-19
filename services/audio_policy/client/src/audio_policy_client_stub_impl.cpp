@@ -255,6 +255,12 @@ int32_t AudioPolicyClientStubImpl::RemoveAudioSessionCallback(const std::shared_
     return SUCCESS;
 }
 
+size_t AudioPolicyClientStubImpl::GetAudioSessionCallbackSize() const
+{
+    std::lock_guard<std::mutex> lockCbMap(audioSessionMutex_);
+    return audioSessionCallbackList_.size();
+}
+
 void AudioPolicyClientStubImpl::OnAudioSessionDeactive(const AudioSessionDeactiveEvent &deactiveEvent)
 {
     AUDIO_INFO_LOG("OnAudioSessionDeactive in");
