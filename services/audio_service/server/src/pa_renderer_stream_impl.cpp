@@ -315,6 +315,13 @@ int32_t PaRendererStreamImpl::Release()
         statusCallback->OnStatusUpdate(OPERATION_RELEASED);
     }
     state_ = RELEASED;
+
+    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
+    if (audioEffectVolume != nullptr) {
+        std::string sessionIDTemp = std::to_string(streamIndex_);
+        audioEffectVolume->StreamVolumeDelete(sessionIDTemp);
+    }
+    
     return SUCCESS;
 }
 
