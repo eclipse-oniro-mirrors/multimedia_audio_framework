@@ -783,7 +783,7 @@ int32_t AudioEffectChainManager::UpdateSpatializationState(AudioSpatializationSt
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     EffectVolumeUpdate(audioEffectVolume);
-    AUDIO_INFO_LOG("systemVolume prepare change");
+    AUDIO_INFO_LOG("systemVolume prepare change or no change");
 
     return SUCCESS;
 }
