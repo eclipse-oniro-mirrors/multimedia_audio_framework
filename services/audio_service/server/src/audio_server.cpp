@@ -1960,7 +1960,7 @@ int32_t AudioServer::SetSystemVolumeToEffect(const AudioStreamType streamType, f
         case STREAM_MUSIC:
             sceneType = "SCENE_MUSIC";
             break;
-        case 12:
+        case STREAM_ACCESSIBILITY:
             sceneType = "SCENE_OTHERS";
             break;
         default:
