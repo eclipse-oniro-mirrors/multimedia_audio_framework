@@ -30,6 +30,7 @@
 #include "securec.h"
 
 #include "audio_info.h"
+#include "audio_common_utils.h"
 
 #define AUDIO_MS_PER_SECOND 1000
 #define AUDIO_US_PER_SECOND 1000000
@@ -229,15 +230,6 @@ public:
     static const std::string GetConnectTypeName(ConnectType connectType);
     static const std::string GetSourceName(SourceType sourceType);
     static const std::string GetDeviceVolumeTypeName(DeviceVolumeType deviceType);
-};
-
-class VolumeUtils {
-public:
-    static AudioVolumeType GetVolumeTypeFromStreamType(AudioStreamType streamType);
-
-private:
-    static std::unordered_map<AudioStreamType, AudioVolumeType> defaultVolumeMap_;
-    static std::unordered_map<AudioStreamType, AudioVolumeType>& GetVolumeMap();
 };
 
 template<typename T>

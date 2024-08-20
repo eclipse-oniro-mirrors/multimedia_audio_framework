@@ -1223,6 +1223,10 @@ std::unordered_map<AudioStreamType, AudioVolumeType>& VolumeUtils::GetVolumeMap(
 
 AudioVolumeType VolumeUtils::GetVolumeTypeFromStreamType(AudioStreamType streamType)
 {
+    if (getuid() != UID_AUDIO) {
+        AUDIO_ERR_LOG("not audio calling!");
+        return STREAM_DEFAULT;
+    }
     std::unordered_map<AudioStreamType, AudioVolumeType> map = GetVolumeMap();
     auto it = map.find(streamType);
     if (it != map.end()) {
