@@ -80,6 +80,7 @@ napi_ref NapiAudioEnum::asrVoiceControlMode_ = nullptr;
 napi_ref NapiAudioEnum::asrVoiceMuteMode_ = nullptr;
 napi_ref NapiAudioEnum::audioDataCallbackResult_ = nullptr;
 napi_ref NapiAudioEnum::concurrencyMode_ = nullptr;
+napi_ref NapiAudioEnum::reason_ = nullptr;
 napi_ref NapiAudioEnum::policyType_ = nullptr;
 
 static const std::string NAPI_AUDIO_ENUM_CLASS_NAME = "AudioEnum";
@@ -510,6 +511,11 @@ const std::map<std::string, int32_t> NapiAudioEnum::concurrencyModeMap = {
     {"CONCURRENCY_PAUSE_OTHERS", static_cast<int32_t>(AudioConcurrencyMode::PAUSE_OTHERS)}
 };
 
+const std::map<std::string, int32_t> NapiAudioEnum::reasonMap = {
+    {"DEACTIVATED_LOWER_PRIORITY", static_cast<int32_t>(AudioSessionDeactiveReason::LOW_PRIORITY)},
+    {"DEACTIVATED_TIMEOUT", static_cast<int32_t>(AudioSessionDeactiveReason::TIMEOUT)}
+};
+
 NapiAudioEnum::NapiAudioEnum()
     : env_(nullptr) {
 }
@@ -683,6 +689,7 @@ napi_status NapiAudioEnum::InitAudioEnum(napi_env env, napi_value exports)
             CreateEnumObject(env, audioDataCallbackResultMap, audioDataCallbackResult_)),
         DECLARE_NAPI_PROPERTY("AudioConcurrencyMode",
             CreateEnumObject(env, concurrencyModeMap, concurrencyMode_)),
+        DECLARE_NAPI_PROPERTY("AudioSessionDeactivatedReason", CreateEnumObject(env, reasonMap, reason_)),
         DECLARE_NAPI_PROPERTY("PolicyType", CreateEnumObject(env, policyTypeMap, policyType_)),
     };
     napi_status status =
