@@ -26,6 +26,7 @@
 #include <string>
 #include <unistd.h>
 #include <mutex>
+#include <thread>
 #include "ctime"
 
 #include "securec.h"
@@ -1138,7 +1139,10 @@ void AudioRendererSinkInner::ReleaseRunningLock()
 #ifdef FEATURE_POWER_MANAGER
     if (runningLockManager_ != nullptr) {
         AUDIO_INFO_LOG("keepRunningLock unLock");
-        runningLockManager_->UnLock();
+        std::thread runningLockThread([this] {
+            runningLockManager_->UnLock();
+        });
+        runningLockThread.join();
     } else {
         AUDIO_WARNING_LOG("keepRunningLock is null, playback can not work well!");
     }
