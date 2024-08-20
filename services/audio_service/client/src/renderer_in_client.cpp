@@ -430,8 +430,6 @@ int32_t RendererInClientInner::DeinitIpcStream()
 {
     Trace trace("RendererInClientInner::DeinitIpcStream");
     ipcStream_->Release();
-    // in plan:
-    ipcStream_ = nullptr;
     ringCache_->ResetBuffer();
     return SUCCESS;
 }
