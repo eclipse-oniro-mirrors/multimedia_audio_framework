@@ -1121,5 +1121,72 @@ void RendererInServer::OnDataLinkConnectionUpdate(IOperation operation)
             return;
     }
 }
+
+static std::string GetStatusStr(IStatus status)
+{
+    switch (status) {
+    case I_STATUS_INVALID:
+        return "INVALID";
+    case I_STATUS_IDLE:
+        return "IDEL";
+    case I_STATUS_STARTING:
+        return "STARTING";
+    case I_STATUS_STARTED:
+        return "STARTED";
+    case I_STATUS_PAUSING:
+        return "PAUSING";
+    case I_STATUS_PAUSED:
+        return "PAUSED";
+    case I_STATUS_FLUSHING_WHEN_STARTED:
+        return "FLUSHING_WHEN_STARTED";
+    case I_STATUS_FLUSHING_WHEN_PAUSED:
+        return "FLUSHING_WHEN_PAUSED";
+    case I_STATUS_FLUSHING_WHEN_STOPPED:
+        return "FLUSHING_WHEN_STOPPED";
+    case I_STATUS_DRAINING:
+        return "DRAINING";
+    case I_STATUS_DRAINED:
+        return "DRAINED";
+    case I_STATUS_STOPPING:
+        return "STOPPING";
+    case I_STATUS_STOPPED:
+        return "STOPPED";
+    case I_STATUS_RELEASING:
+        return "RELEASING";
+    case I_STATUS_RELEASED:
+        return "RELEASED";
+    default:
+        break;
+    }
+    return "NO_SUCH_STATUS";
+}
+
+bool RendererInServer::Dump(std::string &dumpString)
+{
+    if (managerType_ != DIRECT_PLAYBACK && managerType_ != VOIP_PLAYBACK) {
+        return false;
+    }
+    // dump audio stream info
+    dumpString += "audio stream info:\n";
+    AppendFormat(dumpString, "  - session id:%d\n", streamIndex_);
+    AppendFormat(dumpString, "  - appid:%d\n", processConfig_.appInfo.appPid);
+    AppendFormat(dumpString, "  - stream type:%d\n", processConfig_.streamType);
+
+    AppendFormat(dumpString, "  - samplingRate: %d\n", processConfig_.streamInfo.samplingRate);
+    AppendFormat(dumpString, "  - channels: %u\n", processConfig_.streamInfo.channels);
+    AppendFormat(dumpString, "  - format: %u\n", processConfig_.streamInfo.format);
+    AppendFormat(dumpString, "  - device type: %u\n", processConfig_.deviceType);
+    AppendFormat(dumpString, "  - sink type: %d\n", managerType_);
+
+    // dump status info
+    AppendFormat(dumpString, "  - Current stream status: %s\n", GetStatusStr(status_).c_str());
+    if (audioServerBuffer_ != nullptr) {
+        AppendFormat(dumpString, "  - Current read position: %u\n", audioServerBuffer_->GetCurReadFrame());
+        AppendFormat(dumpString, "  - Current write position: %u\n", audioServerBuffer_->GetCurWriteFrame());
+    }
+
+    dumpString += "\n";
+    return true;
+}
 } // namespace AudioStandard
 } // namespace OHOS
