@@ -187,6 +187,7 @@ private:
     bool IsNormalIpcStream(const AudioProcessConfig &config) const;
     void RecognizeAudioEffectType(const std::string &mainkey, const std::string &subkey,
         const std::string &extraSceneType);
+    int32_t SetSystemVolumeToEffect(const AudioStreamType streamType, float volume);
     const std::string GetBundleNameFromUid(int32_t uid);
     bool IsFastBlocked(int32_t uid);
 
@@ -214,6 +215,7 @@ private:
     std::mutex audioParameterMutex_;
     std::mutex audioSceneMutex_;
     std::unique_ptr<AudioEffectServer> audioEffectServer_;
+    bool isFastControlled_ = false;
 };
 } // namespace AudioStandard
 } // namespace OHOS

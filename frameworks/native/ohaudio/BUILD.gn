@@ -179,6 +179,7 @@ ohos_executable("oh_audio_session_manager_test") {
   install_enable = false
 
   include_dirs = [
+    "../../../interfaces/kits/c/",
     "../../../interfaces/kits/c/audio_manager/",
     "../../../interfaces/kits/c/common/",
     "../../../interfaces/kits/c/audio_renderer/",

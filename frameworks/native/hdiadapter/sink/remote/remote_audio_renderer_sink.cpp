@@ -108,6 +108,7 @@ public:
     void RegisterParameterCallback(IAudioSinkCallback* callback) override;
     void ResetOutputRouteForDisconnect(DeviceType device) override;
     int32_t SetPaPower(int32_t flag) override;
+    int32_t SetPriPaPower() override;
 
     void OnAudioParamChange(const std::string &adapterName, const AudioParamKey key, const std::string &condition,
         const std::string &value) override;
@@ -763,6 +764,11 @@ OHOS::AudioStandard::IAudioSinkCallback* RemoteAudioRendererSinkInner::GetParamC
 int32_t RemoteAudioRendererSinkInner::SetPaPower(int32_t flag)
 {
     (void)flag;
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t RemoteAudioRendererSinkInner::SetPriPaPower()
+{
     return ERR_NOT_SUPPORTED;
 }
 

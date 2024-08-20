@@ -1537,7 +1537,8 @@ uint32_t AudioPolicyServer::GetSinkLatencyFromXml()
 int32_t AudioPolicyServer::GetPreferredOutputStreamType(AudioRendererInfo &rendererInfo)
 {
     std::string bundleName = "";
-    if (rendererInfo.rendererFlags == AUDIO_FLAG_MMAP) {
+    bool isFastControlled = audioPolicyService_.getFastControlParam();
+    if (isFastControlled && rendererInfo.rendererFlags == AUDIO_FLAG_MMAP) {
         bundleName = GetBundleName();
         AUDIO_INFO_LOG("bundleName %{public}s", bundleName.c_str());
         return audioPolicyService_.GetPreferredOutputStreamType(rendererInfo, bundleName);
@@ -1729,6 +1730,9 @@ void AudioPolicyServer::RegisteredStreamListenerClientDied(pid_t pid)
         // The last app with the non-persistent microphone setting died, restore the default non-persistent value
         AUDIO_INFO_LOG("Cliet died and reset non-persist mute state");
         audioPolicyService_.SetMicrophoneMute(false);
+    }
+    if (interruptService_ != nullptr && interruptService_->IsAudioSessionActivated(pid)) {
+        interruptService_->DeactivateAudioSession(pid);
     }
     audioPolicyService_.ReduceAudioPolicyClientProxyMap(pid);
 }

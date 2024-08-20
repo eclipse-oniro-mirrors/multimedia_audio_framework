@@ -285,6 +285,11 @@ void AudioServer::OnStart()
         AUDIO_ERR_LOG("start err");
         WriteServiceStartupError();
     }
+    int32_t fastControlFlag = 0;
+    GetSysPara("persist.multimedia.audioflag.fastcontrolled", fastControlFlag);
+    if (fastControlFlag == 1) {
+        isFastControlled_ = true;
+    }
     AddSystemAbilityListener(AUDIO_POLICY_SERVICE_ID);
     AddSystemAbilityListener(RES_SCHED_SYS_ABILITY_ID);
 #ifdef PA
@@ -1494,8 +1499,8 @@ sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &co
         ":%{public}s", ProcessConfig::DumpProcessConfig(resetConfig).c_str());
     CHECK_AND_RETURN_RET_LOG(PermissionChecker(resetConfig), nullptr, "Create audio process failed, no permission");
 
-    if ((IsNormalIpcStream(resetConfig)) || IsFastBlocked(resetConfig.appInfo.appUid)) {
-        AUDIO_INFO_LOG("Create normal ipc stream.");
+    if (IsNormalIpcStream(resetConfig) || (isFastControlled_ && IsFastBlocked(resetConfig.appInfo.appUid))) {
+        AUDIO_INFO_LOG("Create normal ipc stream, isFastControlled: %{public}d", isFastControlled_);
         int32_t ret = 0;
         sptr<IpcStreamInServer> ipcStream = AudioService::GetInstance()->GetIpcStream(resetConfig, ret);
         CHECK_AND_RETURN_RET_LOG(ipcStream != nullptr, nullptr, "GetIpcStream failed.");
@@ -1939,7 +1944,43 @@ int32_t AudioServer::NotifyStreamVolumeChanged(AudioStreamType streamType, float
         AUDIO_ERR_LOG("NotifyStreamVolumeChanged refused for %{public}d", callingUid);
         return ERR_NOT_SUPPORTED;
     }
+
+    SetSystemVolumeToEffect(streamType, volume);
+
     return AudioService::GetInstance()->NotifyStreamVolumeChanged(streamType, volume);
+}
+
+int32_t AudioServer::SetSystemVolumeToEffect(const AudioStreamType streamType, float volume)
+{
+    std::string sceneType;
+    switch (streamType) {
+        case STREAM_RING:
+        case STREAM_ALARM:
+            sceneType = "SCENE_RING";
+            break;
+        case STREAM_VOICE_ASSISTANT:
+            sceneType = "SCENE_SPEECH";
+            break;
+        case STREAM_MUSIC:
+            sceneType = "SCENE_MUSIC";
+            break;
+        case STREAM_ACCESSIBILITY:
+            sceneType = "SCENE_OTHERS";
+            break;
+        default:
+            return SUCCESS;
+    }
+
+    AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEffectChainManager != nullptr, ERROR, "audioEffectChainManager is nullptr");
+    AUDIO_INFO_LOG("streamType : %{public}d , systemVolume : %{public}f", streamType, volume);
+    audioEffectChainManager->SetSceneTypeSystemVolume(sceneType, volume);
+    
+    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
+    audioEffectChainManager->EffectVolumeUpdate(audioEffectVolume);
+
+    return SUCCESS;
 }
 
 int32_t AudioServer::SetSpatializationSceneType(AudioSpatializationSceneType spatializationSceneType)
