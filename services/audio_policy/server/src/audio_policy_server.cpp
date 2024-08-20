@@ -565,6 +565,10 @@ int32_t AudioPolicyServer::SetSystemVolumeLevel(AudioStreamType streamType, int3
     if (!IsVolumeLevelValid(streamType, volumeLevel)) {
         return ERR_NOT_SUPPORTED;
     }
+    if (GetSystemVolumeLevel(streamType) == volumeLevel) {
+        AUDIO_ERR_LOG("The volume is the same as before.");
+        return SUCCESS;
+    }
 
     return SetSystemVolumeLevelInternal(streamType, volumeLevel, volumeFlag == VolumeFlag::FLAG_SHOW_SYSTEM_UI);
 }
