@@ -668,7 +668,7 @@ napi_value NapiAudioRoutingManager::GetPreferredOutputDeviceByFilter(napi_env en
     }
 
     vector<sptr<AudioDeviceDescriptor>> outDeviceDescriptors;
-    CHECK_AND_RETURN_RET_LOG(napiAudioRoutingManager != nullptr && 
+    CHECK_AND_RETURN_RET_LOG(napiAudioRoutingManager != nullptr &&
         napiAudioRoutingManager->audioRoutingMngr_ != nullptr,
         NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_ILLEGAL_STATE,
         "GetPreferredOutputDeviceByFilter napiAudioRoutingManager or audioRoutingMngr is nullptr"),
@@ -792,7 +792,7 @@ napi_value NapiAudioRoutingManager::GetPreferredInputDeviceByFilter(napi_env env
         "sourceType invalid");
 
     vector<sptr<AudioDeviceDescriptor>> outDeviceDescriptors;
-    CHECK_AND_RETURN_RET_LOG(napiAudioRoutingManager != nullptr && 
+    CHECK_AND_RETURN_RET_LOG(napiAudioRoutingManager != nullptr &&
         napiAudioRoutingManager->audioRoutingMngr_ != nullptr,
         NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_ILLEGAL_STATE,
         "GetPreferredInputDeviceByFilter napiAudioRoutingManager or audioRoutingMngr is nullptr"),
