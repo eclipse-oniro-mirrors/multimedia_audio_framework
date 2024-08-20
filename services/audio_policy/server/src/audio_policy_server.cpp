@@ -1537,7 +1537,8 @@ uint32_t AudioPolicyServer::GetSinkLatencyFromXml()
 int32_t AudioPolicyServer::GetPreferredOutputStreamType(AudioRendererInfo &rendererInfo)
 {
     std::string bundleName = "";
-    if (rendererInfo.rendererFlags == AUDIO_FLAG_MMAP) {
+    bool isFastControlled = audioPolicyService_.getFastControlParam();
+    if (isFastControlled && rendererInfo.rendererFlags == AUDIO_FLAG_MMAP) {
         bundleName = GetBundleName();
         AUDIO_INFO_LOG("bundleName %{public}s", bundleName.c_str());
         return audioPolicyService_.GetPreferredOutputStreamType(rendererInfo, bundleName);
