@@ -317,7 +317,7 @@ public:
      * @return Returns <b>true</b> if the rendering is successfully started; returns <b>false</b> otherwise.
      * @since 10
      */
-    virtual bool Start(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const = 0;
+    virtual bool Start(StateChangeCmdType cmdType = CMD_FROM_CLIENT) = 0;
 
     /**
      * @brief Writes audio data.

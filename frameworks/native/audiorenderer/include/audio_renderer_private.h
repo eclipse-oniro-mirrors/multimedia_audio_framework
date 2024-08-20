@@ -42,7 +42,7 @@ public:
     int32_t GetParams(AudioRendererParams &params) const override;
     int32_t GetRendererInfo(AudioRendererInfo &rendererInfo) const override;
     int32_t GetStreamInfo(AudioStreamInfo &streamInfo) const override;
-    bool Start(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
+    bool Start(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
     int32_t Write(uint8_t *buffer, size_t bufferSize) override;
     int32_t Write(uint8_t *pcmBuffer, size_t pcmSize, uint8_t *metaBuffer, size_t metaSize) override;
     RendererState GetStatus() const override;
@@ -200,6 +200,7 @@ private:
     std::shared_ptr<AudioRendererPolicyServiceDiedCallback> policyServiceDiedCallback_ = nullptr;
 
     std::vector<uint32_t> usedSessionId_ = {};
+    std::mutex silentModeAndMixWithOthersMutex_;
 };
 
 class AudioRendererInterruptCallbackImpl : public AudioInterruptCallback {

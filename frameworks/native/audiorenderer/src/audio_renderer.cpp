@@ -648,7 +648,7 @@ void AudioRendererPrivate::UnsetRendererPeriodPositionCallback()
     audioStream_->UnsetRendererPeriodPositionCallback();
 }
 
-bool AudioRendererPrivate::Start(StateChangeCmdType cmdType) const
+bool AudioRendererPrivate::Start(StateChangeCmdType cmdType)
 {
     Trace trace("AudioRenderer::Start");
     std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
@@ -668,9 +668,12 @@ bool AudioRendererPrivate::Start(StateChangeCmdType cmdType) const
     }
 
     CHECK_AND_RETURN_RET_LOG(audioStream_ != nullptr, false, "audio stream is null");
-    if (!audioStream_->GetSilentModeAndMixWithOthers()) {
-        int32_t ret = AudioPolicyManager::GetInstance().ActivateAudioInterrupt(audioInterrupt_);
-        CHECK_AND_RETURN_RET_LOG(ret == 0, false, "ActivateAudioInterrupt Failed");
+    {
+        std::lock_guard<std::mutex> lock(silentModeAndMixWithOthersMutex_);
+        if (!audioStream_->GetSilentModeAndMixWithOthers()) {
+            int32_t ret = AudioPolicyManager::GetInstance().ActivateAudioInterrupt(audioInterrupt_);
+            CHECK_AND_RETURN_RET_LOG(ret == 0, false, "ActivateAudioInterrupt Failed");
+        }
     }
     // When the cellular call stream is starting, only need to activate audio interrupt.
     CHECK_AND_RETURN_RET(audioInterrupt_.streamUsage != STREAM_USAGE_VOICE_MODEM_COMMUNICATION, true);
@@ -678,6 +681,7 @@ bool AudioRendererPrivate::Start(StateChangeCmdType cmdType) const
     bool result = audioStream_->StartAudioStream(cmdType);
     if (!result) {
         AUDIO_ERR_LOG("Start audio stream failed");
+        std::lock_guard<std::mutex> lock(silentModeAndMixWithOthersMutex_);
         if (!audioStream_->GetSilentModeAndMixWithOthers()) {
             int32_t ret = AudioPolicyManager::GetInstance().DeactivateAudioInterrupt(audioInterrupt_);
             if (ret != 0) {
@@ -1211,6 +1215,9 @@ void AudioRendererPrivate::SetInterruptMode(InterruptMode mode)
 
 void AudioRendererPrivate::SetSilentModeAndMixWithOthers(bool on)
 {
+    Trace trace(std::string("AudioRenderer::SetSilentModeAndMixWithOthers:") + (on ? "on" : "off"));
+    std::shared_lock<std::shared_mutex> sharedLockSwitch(switchStreamMutex_);
+    std::lock_guard<std::mutex> lock(silentModeAndMixWithOthersMutex_);
     if (static_cast<RendererState>(audioStream_->GetState()) == RENDERER_RUNNING) {
         if (audioStream_->GetSilentModeAndMixWithOthers() && !on) {
             int32_t ret = AudioPolicyManager::GetInstance().ActivateAudioInterrupt(audioInterrupt_);
@@ -1225,6 +1232,7 @@ void AudioRendererPrivate::SetSilentModeAndMixWithOthers(bool on)
 
 bool AudioRendererPrivate::GetSilentModeAndMixWithOthers()
 {
+    std::lock_guard<std::mutex> lock(silentModeAndMixWithOthersMutex_);
     return audioStream_->GetSilentModeAndMixWithOthers();
 }
 
@@ -1377,6 +1385,8 @@ void AudioRendererPrivate::SetSwitchInfo(IAudioStream::SwitchInfo info, std::sha
     if (info.userSettedPreferredFrameSize.has_value()) {
         audioStream->SetPreferredFrameSize(info.userSettedPreferredFrameSize.value());
     }
+
+    audioStream->SetSilentModeAndMixWithOthers(info.silentModeAndMixWithOthers);
 
     // set callback
     if ((info.renderPositionCb != nullptr) && (info.frameMarkPosition > 0)) {
