@@ -26,6 +26,7 @@
 #include <string>
 #include <unistd.h>
 #include <mutex>
+#include "ctime"
 
 #include "securec.h"
 #ifdef FEATURE_POWER_MANAGER
@@ -34,12 +35,12 @@
 #include "audio_running_lock_manager.h"
 #endif
 #include "v4_0/iaudio_manager.h"
-
 #include "audio_errors.h"
 #include "audio_hdi_log.h"
 #include "audio_utils.h"
 #include "parameters.h"
 #include "media_monitor_manager.h"
+
 #include "audio_log_utils.h"
 
 using namespace std;
@@ -76,12 +77,14 @@ constexpr int32_t RUNNINGLOCK_LOCK_TIMEOUTMS_LASTING = -1;
 const int64_t SECOND_TO_NANOSECOND = 1000000000;
 
 static int32_t g_paStatus = 1;
+const double INTREVAL = 3.0;
 
 const uint16_t GET_MAX_AMPLITUDE_FRAMES_THRESHOLD = 10;
 const uint32_t DEVICE_PARAM_MAX_LEN = 40;
 
 const std::string VOIP_HAL_NAME = "voip";
 const std::string DIRECT_HAL_NAME = "direct";
+const std::string PRIMARY_HAL_NAME = "primary";
 #ifdef FEATURE_POWER_MANAGER
 const std::string PRIMARY_LOCK_NAME_BASE = "AudioBackgroundPlay";
 #endif
@@ -178,6 +181,7 @@ public:
     void ResetOutputRouteForDisconnect(DeviceType device) override;
     float GetMaxAmplitude() override;
     int32_t SetPaPower(int32_t flag) override;
+    int32_t SetPriPaPower() override;
 
     int32_t UpdateAppsUid(const int32_t appsUid[MAX_MIX_CHANNELS],
         const size_t size) final;
@@ -225,6 +229,7 @@ private:
     std::shared_ptr<SignalDetectAgent> signalDetectAgent_ = nullptr;
     mutable int64_t volumeDataCount_ = 0;
     std::string logUtilsTag_ = "";
+    time_t startTime = time(nullptr);
 #ifdef FEATURE_POWER_MANAGER
     std::shared_ptr<AudioRunningLockManager<PowerMgr::RunningLock>> runningLockManager_;
 #endif
@@ -1151,19 +1156,23 @@ int32_t AudioRendererSinkInner::Stop(void)
     CHECK_AND_RETURN_RET_LOG(audioRender_ != nullptr, ERR_INVALID_HANDLE,
         "Stop failed audioRender_ null");
 
-    if (started_) {
-        int32_t ret = audioRender_->Stop(audioRender_);
-        if (!ret) {
-            started_ = false;
-            ReleaseRunningLock();
-            return SUCCESS;
-        } else {
-            AUDIO_ERR_LOG("Stop failed!");
-            ReleaseRunningLock();
-            return ERR_OPERATION_FAILED;
+    if (!started_) {
+        return SUCCESS;
+    }
+
+    if (halName_ == PRIMARY_HAL_NAME) {
+        const char keyValueList[] = "primary=stop";
+        if (audioRender_->SetExtraParams(audioRender_, keyValueList) == 0) {
+            AUDIO_INFO_LOG("set primary stream stop info to hal");
         }
     }
-    ReleaseRunningLock();
+
+    int32_t ret = audioRender_->Stop(audioRender_);
+    if (ret != SUCCESS) {
+        AUDIO_ERR_LOG("Stop failed!");
+        return ERR_OPERATION_FAILED;
+    }
+    started_ = false;
     return SUCCESS;
 }
 
@@ -1564,6 +1573,23 @@ int32_t AudioRendererSinkInner::SetPaPower(int32_t flag)
     }
 
     AUDIO_INFO_LOG("receive invalid flag");
+    return ret;
+}
+
+int32_t AudioRendererSinkInner::SetPriPaPower()
+{
+    time_t nowTime = time(nullptr);
+    int32_t ret = ERROR;
+    const char keyValueList[] = "primary=start";
+    double diff = difftime(nowTime, startTime);
+    if (diff > INTREVAL) {
+        CHECK_AND_RETURN_RET(audioRender_ != nullptr, ERROR);
+        ret = audioRender_->SetExtraParams(audioRender_, keyValueList);
+        if (ret == 0) {
+            AUDIO_INFO_LOG("set primary stream start info to hal");
+        }
+        time(&startTime);
+    }
     return ret;
 }
 
