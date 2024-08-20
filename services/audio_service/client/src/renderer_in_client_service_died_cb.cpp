@@ -33,11 +33,17 @@ RendererInClientPolicyServiceDiedCallbackImpl::~RendererInClientPolicyServiceDie
 
 void RendererInClientPolicyServiceDiedCallbackImpl::OnAudioPolicyServiceDied()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    AUDIO_INFO_LOG("OnAudioPolicyServiceDied");
-    if (policyServiceDiedCallback_ != nullptr) {
-        policyServiceDiedCallback_->OnAudioPolicyServiceDied();
+    std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> cb;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        AUDIO_INFO_LOG("OnAudioPolicyServiceDied");
+        cb = policyServiceDiedCallback_.lock();
+        if (cb == nullptr) {
+            policyServiceDiedCallback_.reset();
+            return;
+        }
     }
+    cb->OnAudioPolicyServiceDied();
 }
 
 void RendererInClientPolicyServiceDiedCallbackImpl::SaveRendererOrCapturerPolicyServiceDiedCB(
@@ -52,9 +58,7 @@ void RendererInClientPolicyServiceDiedCallbackImpl::SaveRendererOrCapturerPolicy
 void RendererInClientPolicyServiceDiedCallbackImpl::RemoveRendererOrCapturerPolicyServiceDiedCB()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (policyServiceDiedCallback_ != nullptr) {
-        policyServiceDiedCallback_ = nullptr;
-    }
+    policyServiceDiedCallback_.reset();
 }
 } // namespace AudioStandard
 } // namespace OHOS

@@ -1056,6 +1056,7 @@ int32_t AudioCapturerPrivate::RemoveCapturerPolicyServiceDiedCallback()
             return ERROR;
         }
     }
+    audioPolicyServiceDiedCallback_ = nullptr;
     return SUCCESS;
 }
 

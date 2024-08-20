@@ -2270,7 +2270,7 @@ int32_t RendererInClientInner::UnregisterRendererInClientPolicyServerDiedCb()
 int32_t RendererInClientInner::RegisterRendererOrCapturerPolicyServiceDiedCB(
     const std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> &callback)
 {
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERROR, "Callback is null");
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERROR, "Callback expired");
 
     int32_t ret = RegisterRendererInClientPolicyServerDiedCb();
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERROR, "RegisterRendererInClientPolicyServerDiedCb failed");
@@ -2296,8 +2296,8 @@ int32_t RendererInClientInner::RemoveRendererOrCapturerPolicyServiceDiedCB()
 bool RendererInClientInner::RestoreAudioStream()
 {
     CHECK_AND_RETURN_RET_LOG(proxyObj_ != nullptr, false, "proxyObj_ is null");
-    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID, true,
-        "state_ is NEW/INVALID, no need for restore");
+    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID && state_ != RELEASED, true,
+        "state_ is %{public}d, no need for restore", state_.load());
     bool result = false;
     State oldState = state_;
     state_ = NEW;
