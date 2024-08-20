@@ -1125,38 +1125,38 @@ void RendererInServer::OnDataLinkConnectionUpdate(IOperation operation)
 static std::string GetStatusStr(IStatus status)
 {
     switch (status) {
-    case I_STATUS_INVALID:
-        return "INVALID";
-    case I_STATUS_IDLE:
-        return "IDEL";
-    case I_STATUS_STARTING:
-        return "STARTING";
-    case I_STATUS_STARTED:
-        return "STARTED";
-    case I_STATUS_PAUSING:
-        return "PAUSING";
-    case I_STATUS_PAUSED:
-        return "PAUSED";
-    case I_STATUS_FLUSHING_WHEN_STARTED:
-        return "FLUSHING_WHEN_STARTED";
-    case I_STATUS_FLUSHING_WHEN_PAUSED:
-        return "FLUSHING_WHEN_PAUSED";
-    case I_STATUS_FLUSHING_WHEN_STOPPED:
-        return "FLUSHING_WHEN_STOPPED";
-    case I_STATUS_DRAINING:
-        return "DRAINING";
-    case I_STATUS_DRAINED:
-        return "DRAINED";
-    case I_STATUS_STOPPING:
-        return "STOPPING";
-    case I_STATUS_STOPPED:
-        return "STOPPED";
-    case I_STATUS_RELEASING:
-        return "RELEASING";
-    case I_STATUS_RELEASED:
-        return "RELEASED";
-    default:
-        break;
+        case I_STATUS_INVALID:
+            return "INVALID";
+        case I_STATUS_IDLE:
+            return "IDEL";
+        case I_STATUS_STARTING:
+            return "STARTING";
+        case I_STATUS_STARTED:
+            return "STARTED";
+        case I_STATUS_PAUSING:
+            return "PAUSING";
+        case I_STATUS_PAUSED:
+            return "PAUSED";
+        case I_STATUS_FLUSHING_WHEN_STARTED:
+            return "FLUSHING_WHEN_STARTED";
+        case I_STATUS_FLUSHING_WHEN_PAUSED:
+            return "FLUSHING_WHEN_PAUSED";
+        case I_STATUS_FLUSHING_WHEN_STOPPED:
+            return "FLUSHING_WHEN_STOPPED";
+        case I_STATUS_DRAINING:
+            return "DRAINING";
+        case I_STATUS_DRAINED:
+            return "DRAINED";
+        case I_STATUS_STOPPING:
+            return "STOPPING";
+        case I_STATUS_STOPPED:
+            return "STOPPED";
+        case I_STATUS_RELEASING:
+            return "RELEASING";
+        case I_STATUS_RELEASED:
+            return "RELEASED";
+        default:
+            break;
     }
     return "NO_SUCH_STATUS";
 }
