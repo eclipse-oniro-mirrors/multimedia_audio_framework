@@ -660,7 +660,7 @@ void AudioService::Dump(std::string &dumpString)
         AppendFormat(dumpString, "  - Endpoint device id: %s\n", item.first.c_str());
         item.second->Dump(dumpString);
     }
-    // dump void and direct
+    // dump voip and direct
     for (const auto &item : allRendererMap_) {
         std::shared_ptr<RendererInServer> renderer = item.second.lock();
         renderer->Dump(dumpString);
