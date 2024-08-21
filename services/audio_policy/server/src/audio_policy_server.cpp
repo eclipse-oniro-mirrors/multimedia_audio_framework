@@ -2176,7 +2176,6 @@ int32_t AudioPolicyServer::SetAvailableDeviceChangeCallback(const int32_t /*clie
 {
     CHECK_AND_RETURN_RET_LOG(object != nullptr, ERR_INVALID_PARAM,
         "SetAvailableDeviceChangeCallback set listener object is nullptr");
-    bool hasSystemPermission = PermissionUtil::VerifySystemPermission();
     switch (usage) {
         case MEDIA_OUTPUT_DEVICES:
         case MEDIA_INPUT_DEVICES:
@@ -2184,13 +2183,11 @@ int32_t AudioPolicyServer::SetAvailableDeviceChangeCallback(const int32_t /*clie
         case CALL_OUTPUT_DEVICES:
         case CALL_INPUT_DEVICES:
         case ALL_CALL_DEVICES:
-            if (!hasSystemPermission) {
-                AUDIO_ERR_LOG("SetAvailableDeviceChangeCallback: No system permission");
-                return ERR_PERMISSION_DENIED;
-            }
+        case D_ALL_DEVICES:
             break;
         default:
-            break;
+            AUDIO_ERR_LOG("Invalid AudioDeviceUsage");
+            return ERR_INVALID_PARAM;
     }
 
     int32_t clientPid = IPCSkeleton::GetCallingPid();
