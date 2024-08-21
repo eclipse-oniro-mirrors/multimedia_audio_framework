@@ -1164,20 +1164,20 @@ static std::string GetStatusStr(IStatus status)
 static std::string GetManagerTypeStr(ManagerType type)
 {
     switch (type) {
-    case PLAYBACK:
-        return "Normal";
-    case DUP_PLAYBACK:
-        return "Dup Playback";
-    case DUAL_PLAYBACK:
-        return "DUAL Playback";
-    case DIRECT_PLAYBACK:
-        return "Direct";
-    case VOIP_PLAYBACK:
-        return "Voip";
-    case RECORDER:
-        return "Recorder";
-    default:
-        break;
+        case PLAYBACK:
+            return "Normal";
+        case DUP_PLAYBACK:
+            return "Dup Playback";
+        case DUAL_PLAYBACK:
+            return "DUAL Playback";
+        case DIRECT_PLAYBACK:
+            return "Direct";
+        case VOIP_PLAYBACK:
+            return "Voip";
+        case RECORDER:
+            return "Recorder";
+        default:
+            break;
     }
     return "NO_SUCH_TYPE";
 }
