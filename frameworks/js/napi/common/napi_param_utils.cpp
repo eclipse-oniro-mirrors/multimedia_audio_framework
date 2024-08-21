@@ -824,6 +824,10 @@ napi_status NapiParamUtils::GetAudioCapturerFilter(const napi_env &env, sptr<Aud
         audioCapturerFilter->uid = intValue;
     }
 
+    napi_value tempValue = nullptr;
+    if (napi_get_named_property(env, in, "capturerInfo", &tempValue) == napi_ok) {
+        GetCapturerInfo(env, &(audioCapturerFilter->capturerInfo), tempValue);
+    }
     return napi_ok;
 }
 
