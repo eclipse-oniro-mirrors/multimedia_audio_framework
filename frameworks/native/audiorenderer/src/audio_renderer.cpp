@@ -822,7 +822,7 @@ bool AudioRendererPrivate::Stop() const
     return result;
 }
 
-bool AudioRendererPrivate::Release() const
+bool AudioRendererPrivate::Release()
 {
     AUDIO_INFO_LOG("StreamClientState for Renderer::Release. id: %{public}u", sessionID_);
 
@@ -843,6 +843,8 @@ bool AudioRendererPrivate::Release() const
         cb->UnsetAudioRendererObj();
         AudioPolicyManager::GetInstance().UnsetAudioConcurrencyCallback(sessionID_);
     }
+
+    RemoveRendererPolicyServiceDiedCallback();
 
     return result;
 }
@@ -1640,7 +1642,7 @@ int32_t AudioRendererPrivate::RegisterRendererPolicyServiceDiedCallback()
     return SUCCESS;
 }
 
-int32_t AudioRendererPrivate::RemoveRendererPolicyServiceDiedCallback() const
+int32_t AudioRendererPrivate::RemoveRendererPolicyServiceDiedCallback()
 {
     AUDIO_DEBUG_LOG("RemoveRendererPolicyServiceDiedCallback");
     if (audioPolicyServiceDiedCallback_) {
@@ -1650,6 +1652,7 @@ int32_t AudioRendererPrivate::RemoveRendererPolicyServiceDiedCallback() const
             return ERROR;
         }
     }
+    audioPolicyServiceDiedCallback_ = nullptr;
     return SUCCESS;
 }
 

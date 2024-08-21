@@ -53,7 +53,7 @@ public:
     bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
     bool Stop() const override;
     bool Flush() const override;
-    bool Release() const override;
+    bool Release() override;
     int32_t GetBufferSize(size_t &bufferSize) const override;
     int32_t GetAudioStreamId(uint32_t &sessionID) const override;
     int32_t SetAudioRendererDesc(AudioRendererDesc audioRendererDesc) override;
@@ -114,7 +114,7 @@ public:
     int32_t SetVolumeWithRamp(float volume, int32_t duration) override;
 
     int32_t RegisterRendererPolicyServiceDiedCallback();
-    int32_t RemoveRendererPolicyServiceDiedCallback() const;
+    int32_t RemoveRendererPolicyServiceDiedCallback();
 
     void GetAudioInterrupt(AudioInterrupt &audioInterrupt);
 

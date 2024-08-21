@@ -36,7 +36,7 @@ public:
 
 private:
     std::mutex mutex_;
-    std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> policyServiceDiedCallback_;
+    std::weak_ptr<RendererOrCapturerPolicyServiceDiedCallback> policyServiceDiedCallback_;
 };
 } // namespace AudioStandard
 } // namespace OHOS

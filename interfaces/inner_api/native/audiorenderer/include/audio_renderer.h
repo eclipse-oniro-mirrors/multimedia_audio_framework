@@ -443,7 +443,7 @@ public:
      * @return Returns <b>true</b> if the object is successfully released; returns <b>false</b> otherwise.
      * @since 8
      */
-    virtual bool Release() const = 0;
+    virtual bool Release() = 0;
 
     /**
      * @brief Obtains a reasonable minimum buffer size for rendering, however, the renderer can

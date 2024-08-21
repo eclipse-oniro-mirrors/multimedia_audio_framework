@@ -882,8 +882,8 @@ int32_t FastAudioStream::RemoveRendererOrCapturerPolicyServiceDiedCB()
 bool FastAudioStream::RestoreAudioStream()
 {
     CHECK_AND_RETURN_RET_LOG(proxyObj_ != nullptr, false, "proxyObj_ is null");
-    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID, true,
-        "state_ is NEW/INVALID, no need for restore");
+    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID && state_ != RELEASED, true,
+        "state_ is %{public}d, no need for restore", state_);
     bool result = false;
     State oldState = state_;
     state_ = NEW;
@@ -959,11 +959,17 @@ FastPolicyServiceDiedCallbackImpl::~FastPolicyServiceDiedCallbackImpl()
 
 void FastPolicyServiceDiedCallbackImpl::OnAudioPolicyServiceDied()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    AUDIO_INFO_LOG("FastPolicyServiceDiedCallbackImpl OnAudioPolicyServiceDied");
-    if (policyServiceDiedCallback_ != nullptr) {
-        policyServiceDiedCallback_->OnAudioPolicyServiceDied();
+    std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> cb;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        AUDIO_INFO_LOG("FastPolicyServiceDiedCallbackImpl OnAudioPolicyServiceDied");
+        cb = policyServiceDiedCallback_.lock();
+        if (cb == nullptr) {
+            policyServiceDiedCallback_.reset();
+            return;
+        }
     }
+    cb->OnAudioPolicyServiceDied();
 }
 
 void FastPolicyServiceDiedCallbackImpl::SaveRendererOrCapturerPolicyServiceDiedCB(
@@ -978,7 +984,7 @@ void FastPolicyServiceDiedCallbackImpl::SaveRendererOrCapturerPolicyServiceDiedC
 void FastPolicyServiceDiedCallbackImpl::RemoveRendererOrCapturerPolicyServiceDiedCB()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    policyServiceDiedCallback_ = nullptr;
+    policyServiceDiedCallback_.reset();
 }
 } // namespace AudioStandard
 } // namespace OHOS

@@ -76,7 +76,7 @@ public:
 
 private:
     std::mutex mutex_;
-    std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> policyServiceDiedCallback_;
+    std::weak_ptr<RendererOrCapturerPolicyServiceDiedCallback> policyServiceDiedCallback_;
 };
 
 class CapturerInClientInner : public CapturerInClient, public IStreamListener, public IHandler,
@@ -1944,8 +1944,8 @@ int32_t CapturerInClientInner::RemoveRendererOrCapturerPolicyServiceDiedCB()
 bool CapturerInClientInner::RestoreAudioStream()
 {
     CHECK_AND_RETURN_RET_LOG(proxyObj_ != nullptr, false, "proxyObj_ is null");
-    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID, true,
-        "state_ is NEW/INVALID, no need for restore");
+    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID && state_ != RELEASED, true,
+        "state_ is %{public}d, no need for restore", state_.load());
     bool result = false;
     State oldState = state_;
     state_ = NEW;
@@ -1993,11 +1993,17 @@ CapturerInClientPolicyServiceDiedCallbackImpl::~CapturerInClientPolicyServiceDie
 
 void CapturerInClientPolicyServiceDiedCallbackImpl::OnAudioPolicyServiceDied()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    AUDIO_INFO_LOG("OnAudioPolicyServiceDied");
-    if (policyServiceDiedCallback_ != nullptr) {
-        policyServiceDiedCallback_->OnAudioPolicyServiceDied();
+    std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> cb;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        AUDIO_INFO_LOG("OnAudioPolicyServiceDied");
+        cb = policyServiceDiedCallback_.lock();
+        if (cb == nullptr) {
+            policyServiceDiedCallback_.reset();
+            return;
+        }
     }
+    cb->OnAudioPolicyServiceDied();
 }
 
 void CapturerInClientPolicyServiceDiedCallbackImpl::SaveRendererOrCapturerPolicyServiceDiedCB(
@@ -2012,9 +2018,7 @@ void CapturerInClientPolicyServiceDiedCallbackImpl::SaveRendererOrCapturerPolicy
 void CapturerInClientPolicyServiceDiedCallbackImpl::RemoveRendererOrCapturerPolicyServiceDiedCB()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (policyServiceDiedCallback_ != nullptr) {
-        policyServiceDiedCallback_ = nullptr;
-    }
+    policyServiceDiedCallback_.reset();
 }
 } // namespace AudioStandard
 } // namespace OHOS
