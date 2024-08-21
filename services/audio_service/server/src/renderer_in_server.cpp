@@ -1161,6 +1161,27 @@ static std::string GetStatusStr(IStatus status)
     return "NO_SUCH_STATUS";
 }
 
+static std::string GetManagerTypeStr(ManagerType type)
+{
+    switch (type) {
+    case PLAYBACK:
+        return "Normal";
+    case DUP_PLAYBACK:
+        return "Dup Playback";
+    case DUAL_PLAYBACK:
+        return "DUAL Playback";
+    case DIRECT_PLAYBACK:
+        return "Direct";
+    case VOIP_PLAYBACK:
+        return "Voip";
+    case RECORDER:
+        return "Recorder";
+    default:
+        break;
+    }
+    return "NO_SUCH_TYPE";
+}
+
 bool RendererInServer::Dump(std::string &dumpString)
 {
     if (managerType_ != DIRECT_PLAYBACK && managerType_ != VOIP_PLAYBACK) {
@@ -1176,7 +1197,7 @@ bool RendererInServer::Dump(std::string &dumpString)
     AppendFormat(dumpString, "  - channels: %u\n", processConfig_.streamInfo.channels);
     AppendFormat(dumpString, "  - format: %u\n", processConfig_.streamInfo.format);
     AppendFormat(dumpString, "  - device type: %u\n", processConfig_.deviceType);
-    AppendFormat(dumpString, "  - sink type: %d\n", managerType_);
+    AppendFormat(dumpString, "  - sink type: %s\n", GetManagerTypeStr(managerType_).c_str());
 
     // dump status info
     AppendFormat(dumpString, "  - Current stream status: %s\n", GetStatusStr(status_).c_str());
