@@ -30,6 +30,7 @@ static OHOS::AudioStandard::OHAudioSessionManager *convertManager(OH_AudioSessio
     return (OHAudioSessionManager*) manager;
 }
 
+
 OH_AudioCommon_Result OH_AudioManager_GetAudioSessionManager(OH_AudioSessionManager **audioSessionManager)
 {
     OHAudioSessionManager* ohAudioSessionManager = OHAudioSessionManager::GetInstance();

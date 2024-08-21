@@ -308,7 +308,7 @@ void NapiAudioSessionMgr::UnregisterCallback(napi_env env, napi_value jsThis)
     AUDIO_ERR_LOG("Unset AudioSessionCallback Success");
 }
 
-void NapiAudioSessionMgr::UnregisterCallbackCarryParam(napi_env env, napi_value jsThis, napi_value *args)
+void NapiAudioSessionMgr::UnregisterCallbackCarryParam(napi_env env, napi_value jsThis, napi_value *args, size_t len)
 {
     AUDIO_INFO_LOG("UnregisterCallback");
     NapiAudioSessionMgr *napiSessionMgr = nullptr;
@@ -355,7 +355,7 @@ napi_value NapiAudioSessionMgr::Off(napi_env env, napi_callback_info info)
         napi_valuetype handler = napi_undefined;
         napi_typeof(env, args[PARAM1], &handler);
         if (handler == napi_function) {
-            UnregisterCallbackCarryParam(env, jsThis, args);
+            UnregisterCallbackCarryParam(env, jsThis, args, sizeof(args));
         } else {
             UnregisterCallback(env, jsThis);
         }
