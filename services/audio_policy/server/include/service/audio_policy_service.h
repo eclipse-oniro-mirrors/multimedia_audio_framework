@@ -890,6 +890,8 @@ private:
 
     void CheckWiredActiveMusicTime(int32_t safeVolume);
 
+    void RestoreSafeVolume(AudioStreamType streamType, int32_t safeVolume);
+
     int32_t CheckActiveMusicTime();
 
     int32_t ShowDialog();
