@@ -50,8 +50,8 @@ const std::set<OH_AudioStream_SourceType> VALID_OH_SOURCE_TYPES = {
     AUDIOSTREAM_SOURCE_TYPE_MIC,
     AUDIOSTREAM_SOURCE_TYPE_VOICE_RECOGNITION,
     AUDIOSTREAM_SOURCE_TYPE_PLAYBACK_CAPTURE,
-    AUDIOSTREAM_SOURCE_TYPE_VOICE_CALL,
-    AUDIOSTREAM_SOURCE_TYPE_VOICE_COMMUNICATION
+    AUDIOSTREAM_SOURCE_TYPE_VOICE_COMMUNICATION,
+    AUDIOSTREAM_SOURCE_TYPE_VOICE_MESSAGE
 };
 }
 
@@ -102,6 +102,7 @@ OH_AudioCommon_Result OH_AudioRoutingManager_GetAvailableDevices(OH_AudioRouting
     if (audioRoutingManager == nullptr || !VALID_OH_AUDIO_DEVICE_UASGES.count(deviceUsage) ||
         audioDeviceDescriptorArray == nullptr) {
         AUDIO_ERR_LOG("Invalid params!");
+        return AUDIOCOMMON_RESULT_ERROR_INVALID_PARAM;
     }
     OHAudioRoutingManager* ohAudioRoutingManager = convertManager(audioRoutingManager);
     CHECK_AND_RETURN_RET_LOG(ohAudioRoutingManager != nullptr,
@@ -121,6 +122,7 @@ OH_AudioCommon_Result OH_AudioRoutingManager_GetPreferredOutputDevice(OH_AudioRo
     if (audioRoutingManager == nullptr || !VALID_OH_STREAM_USAGES.count(streamUsage) ||
         audioDeviceDescriptorArray == nullptr) {
         AUDIO_ERR_LOG("Invalid params!");
+        return AUDIOCOMMON_RESULT_ERROR_INVALID_PARAM;
     }
     OHAudioRoutingManager* ohAudioRoutingManager = convertManager(audioRoutingManager);
     CHECK_AND_RETURN_RET_LOG(ohAudioRoutingManager != nullptr,
@@ -140,6 +142,7 @@ OH_AudioCommon_Result OH_AudioRoutingManager_GetPreferredInputDevice(OH_AudioRou
     if (audioRoutingManager == nullptr || !VALID_OH_SOURCE_TYPES.count(sourceType) ||
         audioDeviceDescriptorArray == nullptr) {
         AUDIO_ERR_LOG("Invalid params!");
+        return AUDIOCOMMON_RESULT_ERROR_INVALID_PARAM;
     }
     OHAudioRoutingManager* ohAudioRoutingManager = convertManager(audioRoutingManager);
     CHECK_AND_RETURN_RET_LOG(ohAudioRoutingManager != nullptr,
