@@ -5560,7 +5560,7 @@ int32_t AudioPolicyService::ShowDialog()
     isSafeVolumeDialogShowing_.store(true);
     if (!isDialogSelectDestroy_.load()) {
         auto status = dialogSelectCondition_.wait_for(lock, std::chrono::seconds(WAIT_DIALOG_CLOSE_TIME_S),
-            [this] () { return isDialogSelectDestroy_.load(); });
+            [this] () { return isDialogSelectDestroy_.load() || !isSafeVolumeDialogShowing_.load(); });
         if (!status) {
             AUDIO_ERR_LOG("user cancel or not select");
         }
@@ -7569,8 +7569,8 @@ int32_t AudioPolicyService::SafeVolumeDialogDisapper()
 {
     AUDIO_INFO_LOG("Enter");
     std::lock_guard<std::mutex> lock(dialogMutex_);
-    dialogSelectCondition_.notify_all();
     isSafeVolumeDialogShowing_.store(false);
+    dialogSelectCondition_.notify_all();
     SetDeviceSafeVolumeStatus();
     return SUCCESS;
 }
