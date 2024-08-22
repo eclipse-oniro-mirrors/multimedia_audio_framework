@@ -575,6 +575,7 @@ bool FastAudioStream::ReleaseAudioStream(bool releaseRunner)
         AUDIO_DEBUG_LOG("AudioStream:Calling Update tracker for release");
         audioStreamTracker_->UpdateTracker(sessionId_, state_, clientPid_, rendererInfo_, capturerInfo_);
     }
+    RemoveRendererOrCapturerPolicyServiceDiedCB();
     return true;
 }
 
