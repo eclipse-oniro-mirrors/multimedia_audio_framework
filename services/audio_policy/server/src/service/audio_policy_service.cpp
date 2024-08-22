@@ -2286,7 +2286,7 @@ void AudioPolicyService::MuteSinkPort(const std::string &portName, int32_t durat
         audioPolicyManager_.SetSinkMute(portName, true, isSync);
     }
     IPCSkeleton::SetCallingIdentity(identity);
-    
+
     // Muted and then unmute.
     thread switchThread(&AudioPolicyService::UnmutePortAfterMuteDuration, this, duration, portName, DEVICE_TYPE_NONE);
     switchThread.detach();
