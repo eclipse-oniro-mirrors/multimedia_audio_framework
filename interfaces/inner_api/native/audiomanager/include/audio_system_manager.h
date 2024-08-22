@@ -73,6 +73,7 @@ public:
         int32_t channelIndexMasks = 0);
 
     bool isSameDevice(const DeviceInfo &deviceInfo);
+    bool isSameDeviceDesc(const std::unique_ptr<AudioDeviceDescriptor> &deviceDescriptor);
 };
 
 struct AudioSpatialEnabledStateForDevice {

@@ -213,6 +213,14 @@ bool AudioDeviceDescriptor::isSameDevice(const DeviceInfo &deviceInfo)
         deviceInfo.networkId == networkId_;
 }
 
+bool AudioDeviceDescriptor::isSameDeviceDesc(const std::unique_ptr<AudioDeviceDescriptor> &deviceDescriptor)
+{
+    CHECK_AND_RETURN_RET_LOG(deviceDescriptor != nullptr, false, "Invalid device descriptor");
+    return deviceDescriptor->deviceType_ == deviceType_ &&
+        deviceDescriptor->macAddress_ == macAddress_ &&
+        deviceDescriptor->networkId_ == networkId_;
+}
+
 AudioRendererFilter::AudioRendererFilter()
 {}
 
