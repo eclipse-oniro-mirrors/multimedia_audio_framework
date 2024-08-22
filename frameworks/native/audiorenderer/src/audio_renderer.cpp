@@ -1422,6 +1422,24 @@ void AudioRendererPrivate::UpdateRendererAudioStream(const std::shared_ptr<IAudi
     }
 }
 
+void AudioRendererPrivate::InitSwitchInfo(IAudioStream::StreamClass targetClass, IAudioStream::SwitchInfo &info)
+{
+    audioStream_->GetSwitchInfo(info);
+    if (targetClass == IAudioStream::VOIP_STREAM) {
+        info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_FAST;
+    }
+
+    if (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT) {
+        info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_DIRECT;
+        info.rendererInfo.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
+        info.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
+    } else if (rendererInfo_.rendererFlags == AUDIO_FLAG_DIRECT) {
+        info.rendererInfo.pipeType = PIPE_TYPE_DIRECT_MUSIC;
+        info.rendererFlags = AUDIO_FLAG_DIRECT;
+    }
+    return;
+}
+
 bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass targetClass, uint32_t &newSessionId,
     const AudioStreamDeviceChangeReasonExt reason)
 {
@@ -1437,19 +1455,7 @@ bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
             CHECK_AND_RETURN_RET_LOG(switchResult, false, "StopAudioStream failed.");
         }
         IAudioStream::SwitchInfo info;
-        audioStream_->GetSwitchInfo(info);
-        if (targetClass == IAudioStream::VOIP_STREAM) {
-            info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_FAST;
-        }
-
-        if (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT) {
-            info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_DIRECT;
-            info.rendererInfo.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
-            info.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
-        } else if (rendererInfo_.rendererFlags == AUDIO_FLAG_DIRECT) {
-            info.rendererInfo.pipeType = PIPE_TYPE_DIRECT_MUSIC;
-            info.rendererFlags = AUDIO_FLAG_DIRECT;
-        }
+        InitSwitchInfo(targetClass, info);
         if (targetClass == AUDIO_FLAG_MMAP) {
             switchResult = audioStream_->ReleaseAudioStream();
         }
@@ -1472,6 +1478,7 @@ bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
             CHECK_AND_RETURN_RET_LOG(switchResult, false, "start new stream failed.");
         }
         audioStream_ = newAudioStream;
+        RegisterRendererPolicyServiceDiedCallback();
         UpdateRendererAudioStream(audioStream_);
         isSwitching_ = false;
         audioStream_->GetAudioSessionID(newSessionId);
@@ -1649,6 +1656,7 @@ int32_t AudioRendererPrivate::RemoveRendererPolicyServiceDiedCallback()
         int32_t ret = audioStream_->RemoveRendererOrCapturerPolicyServiceDiedCB();
         if (ret != 0) {
             AUDIO_ERR_LOG("RemoveRendererPolicyServiceDiedCallback failed");
+            audioPolicyServiceDiedCallback_ = nullptr;
             return ERROR;
         }
     }

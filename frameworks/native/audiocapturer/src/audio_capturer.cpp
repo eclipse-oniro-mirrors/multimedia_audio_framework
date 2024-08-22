@@ -1136,6 +1136,7 @@ bool AudioCapturerPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
             CHECK_AND_RETURN_RET_LOG(switchResult, false, "start new stream failed.");
         }
         audioStream_ = newAudioStream;
+        RegisterCapturerPolicyServiceDiedCallback();
         if (audioInterruptCallback_ != nullptr) {
             std::shared_ptr<AudioCapturerInterruptCallbackImpl> interruptCbImpl =
                 std::static_pointer_cast<AudioCapturerInterruptCallbackImpl>(audioInterruptCallback_);

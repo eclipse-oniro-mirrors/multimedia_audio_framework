@@ -1416,6 +1416,7 @@ bool RendererInClientInner::ReleaseAudioStream(bool releaseRunner)
     lock.unlock();
 
     UpdateTracker("RELEASED");
+    RemoveRendererOrCapturerPolicyServiceDiedCB();
     AUDIO_INFO_LOG("Release end, sessionId: %{public}d, uid: %{public}d", sessionId_, clientUid_);
 
     audioSpeed_.reset();
