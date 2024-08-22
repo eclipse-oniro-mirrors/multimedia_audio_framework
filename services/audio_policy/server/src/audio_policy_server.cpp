@@ -2135,13 +2135,11 @@ std::vector<std::unique_ptr<AudioDeviceDescriptor>> AudioPolicyServer::GetAvaila
         case CALL_OUTPUT_DEVICES:
         case CALL_INPUT_DEVICES:
         case ALL_CALL_DEVICES:
-            if (!hasSystemPermission) {
-                AUDIO_ERR_LOG("GetAvailableDevices: No system permission");
-                return deviceDescs;
-            }
+        case D_ALL_DEVICES:
             break;
         default:
-            break;
+            AUDIO_ERR_LOG("Invalid device usage:%{public}d", usage);
+            return deviceDescs;
     }
 
     deviceDescs = audioPolicyService_.GetAvailableDevices(usage);
