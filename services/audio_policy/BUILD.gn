@@ -378,13 +378,13 @@ ohos_shared_library("audio_policy_client") {
     "client/src/audio_policy_client_stub_impl.cpp",
     "client/src/audio_policy_manager.cpp",
     "client/src/audio_policy_manager_listener_stub.cpp",
-    "client/src/proxy/audio_policy_proxy.cpp",
-    "client/src/proxy/audio_policy_callback_proxy.cpp",
-    "client/src/proxy/audio_policy_volume_proxy.cpp",
-    "client/src/proxy/audio_policy_microphone_proxy.cpp",
     "client/src/audio_routing_manager_listener_stub.cpp",
     "client/src/audio_spatialization_state_change_listener_stub.cpp",
     "client/src/audio_volume_group_info.cpp",
+    "client/src/proxy/audio_policy_callback_proxy.cpp",
+    "client/src/proxy/audio_policy_microphone_proxy.cpp",
+    "client/src/proxy/audio_policy_proxy.cpp",
+    "client/src/proxy/audio_policy_volume_proxy.cpp",
   ]
 
   deps = [ "../../frameworks/native/audioutils:audio_utils" ]
