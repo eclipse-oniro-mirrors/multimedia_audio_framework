@@ -28,9 +28,15 @@ ohos_unittest("audio_effect_chain_manager_unit_test") {
   cflags = [
     "-Wall",
     "-Werror",
+    "-fno-access-control",
   ]
 
-  sources = [ "src/audio_effect_chain_manager_unit_test.cpp" ]
+  sources = [
+    "src/audio_effect_chain_adapter_unit_test.cpp",
+    "src/audio_effect_chain_manager_unit_test.cpp",
+    "src/audio_enhance_chain_adapter_unit_test.cpp",
+    "src/audio_enhance_chain_manager_unit_test.cpp",
+  ]
 
   deps = [
     "../../../../audioeffect:audio_effect",
