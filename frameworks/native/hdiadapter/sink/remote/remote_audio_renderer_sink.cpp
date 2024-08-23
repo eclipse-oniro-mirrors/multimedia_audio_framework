@@ -297,7 +297,7 @@ int32_t RemoteAudioRendererSinkInner::Init(const IAudioSinkAttr &attr)
     return SUCCESS;
 }
 
-int32_t RemoteAudioRendererSinkInner::splitStreamInit(const char *splitStreamString, vector<string> &splitStreamVector)
+void RemoteAudioRendererSinkInner::splitStreamInit(const char *splitStreamString, vector<string> &splitStreamVector)
 {
     AUDIO_INFO_LOG("audio split stream is %{public}s", splitStreamString);
     if (splitStreamString == nullptr) {
