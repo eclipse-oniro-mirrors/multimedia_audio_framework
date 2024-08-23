@@ -847,6 +847,14 @@ bool AudioPolicyServer::GetStreamMuteInternal(AudioStreamType streamType)
     return audioPolicyService_.GetStreamMute(streamType);
 }
 
+bool AudioPolicyServer::IsArmUsbDevice(const AudioDeviceDescriptor &desc)
+{
+    if (desc.deviceType_ == DEVICE_TYPE_USB_ARM_HEADSET) return true;
+    if (desc.deviceType_ != DEVICE_TYPE_USB_HEADSET) return false;
+
+    return audioPolicyService_.IsArmUsbDevice(desc);
+}
+
 int32_t AudioPolicyServer::SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
     std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors)
 {

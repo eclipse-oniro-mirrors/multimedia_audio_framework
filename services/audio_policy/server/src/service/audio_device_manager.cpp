@@ -219,6 +219,15 @@ void AudioDeviceManager::MakePairedDefaultDeviceImpl(const shared_ptr<AudioDevic
     }
 }
 
+bool AudioDeviceManager::IsArmUsbDevice(const AudioDeviceDescriptor &desc)
+{
+    auto isPresent = [&desc] (auto &connDesc) {
+        return connDesc->deviceId_ == desc.deviceId_;
+    };
+    auto itr = std::find_if(connectedDevices_.begin(), connectedDevices_.end(), isPresent);
+    return (*itr)->deviceType_ == DEVICE_TYPE_USB_ARM_HEADSET;
+}
+
 void AudioDeviceManager::AddConnectedDevices(const shared_ptr<AudioDeviceDescriptor> &devDesc)
 {
     connectedDevices_.insert(connectedDevices_.begin(), devDesc);

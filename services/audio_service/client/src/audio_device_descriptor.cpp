@@ -139,7 +139,7 @@ DeviceRole AudioDeviceDescriptor::getRole() const
 
 bool AudioDeviceDescriptor::Marshalling(Parcel &parcel) const
 {
-    parcel.WriteInt32(deviceType_);
+    parcel.WriteInt32(deviceType_ == DEVICE_TYPE_USB_ARM_HEADSET ? DEVICE_TYPE_USB_HEADSET : deviceType_);
     parcel.WriteInt32(deviceRole_);
     parcel.WriteInt32(deviceId_);
 
