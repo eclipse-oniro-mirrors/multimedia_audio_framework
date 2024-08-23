@@ -273,12 +273,12 @@ int32_t RemoteAudioRendererSinkInner::Init(const IAudioSinkAttr &attr)
     struct AudioAdapterDescriptor *desc = audioManager_->GetTargetAdapterDesc(deviceNetworkId_, false);
     CHECK_AND_RETURN_RET_LOG(desc != nullptr, ERR_NOT_STARTED, "Get target adapters descriptor fail.");
     AUDIO_INFO_LOG("splitStreamVector size is %{public}u", splitStreamVector.size());
-    auto splitStreamTypeIter = splitStreamVector->begin();
+    auto splitStreamTypeIter = splitStreamVector.begin();
     for (uint32_t port = 0; port < desc->ports.size(); port++) {
         if (desc->ports[port].portId == AudioPortPin::PIN_OUT_SPEAKER) {
             AUDIO_INFO_LOG("current audio stream type is %{public}s, port index is %{public}d",
                 splitStreamTypeIter->c_str(), port);
-            while (splitStreamTypeIter != splitStreamTypeIter->end()) {
+            while (splitStreamTypeIter != splitStreamVector.end()) {
                 audioPortMap_[splitStreamMap_[*splitStreamTypeIter]] = desc->ports[port];
                 splitStreamTypeIter++;
             }
