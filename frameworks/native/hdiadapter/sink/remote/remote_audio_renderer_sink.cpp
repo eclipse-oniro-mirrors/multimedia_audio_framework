@@ -273,12 +273,12 @@ int32_t RemoteAudioRendererSinkInner::Init(const IAudioSinkAttr &attr)
     struct AudioAdapterDescriptor *desc = audioManager_->GetTargetAdapterDesc(deviceNetworkId_, false);
     CHECK_AND_RETURN_RET_LOG(desc != nullptr, ERR_NOT_STARTED, "Get target adapters descriptor fail.");
     AUDIO_INFO_LOG("splitStreamVector size is %{public}u", splitStreamVector.size());
-    auto splitStreamTypeIter = splitStreamVector.begin();
+    auto splitStreamTypeIter = splitStreamVector->begin();
     for (uint32_t port = 0; port < desc->ports.size(); port++) {
         if (desc->ports[port].portId == AudioPortPin::PIN_OUT_SPEAKER) {
             AUDIO_INFO_LOG("current audio stream type is %{public}s, port index is %{public}d",
                 splitStreamTypeIter->c_str(), port);
-            while (splitStreamTypeIter != splitStreamTypeIter.end()) {
+            while (splitStreamTypeIter != splitStreamTypeIter->end()) {
                 audioPortMap_[splitStreamMap_[*splitStreamTypeIter]] = desc->ports[port];
                 splitStreamTypeIter++;
             }
@@ -476,7 +476,7 @@ int32_t RemoteAudioRendererSinkInner::Start(void)
     if (!isRenderCreated_.load()) {
         for (auto audioPort : audioPortMap_) {
             CHECK_AND_RETURN_RET_LOG(CreateRender(audioPort.second, audioPort.first, *renderId) == SUCCESS,
-                ERR_NOT_STARTED,"Create render fail, audio port %{public}d", audioPort.second.portId);
+                ERR_NOT_STARTED, "Create render fail, audio port %{public}d", audioPort.second.portId);
             renderId++;
         }
     }
@@ -610,8 +610,8 @@ int32_t RemoteAudioRendererSinkInner::SetVolume(float left, float right)
         volume = (leftVolume_ + rightVolume_) / HALF_FACTOR;
     }
     for (auto audioRender : audioRenderMap_) {
-        CHECK_AND_RETURN_RET_LOG(audioRender.second != nullptr, ERR_INVALID_HANDLE
-            , "SetVolume: Audio render is null. Audio stream type is %{public}d", audioRender.first);
+        CHECK_AND_RETURN_RET_LOG(audioRender.second != nullptr, ERR_INVALID_HANDLE,
+            "SetVolume: Audio render is null. Audio stream type is %{public}d", audioRender.first);
         int32_t ret = audioRender.second->SetVolume(volume);
         CHECK_AND_RETURN_RET_LOG(ret == 0, ERR_OPERATION_FAILED, "Set volume fail, ret %{public}d.", ret);
     }
