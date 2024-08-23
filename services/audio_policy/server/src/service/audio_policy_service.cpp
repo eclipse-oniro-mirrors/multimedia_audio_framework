@@ -8459,7 +8459,7 @@ void AudioPolicyService::UpdateSessionConnectionState(const int32_t &sessionID, 
 void AudioA2dpOffloadManager::OnA2dpPlayingStateChanged(const std::string &deviceAddress, int32_t playingState)
 {
     AUDIO_INFO_LOG("Current A2dpOffload MacAddr:%{public}s, incoming MacAddr:%{public}s, state:%{public}d",
-        a2dpOffloadDeviceAddress_.c_str(), GetEncryptAddr(deviceAddress).c_str(), playingState);
+        GetEncryptAddr(a2dpOffloadDeviceAddress_).c_str(), GetEncryptAddr(deviceAddress).c_str(), playingState);
     if (deviceAddress == a2dpOffloadDeviceAddress_) {
         if (playingState == A2DP_PLAYING && currentOffloadConnectionState_ == CONNECTION_STATUS_CONNECTING) {
             AUDIO_INFO_LOG("currentOffloadConnectionState_ change from %{public}d to %{public}d",
