@@ -489,7 +489,7 @@ int32_t RemoteAudioRendererSinkInner::Start(void)
     for (auto audioRender : audioRenderMap_) {
         CHECK_AND_RETURN_RET_LOG(audioRender.second != nullptr, ERR_INVALID_HANDLE,
             "Start: Audio render is null. Audio steam type is %{public}d", audioRender.first);
-        int32_t ret = audioRender->Start();
+        int32_t ret = audioRender.second->Start();
         CHECK_AND_RETURN_RET_LOG(ret == 0, ERR_NOT_STARTED, "Start fail, ret %{public}d.", ret);
     }
     started_.store(true);
