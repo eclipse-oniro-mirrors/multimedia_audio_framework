@@ -202,7 +202,8 @@ int32_t IAudioRendererSinkRenderFrame(struct RendererSinkAdapter *adapter, char 
     return ret;
 }
 
-int32_t IAudioRendererSinkSplitRenderFrame(struct RendererSinkAdapter *adapter, char *data, uint64_t len, uint64_t *writeLen)
+int32_t IAudioRendererSinkSplitRenderFrame(struct RendererSinkAdapter *adapter, char *data, uint64_t len, 
+uint64_t *writeLen)
 {
     CHECK_AND_RETURN_RET_LOG(adapter != nullptr, ERR_INVALID_HANDLE, "null RendererSinkAdapter");
 

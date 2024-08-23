@@ -47,7 +47,8 @@ struct RendererSinkAdapter {
     int32_t (*RendererSinkResume)(struct RendererSinkAdapter *adapter);
     int32_t (*RendererSinkStop)(struct RendererSinkAdapter *adapter);
     int32_t (*RendererRenderFrame)(struct RendererSinkAdapter *adapter, char *data, uint64_t len, uint64_t *writeLen);
-    int32_t (*RendererSplitRenderFrame)(struct RendererSinkAdapter *adapter, char *data, uint64_t len, uint64_t *writeLen, char *streamType);
+    int32_t (*RendererSplitRenderFrame)(struct RendererSinkAdapter *adapter, char *data, uint64_t len
+        , uint64_t *writeLen, char *streamType);
     int32_t (*RendererSinkSetVolume)(struct RendererSinkAdapter *adapter, float left, float right);
     int32_t (*RendererSinkGetVolume)(struct RendererSinkAdapter *adapter, float *left, float *right);
     int32_t (*RendererSinkGetLatency)(struct RendererSinkAdapter *adapter, uint32_t *latency);
