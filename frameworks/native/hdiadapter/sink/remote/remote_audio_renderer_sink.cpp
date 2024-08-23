@@ -279,7 +279,7 @@ int32_t RemoteAudioRendererSinkInner::Init(const IAudioSinkAttr &attr)
             AUDIO_INFO_LOG("current audio stream type is %{public}s, port index is %{public}d",
                 splitStreamTypeIter->c_str(), port);
             while (splitStreamTypeIter != splitStreamTypeIter.end()) {
-                audiPortMap[splitStreamMap_[*splitStreamTypeIter]] = desc->ports[port];
+                audioPortMap_[splitStreamMap_[*splitStreamTypeIter]] = desc->ports[port];
                 splitStreamTypeIter++;
             }
         }
@@ -417,7 +417,6 @@ int32_t RemoteAudioRendererSinkInner::RenderFrameLogic(char &data, uint64_t len,
     }
 
     Trace::CountVolume("RemoteAudioRendererSinkInner::RenderFrameLogic", static_cast<uint8_t>(data));
-    AUDIO_INFO_LOG("RemoteAudioRendererSinkInner::RenderFrameLogic, frameHal len is %{public}lu", len);
     ret = audioRender_->RenderFrame(frameHal, writeLen);
     CHECK_AND_RETURN_RET_LOG(ret == 0, ERR_WRITE_FAILED, "Render frame fail, ret %{public}x.", ret);
     writeLen = len;

@@ -203,7 +203,7 @@ int32_t IAudioRendererSinkRenderFrame(struct RendererSinkAdapter *adapter, char 
 }
 
 int32_t IAudioRendererSinkSplitRenderFrame(struct RendererSinkAdapter *adapter, char *data, uint64_t len,
-    uint64_t *writeLen)
+    uint64_t *writeLen, char *streamType)
 {
     CHECK_AND_RETURN_RET_LOG(adapter != nullptr, ERR_INVALID_HANDLE, "null RendererSinkAdapter");
 
@@ -212,7 +212,7 @@ int32_t IAudioRendererSinkSplitRenderFrame(struct RendererSinkAdapter *adapter, 
     bool isInited = audioRendererSink->IsInited();
     CHECK_AND_RETURN_RET_LOG(isInited, ERR_NOT_STARTED, "audioRenderer Not Inited! Init the renderer first\n");
 
-    int32_t ret = audioRendererSink->SplitRenderFrame(*data, len, *writeLen);
+    int32_t ret = audioRendererSink->SplitRenderFrame(*data, len, *writeLen, streamType);
     return ret;
 }
 
