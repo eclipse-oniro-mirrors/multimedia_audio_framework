@@ -142,6 +142,7 @@ public:
     virtual int32_t OffloadRunningLockUnlock(void) = 0;
 };
 class IRemoteAudioRendererSink : public IAudioRendererSink {
+public:
     virtual int32_t SplitRenderFrame(char &data, uint64_t len, uint64_t &writeLen, char *streamType) = 0;
 };
 }  // namespace AudioStandard
