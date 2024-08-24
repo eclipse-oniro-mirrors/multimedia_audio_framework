@@ -8439,7 +8439,7 @@ int32_t  AudioPolicyService::LoadSplitModule(const std::string &splitArgs, const
     AUDIO_INFO_LOG("start audio stream split, the split args is %{public}s", splitArgs.c_str());
     if (splitArgs.empty() || networkId.empty()) {
         std::string anonymousNetworkId = networkId.empty() ? "" : networkId.substr(0, 2) + "***";
-        AUDIO_INFO_LOG("LoadSplitModule, invalid param, splitArgs:'%{public}s', networkId:'%{public}s'",
+        AUDIO_ERR_LOG("LoadSplitModule, invalid param, splitArgs:'%{public}s', networkId:'%{public}s'",
             splitArgs.c_str(), anonymousNetworkId.c_str());
         return ERR_INVALID_PARAM;
     }

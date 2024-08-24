@@ -58,7 +58,7 @@ namespace {
     std::list<std::pair<AudioInterrupt, AudioFocuState>> g_audioFocusInfoList;
     static constexpr char CONFIG_FILE[] = "/vendor/etc/audio/audio_policy_config.xml";
     static constexpr char CONFIG_FILE_NEW[] = "/chip_prod/etc/audio/audio_policy_config.xml";
-    // "hello wrold" sha256
+    // "hello world" sha256
     constexpr const char *TEST_NETWORK_ID = "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9";
     constexpr const char *TEST_SPLIT_ARGS = "8:4096:1";
 }
