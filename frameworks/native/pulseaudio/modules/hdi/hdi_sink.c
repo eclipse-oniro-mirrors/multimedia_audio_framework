@@ -1613,10 +1613,6 @@ static void SinkRenderPrimaryAfterProcess(pa_sink *si, size_t length, pa_memchun
     u->bufferAttr->numChanIn = DEFAULT_IN_CHANNEL_NUM;
     void *dst = pa_memblock_acquire_chunk(chunkIn);
     int32_t frameLen = bitSize > 0 ? ((int32_t) length / bitSize) : 0;
-    for (int32_t i = 0; i < frameLen; i++) {
-        u->bufferAttr->tempBufOut[i] = u->bufferAttr->tempBufOut[i] > 0.99f ? 0.99f : u->bufferAttr->tempBufOut[i];
-        u->bufferAttr->tempBufOut[i] = u->bufferAttr->tempBufOut[i] < -0.99f ? -0.99f : u->bufferAttr->tempBufOut[i];
-    }
     DoSpatializationFading(u->bufferAttr->tempBufOut, u->spatializationFadingState, &u->spatializationFadingCount,
         frameLen / DEFAULT_IN_CHANNEL_NUM, DEFAULT_IN_CHANNEL_NUM);
     ConvertFromFloat(u->format, frameLen, u->bufferAttr->tempBufOut, dst);
