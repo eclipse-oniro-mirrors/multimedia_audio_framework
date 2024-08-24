@@ -718,7 +718,7 @@ int32_t RemoteAudioRendererSinkInner::OpenOutput(DeviceType outputDevice)
         AUDIO_WARNING_LOG("audioPortMap_ is null, ret %{public}d.", ret);
         return ERR_INVALID_HANDLE;
     }
-    sink.portId = static_cast<int32_t>(audioPort.portId);
+    sink.portId = static_cast<int32_t>(audioPortMap_[AudioCategory::AUDIO_IN_MEDIA].portId);
     sink.role = AudioPortRole::AUDIO_PORT_SINK_ROLE;
     sink.type = AudioPortType::AUDIO_PORT_DEVICE_TYPE;
     sink.ext.device.moduleId = 0;
