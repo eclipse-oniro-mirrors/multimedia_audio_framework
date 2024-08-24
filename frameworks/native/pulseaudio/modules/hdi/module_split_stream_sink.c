@@ -1155,8 +1155,8 @@ int pa__init(pa_module *m)
         return InitFailed(m, ma);
     }
 
-    if (!(u->thread_split_hdi = pa_thread_new("OS_splitStreamToHdi", ThreadFuncWriteHDI, u))) {
-        AUDIO_ERR_LOG("Failed to create OS_splitStreamToHdi.");
+    if (!(u->thread_split_hdi = pa_thread_new("OS_splitToHdi", ThreadFuncWriteHDI, u))) {
+        AUDIO_ERR_LOG("Failed to create OS_splitToHdi.");
         return InitFailed(m, ma);
     }
 
