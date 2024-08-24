@@ -46,17 +46,21 @@ namespace {
     constexpr int32_t MAX_VOL = 15;
     constexpr int32_t MIN_VOL = 0;
     constexpr int32_t INV_CHANNEL = -1;
+    constexpr int32_t CAPTURER_FLAG = 0;
     constexpr float DISCOUNT_VOLUME = 0.5;
     constexpr float INVALID_VOLUME = -1.0;
     constexpr float VOLUME_MIN = 0;
     constexpr float VOLUME_MAX = 1.0;
-    constexpr int32_t CAPTURER_FLAG = 0;
+    constexpr uid_t UID_CAR_DISTRIBUTED_ENGINE_SA = 65872;
     int g_isCallbackReceived = false;
     std::mutex g_mutex;
     std::condition_variable g_condVar;
     std::list<std::pair<AudioInterrupt, AudioFocuState>> g_audioFocusInfoList;
     static constexpr char CONFIG_FILE[] = "/vendor/etc/audio/audio_policy_config.xml";
     static constexpr char CONFIG_FILE_NEW[] = "/chip_prod/etc/audio/audio_policy_config.xml";
+    // "hello wrold" sha256
+    constexpr const char *TEST_NETWORK_ID = "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9";
+    constexpr const char *TEST_SPLIT_ARGS = "8:4096:1";
 }
 
 void AudioManagerUnitTest::SetUpTestCase(void) {}
@@ -2857,10 +2861,10 @@ HWTEST(AudioManagerUnitTest, ConfigDistributedRoutingRoleTest_003, TestSize.Leve
 }
 
 /**
-* @tc.name   : Test SetCallDeviceActive API
-* @tc.number : SetCallDeviceActive_001
-* @tc.desc   : Test SetCallDeviceActive interface.
-*/
+ * @tc.name   : Test SetCallDeviceActive API
+ * @tc.number : SetCallDeviceActive_001
+ * @tc.desc   : Test SetCallDeviceActive interface.
+ */
 HWTEST(AudioManagerUnitTest, SetCallDeviceActive_001, TestSize.Level1)
 {
     // On bootup sco won't be connected. Hence setup should fail.
@@ -2868,5 +2872,56 @@ HWTEST(AudioManagerUnitTest, SetCallDeviceActive_001, TestSize.Level1)
     auto ret = AudioSystemManager::GetInstance()->SetCallDeviceActive(ActiveDeviceType::BLUETOOTH_SCO, true, address);
     EXPECT_EQ(ERR_OPERATION_FAILED, ret);
 }
+
+/**
+ * @tc.name   : Test LoadSplitModule API
+ * @tc.number : LoadSplitModule_001
+ * @tc.desc   : Test LoadSplitModule interface, no permission, DT uid is 0(ROOT), not hicar uid: 65872
+ */
+HWTEST(AudioManagerUnitTest, LoadSplitModule_001, TestSize.Level1)
+{
+    auto ret = AudioSystemManager::GetInstance()->LoadSplitModule("", "");
+    EXPECT_EQ(ERR_PERMISSION_DENIED, ret);
+}
+
+/**
+ * @tc.name   : Test LoadSplitModule API
+ * @tc.number : LoadSplitModule_002
+ * @tc.desc   : Test LoadSplitModule interface, ERR_INVALID_PARAM return, the "splitArgs" is empty.
+ */
+HWTEST(AudioManagerUnitTest, LoadSplitModule_002, TestSize.Level1)
+{
+    int32_t setUidRet = setuid(UID_CAR_DISTRIBUTED_ENGINE_SA);
+    std::cout << "stUidRet: " << setUidRet << std::endl;
+    auto ret = AudioSystemManager::GetInstance()->LoadSplitModule("", TEST_NETWORK_ID);
+    EXPECT_EQ(ERR_INVALID_PARAM, ret);
+}
+
+/**
+ * @tc.name   : Test LoadSplitModule API
+ * @tc.number : LoadSplitModule_003
+ * @tc.desc   : Test LoadSplitModule interface, ERR_INVALID_PARAM return, the "networkId" is empty.
+ */
+HWTEST(AudioManagerUnitTest, LoadSplitModule_003, TestSize.Level1)
+{
+    int32_t setUidRet = setuid(UID_CAR_DISTRIBUTED_ENGINE_SA);
+    std::cout << "stUidRet: " << setUidRet << std::endl;
+    auto ret = AudioSystemManager::GetInstance()->LoadSplitModule(TEST_SPLIT_ARGS, "");
+    EXPECT_EQ(ERR_INVALID_PARAM, ret);
+}
+
+/**
+ * @tc.name   : Test LoadSplitModule API
+ * @tc.number : LoadSplitModule_004
+ * @tc.desc   : Test LoadSplitModule interface, ERR_INVALID_HANDLE return. OpenPortAndInsertIOHandle failed.
+ */
+HWTEST(AudioManagerUnitTest, LoadSplitModule_004, TestSize.Level1)
+{
+    int32_t setUidRet = setuid(UID_CAR_DISTRIBUTED_ENGINE_SA);
+    std::cout << "stUidRet: " << setUidRet << std::endl;
+    auto ret = AudioSystemManager::GetInstance()->LoadSplitModule(TEST_SPLIT_ARGS, TEST_NETWORK_ID);
+    EXPECT_EQ(ERR_INVALID_HANDLE, ret);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS
