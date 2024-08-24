@@ -1856,6 +1856,7 @@ int32_t AudioRendererPrivate::SetDefaultOutputDevice(DeviceType deviceType)
     int32_t ret = AudioPolicyManager::GetInstance().SetDefaultOutputDevice(deviceType, sessionID_,
         rendererInfo_.streamUsage, GetStatus() == RENDERER_RUNNING);
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "select default output device failed");
+    return SUCCESS;
 }
 }  // namespace AudioStandard
 }  // namespace OHOS

@@ -1586,7 +1586,7 @@ napi_value NapiAudioRenderer::SetDefaultOutputDevice(napi_env env, napi_callback
 
     int32_t deviceType;
     NapiParamUtils::GetValueInt32(env, deviceType, argv[PARAM0]);
-    CHECK_AND_RETURN_RET_LOG(NapiAudioEnum::IsLegalInputArgumentOutputDeviceType(deviceType),
+    CHECK_AND_RETURN_RET_LOG(NapiAudioEnum::IsLegalInputArgumentDefaultOutputDeviceType(deviceType),
         NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INVALID_PARAM,
         "parameter verification failed: The param of mode must be enum deviceType"), "unsupport params");
 

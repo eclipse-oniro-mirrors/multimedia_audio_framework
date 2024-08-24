@@ -40,6 +40,7 @@
 
 #include <time.h>
 #include "native_audiostream_base.h"
+#include "native_audio_device_base.h"
 #include "multimedia/native_audio_channel_layout.h"
 #ifdef __cplusplus
 extern "C" {
@@ -403,7 +404,7 @@ OH_AudioStream_Result OH_AudioRenderer_GetSilentModeAndMixWithOthers(
  * @return {@link #AUDIOSTREAM_SUCCESS} or an undesired error.
  */
 OH_AudioStream_Result OH_AudioRenderer_SetDefaultOutputDevice(
-    OH_AudioRenderer* renderer, DeviceType devicetype);
+    OH_AudioRenderer* renderer, OH_AudioDevice_Type devicetype);
 #ifdef __cplusplus
 }
 #endif
