@@ -206,7 +206,7 @@ void RemoteAudioRendererSinkInner::ClearRender()
 
     auto renderId = renderIdVector_.begin();
     if (audioAdapter_ != nullptr) {
-        for (const auto &audioRender : audioRenderMap_) {
+        for (auto &audioRender : audioRenderMap_) {
             audioAdapter_->DestroyRender(audioRender.second, *renderId);
             audioRender.second = nullptr;
             renderId++;
