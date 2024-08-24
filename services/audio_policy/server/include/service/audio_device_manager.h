@@ -27,6 +27,8 @@ namespace OHOS {
 namespace AudioStandard {
 using namespace std;
 
+constexpr int32_t NEED_TO_FETCH = 1;
+
 typedef function<bool(const std::unique_ptr<AudioDeviceDescriptor> &desc)> IsPresentFunc;
 std::string GetEncryptAddr(const std::string &addr);
 class AudioDeviceManager {
@@ -82,6 +84,12 @@ public:
     bool IsDeviceConnected(sptr<AudioDeviceDescriptor> &audioDeviceDescriptors);
     bool IsVirtualConnectedDevice(const sptr<AudioDeviceDescriptor> &selectedDesc);
     int32_t UpdateDeviceDescDeviceId(sptr<AudioDeviceDescriptor> &deviceDescriptor);
+    int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
+        const StreamUsage streamUsage, bool isRunning);
+    int32_t UpdateDefaultOutputDeviceWhenStarting(const uint32_t sessionID);
+    int32_t UpdateDefaultOutputDeviceWhenStopping(const uint32_t sessionID);
+    unique_ptr<AudioDeviceDescriptor> GetSelectedMediaRenderDevice();
+    unique_ptr<AudioDeviceDescriptor> GetSelectedCallRenderDevice();
 
 private:
     AudioDeviceManager();
@@ -157,6 +165,12 @@ private:
     sptr<AudioDeviceDescriptor> speaker_ = nullptr;
     sptr<AudioDeviceDescriptor> defalutMic_ = nullptr;
     bool hasEarpiece_ = false;
+    unordered_map<uint32_t, std::pair<DeviceType, StreamUsage>> selectedDefaultOutputDeviceInfo_;
+    vector<std::pair<uint32_t, DeviceType>> mediaDefaultOutputDevices_;
+    vector<std::pair<uint32_t, DeviceType>> callDefaultOutputDevices_;
+    DeviceType selectedMediaDefaultOutputDevice_ = DEVICE_TYPE_DEFAULT;
+    DeviceType selectedCallDefaultOutputDevice_ = DEVICE_TYPE_DEFAULT;
+    std::mutex selectDefaultOutputDeviceMutex_;
 };
 } // namespace AudioStandard
 } // namespace OHOS

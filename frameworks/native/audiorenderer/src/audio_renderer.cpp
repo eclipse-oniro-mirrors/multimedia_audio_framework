@@ -1846,5 +1846,16 @@ void AudioRendererPrivate::EnableVoiceModemCommunicationStartStream(bool enable)
 {
     isEnableVoiceModemCommunicationStartStream_ = enable;
 }
+
+int32_t AudioRendererPrivate::SetDefaultOutputDevice(DeviceType deviceType)
+{
+    bool isSupportedStreamUsage = (find(AUDIO_DEFAULT_OUTPUT_DEVICE_SUPPORTED_STREAM_USAGES.begin(),
+        AUDIO_DEFAULT_OUTPUT_DEVICE_SUPPORTED_STREAM_USAGES.end(), rendererInfo_.streamUsage) !=
+        AUDIO_DEFAULT_OUTPUT_DEVICE_SUPPORTED_STREAM_USAGES.end());
+    CHECK_AND_RETURN_RET_LOG(isSupportedStreamUsage, ERR_NOT_SUPPORTED, "stream usage not supported");
+    int32_t ret = AudioPolicyManager::GetInstance().SetDefaultOutputDevice(deviceType, sessionID_,
+        rendererInfo_.streamUsage, GetStatus() == RENDERER_RUNNING);
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "select default output device failed");
+}
 }  // namespace AudioStandard
 }  // namespace OHOS
