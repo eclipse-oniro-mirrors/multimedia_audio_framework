@@ -4911,10 +4911,10 @@ int32_t AudioPolicyService::UpdateTracker(AudioMode &mode, AudioStreamChangeInfo
     }
 
     if (mode == AUDIO_MODE_PLAYBACK && rendererState == RENDERER_RUNNING) {
-        audioPolicyManager_.UpdateDefaultOutputDeviceWhenStarting(streamChangeInfo.audioRendererChangeInfo.sessionId);
+        audioDeviceManager_.UpdateDefaultOutputDeviceWhenStarting(streamChangeInfo.audioRendererChangeInfo.sessionId);
     } else if (mode == AUDIO_MODE_PLAYBACK && (rendererState == RENDERER_STOPPED ||
         rendererState == RENDERER_RELEASED || rendererState == RENDERER_PAUSED)) {
-        audioPolicyManager_.UpdateDefaultOutputDeviceWhenStopping(streamChangeInfo.audioRendererChangeInfo.sessionId);
+        audioDeviceManager_.UpdateDefaultOutputDeviceWhenStopping(streamChangeInfo.audioRendererChangeInfo.sessionId);
     }
 
     if (rendererState == RENDERER_RELEASED && !streamCollector_.ExistStreamForPipe(PIPE_TYPE_MULTICHANNEL)) {
