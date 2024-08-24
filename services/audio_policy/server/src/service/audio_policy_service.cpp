@@ -753,8 +753,13 @@ void AudioPolicyService::ResetOffloadMode(int32_t sessionId)
 
 void AudioPolicyService::OffloadStreamSetCheck(uint32_t sessionId)
 {
+    AudioPipeType pipeType = PIPE_TYPE_OFFLOAD;
+    int32_t ret = ActivateAudioConcurrency(pipeType);
+    if (ret != SUCCESS) {
+        return;
+    }
     DeviceInfo deviceInfo;
-    int32_t ret = streamCollector_.GetRendererDeviceInfo(sessionId, deviceInfo);
+    ret = streamCollector_.GetRendererDeviceInfo(sessionId, deviceInfo);
     if (ret != SUCCESS || currentActiveDevice_.networkId_ != LOCAL_NETWORK_ID ||
         currentActiveDevice_.deviceType_ == DEVICE_TYPE_REMOTE_CAST ||
         deviceInfo.deviceType != currentActiveDevice_.deviceType_ ||
