@@ -166,6 +166,7 @@ private:
     void DeactivateAudioSessionInternal(MessageParcel &data, MessageParcel &reply);
     void IsAudioSessionActivatedInternal(MessageParcel &data, MessageParcel &reply);
     void LoadSplitModuleInternal(MessageParcel &data, MessageParcel &reply);
+    void SetDefaultOutputDeviceInternal(MessageParcel &data, MessageParcel &reply);
 
     void OnMiddleNinRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleEigRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
