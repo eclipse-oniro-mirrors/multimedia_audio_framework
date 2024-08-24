@@ -278,7 +278,8 @@ void AudioAdapterManager::SaveRingtoneVolumeToLocal(AudioVolumeType volumeType, 
 
 int32_t AudioAdapterManager::SetSystemVolumeLevel(AudioStreamType streamType, int32_t volumeLevel)
 {
-    if (GetSystemVolumeLevel(streamType) == volumeLevel) {
+    if (GetSystemVolumeLevel(streamType) == volumeLevel && currentActiveDevice_ != DEVICE_TYPE_BLUETOOTH_SCO &&
+        currentActiveDevice_ != DEVICE_TYPE_BLUETOOTH_A2DP) {
         AUDIO_INFO_LOG("The volume is the same as before.");
         return SUCCESS;
     }
