@@ -49,6 +49,8 @@ constexpr uid_t UID_CAST_ENGINE_SA = 5526;
 constexpr uid_t UID_AUDIO = 1041;
 constexpr uid_t UID_FOUNDATION_SA = 5523;
 constexpr uid_t UID_BLUETOOTH_SA = 1002;
+constexpr uid_t UID_CAR_DISTRIBUTED_ENGINE_SA = 65872;
+constexpr uid_t UID_RESOURCE_SCHEDULE_SERVICE = 1096;
 constexpr int64_t OFFLOAD_NO_SESSION_ID = -1;
 constexpr unsigned int GET_BUNDLE_TIME_OUT_SECONDS = 10;
 
@@ -129,7 +131,7 @@ void AudioPolicyServer::OnStart()
     if (iRes < 0) {
         AUDIO_ERR_LOG("fail to call RegisterPermStateChangeCallback.");
     }
-    
+
 #ifdef FEATURE_MULTIMODALINPUT_INPUT
     SubscribeVolumeKeyEvents();
 #endif
@@ -185,7 +187,7 @@ void AudioPolicyServer::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         case COMMON_EVENT_SERVICE_ID:
             AUDIO_INFO_LOG("OnAddSystemAbility common event service start");
             SubscribeCommonEvent("usual.event.DATA_SHARE_READY");
-            SubscribeCommonEvent("custom.event.display_rotation_changed");
+            SubscribeCommonEvent("usual.event.dms.rotation_changed");
             SubscribeCommonEvent("usual.event.bluetooth.remotedevice.NAME_UPDATE");
             break;
         default:
@@ -455,7 +457,7 @@ void AudioPolicyServer::OnReceiveEvent(const EventFwk::CommonEventData &eventDat
             AUDIO_INFO_LOG("receive DATA_SHARE_READY action and need init mic mute state");
             InitMicrophoneMute();
         }
-    } else if (action == "custom.event.display_rotation_changed") {
+    } else if (action == "usual.event.dms.rotation_changed") {
         uint32_t rotate = static_cast<uint32_t>(want.GetIntParam("rotation", 0));
         AUDIO_INFO_LOG("Set rotation to audioeffectchainmanager is %{public}d", rotate);
         audioPolicyService_.SetRotationToEffect(rotate);
@@ -586,8 +588,8 @@ int32_t AudioPolicyServer::GetSystemVolumeLevelInternal(AudioStreamType streamTy
 int32_t AudioPolicyServer::SetLowPowerVolume(int32_t streamId, float volume)
 {
     auto callerUid = IPCSkeleton::GetCallingUid();
-    if (callerUid != UID_FOUNDATION_SA) {
-        AUDIO_ERR_LOG("SetLowPowerVolume callerUid Error: not foundation or component_schedule_service");
+    if (callerUid != UID_FOUNDATION_SA && callerUid != UID_RESOURCE_SCHEDULE_SERVICE) {
+        AUDIO_ERR_LOG("SetLowPowerVolume callerUid Error: not foundation or resource_schedule_service");
         return ERROR;
     }
     return audioPolicyService_.SetLowPowerVolume(streamId, volume);
@@ -844,6 +846,14 @@ bool AudioPolicyServer::GetStreamMuteInternal(AudioStreamType streamType)
         AUDIO_INFO_LOG("GetStreamMute of STREAM_ALL for streamType = %{public}d ", streamType);
     }
     return audioPolicyService_.GetStreamMute(streamType);
+}
+
+bool AudioPolicyServer::IsArmUsbDevice(const AudioDeviceDescriptor &desc)
+{
+    if (desc.deviceType_ == DEVICE_TYPE_USB_ARM_HEADSET) return true;
+    if (desc.deviceType_ != DEVICE_TYPE_USB_HEADSET) return false;
+
+    return audioPolicyService_.IsArmUsbDevice(desc);
 }
 
 int32_t AudioPolicyServer::SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
@@ -1537,7 +1547,8 @@ uint32_t AudioPolicyServer::GetSinkLatencyFromXml()
 int32_t AudioPolicyServer::GetPreferredOutputStreamType(AudioRendererInfo &rendererInfo)
 {
     std::string bundleName = "";
-    if (rendererInfo.rendererFlags == AUDIO_FLAG_MMAP) {
+    bool isFastControlled = audioPolicyService_.getFastControlParam();
+    if (isFastControlled && rendererInfo.rendererFlags == AUDIO_FLAG_MMAP) {
         bundleName = GetBundleName();
         AUDIO_INFO_LOG("bundleName %{public}s", bundleName.c_str());
         return audioPolicyService_.GetPreferredOutputStreamType(rendererInfo, bundleName);
@@ -1729,6 +1740,9 @@ void AudioPolicyServer::RegisteredStreamListenerClientDied(pid_t pid)
         // The last app with the non-persistent microphone setting died, restore the default non-persistent value
         AUDIO_INFO_LOG("Cliet died and reset non-persist mute state");
         audioPolicyService_.SetMicrophoneMute(false);
+    }
+    if (interruptService_ != nullptr && interruptService_->IsAudioSessionActivated(pid)) {
+        interruptService_->DeactivateAudioSession(pid);
     }
     audioPolicyService_.ReduceAudioPolicyClientProxyMap(pid);
 }
@@ -2130,13 +2144,11 @@ std::vector<std::unique_ptr<AudioDeviceDescriptor>> AudioPolicyServer::GetAvaila
         case CALL_OUTPUT_DEVICES:
         case CALL_INPUT_DEVICES:
         case ALL_CALL_DEVICES:
-            if (!hasSystemPermission) {
-                AUDIO_ERR_LOG("GetAvailableDevices: No system permission");
-                return deviceDescs;
-            }
+        case D_ALL_DEVICES:
             break;
         default:
-            break;
+            AUDIO_ERR_LOG("Invalid device usage:%{public}d", usage);
+            return deviceDescs;
     }
 
     deviceDescs = audioPolicyService_.GetAvailableDevices(usage);
@@ -2171,7 +2183,6 @@ int32_t AudioPolicyServer::SetAvailableDeviceChangeCallback(const int32_t /*clie
 {
     CHECK_AND_RETURN_RET_LOG(object != nullptr, ERR_INVALID_PARAM,
         "SetAvailableDeviceChangeCallback set listener object is nullptr");
-    bool hasSystemPermission = PermissionUtil::VerifySystemPermission();
     switch (usage) {
         case MEDIA_OUTPUT_DEVICES:
         case MEDIA_INPUT_DEVICES:
@@ -2179,13 +2190,11 @@ int32_t AudioPolicyServer::SetAvailableDeviceChangeCallback(const int32_t /*clie
         case CALL_OUTPUT_DEVICES:
         case CALL_INPUT_DEVICES:
         case ALL_CALL_DEVICES:
-            if (!hasSystemPermission) {
-                AUDIO_ERR_LOG("SetAvailableDeviceChangeCallback: No system permission");
-                return ERR_PERMISSION_DENIED;
-            }
+        case D_ALL_DEVICES:
             break;
         default:
-            break;
+            AUDIO_ERR_LOG("Invalid AudioDeviceUsage");
+            return ERR_INVALID_PARAM;
     }
 
     int32_t clientPid = IPCSkeleton::GetCallingPid();
@@ -2559,7 +2568,7 @@ std::unique_ptr<AudioDeviceDescriptor> AudioPolicyServer::GetActiveBluetoothDevi
         AUDIO_ERR_LOG("No system permission");
         return make_unique<AudioDeviceDescriptor>();
     }
-   
+
     auto btdevice = audioPolicyService_.GetActiveBluetoothDevice();
 
     bool hasBTPermission = VerifyBluetoothPermission();
@@ -2741,11 +2750,6 @@ int32_t AudioPolicyServer::ActivateAudioConcurrency(const AudioPipeType &pipeTyp
     return audioPolicyService_.ActivateAudioConcurrency(pipeType);
 }
 
-int32_t AudioPolicyServer::ResetRingerModeMute()
-{
-    return audioPolicyService_.ResetRingerModeMute();
-}
-
 int32_t AudioPolicyServer::InjectInterruption(const std::string networkId, InterruptEvent &event)
 {
     auto callerUid = IPCSkeleton::GetCallingUid();
@@ -2815,5 +2819,16 @@ bool AudioPolicyServer::IsAudioSessionActivated()
     AUDIO_INFO_LOG("callerPid %{public}d, isSessionActive: %{public}d.", callerPid, isActive);
     return isActive;
 }
+
+int32_t AudioPolicyServer::LoadSplitModule(const std::string &splitArgs, const std::string &networkId)
+{
+    auto callerUid = IPCSkeleton::GetCallingUid();
+    if (callerUid != UID_CAR_DISTRIBUTED_ENGINE_SA) {
+        AUDIO_ERR_LOG("callerUid %{public}d is not allow LoadSplitModule", callerUid);
+        return ERR_PERMISSION_DENIED;
+    }
+    return audioPolicyService_.LoadSplitModule(splitArgs, networkId);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

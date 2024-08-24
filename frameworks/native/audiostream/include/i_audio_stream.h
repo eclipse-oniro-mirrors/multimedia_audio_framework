@@ -102,6 +102,7 @@ public:
         std::shared_ptr<AudioRendererFirstFrameWritingCallback> rendererFirstFrameWritingCallback;
 
         std::optional<int32_t> userSettedPreferredFrameSize = std::nullopt;
+        bool silentModeAndMixWithOthers = false;
     };
 
     virtual ~IAudioStream() = default;

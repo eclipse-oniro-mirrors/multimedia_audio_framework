@@ -27,6 +27,7 @@ ohos_unittest("audio_toneplayer_unit_test") {
   cflags = [
     "-Wall",
     "-Werror",
+    "-fno-access-control",
   ]
 
   defines = [ "FEATURE_DTMF_TONE" ]

@@ -24,6 +24,7 @@
 #include "audio_policy_proxy.h"
 #include "audio_stream_manager.h"
 #include "audio_group_manager.h"
+#include "audio_system_manager.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -62,6 +63,73 @@ public:
      * @param micStateChangeEvent Microphone Status Information.
      */
     virtual void OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent) {};
+};
+
+class AudioPreferredOutputDeviceChangeCallbackTest : public AudioPreferredOutputDeviceChangeCallback {
+public:
+    virtual ~AudioPreferredOutputDeviceChangeCallbackTest() = default;
+    /**
+     * Called when the prefer output device changes
+     *
+     * @param vector<sptr<AudioDeviceDescriptor>> deviceDescriptor.
+     */
+    virtual void OnPreferredOutputDeviceUpdated(const std::vector<sptr<AudioDeviceDescriptor>> &desc) {}
+};
+
+class AudioPreferredInputDeviceChangeCallbackTest : public AudioPreferredInputDeviceChangeCallback {
+public:
+    virtual ~AudioPreferredInputDeviceChangeCallbackTest() = default;
+    /**
+     * Called when the prefer input device changes
+     *
+     * @param vector<sptr<AudioDeviceDescriptor>> deviceDescriptor.
+     */
+    virtual void OnPreferredInputDeviceUpdated(const std::vector<sptr<AudioDeviceDescriptor>> &desc) {};
+};
+
+class AudioFocusInfoChangeCallbackTest : public AudioFocusInfoChangeCallback {
+public:
+    virtual ~AudioFocusInfoChangeCallbackTest() = default;
+    /**
+     * Called when focus info change.
+     *
+     * @param focusInfoList Indicates the focusInfoList information needed by client.
+     * For details, refer audioFocusInfoList_ struct in audio_policy_server.h
+     * @since 9
+     */
+    virtual void OnAudioFocusInfoChange(const std::list<std::pair<AudioInterrupt, AudioFocuState>> &focusInfoList) {};
+
+    virtual void OnAudioFocusRequested(const AudioInterrupt &) {};
+
+    virtual void OnAudioFocusAbandoned(const AudioInterrupt &) {};
+};
+
+class AudioSpatializationEnabledChangeCallbackTest : public AudioSpatializationEnabledChangeCallback {
+public:
+    virtual ~AudioSpatializationEnabledChangeCallbackTest() = default;
+    /**
+     * @brief AudioSpatializationEnabledChangeCallback will be executed when spatialization enabled state changes
+     *
+     * @param enabled the spatialization enabled state.
+     * @since 11
+     */
+    virtual void OnSpatializationEnabledChange(const bool &enabled) {};
+    virtual void OnSpatializationEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+        const bool &enabled) {};
+};
+
+class AudioHeadTrackingEnabledChangeCallbackTest : public AudioHeadTrackingEnabledChangeCallback {
+public:
+    virtual ~AudioHeadTrackingEnabledChangeCallbackTest() = default;
+    /**
+     * @brief AudioHeadTrackingEnabledChangeCallback will be executed when head tracking enabled state changes
+     *
+     * @param enabled the head tracking enabled state.
+     * @since 11
+     */
+    virtual void OnHeadTrackingEnabledChange(const bool &enabled){};
+    virtual void OnHeadTrackingEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
+        const bool &enabled) {};
 };
 
 class AudioClientTrackerTest : public AudioClientTracker {

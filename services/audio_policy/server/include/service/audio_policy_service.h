@@ -120,6 +120,8 @@ public:
 
     void NotifyUserSelectionEventToBt(sptr<AudioDeviceDescriptor> audioDeviceDescriptor);
 
+    bool IsArmUsbDevice(const AudioDeviceDescriptor &desc);
+
     int32_t SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
         std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors);
     int32_t SelectFastOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
@@ -431,7 +433,7 @@ public:
     void UpdateA2dpOffloadFlagForAllStream(std::unordered_map<uint32_t, bool> &sessionIDToSpatializationEnableMap,
         DeviceType deviceType = DEVICE_TYPE_NONE);
 
-    void UpdateA2dpOffloadFlagForAllStream(DeviceType deviceType = DEVICE_TYPE_NONE);
+    int32_t UpdateA2dpOffloadFlagForAllStream(DeviceType deviceType = DEVICE_TYPE_NONE);
 
     int32_t OffloadStartPlaying(const std::vector<int32_t> &sessionIds);
 
@@ -531,6 +533,7 @@ public:
     int32_t ActivateAudioConcurrency(const AudioPipeType &pipeType);
 
     int32_t ResetRingerModeMute();
+
     bool IsRingerModeMute();
 
     void OnReceiveBluetoothEvent(const std::string macAddress, const std::string deviceName);
@@ -539,6 +542,9 @@ public:
     void SetRotationToEffect(const uint32_t rotate);
     void FetchStreamForA2dpOffload(const bool &requireReset);
     void UpdateSessionConnectionState(const int32_t &sessionID, const int32_t &state);
+    bool getFastControlParam();
+
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId);
 
 private:
     AudioPolicyService()
@@ -986,6 +992,11 @@ private:
 
     void SendA2dpConnectedWhileRunning(const RendererState &rendererState, const uint32_t &sessionId);
 
+    int32_t ConnectVirtualDevice(sptr<AudioDeviceDescriptor> &desc);
+    void UpdateDeviceList(AudioDeviceDescriptor &updatedDesc, bool isConnected,
+        std::vector<sptr<AudioDeviceDescriptor>> &descForCb,
+        AudioStreamDeviceChangeReasonExt &reason);
+
     bool isUpdateRouteSupported_ = true;
     bool isCurrentRemoteRenderer = false;
     bool remoteCapturerSwitch_ = false;
@@ -1004,6 +1015,7 @@ private:
     bool enableDualHalToneState_ = false;
     int32_t enableDualHalToneSessionId_ = -1;
     int32_t shouldUpdateDeviceDueToDualTone_ = false;
+    bool isFastControlled_ = false;
 
     std::unordered_map<std::string, DeviceType> spatialDeviceMap_;
 
@@ -1079,7 +1091,8 @@ private:
 
     mutable std::shared_mutex deviceStatusUpdateSharedMutex_;
 
-    bool isArmUsbDevice_ = false;
+    bool hasArmUsbDevice_ = false;
+    bool hasHifiUsbDevice_ = false; // Only the first usb device is supported now, hifi or arm.
     bool hasDpDevice_ = false; // Only the first dp device is supported.
 
     AudioDeviceManager &audioDeviceManager_;

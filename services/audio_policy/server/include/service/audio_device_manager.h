@@ -77,9 +77,12 @@ public:
     DeviceUsage GetDeviceUsage(const AudioDeviceDescriptor &desc);
     std::string GetConnDevicesStr();
     std::string GetConnDevicesStr(const vector<shared_ptr<AudioDeviceDescriptor>> &descs);
+    bool IsArmUsbDevice(const AudioDeviceDescriptor &desc);
     void OnReceiveBluetoothEvent(const std::string macAddress, const std::string deviceName);
     bool IsDeviceConnected(sptr<AudioDeviceDescriptor> &audioDeviceDescriptors);
-    
+    bool IsVirtualConnectedDevice(const sptr<AudioDeviceDescriptor> &selectedDesc);
+    int32_t UpdateDeviceDescDeviceId(sptr<AudioDeviceDescriptor> &deviceDescriptor);
+
 private:
     AudioDeviceManager();
     ~AudioDeviceManager() {};
@@ -129,6 +132,8 @@ private:
     bool UpdateDeviceCategory(const sptr<AudioDeviceDescriptor> &deviceDescriptor);
     bool UpdateEnableState(const shared_ptr<AudioDeviceDescriptor> &deviceDescriptor);
     bool UpdateExceptionFlag(const shared_ptr<AudioDeviceDescriptor> &deviceDescriptor);
+
+    void RemoveVirtualConnectedDevice(const shared_ptr<AudioDeviceDescriptor> &devDesc);
 
     list<DevicePrivacyInfo> privacyDeviceList_;
     list<DevicePrivacyInfo> publicDeviceList_;

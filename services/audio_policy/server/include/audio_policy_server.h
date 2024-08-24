@@ -126,6 +126,8 @@ public:
 
     float GetSystemVolumeInDb(AudioVolumeType volumeType, int32_t volumeLevel, DeviceType deviceType) override;
 
+    bool IsArmUsbDevice(const AudioDeviceDescriptor &desc) override;
+
     int32_t SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
         std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors) override;
 
@@ -393,9 +395,9 @@ public:
 
     int32_t ActivateAudioConcurrency(const AudioPipeType &pipeType) override;
 
-    int32_t ResetRingerModeMute() override;
-
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event) override;
+
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId) override;
 
     class RemoteParameterCallback : public AudioParameterCallback {
     public:

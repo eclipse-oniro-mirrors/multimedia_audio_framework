@@ -30,6 +30,7 @@ namespace AudioStandard {
 
 const uint32_t NUM_SET_EFFECT_PARAM = 7;
 const uint32_t DEFAULT_SAMPLE_RATE = 48000;
+const uint32_t MAX_UINT_VOLUME = 65535;
 const uint32_t DEFAULT_NUM_CHANNEL = STEREO;
 const uint64_t DEFAULT_NUM_CHANNELLAYOUT = CH_LAYOUT_STEREO;
 
@@ -172,12 +173,7 @@ int32_t AudioEffectChain::SetEffectParamToHandle(AudioEffectHandle handle, int32
     data[3] = 0; // 3:rotation index
 #endif
     AUDIO_DEBUG_LOG("set ap integration rotation: %{public}d", data[3]); // 3:rotation index
-    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
-    if (audioEffectVolume == nullptr) {
-        data[4] = 0; // 4:volume index
-    } else {
-        data[4] = audioEffectVolume->GetApVolume(sceneType_); // 4:volume index
-    }
+    data[4] = static_cast<int32_t>(finalVolume_ * MAX_UINT_VOLUME); // 4:volume index
     AUDIO_DEBUG_LOG("set ap integration volume: %{public}d", data[4]); // 4:volume index
     data[5] = static_cast<int32_t>(extraEffectChainType_); // 5:extra effect chain type index
     AUDIO_DEBUG_LOG("set extra effect chain type: %{public}d", extraEffectChainType_);
@@ -398,6 +394,16 @@ void AudioEffectChain::InitEffectChain()
         CHECK_AND_RETURN_LOG(ret == 0, "[%{public}s] with mode [%{public}s], either one of libs EFFECT_CMD_ENABLE fail",
             sceneType_.c_str(), effectMode_.c_str());
     }
+}
+
+void AudioEffectChain::SetFinalVolume(const float volume)
+{
+    finalVolume_ = volume;
+}
+
+float AudioEffectChain::GetFinalVolume()
+{
+    return finalVolume_;
 }
 
 void AudioEffectChain::SetSpatialDeviceType(AudioSpatialDeviceType spatialDeviceType)

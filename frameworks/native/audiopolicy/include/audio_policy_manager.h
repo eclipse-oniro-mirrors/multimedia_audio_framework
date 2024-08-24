@@ -411,9 +411,10 @@ public:
 
     int32_t ActivateAudioConcurrency(const AudioPipeType &pipeType);
 
-    int32_t ResetRingerModeMute();
-
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event);
+
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId);
+
 private:
     AudioPolicyManager() {}
     ~AudioPolicyManager() {}

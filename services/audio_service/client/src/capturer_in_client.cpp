@@ -76,7 +76,7 @@ public:
 
 private:
     std::mutex mutex_;
-    std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> policyServiceDiedCallback_;
+    std::weak_ptr<RendererOrCapturerPolicyServiceDiedCallback> policyServiceDiedCallback_;
 };
 
 class CapturerInClientInner : public CapturerInClient, public IStreamListener, public IHandler,
@@ -1442,11 +1442,14 @@ bool CapturerInClientInner::StopAudioStream()
 
 bool CapturerInClientInner::ReleaseAudioStream(bool releaseRunner)
 {
+    std::unique_lock<std::mutex> statusLock(statusMutex_);
     if (state_ == RELEASED) {
         AUDIO_WARNING_LOG("Already release, do nothing");
         return true;
     }
     state_ = RELEASED;
+    statusLock.unlock();
+
     Trace trace("CapturerInClientInner::ReleaseAudioStream " + std::to_string(sessionId_));
     if (ipcStream_ != nullptr) {
         ipcStream_->Release();
@@ -1489,6 +1492,7 @@ bool CapturerInClientInner::ReleaseAudioStream(bool releaseRunner)
     lock.unlock();
 
     UpdateTracker("RELEASED");
+    RemoveRendererOrCapturerPolicyServiceDiedCB();
     AUDIO_INFO_LOG("Release end, sessionId: %{public}d, uid: %{public}d", sessionId_, clientUid_);
     return true;
 }
@@ -1632,13 +1636,6 @@ int32_t CapturerInClientInner::Read(uint8_t &buffer, size_t userSize, bool isBlo
 
     std::lock_guard<std::mutex> lock(readMutex_);
 
-    // if first call, call set thread priority. if thread tid change recall set thread priority
-    if (needSetThreadPriority_) {
-        ipcStream_->RegisterThreadPriority(gettid(),
-            AudioSystemManager::GetInstance()->GetSelfBundleName(clientConfig_.appInfo.appUid));
-        needSetThreadPriority_ = false;
-    }
-
     std::unique_lock<std::mutex> statusLock(statusMutex_); // status check
     if (state_ != RUNNING) {
         if (readLogTimes_ < LOGLITMITTIMES) {
@@ -1653,6 +1650,15 @@ int32_t CapturerInClientInner::Read(uint8_t &buffer, size_t userSize, bool isBlo
     }
 
     statusLock.unlock();
+
+    // if first call, call set thread priority. if thread tid change recall set thread priority
+    if (needSetThreadPriority_) {
+        CHECK_AND_RETURN_RET_LOG(ipcStream_ != nullptr, ERROR, "ipcStream_ is null");
+        ipcStream_->RegisterThreadPriority(gettid(),
+            AudioSystemManager::GetInstance()->GetSelfBundleName(clientConfig_.appInfo.appUid));
+        needSetThreadPriority_ = false;
+    }
+
     size_t readSize = 0;
     int32_t res = HandleCapturerRead(readSize, userSize, buffer, isBlockingRead);
     CHECK_AND_RETURN_RET_LOG(res >= 0, ERROR, "HandleCapturerRead err : %{public}d", res);
@@ -1944,8 +1950,8 @@ int32_t CapturerInClientInner::RemoveRendererOrCapturerPolicyServiceDiedCB()
 bool CapturerInClientInner::RestoreAudioStream()
 {
     CHECK_AND_RETURN_RET_LOG(proxyObj_ != nullptr, false, "proxyObj_ is null");
-    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID, true,
-        "state_ is NEW/INVALID, no need for restore");
+    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID && state_ != RELEASED, true,
+        "state_ is %{public}d, no need for restore", state_.load());
     bool result = false;
     State oldState = state_;
     state_ = NEW;
@@ -1993,11 +1999,17 @@ CapturerInClientPolicyServiceDiedCallbackImpl::~CapturerInClientPolicyServiceDie
 
 void CapturerInClientPolicyServiceDiedCallbackImpl::OnAudioPolicyServiceDied()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    AUDIO_INFO_LOG("OnAudioPolicyServiceDied");
-    if (policyServiceDiedCallback_ != nullptr) {
-        policyServiceDiedCallback_->OnAudioPolicyServiceDied();
+    std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> cb;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        AUDIO_INFO_LOG("OnAudioPolicyServiceDied");
+        cb = policyServiceDiedCallback_.lock();
+        if (cb == nullptr) {
+            policyServiceDiedCallback_.reset();
+            return;
+        }
     }
+    cb->OnAudioPolicyServiceDied();
 }
 
 void CapturerInClientPolicyServiceDiedCallbackImpl::SaveRendererOrCapturerPolicyServiceDiedCB(
@@ -2012,9 +2024,7 @@ void CapturerInClientPolicyServiceDiedCallbackImpl::SaveRendererOrCapturerPolicy
 void CapturerInClientPolicyServiceDiedCallbackImpl::RemoveRendererOrCapturerPolicyServiceDiedCB()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (policyServiceDiedCallback_ != nullptr) {
-        policyServiceDiedCallback_ = nullptr;
-    }
+    policyServiceDiedCallback_.reset();
 }
 } // namespace AudioStandard
 } // namespace OHOS

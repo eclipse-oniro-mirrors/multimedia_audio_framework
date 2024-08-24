@@ -648,7 +648,7 @@ void AudioRendererPrivate::UnsetRendererPeriodPositionCallback()
     audioStream_->UnsetRendererPeriodPositionCallback();
 }
 
-bool AudioRendererPrivate::Start(StateChangeCmdType cmdType) const
+bool AudioRendererPrivate::Start(StateChangeCmdType cmdType)
 {
     Trace trace("AudioRenderer::Start");
     std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
@@ -668,16 +668,21 @@ bool AudioRendererPrivate::Start(StateChangeCmdType cmdType) const
     }
 
     CHECK_AND_RETURN_RET_LOG(audioStream_ != nullptr, false, "audio stream is null");
-    if (!audioStream_->GetSilentModeAndMixWithOthers()) {
-        int32_t ret = AudioPolicyManager::GetInstance().ActivateAudioInterrupt(audioInterrupt_);
-        CHECK_AND_RETURN_RET_LOG(ret == 0, false, "ActivateAudioInterrupt Failed");
+    {
+        std::lock_guard<std::mutex> lock(silentModeAndMixWithOthersMutex_);
+        if (!audioStream_->GetSilentModeAndMixWithOthers()) {
+            int32_t ret = AudioPolicyManager::GetInstance().ActivateAudioInterrupt(audioInterrupt_);
+            CHECK_AND_RETURN_RET_LOG(ret == 0, false, "ActivateAudioInterrupt Failed");
+        }
     }
     // When the cellular call stream is starting, only need to activate audio interrupt.
-    CHECK_AND_RETURN_RET(audioInterrupt_.streamUsage != STREAM_USAGE_VOICE_MODEM_COMMUNICATION, true);
+    CHECK_AND_RETURN_RET(audioInterrupt_.streamUsage != STREAM_USAGE_VOICE_MODEM_COMMUNICATION ||
+        isEnableVoiceModemCommunicationStartStream_, true);
 
     bool result = audioStream_->StartAudioStream(cmdType);
     if (!result) {
         AUDIO_ERR_LOG("Start audio stream failed");
+        std::lock_guard<std::mutex> lock(silentModeAndMixWithOthersMutex_);
         if (!audioStream_->GetSilentModeAndMixWithOthers()) {
             int32_t ret = AudioPolicyManager::GetInstance().DeactivateAudioInterrupt(audioInterrupt_);
             if (ret != 0) {
@@ -770,7 +775,8 @@ bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType) const
 
     CHECK_AND_RETURN_RET_LOG(!isSwitching_, false, "Pause failed. Switching state: %{public}d", isSwitching_);
 
-    if (audioInterrupt_.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION) {
+    if (audioInterrupt_.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION &&
+        !isEnableVoiceModemCommunicationStartStream_) {
         // When the cellular call stream is pausing, only need to deactivate audio interrupt.
         if (AudioPolicyManager::GetInstance().DeactivateAudioInterrupt(audioInterrupt_) != 0) {
             AUDIO_ERR_LOG("DeactivateAudioInterrupt Failed");
@@ -799,7 +805,8 @@ bool AudioRendererPrivate::Stop() const
     std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
     CHECK_AND_RETURN_RET_LOG(!isSwitching_, false,
         "AudioRenderer::Stop failed. Switching state: %{public}d", isSwitching_);
-    if (audioInterrupt_.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION) {
+    if (audioInterrupt_.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION &&
+        !isEnableVoiceModemCommunicationStartStream_) {
         // When the cellular call stream is stopping, only need to deactivate audio interrupt.
         if (AudioPolicyManager::GetInstance().DeactivateAudioInterrupt(audioInterrupt_) != 0) {
             AUDIO_WARNING_LOG("DeactivateAudioInterrupt Failed");
@@ -818,8 +825,9 @@ bool AudioRendererPrivate::Stop() const
     return result;
 }
 
-bool AudioRendererPrivate::Release() const
+bool AudioRendererPrivate::Release()
 {
+    std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
     AUDIO_INFO_LOG("StreamClientState for Renderer::Release. id: %{public}u", sessionID_);
 
     bool result = audioStream_->ReleaseAudioStream();
@@ -839,6 +847,8 @@ bool AudioRendererPrivate::Release() const
         cb->UnsetAudioRendererObj();
         AudioPolicyManager::GetInstance().UnsetAudioConcurrencyCallback(sessionID_);
     }
+
+    RemoveRendererPolicyServiceDiedCallback();
 
     return result;
 }
@@ -1211,6 +1221,9 @@ void AudioRendererPrivate::SetInterruptMode(InterruptMode mode)
 
 void AudioRendererPrivate::SetSilentModeAndMixWithOthers(bool on)
 {
+    Trace trace(std::string("AudioRenderer::SetSilentModeAndMixWithOthers:") + (on ? "on" : "off"));
+    std::shared_lock<std::shared_mutex> sharedLockSwitch(switchStreamMutex_);
+    std::lock_guard<std::mutex> lock(silentModeAndMixWithOthersMutex_);
     if (static_cast<RendererState>(audioStream_->GetState()) == RENDERER_RUNNING) {
         if (audioStream_->GetSilentModeAndMixWithOthers() && !on) {
             int32_t ret = AudioPolicyManager::GetInstance().ActivateAudioInterrupt(audioInterrupt_);
@@ -1225,6 +1238,7 @@ void AudioRendererPrivate::SetSilentModeAndMixWithOthers(bool on)
 
 bool AudioRendererPrivate::GetSilentModeAndMixWithOthers()
 {
+    std::lock_guard<std::mutex> lock(silentModeAndMixWithOthersMutex_);
     return audioStream_->GetSilentModeAndMixWithOthers();
 }
 
@@ -1378,6 +1392,8 @@ void AudioRendererPrivate::SetSwitchInfo(IAudioStream::SwitchInfo info, std::sha
         audioStream->SetPreferredFrameSize(info.userSettedPreferredFrameSize.value());
     }
 
+    audioStream->SetSilentModeAndMixWithOthers(info.silentModeAndMixWithOthers);
+
     // set callback
     if ((info.renderPositionCb != nullptr) && (info.frameMarkPosition > 0)) {
         audioStream->SetRendererPositionCallback(info.frameMarkPosition, info.renderPositionCb);
@@ -1410,6 +1426,24 @@ void AudioRendererPrivate::UpdateRendererAudioStream(const std::shared_ptr<IAudi
     }
 }
 
+void AudioRendererPrivate::InitSwitchInfo(IAudioStream::StreamClass targetClass, IAudioStream::SwitchInfo &info)
+{
+    audioStream_->GetSwitchInfo(info);
+    if (targetClass == IAudioStream::VOIP_STREAM) {
+        info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_FAST;
+    }
+
+    if (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT) {
+        info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_DIRECT;
+        info.rendererInfo.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
+        info.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
+    } else if (rendererInfo_.rendererFlags == AUDIO_FLAG_DIRECT) {
+        info.rendererInfo.pipeType = PIPE_TYPE_DIRECT_MUSIC;
+        info.rendererFlags = AUDIO_FLAG_DIRECT;
+    }
+    return;
+}
+
 bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass targetClass, uint32_t &newSessionId,
     const AudioStreamDeviceChangeReasonExt reason)
 {
@@ -1425,19 +1459,7 @@ bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
             CHECK_AND_RETURN_RET_LOG(switchResult, false, "StopAudioStream failed.");
         }
         IAudioStream::SwitchInfo info;
-        audioStream_->GetSwitchInfo(info);
-        if (targetClass == IAudioStream::VOIP_STREAM) {
-            info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_FAST;
-        }
-
-        if (rendererInfo_.rendererFlags == AUDIO_FLAG_VOIP_DIRECT) {
-            info.rendererInfo.originalFlag = AUDIO_FLAG_VOIP_DIRECT;
-            info.rendererInfo.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
-            info.rendererFlags = AUDIO_FLAG_VOIP_DIRECT;
-        } else if (rendererInfo_.rendererFlags == AUDIO_FLAG_DIRECT) {
-            info.rendererInfo.pipeType = PIPE_TYPE_DIRECT_MUSIC;
-            info.rendererFlags = AUDIO_FLAG_DIRECT;
-        }
+        InitSwitchInfo(targetClass, info);
         if (targetClass == AUDIO_FLAG_MMAP) {
             switchResult = audioStream_->ReleaseAudioStream();
         }
@@ -1460,6 +1482,7 @@ bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
             CHECK_AND_RETURN_RET_LOG(switchResult, false, "start new stream failed.");
         }
         audioStream_ = newAudioStream;
+        RegisterRendererPolicyServiceDiedCallback();
         UpdateRendererAudioStream(audioStream_);
         isSwitching_ = false;
         audioStream_->GetAudioSessionID(newSessionId);
@@ -1630,16 +1653,18 @@ int32_t AudioRendererPrivate::RegisterRendererPolicyServiceDiedCallback()
     return SUCCESS;
 }
 
-int32_t AudioRendererPrivate::RemoveRendererPolicyServiceDiedCallback() const
+int32_t AudioRendererPrivate::RemoveRendererPolicyServiceDiedCallback()
 {
     AUDIO_DEBUG_LOG("RemoveRendererPolicyServiceDiedCallback");
     if (audioPolicyServiceDiedCallback_) {
         int32_t ret = audioStream_->RemoveRendererOrCapturerPolicyServiceDiedCB();
         if (ret != 0) {
             AUDIO_ERR_LOG("RemoveRendererPolicyServiceDiedCallback failed");
+            audioPolicyServiceDiedCallback_ = nullptr;
             return ERROR;
         }
     }
+    audioPolicyServiceDiedCallback_ = nullptr;
     return SUCCESS;
 }
 
@@ -1815,6 +1840,11 @@ void AudioRendererPrivate::ConcedeStream()
         default:
             break;
     }
+}
+
+void AudioRendererPrivate::EnableVoiceModemCommunicationStartStream(bool enable)
+{
+    isEnableVoiceModemCommunicationStartStream_ = enable;
 }
 }  // namespace AudioStandard
 }  // namespace OHOS

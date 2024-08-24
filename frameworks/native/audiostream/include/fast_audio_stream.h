@@ -220,6 +220,9 @@ private:
     std::shared_ptr<AudioClientTracker> proxyObj_ = nullptr;
     float cacheVolume_ = 1.0f;
     bool silentModeAndMixWithOthers_ = false;
+
+    std::mutex setPreferredFrameSizeMutex_;
+    std::optional<int32_t> userSettedPreferredFrameSize_ = std::nullopt;
 };
 
 class FastPolicyServiceDiedCallbackImpl : public AudioStreamPolicyServiceDiedCallback {
@@ -233,7 +236,7 @@ public:
 
 private:
     std::mutex mutex_;
-    std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> policyServiceDiedCallback_;
+    std::weak_ptr<RendererOrCapturerPolicyServiceDiedCallback> policyServiceDiedCallback_;
 };
 } // namespace AudioStandard
 } // namespace OHOS
