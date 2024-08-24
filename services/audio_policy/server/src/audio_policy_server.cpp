@@ -131,7 +131,7 @@ void AudioPolicyServer::OnStart()
     if (iRes < 0) {
         AUDIO_ERR_LOG("fail to call RegisterPermStateChangeCallback.");
     }
-    
+
 #ifdef FEATURE_MULTIMODALINPUT_INPUT
     SubscribeVolumeKeyEvents();
 #endif
@@ -2568,7 +2568,7 @@ std::unique_ptr<AudioDeviceDescriptor> AudioPolicyServer::GetActiveBluetoothDevi
         AUDIO_ERR_LOG("No system permission");
         return make_unique<AudioDeviceDescriptor>();
     }
-   
+
     auto btdevice = audioPolicyService_.GetActiveBluetoothDevice();
 
     bool hasBTPermission = VerifyBluetoothPermission();
@@ -2748,11 +2748,6 @@ int32_t AudioPolicyServer::UnsetAudioConcurrencyCallback(const uint32_t sessionI
 int32_t AudioPolicyServer::ActivateAudioConcurrency(const AudioPipeType &pipeType)
 {
     return audioPolicyService_.ActivateAudioConcurrency(pipeType);
-}
-
-int32_t AudioPolicyServer::ResetRingerModeMute()
-{
-    return audioPolicyService_.ResetRingerModeMute();
 }
 
 int32_t AudioPolicyServer::InjectInterruption(const std::string networkId, InterruptEvent &event)
