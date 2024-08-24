@@ -714,7 +714,10 @@ int32_t RemoteAudioRendererSinkInner::OpenOutput(DeviceType outputDevice)
     source.ext.mix.moduleId = 0;
     source.ext.mix.streamId = REMOTE_OUTPUT_STREAM_ID;
 
-    struct AudioPort audioPort = audioPortMap_[AudioCategory::AUDIO_IN_MEDIA];
+    if (audioPortMap_.find(AudioCategory::AUDIO_IN_MEDIA) == audioPortMap_.end()) {
+        AUDIO_WARNING_LOG("audioPortMap_ is null, ret %{public}d.", ret);
+        return ERR_INVALID_HANDLE;
+    }
     CHECK_AND_RETURN_RET_LOG(audioPort != nullptr, ERR_INVALID_HANDLE, "OpenOutput: Audio port is null.")
     sink.portId = static_cast<int32_t>(audioPort.portId);
     sink.role = AudioPortRole::AUDIO_PORT_SINK_ROLE;
