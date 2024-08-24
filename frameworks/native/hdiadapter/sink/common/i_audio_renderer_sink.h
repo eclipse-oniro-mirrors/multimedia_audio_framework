@@ -36,6 +36,7 @@ typedef struct IAudioSinkAttr {
     uint64_t channelLayout = 0;
     int32_t audioStreamFlag = 0;
     std::string address;
+    const char *aux;
 } IAudioSinkAttr;
 
 class IAudioSinkCallback {
@@ -139,6 +140,10 @@ public:
     virtual int32_t OffloadRunningLockInit(void) = 0;
     virtual int32_t OffloadRunningLockLock(void) = 0;
     virtual int32_t OffloadRunningLockUnlock(void) = 0;
+};
+class IRemoteAudioRendererSink : public IAudioRendererSink {
+public:
+    virtual int32_t SplitRenderFrame(char &data, uint64_t len, uint64_t &writeLen, char *streamType) = 0;
 };
 }  // namespace AudioStandard
 }  // namespace OHOS
