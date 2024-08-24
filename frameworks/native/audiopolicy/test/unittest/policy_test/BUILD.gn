@@ -32,6 +32,7 @@ ohos_unittest("audio_policy_unit_test") {
   cflags = [
     "-Wall",
     "-Werror",
+    "-fno-access-control",
   ]
   external_deps = [
     "ability_base:want",
@@ -64,5 +65,7 @@ ohos_unittest("audio_policy_unit_test") {
     "../../../../../../services/audio_policy:audio_policy_client",
     "../../../../../../services/audio_policy:audio_policy_service",
     "../../../../../../services/audio_service:audio_client",
+    "../../../../audiocapturer:audio_capturer",
+    "../../../../audiorenderer:audio_renderer",
   ]
 }
