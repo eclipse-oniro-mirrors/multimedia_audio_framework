@@ -8434,14 +8434,14 @@ void AudioPolicyService::UpdateSessionConnectionState(const int32_t &sessionID, 
     IPCSkeleton::SetCallingIdentity(identity);
 }
 
-int32_t  AudioPolicyService::LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId)
+int32_t  AudioPolicyService::LoadSplitModule(const std::string &splitArgs, const std::string &networkId)
 {
     AUDIO_INFO_LOG("start audio stream split, the split args is %{public}s", splitArgs.c_str());
-    std::string moduleName = GetRemoteModuleName(netWorkId, OUTPUT_DEVICE);
+    std::string moduleName = GetRemoteModuleName(networkId, OUTPUT_DEVICE);
 
     ClosePortAndEraseIOHandle(moduleName);
 
-    AudioModuleInfo moudleInfo = ConstructRemoteAudioModuleInfo(netWorkId, OUTPUT_DEVICE, DEVICE_TYPE_SPEAKER);
+    AudioModuleInfo moudleInfo = ConstructRemoteAudioModuleInfo(networkId, OUTPUT_DEVICE, DEVICE_TYPE_SPEAKER);
     moudleInfo.lib = "libmodule-split-stream-sink.z.so";
     moudleInfo.extra = splitArgs;
     

@@ -399,7 +399,7 @@ public:
 
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event) override;
 
-    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId) override;
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId) override;
 
     class RemoteParameterCallback : public AudioParameterCallback {
     public:

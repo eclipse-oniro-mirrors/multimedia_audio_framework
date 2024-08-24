@@ -360,7 +360,7 @@ int32_t AudioPolicyProxy::SetDeviceActive(InternalDeviceType deviceType, bool ac
     return reply.ReadInt32();
 }
 
-int32_t AudioPolicyProxy::LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId)
+int32_t AudioPolicyProxy::LoadSplitModule(const std::string &splitArgs, const std::string &networkId)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -369,7 +369,7 @@ int32_t AudioPolicyProxy::LoadSplitModule(const std::string &splitArgs, const st
     bool ret = data.WriteInterfaceToken(GetDescriptor());
     CHECK_AND_RETURN_RET_LOG(ret, -1, "WriteInterfaceToken failed");
     data.WriteString(splitArgs);
-    data.WriteString(netWorkId);
+    data.WriteString(networkId);
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(AudioPolicyInterfaceCode::LOAD_SPLIT_MODULE), data, reply, option);
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "load split module failed, error: %{public}d", error);

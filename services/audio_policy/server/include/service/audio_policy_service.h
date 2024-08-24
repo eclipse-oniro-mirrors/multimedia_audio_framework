@@ -543,7 +543,7 @@ public:
     void UpdateSessionConnectionState(const int32_t &sessionID, const int32_t &state);
     bool getFastControlParam();
 
-    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId);
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId);
 
 private:
     AudioPolicyService()

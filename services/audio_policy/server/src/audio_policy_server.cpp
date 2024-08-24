@@ -2825,14 +2825,14 @@ bool AudioPolicyServer::IsAudioSessionActivated()
     return isActive;
 }
 
-int32_t AudioPolicyServer::LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId)
+int32_t AudioPolicyServer::LoadSplitModule(const std::string &splitArgs, const std::string &networkId)
 {
     auto callerUid = IPCSkeleton::GetCallingUid();
     if (callerUid != UID_CAR_DISTRIBUTED_ENGINE_SA) {
         AUDIO_ERR_LOG("callerUid %{public}d is not allow LoadSplitModule", callerUid);
         return ERR_PERMISSION_DENIED;
     }
-    return audioPolicyService_.LoadSplitModule(splitArgs, netWorkId);
+    return audioPolicyService_.LoadSplitModule(splitArgs, networkId);
 }
 
 } // namespace AudioStandard

@@ -415,7 +415,7 @@ public:
 
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event);
 
-    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId);
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId);
 
 private:
     AudioPolicyManager() {}

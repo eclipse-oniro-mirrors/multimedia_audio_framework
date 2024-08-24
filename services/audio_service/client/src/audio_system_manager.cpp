@@ -1512,9 +1512,9 @@ int32_t AudioSystemManager::InjectInterruption(const std::string networkId, Inte
     return AudioPolicyManager::GetInstance().InjectInterruption(networkId, event);
 }
 
-int32_t AudioSystemManager::LoadSplitModule(const std::string &splitArgs, const std::string &netWorkId)
+int32_t AudioSystemManager::LoadSplitModule(const std::string &splitArgs, const std::string &networkId)
 {
-    return AudioPolicyManager::GetInstance().LoadSplitModule(splitArgs, netWorkId);
+    return AudioPolicyManager::GetInstance().LoadSplitModule(splitArgs, networkId);
 }
 
 } // namespace AudioStandard
