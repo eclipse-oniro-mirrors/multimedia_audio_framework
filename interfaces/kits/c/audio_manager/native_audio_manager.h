@@ -32,6 +32,7 @@
  *
  * @library libohaudio.so
  * @syscap SystemCapability.Multimedia.Audio.Core
+ * @kit AudioKit
  * @since 12
  * @version 1.0
  */
