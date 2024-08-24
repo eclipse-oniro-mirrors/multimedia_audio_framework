@@ -314,6 +314,8 @@ public:
 
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event) override;
 
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId) override;
+
 private:
     static inline BrokerDelegator<AudioPolicyProxy> mDdelegator;
     void WriteStreamChangeInfo(MessageParcel &data, const AudioMode &mode,

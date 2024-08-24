@@ -49,6 +49,7 @@ constexpr uid_t UID_CAST_ENGINE_SA = 5526;
 constexpr uid_t UID_AUDIO = 1041;
 constexpr uid_t UID_FOUNDATION_SA = 5523;
 constexpr uid_t UID_BLUETOOTH_SA = 1002;
+constexpr uid_t UID_CAR_DISTRIBUTED_ENGINE_SA = 65872;
 constexpr uid_t UID_RESOURCE_SCHEDULE_SERVICE = 1096;
 constexpr int64_t OFFLOAD_NO_SESSION_ID = -1;
 constexpr unsigned int GET_BUNDLE_TIME_OUT_SECONDS = 10;
@@ -2823,5 +2824,16 @@ bool AudioPolicyServer::IsAudioSessionActivated()
     AUDIO_INFO_LOG("callerPid %{public}d, isSessionActive: %{public}d.", callerPid, isActive);
     return isActive;
 }
+
+int32_t AudioPolicyServer::LoadSplitModule(const std::string &splitArgs, const std::string &networkId)
+{
+    auto callerUid = IPCSkeleton::GetCallingUid();
+    if (callerUid != UID_CAR_DISTRIBUTED_ENGINE_SA) {
+        AUDIO_ERR_LOG("callerUid %{public}d is not allow LoadSplitModule", callerUid);
+        return ERR_PERMISSION_DENIED;
+    }
+    return audioPolicyService_.LoadSplitModule(splitArgs, networkId);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

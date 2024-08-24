@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -217,6 +217,42 @@ int32_t AudioPolicyProxy::UnsetDistributedRoutingRoleCallback()
         static_cast<uint32_t>(AudioPolicyInterfaceCode::UNSET_DISTRIBUTED_ROUTING_ROLE_CALLBACK), data, reply, option);
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error,
         "AudioPolicyProxy UnsetDistributedRoutingRoleCallback failed error : %{public}d", error);
+    return reply.ReadInt32();
+}
+
+int32_t AudioPolicyProxy::SetClientCallbacksEnable(const CallbackChange &callbackchange, const bool &enable)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, -1, "WriteInterfaceToken failed");
+    data.WriteInt32(static_cast<int32_t>(callbackchange));
+    data.WriteBool(enable);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_CALLBACKS_ENABLE), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "Set client callback failed, error: %{public}d", error);
+
+    return reply.ReadInt32();
+}
+
+int32_t AudioPolicyProxy::RegisterPolicyCallbackClient(const sptr<IRemoteObject> &object, const int32_t zoneID)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    CHECK_AND_RETURN_RET_LOG(object != nullptr, ERR_NULL_OBJECT, "RegisterPolicyCallbackClient object is null");
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, ERROR, "WriteInterfaceToken failed");
+
+    data.WriteRemoteObject(object);
+    data.WriteInt32(zoneID);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::REGISTER_POLICY_CALLBACK_CLIENT), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, ERROR, "SendRequest failed , error: %{public}d", error);
     return reply.ReadInt32();
 }
 

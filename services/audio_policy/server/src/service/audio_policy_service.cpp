@@ -8443,6 +8443,30 @@ void AudioPolicyService::UpdateSessionConnectionState(const int32_t &sessionID, 
     IPCSkeleton::SetCallingIdentity(identity);
 }
 
+int32_t  AudioPolicyService::LoadSplitModule(const std::string &splitArgs, const std::string &networkId)
+{
+    AUDIO_INFO_LOG("start audio stream split, the split args is %{public}s", splitArgs.c_str());
+    if (splitArgs.empty() || networkId.empty()) {
+        std::string anonymousNetworkId = networkId.empty() ? "" : networkId.substr(0, 2) + "***";
+        AUDIO_ERR_LOG("LoadSplitModule, invalid param, splitArgs:'%{public}s', networkId:'%{public}s'",
+            splitArgs.c_str(), anonymousNetworkId.c_str());
+        return ERR_INVALID_PARAM;
+    }
+    std::string moduleName = GetRemoteModuleName(networkId, OUTPUT_DEVICE);
+
+    ClosePortAndEraseIOHandle(moduleName);
+
+    AudioModuleInfo moudleInfo = ConstructRemoteAudioModuleInfo(networkId, OUTPUT_DEVICE, DEVICE_TYPE_SPEAKER);
+    moudleInfo.lib = "libmodule-split-stream-sink.z.so";
+    moudleInfo.extra = splitArgs;
+    
+    int32_t openRet = OpenPortAndInsertIOHandle(moduleName, moudleInfo);
+    if (openRet != 0) {
+        AUDIO_ERR_LOG("open fail, OpenPortAndInsertIOHandle ret: %{public}d", openRet);
+    }
+    return openRet;
+}
+
 void AudioA2dpOffloadManager::OnA2dpPlayingStateChanged(const std::string &deviceAddress, int32_t playingState)
 {
     AUDIO_INFO_LOG("Current A2dpOffload MacAddr:%{public}s, incoming MacAddr:%{public}s, state:%{public}d",

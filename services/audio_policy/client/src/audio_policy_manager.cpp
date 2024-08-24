@@ -1909,6 +1909,13 @@ int32_t AudioPolicyManager::InjectInterruption(const std::string networkId, Inte
     return gsp->InjectInterruption(networkId, event);
 }
 
+int32_t AudioPolicyManager::LoadSplitModule(const std::string &splitArgs, const std::string &networkId)
+{
+    const sptr<IAudioPolicy> gsp = GetAudioPolicyManagerProxy();
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, -1, "audio policy manager proxy is NULL.");
+    return gsp->LoadSplitModule(splitArgs, networkId);
+}
+
 AudioPolicyManager& AudioPolicyManager::GetInstance()
 {
     static AudioPolicyManager policyManager;
