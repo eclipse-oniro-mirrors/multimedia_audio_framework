@@ -1264,7 +1264,8 @@ std::vector<SourceOutput> AudioPolicyService::FilterSourceOutputs(int32_t sessio
 {
     std::vector<SourceOutput> targetSourceOutputs = {};
     std::vector<SourceOutput> sourceOutputs;
-    if (IOHandles_.count([x] { return CheckIsSource(x); }) > 0) {
+    if (std::any_of(IOHandles_.cbegin(), IOHandles_.cend(),
+        [](const auto &pair) { return CheckIsSource(pair.first); })) {
         sourceOutputs = audioPolicyManager_.GetAllSourceOutputs();
     }
 
@@ -5218,7 +5219,8 @@ void AudioPolicyService::WriteDeviceChangedSysEvents(const vector<sptr<AudioDevi
                 }
             } else if (deviceDescriptor->deviceRole_ == INPUT_DEVICE) {
                 vector<SourceOutput> sourceOutputs;
-                if (IOHandles_.count([x] { return CheckIsSource(x); }) > 0) {
+                if (std::any_of(IOHandles_.cbegin(), IOHandles_.cend(),
+                    [](const auto &pair) { return CheckIsSource(pair.first); })) {
                     sourceOutputs = audioPolicyManager_.GetAllSourceOutputs();
                 }
                 for (SourceOutput sourceOutput : sourceOutputs) {
