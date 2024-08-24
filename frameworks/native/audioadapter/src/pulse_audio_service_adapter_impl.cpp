@@ -99,6 +99,7 @@ bool PulseAudioServiceAdapterImpl::Connect()
     int32_t XcollieFlag = (1 | 2); // flag 1 generate log file, flag 2 die when timeout, restart server
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::Connect");
 
     while (true) {
         pa_context_state_t state;
@@ -186,6 +187,7 @@ uint32_t PulseAudioServiceAdapterImpl::OpenAudioPort(string audioPortName, strin
     userData->thiz = this;
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::OpenAudioPort");
     if (mContext == nullptr) {
         AUDIO_ERR_LOG("mContext is nullptr");
         return ERROR;
@@ -261,6 +263,7 @@ bool PulseAudioServiceAdapterImpl::SetSinkMute(const std::string &sinkName, bool
     int32_t XcollieFlag = (1 | 2); // flag 1 generate log file, flag 2 die when timeout, restart server
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::SetSinkMute");
 
     int muteFlag = isMute ? 1 : 0;
 
@@ -382,6 +385,7 @@ std::vector<SinkInfo> PulseAudioServiceAdapterImpl::GetAllSinks()
     CHECK_AND_RETURN_RET_LOG(mContext != nullptr, userData->sinkInfos, "mContext is nullptr");
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::GetAllSinks");
 
     pa_operation *operation = pa_context_get_sink_info_list(mContext,
         PulseAudioServiceAdapterImpl::PaGetSinksCb, reinterpret_cast<void*>(userData.get()));
@@ -438,6 +442,7 @@ int32_t PulseAudioServiceAdapterImpl::MoveSinkInputByIndexOrName(uint32_t sinkIn
     std::string sinkName)
 {
     lock_guard<mutex> lock(lock_);
+    Trace trace("PulseAudioServiceAdapterImpl::MoveSinkInputByIndexOrName");
 
     unique_ptr<UserData> userData = make_unique<UserData>();
     userData->thiz = this;
@@ -478,6 +483,7 @@ int32_t PulseAudioServiceAdapterImpl::MoveSourceOutputByIndexOrName(uint32_t sou
     std::string sourceName)
 {
     lock_guard<mutex> lock(lock_);
+    Trace trace("PulseAudioServiceAdapterImpl::MoveSourceOutputByIndexOrName");
 
     unique_ptr<UserData> userData = make_unique<UserData>();
     userData->thiz = this;
@@ -576,6 +582,7 @@ vector<SinkInput> PulseAudioServiceAdapterImpl::GetAllSinkInputs()
     CHECK_AND_RETURN_RET_LOG(mContext != nullptr, userData->sinkInputList, "mContext is nullptr");
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::GetAllSinkInputs");
 
     pa_operation *operation = pa_context_get_sink_input_info_list(mContext,
         PulseAudioServiceAdapterImpl::PaGetAllSinkInputsCb, reinterpret_cast<void*>(userData.get()));
@@ -602,6 +609,7 @@ vector<SinkInput> PulseAudioServiceAdapterImpl::GetAllSinkInputs()
 vector<SourceOutput> PulseAudioServiceAdapterImpl::GetAllSourceOutputs()
 {
     lock_guard<mutex> lock(lock_);
+    Trace trace("PulseAudioServiceAdapterImpl::GetAllSourceOutputs");
 
     unique_ptr<UserData> userData = make_unique<UserData>();
     userData->thiz = this;
