@@ -344,6 +344,7 @@ struct AudioRendererInfo {
     uint64_t channelLayout = 0ULL;
     AudioSampleFormat format = SAMPLE_S16LE;
     bool isOffloadAllowed = true;
+    bool isSatellite = false;
 
     bool Marshalling(Parcel &parcel) const
     {

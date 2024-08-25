@@ -217,6 +217,7 @@ int32_t ProcessConfig::WriteConfigToParcel(const AudioProcessConfig &config, Mes
     parcel.WriteString(config.rendererInfo.sceneType);
     parcel.WriteBool(config.rendererInfo.spatializationEnabled);
     parcel.WriteBool(config.rendererInfo.headTrackingEnabled);
+    parcel.WriteBool(config.rendererInfo.isSatellite);
     parcel.WriteInt32(config.rendererInfo.pipeType);
 
     //AudioPrivacyType
@@ -267,6 +268,7 @@ int32_t ProcessConfig::ReadConfigFromParcel(AudioProcessConfig &config, MessageP
     config.rendererInfo.sceneType = parcel.ReadString();
     config.rendererInfo.spatializationEnabled = parcel.ReadBool();
     config.rendererInfo.headTrackingEnabled = parcel.ReadBool();
+    config.rendererInfo.isSatellite = parcel.ReadBool();
     config.rendererInfo.pipeType = static_cast<AudioPipeType>(parcel.ReadInt32());
 
     //AudioPrivacyType

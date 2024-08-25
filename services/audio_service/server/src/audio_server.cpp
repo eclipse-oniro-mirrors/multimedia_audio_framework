@@ -32,6 +32,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "hisysevent.h"
+#include "parameters.h"
 
 #include "audio_capturer_source.h"
 #include "fast_audio_capturer_source.h"
@@ -69,6 +70,9 @@ std::map<std::string, std::string> AudioServer::audioParameters;
 std::unordered_map<std::string, std::unordered_map<std::string, std::set<std::string>>> AudioServer::audioParameterKeys;
 const string DEFAULT_COOKIE_PATH = "/data/data/.pulse_dir/state/cookie";
 const std::string CHECK_FAST_BLOCK_PREFIX = "Is_Fast_Blocked_For_AppName#";
+constexpr const char *TEL_SATELLITE_SUPPORT = "const.telephony.satellite.supported";
+const std::string SATEMODEM_PARAMETER = "usedmodem=satemodem";
+constexpr int32_t UID_FOUNDATION_SA = 5523;
 const unsigned int TIME_OUT_SECONDS = 10;
 const unsigned int SCHEDULE_REPORT_TIME_OUT_SECONDS = 2;
 static const std::vector<StreamUsage> STREAMS_NEED_VERIFY_SYSTEM_PERMISSION = {
@@ -1498,6 +1502,18 @@ sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &co
     CHECK_AND_RETURN_RET_LOG(CheckConfigFormat(resetConfig), nullptr, "AudioProcessConfig format is wrong, please check"
         ":%{public}s", ProcessConfig::DumpProcessConfig(resetConfig).c_str());
     CHECK_AND_RETURN_RET_LOG(PermissionChecker(resetConfig), nullptr, "Create audio process failed, no permission");
+
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    if (config.rendererInfo.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION) {
+        if (callingUid == UID_FOUNDATION_SA) {
+            bool isSupportSate = OHOS::system::GetBoolParameter(TEL_SATELLITE_SUPPORT, false);
+            CHECK_AND_RETURN_RET_LOG(isSupportSate, nullptr, "DO not support satellite");
+            if (config.rendererInfo.isSatellite && isSupportSate) {
+                IAudioRendererSink* audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
+                audioRendererSinkInstance->SetAudioParameter(AudioParamKey::NONE, "", SATEMODEM_PARAMETER);
+            }
+        }
+    }
 
     if (IsNormalIpcStream(resetConfig) || (isFastControlled_ && IsFastBlocked(resetConfig.appInfo.appUid))) {
         AUDIO_INFO_LOG("Create normal ipc stream, isFastControlled: %{public}d", isFastControlled_);
