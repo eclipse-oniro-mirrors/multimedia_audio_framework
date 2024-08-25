@@ -46,6 +46,7 @@ AudioPolicyServer* GetServerPtr()
         server.OnAddSystemAbility(ACCESSIBILITY_MANAGER_SERVICE_ID, "");
         server.OnAddSystemAbility(POWER_MANAGER_SERVICE_ID, "");
         server.OnAddSystemAbility(SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN, "");
+        server.audioPolicyService_.SetDefaultDeviceLoadFlag(true);
         g_hasServerInit = true;
     }
     return &server;

@@ -994,6 +994,8 @@ private:
         std::vector<sptr<AudioDeviceDescriptor>> &descForCb,
         AudioStreamDeviceChangeReasonExt &reason);
 
+    void SetDefaultDeviceLoadFlag(bool isLoad);
+
     bool isUpdateRouteSupported_ = true;
     bool isCurrentRemoteRenderer = false;
     bool remoteCapturerSwitch_ = false;
