@@ -151,11 +151,9 @@ ohos_shared_library("module-split-stream-sink") {
 
   deps = [
     "../../../../../services/audio_service:audio_common",
-    "../../../audioeffect:audio_effect",
     "../../../audioschedule:audio_schedule",
     "../../../audioutils:audio_utils",
     "../../../hdiadapter/sink:renderer_sink_adapter",
-    "../../../playbackcapturer:playback_capturer",
   ]
 
   external_deps = [

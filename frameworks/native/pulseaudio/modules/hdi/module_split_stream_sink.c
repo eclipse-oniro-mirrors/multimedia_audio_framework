@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -51,10 +51,7 @@
 #include "audio_schedule.h"
 #include "audio_utils_c.h"
 #include "audio_hdiadapter_info.h"
-
 #include "renderer_sink_adapter.h"
-#include "audio_effect_chain_adapter.h"
-#include "playback_capturer_adapter.h"
 
 #define DEFAULT_SINK_NAME "hdi_output"
 #define DEFAULT_DEVICE_CLASS "primary"
@@ -75,9 +72,9 @@
 char *g_splitArr[MAX_PARTS];
 int g_splitNums = 0;
 const char *SPLIT_MODE;
-const uint32_t ONE_STREAM = 1;
-const uint32_t TWO_STREAM = 2;
-const uint32_t THREE_STREAM = 3;
+const uint32_t SPLIT_ONE_STREAM = 1;
+const uint32_t SPLIT_TWO_STREAM = 2;
+const uint32_t SPLIT_THREE_STREAM = 3;
 
 PA_MODULE_AUTHOR("OpenHarmony");
 PA_MODULE_DESCRIPTION(_("Split Stream Sink"));
@@ -130,7 +127,7 @@ struct userdata {
     uint32_t fixed_latency;
     pa_usec_t lastProcessDataTime;
     int64_t timestampSleep;
-    uint32_t render_in_idle_state;
+    uint32_t renderInIdleState;
 };
 
 static const char * const VALID_MODARGS[] = {
@@ -171,59 +168,56 @@ enum {
     HDI_RENDER_COMMUNICATION
 };
 
-static int32_t GetSinkTypeNum(const char *sinkSceneType)
+static enum HdiAdapterFormat ConvertPaToHdiAdapterFormat(pa_sample_format_t format)
 {
-    for (int32_t i = 0; i < SCENE_TYPE_NUM; i++) {
-        if (pa_safe_streq(sinkSceneType, SCENE_TYPE_SET[i])) {
-            return i;
-        }
+    enum HdiAdapterFormat adapterFormat;
+    switch (format) {
+        case PA_SAMPLE_U8:
+            adapterFormat = SAMPLE_U8;
+            break;
+        case PA_SAMPLE_S16LE:
+            adapterFormat = SAMPLE_S16;
+            break;
+        case PA_SAMPLE_S24LE:
+            adapterFormat = SAMPLE_S24;
+            break;
+        case PA_SAMPLE_S32LE:
+            adapterFormat = SAMPLE_S32;
+            break;
+        default:
+            adapterFormat = INVALID_WIDTH;
+            break;
     }
-    return -1;
+
+    return adapterFormat;
 }
 
-static void SetHdiParam(struct userdata *u)
+static void ConvertToSplitArr(const char *str)
 {
-    pa_sink_input *i;
-    void *state = NULL;
-    int sessionIDMax = -1;
-    int32_t sinkSceneTypeMax = -1;
-    int32_t sinkSceneModeMax = -1;
-    bool hdiEffectEnabledMax = false;
-    while ((i = pa_hashmap_iterate(u->sink->thread_info.inputs, &state, NULL))) {
-        pa_sink_input_assert_ref(i);
-        const char *clientUid = pa_proplist_gets(i->proplist, "stream.client.uid");
-        const char *bootUpMusic = "1003";
-        if (pa_safe_streq(clientUid, bootUpMusic)) { return; }
-        const char *sinkSceneType = pa_proplist_gets(i->proplist, "scene.type");
-        const char *sinkSceneMode = pa_proplist_gets(i->proplist, "scene.mode");
-        const char *sinkSpatialization = pa_proplist_gets(i->proplist, "spatialization.enabled");
-        const char *sinkSessionStr = pa_proplist_gets(i->proplist, "stream.sessionID");
-        bool spatializationEnabled = pa_safe_streq(sinkSpatialization, "1") ? true : false;
-        bool hdiEffectEnabled = spatializationEnabled;
-        int sessionID = atoi(sinkSessionStr == NULL ? "-1" : sinkSessionStr);
-        if (sinkSceneType && sinkSceneMode && sinkSpatialization) {
-            if (sessionID > sessionIDMax) {
-                sessionIDMax = sessionID;
-                sinkSceneTypeMax = GetSinkTypeNum(sinkSceneType);
-                sinkSceneModeMax = pa_safe_streq(sinkSceneMode, "EFFECT_NONE") == true ? 0 : 1;
-                hdiEffectEnabledMax = hdiEffectEnabled;
-            }
+    for (int i = 0; i < MAX_PARTS; ++i) {
+        g_splitArr[i] = NULL;
+    }
+
+    char *token;
+    char *copy = strdup(str);
+    int count = 0;
+
+    token = strtok(copy, ":");
+    while (token != NULL && count < MAX_PARTS) {
+        g_splitArr[count] = (char *)malloc(strlen(token) + 1);
+        if (g_splitArr[count] != NULL) {
+            if (strcpy_s(g_splitArr[count], strlen(token) + 1, token) != 0) {
+                AUDIO_ERR_LOG("strcpy_s failed.");
+            };
+            count++;
+        } else {
+            AUDIO_ERR_LOG("Memory allocation failed.\n");
+            break;
         }
+        token = strtok(NULL, ":");
     }
-
-    if (u == NULL) {
-        AUDIO_DEBUG_LOG("SetHdiParam userdata null pointer");
-        return;
-    }
-
-    if ((u->sinkSceneType != sinkSceneTypeMax) || (u->sinkSceneMode != sinkSceneModeMax) ||
-        (u->hdiEffectEnabled != hdiEffectEnabledMax)) {
-        u->sinkSceneMode = sinkSceneModeMax;
-        u->sinkSceneType = sinkSceneTypeMax;
-        u->hdiEffectEnabled = hdiEffectEnabledMax;
-        EffectChainManagerSetHdiParam(u->sinkSceneType < 0 ? "" : SCENE_TYPE_SET[u->sinkSceneType],
-            u->sinkSceneMode == 0 ? "EFFECT_NONE" : "EFFECT_DEFAULT", u->hdiEffectEnabled);
-    }
+    g_splitNums = count;
+    free(copy);
 }
 
 static int SinkProcessMsg(pa_msgobject *o, int code, void *data, int64_t offset, pa_memchunk *chunk)
@@ -354,7 +348,7 @@ static void StartSplitStreamHdiIfRunning(struct userdata *u)
         u->writeCount = 0;
         u->renderCount = 0;
         AUDIO_INFO_LOG("StartPrimaryHdiIfRunning, Successfully restarted HDI renderer");
-        u->render_in_idle_state = 1;
+        u->renderInIdleState = 1;
     }
 }
 
@@ -371,7 +365,6 @@ static void SplitSinkRenderInputsDrop(pa_sink *si, pa_mix_info *infoIn, unsigned
 
     pa_mix_info *infoCur = NULL;
     pa_sink_input *sinkInput = NULL;
-    bool isCaptureSilently = IsCaptureSilently();
     for (uint32_t k = 0; k < n; k++) {
         sinkInput = infoIn[k].userdata;
         pa_sink_input_assert_ref(sinkInput);
@@ -386,10 +379,6 @@ static void SplitSinkRenderInputsDrop(pa_sink *si, pa_mix_info *infoIn, unsigned
             }
 
             pa_sink_input_unref(infoCur->userdata);
-
-            if (isCaptureSilently) {
-                infoCur->userdata = NULL;
-            }
         }
     }
 }
@@ -397,11 +386,11 @@ static void SplitSinkRenderInputsDrop(pa_sink *si, pa_mix_info *infoIn, unsigned
 static int IsPeekCurrentSinkInput(char *streamType, const char *usageStr)
 {
     int flag = 0;
-    if (g_splitNums == ONE_STREAM) {
+    if (g_splitNums == SPLIT_ONE_STREAM) {
         flag = 1;
     }
 
-    if (g_splitNums == TWO_STREAM) {
+    if (g_splitNums == SPLIT_TWO_STREAM) {
         if (strcmp(usageStr, STREAM_TYPE_NAVIGATION) && !strcmp(streamType, STREAM_TYPE_MEDIA)) {
             flag = 1;
         } else if (!strcmp(usageStr, STREAM_TYPE_NAVIGATION) && !strcmp(streamType, STREAM_TYPE_NAVIGATION)) {
@@ -409,7 +398,7 @@ static int IsPeekCurrentSinkInput(char *streamType, const char *usageStr)
         }
     }
 
-    if (g_splitNums == THREE_STREAM) {
+    if (g_splitNums == SPLIT_THREE_STREAM) {
         if (strcmp(usageStr, STREAM_TYPE_NAVIGATION) && strcmp(usageStr, STREAM_TYPE_COMMUNICATION) &&
             !strcmp(streamType, STREAM_TYPE_MEDIA)) {
             flag = 1;
@@ -882,8 +871,8 @@ static ssize_t SplitRenderWrite(struct RendererSinkAdapter *sinkAdapter, pa_memc
     while (true) {
         uint64_t writeLen = 0;
 
-        int32_t ret = sinkAdapter->RendererRenderFrame(sinkAdapter, ((char*)p + index),
-            (uint64_t)length, &writeLen);
+        int32_t ret = sinkAdapter->RendererSplitRenderFrame(sinkAdapter, ((char*)p + index),
+            (uint64_t)length, &writeLen, streamType);
         if (writeLen > length) {
             AUDIO_ERR_LOG("Error writeLen > actual bytes. Length: %zu, Written: %" PRIu64 " bytes, %d ret",
                          length, writeLen, ret);
@@ -977,30 +966,6 @@ static int CreateSink(pa_module *m, pa_modargs *ma, struct userdata *u)
     return 0;
 }
 
-static enum HdiAdapterFormat ConvertPaToHdiAdapterFormat(pa_sample_format_t format)
-{
-    enum HdiAdapterFormat adapterFormat;
-    switch (format) {
-        case PA_SAMPLE_U8:
-            adapterFormat = SAMPLE_U8;
-            break;
-        case PA_SAMPLE_S16LE:
-            adapterFormat = SAMPLE_S16;
-            break;
-        case PA_SAMPLE_S24LE:
-            adapterFormat = SAMPLE_S24;
-            break;
-        case PA_SAMPLE_S32LE:
-            adapterFormat = SAMPLE_S32;
-            break;
-        default:
-            adapterFormat = INVALID_WIDTH;
-            break;
-    }
-
-    return adapterFormat;
-}
-
 static int32_t InitRemoteSink(struct userdata *u, const char *filePath)
 {
     SinkAttr sample_attrs;
@@ -1085,34 +1050,6 @@ static int32_t PaHdiSinkNewInit(pa_module *m, pa_modargs *ma, struct userdata *u
     }
 
     return 0;
-}
-
-static void ConvertToSplitArr(const char *str)
-{
-    for (int i = 0; i < MAX_PARTS; ++i) {
-        g_splitArr[i] = NULL;
-    }
-
-    char *token;
-    char *copy = strdup(str);
-    int count = 0;
-
-    token = strtok(copy, ":");
-    while (token != NULL && count < MAX_PARTS) {
-        g_splitArr[count] = (char *)malloc(strlen(token) + 1);
-        if (g_splitArr[count] != NULL) {
-            if (strcpy_s(g_splitArr[count], strlen(token) + 1, token) != 0) {
-                AUDIO_ERR_LOG("strcpy_s failed.");
-            };
-            count++;
-        } else {
-            AUDIO_ERR_LOG("Memory allocation failed.\n");
-            break;
-        }
-        token = strtok(NULL, ":");
-    }
-    g_splitNums = count;
-    free(copy);
 }
 
 int pa__init(pa_module *m)
