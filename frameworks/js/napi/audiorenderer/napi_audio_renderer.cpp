@@ -103,6 +103,7 @@ napi_status NapiAudioRenderer::InitNapiAudioRenderer(napi_env env, napi_value &c
         DECLARE_NAPI_FUNCTION("off", Off),
         DECLARE_NAPI_FUNCTION("setSilentModeAndMixWithOthers", SetSilentModeAndMixWithOthers),
         DECLARE_NAPI_FUNCTION("getSilentModeAndMixWithOthers", GetSilentModeAndMixWithOthers),
+        DECLARE_NAPI_FUNCTION("setDefaultOutputDevice", SetDefaultOutputDevice),
     };
 
     napi_status status = napi_define_class(env, NAPI_AUDIO_RENDERER_CLASS_NAME.c_str(),
@@ -1566,6 +1567,36 @@ napi_value NapiAudioRenderer::GetSilentModeAndMixWithOthers(napi_env env, napi_c
 
     bool on = napiAudioRenderer->audioRenderer_->GetSilentModeAndMixWithOthers();
     napi_get_boolean(env, on, &result);
+    return result;
+}
+
+napi_value NapiAudioRenderer::SetDefaultOutputDevice(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {};
+    auto *napiAudioRenderer = GetParamWithSync(env, info, argc, argv);
+    CHECK_AND_RETURN_RET_LOG(argc == ARGS_ONE, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "mandatory parameters are left unspecified"), "argcCount invaild");
+
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[PARAM0], &valueType);
+    CHECK_AND_RETURN_RET_LOG(valueType == napi_number, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INPUT_INVALID,
+        "incorrect parameter types: The type of mode must be number"), "valueType params");
+
+    int32_t deviceType;
+    NapiParamUtils::GetValueInt32(env, deviceType, argv[PARAM0]);
+    CHECK_AND_RETURN_RET_LOG(NapiAudioEnum::IsLegalInputArgumentDefaultOutputDeviceType(deviceType),
+        NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INVALID_PARAM,
+        "parameter verification failed: The param of mode must be enum deviceType"), "unsupport params");
+
+    CHECK_AND_RETURN_RET_LOG(napiAudioRenderer!= nullptr, result, "napiAudioRenderer is nullptr");
+    CHECK_AND_RETURN_RET_LOG(napiAudioRenderer->audioRenderer_ != nullptr, result, "audioRenderer_ is nullptr");
+    int32_t ret =
+        napiAudioRenderer->audioRenderer_->SetDefaultOutputDevice(static_cast<DeviceType>(deviceType));
+    CHECK_AND_RETURN_RET_LOG(ret != ERR_ILLEGAL_STATE,
+        NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_ILLEGAL_STATE), "err illegal state");
+
     return result;
 }
 

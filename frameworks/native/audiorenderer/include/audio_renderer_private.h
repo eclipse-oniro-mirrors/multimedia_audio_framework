@@ -128,6 +128,8 @@ public:
 
     void EnableVoiceModemCommunicationStartStream(bool enable) override;
 
+    int32_t SetDefaultOutputDevice(DeviceType deviceType) override;
+
     static inline AudioStreamParams ConvertToAudioStreamParams(const AudioRendererParams params)
     {
         AudioStreamParams audioStreamParams;

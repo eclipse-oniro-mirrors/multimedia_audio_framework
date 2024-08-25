@@ -1909,6 +1909,14 @@ int32_t AudioPolicyManager::LoadSplitModule(const std::string &splitArgs, const 
     return gsp->LoadSplitModule(splitArgs, networkId);
 }
 
+int32_t AudioPolicyManager::SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
+    const StreamUsage streamUsage, bool isRunning)
+{
+    const sptr<IAudioPolicy> gsp = GetAudioPolicyManagerProxy();
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, -1, "audio policy manager proxy is NULL.");
+    return gsp->SetDefaultOutputDevice(deviceType, sessionID, streamUsage, isRunning);
+}
+
 AudioPolicyManager& AudioPolicyManager::GetInstance()
 {
     static AudioPolicyManager policyManager;

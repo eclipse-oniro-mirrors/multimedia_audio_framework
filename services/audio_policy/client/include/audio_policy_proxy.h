@@ -314,6 +314,9 @@ public:
 
     int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId) override;
 
+    int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
+        const StreamUsage streamUsage, bool isRunning) override;
+
 private:
     static inline BrokerDelegator<AudioPolicyProxy> mDdelegator;
     void WriteStreamChangeInfo(MessageParcel &data, const AudioMode &mode,

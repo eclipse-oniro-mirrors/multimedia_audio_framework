@@ -399,6 +399,9 @@ public:
 
     int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId) override;
 
+    int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
+        const StreamUsage streamUsage, bool isRunning) override;
+
     class RemoteParameterCallback : public AudioParameterCallback {
     public:
         RemoteParameterCallback(sptr<AudioPolicyServer> server);
