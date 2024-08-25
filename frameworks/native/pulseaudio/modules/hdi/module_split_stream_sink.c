@@ -765,7 +765,6 @@ static void ThreadFunc(void *userdata)
         if (PA_UNLIKELY(u->sink->thread_info.rewind_requested)) {
             ProcessRewind(u, now);
         }
-        SetHdiParam(u);
         /* Render some data and drop it immediately */
         if (PA_SINK_IS_OPENED(u->sink->thread_info.state)) {
             if (u->timestamp <= now) {
