@@ -736,6 +736,11 @@ void UpdateSinkArgs(const AudioModuleInfo &audioModuleInfo, std::string &args)
         args.append(" device_type=");
         args.append(audioModuleInfo.deviceType);
     }
+
+    if (!audioModuleInfo.extra.empty()) {
+        args.append(" split_mode=");
+        args.append(audioModuleInfo.extra);
+    }
 }
 
 void UpdateSourceArgs(const AudioModuleInfo &audioModuleInfo, std::string &args)
@@ -834,6 +839,9 @@ std::string AudioAdapterManager::GetModuleArgs(const AudioModuleInfo &audioModul
             args.append(" test_mode_on=");
             args.append("1");
         }
+    } else if (audioModuleInfo.lib == SPLIT_STREAM_SINK) {
+        UpdateCommonArgs(audioModuleInfo, args);
+        UpdateSinkArgs(audioModuleInfo, args);
     } else if (audioModuleInfo.lib == HDI_SOURCE) {
         UpdateCommonArgs(audioModuleInfo, args);
         UpdateSourceArgs(audioModuleInfo, args);

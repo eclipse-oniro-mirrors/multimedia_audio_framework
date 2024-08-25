@@ -77,6 +77,7 @@ int32_t LoadSinkAdapter(const char *device, const char *deviceNetworkId, struct 
     adapter->RendererSinkPause = IAudioRendererSinkPause;
     adapter->RendererSinkResume = IAudioRendererSinkResume;
     adapter->RendererRenderFrame = IAudioRendererSinkRenderFrame;
+    adapter->RendererSplitRenderFrame = IAudioRendererSinkSplitRenderFrame;
     adapter->RendererSinkSetVolume = IAudioRendererSinkSetVolume;
     adapter->RendererSinkGetVolume = IAudioRendererSinkGetVolume;
     adapter->RendererSinkGetLatency = IAudioRendererSinkGetLatency;
