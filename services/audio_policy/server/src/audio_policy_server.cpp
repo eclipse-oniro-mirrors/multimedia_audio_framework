@@ -377,13 +377,15 @@ bool AudioPolicyServer::IsVolumeLevelValid(AudioStreamType streamType, int32_t v
 
 void AudioPolicyServer::SubscribeOsAccountChangeEvents()
 {
-    AccountSA::OsAccountSubscribeInfo osAccountSubscribeInfo;
-    osAccountSubscribeInfo.SetOsAccountSubscribeType(AccountSA::OS_ACCOUNT_SUBSCRIBE_TYPE::SWITCHED);
-    std::shared_ptr<AudioOsAccountInfo> accountInfoObs =
-    std::make_shared<AudioOsAccountInfo>(osAccountSubscribeInfo, this);
-    ErrCode errCode = AccountSA::OsAccountManager::SubscribeOsAccount(accountInfoObs);
-    if (errCode != SUCCESS) {
-        AUDIO_ERR_LOG("SubscribeOsAccount failed");
+    if (!accountObserver_){
+        AccountSA::OsAccountSubscribeInfo osAccountSubscribeInfo;
+        osAccountSubscribeInfo.SetOsAccountSubscribeType(AccountSA::OS_ACCOUNT_SUBSCRIBE_TYPE::SWITCHED);
+        accountObserver_ = std::make_shared<AudioOsAccountInfo>(osAccountSubscribeInfo, this);
+        ErrCode errCode = AccountSA::OsAccountManager::SubscribeOsAccount(accountObserver_);
+        CHECK_AND_RETURN_LOG(errCode == ERR_OK, "account observer register fail");
+        AUDIO_INFO_LOG("account observer register success");
+    } else {
+        AUDIO_ERR_LOG("account observer register already");
     }
 }
 

@@ -583,12 +583,13 @@ private:
     std::map<std::u16string, DumpFunc> dumpFuncMap;
     pid_t lastMicMuteSettingPid_ = 0;
     std::string GetBundleName();
+    std::shared_ptr<AudioOsAccountInfo> accountObserver_ = nullptr;
 };
 
 class AudioOsAccountInfo : public AccountSA::OsAccountSubscriber {
 public:
     explicit AudioOsAccountInfo(const AccountSA::OsAccountSubscribeInfo &subscribeInfo,
-        AudioPolicyServer *audioPolicyServer) : AccountSA::OsAccountSubscriber(subscribeInfo),
+        sptr<AudioPolicyServer> audioPolicyServer) : AccountSA::OsAccountSubscriber(subscribeInfo),
         audioPolicyServer_(audioPolicyServer) {}
 
     ~AudioOsAccountInfo()
@@ -610,7 +611,7 @@ public:
         }
     }
 private:
-    AudioPolicyServer *audioPolicyServer_;
+    sptr<AudioPolicyServer> audioPolicyServer_;
 };
 
 class AudioCommonEventSubscriber : public EventFwk::CommonEventSubscriber {
