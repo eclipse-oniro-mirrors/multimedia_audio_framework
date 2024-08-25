@@ -1415,7 +1415,6 @@ bool RendererInClientInner::ReleaseAudioStream(bool releaseRunner)
     lock.unlock();
 
     UpdateTracker("RELEASED");
-    RemoveRendererOrCapturerPolicyServiceDiedCB();
     AUDIO_INFO_LOG("Release end, sessionId: %{public}d, uid: %{public}d", sessionId_, clientUid_);
 
     audioSpeed_.reset();
@@ -2245,51 +2244,6 @@ void SpatializationStateChangeCallbackImpl::OnSpatializationStateChange(
     if (rendererInClient != nullptr) {
         rendererInClient->OnSpatializationStateChange(spatializationState);
     }
-}
-
-int32_t RendererInClientInner::RegisterRendererInClientPolicyServerDiedCb()
-{
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ == nullptr,
-        ERROR, "policyServiceDiedCB_ existence, do not create duplicate");
-
-    policyServiceDiedCB_ = std::make_shared<RendererInClientPolicyServiceDiedCallbackImpl>();
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ != nullptr,
-        ERROR, "create policyServiceDiedCB_ failed");
-
-    return AudioPolicyManager::GetInstance().RegisterAudioStreamPolicyServerDiedCb(policyServiceDiedCB_);
-}
-
-int32_t RendererInClientInner::UnregisterRendererInClientPolicyServerDiedCb()
-{
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ != nullptr,
-        ERROR, "audioStreamPolicyServiceDiedCB_ is null");
-    return AudioPolicyManager::GetInstance().UnregisterAudioStreamPolicyServerDiedCb(policyServiceDiedCB_);
-}
-
-int32_t RendererInClientInner::RegisterRendererOrCapturerPolicyServiceDiedCB(
-    const std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> &callback)
-{
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERROR, "Callback expired");
-
-    int32_t ret = RegisterRendererInClientPolicyServerDiedCb();
-    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERROR, "RegisterRendererInClientPolicyServerDiedCb failed");
-
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ != nullptr,
-        ERROR, "policyServiceDiedCB_ is null");
-    policyServiceDiedCB_->SaveRendererOrCapturerPolicyServiceDiedCB(callback);
-    return SUCCESS;
-}
-
-int32_t RendererInClientInner::RemoveRendererOrCapturerPolicyServiceDiedCB()
-{
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ != nullptr,
-        ERROR, "policyServiceDiedCB_ is null");
-    policyServiceDiedCB_->RemoveRendererOrCapturerPolicyServiceDiedCB();
-
-    int32_t ret = UnregisterRendererInClientPolicyServerDiedCb();
-    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERROR, "UnregisterRendererInClientPolicyServerDiedCb failed");
-
-    return SUCCESS;
 }
 
 bool RendererInClientInner::RestoreAudioStream()

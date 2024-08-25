@@ -290,7 +290,7 @@ private:
     std::mutex callbackMutex_;
 };
 
-class RendererPolicyServiceDiedCallback : public RendererOrCapturerPolicyServiceDiedCallback {
+class RendererPolicyServiceDiedCallback : public AudioStreamPolicyServiceDiedCallback {
 public:
     RendererPolicyServiceDiedCallback();
     virtual ~RendererPolicyServiceDiedCallback();

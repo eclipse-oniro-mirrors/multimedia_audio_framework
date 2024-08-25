@@ -575,7 +575,6 @@ bool FastAudioStream::ReleaseAudioStream(bool releaseRunner)
         AUDIO_DEBUG_LOG("AudioStream:Calling Update tracker for release");
         audioStreamTracker_->UpdateTracker(sessionId_, state_, clientPid_, rendererInfo_, capturerInfo_);
     }
-    RemoveRendererOrCapturerPolicyServiceDiedCB();
     return true;
 }
 
@@ -832,54 +831,6 @@ void FastAudioStream::UpdateRegisterTrackerInfo(AudioRegisterTrackerInfo &regist
     registerTrackerInfo.capturerInfo = capturerInfo_;
 }
 
-int32_t FastAudioStream::RegisterAudioStreamPolicyServerDiedCb()
-{
-    AUDIO_DEBUG_LOG("RegisterAudioStreamPolicyServerDiedCb enter");
-    CHECK_AND_RETURN_RET_LOG(audioStreamPolicyServiceDiedCB_ == nullptr,
-        ERROR, "audioStreamPolicyServiceDiedCB_ existence, do not create duplicate");
-
-    audioStreamPolicyServiceDiedCB_ = std::make_shared<FastPolicyServiceDiedCallbackImpl>();
-    CHECK_AND_RETURN_RET_LOG(audioStreamPolicyServiceDiedCB_ != nullptr,
-        ERROR, "create audioStreamPolicyServiceDiedCB_ failed");
-
-    return AudioPolicyManager::GetInstance().RegisterAudioStreamPolicyServerDiedCb(audioStreamPolicyServiceDiedCB_);
-}
-
-int32_t FastAudioStream::UnregisterAudioStreamPolicyServerDiedCb()
-{
-    AUDIO_DEBUG_LOG("AudioRendererPrivate:: UnregisterAudioStreamPolicyServerDiedCb enter");
-    CHECK_AND_RETURN_RET_LOG(audioStreamPolicyServiceDiedCB_ != nullptr,
-        ERROR, "audioStreamPolicyServiceDiedCB_ is null");
-    return AudioPolicyManager::GetInstance().UnregisterAudioStreamPolicyServerDiedCb(audioStreamPolicyServiceDiedCB_);
-}
-
-int32_t FastAudioStream::RegisterRendererOrCapturerPolicyServiceDiedCB(
-    const std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> &callback)
-{
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERROR, "Callback is null");
-
-    if (RegisterAudioStreamPolicyServerDiedCb() != SUCCESS) {
-        return ERROR;
-    }
-
-    CHECK_AND_RETURN_RET_LOG(audioStreamPolicyServiceDiedCB_ != nullptr,
-        ERROR, "audioStreamPolicyServiceDiedCB_ is null");
-    audioStreamPolicyServiceDiedCB_->SaveRendererOrCapturerPolicyServiceDiedCB(callback);
-    return SUCCESS;
-}
-
-int32_t FastAudioStream::RemoveRendererOrCapturerPolicyServiceDiedCB()
-{
-    CHECK_AND_RETURN_RET_LOG(audioStreamPolicyServiceDiedCB_ != nullptr,
-        ERROR, "audioStreamPolicyServiceDiedCB_ is null");
-
-    audioStreamPolicyServiceDiedCB_->RemoveRendererOrCapturerPolicyServiceDiedCB();
-    if (UnregisterAudioStreamPolicyServerDiedCb() != SUCCESS) {
-        return ERROR;
-    }
-    return SUCCESS;
-}
-
 bool FastAudioStream::RestoreAudioStream()
 {
     CHECK_AND_RETURN_RET_LOG(proxyObj_ != nullptr, false, "proxyObj_ is null");
@@ -946,46 +897,6 @@ bool FastAudioStream::GetHighResolutionEnabled()
 {
     AUDIO_WARNING_LOG("not supported in fast audio stream");
     return false;
-}
-
-FastPolicyServiceDiedCallbackImpl::FastPolicyServiceDiedCallbackImpl()
-{
-    AUDIO_DEBUG_LOG("FastPolicyServiceDiedCallbackImpl instance create");
-}
-
-FastPolicyServiceDiedCallbackImpl::~FastPolicyServiceDiedCallbackImpl()
-{
-    AUDIO_DEBUG_LOG("FastPolicyServiceDiedCallbackImpl instance destory");
-}
-
-void FastPolicyServiceDiedCallbackImpl::OnAudioPolicyServiceDied()
-{
-    std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> cb;
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        AUDIO_INFO_LOG("FastPolicyServiceDiedCallbackImpl OnAudioPolicyServiceDied");
-        cb = policyServiceDiedCallback_.lock();
-        if (cb == nullptr) {
-            policyServiceDiedCallback_.reset();
-            return;
-        }
-    }
-    cb->OnAudioPolicyServiceDied();
-}
-
-void FastPolicyServiceDiedCallbackImpl::SaveRendererOrCapturerPolicyServiceDiedCB(
-    const std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> &callback)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (callback != nullptr) {
-        policyServiceDiedCallback_ = callback;
-    }
-}
-
-void FastPolicyServiceDiedCallbackImpl::RemoveRendererOrCapturerPolicyServiceDiedCB()
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    policyServiceDiedCallback_.reset();
 }
 } // namespace AudioStandard
 } // namespace OHOS

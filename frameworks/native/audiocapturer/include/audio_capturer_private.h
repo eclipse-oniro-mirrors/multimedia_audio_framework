@@ -241,7 +241,7 @@ private:
     std::mutex mutex_;
 };
 
-class CapturerPolicyServiceDiedCallback : public RendererOrCapturerPolicyServiceDiedCallback {
+class CapturerPolicyServiceDiedCallback : public AudioStreamPolicyServiceDiedCallback {
 public:
     CapturerPolicyServiceDiedCallback();
     virtual ~CapturerPolicyServiceDiedCallback();
