@@ -1069,7 +1069,7 @@ int32_t AudioRendererSinkInner::SetOutputRoutes(std::vector<std::pair<DeviceType
     route.sinksLen = static_cast<uint32_t>(sinksSize);
 
     int32_t ret = SetAudioRoute(outputDevice, route);
-    if (sinks != nullptr){
+    if (sinks != nullptr) {
         delete [] sinks;
         sinks = nullptr;
     }
