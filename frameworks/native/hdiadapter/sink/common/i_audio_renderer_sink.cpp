@@ -129,6 +129,7 @@ int32_t IAudioRendererSinkInit(struct RendererSinkAdapter *adapter, const SinkAt
     iAttr.deviceNetworkId = attr->deviceNetworkId;
     iAttr.deviceType = attr->deviceType;
     iAttr.channelLayout = attr->channelLayout;
+    iAttr.aux = attr->aux;
 
     return audioRendererSink->Init(iAttr);
 }
