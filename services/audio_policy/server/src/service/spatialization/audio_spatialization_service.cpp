@@ -162,7 +162,7 @@ int32_t AudioSpatializationService::SetSpatializationEnabled(const sptr<AudioDev
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     preSettingSpatialAddress_ = address;
     std::string deviceSpatialInfo = EnCapsulateDeviceInfo(address);
-    UpdateDeviceSpatialInfo(addrss, deviceSpatialInfo);
+    UpdateDeviceSpatialInfo(address, deviceSpatialInfo);
     if (addressToSpatialEnabledMap_[address].spatializationEnabled == enable) {
         WriteSpatializationStateToDb(WRITE_DEVICESPATIAL_INFO);
         return SPATIALIZATION_SERVICE_OK;
@@ -221,7 +221,7 @@ int32_t AudioSpatializationService::SetHeadTrackingEnabled(const sptr<AudioDevic
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     preSettingSpatialAddress_ = address;
     std::string deviceSpatialInfo = EnCapsulateDeviceInfo(address);
-    UpdateDeviceSpatialInfo(addrss, deviceSpatialInfo);
+    UpdateDeviceSpatialInfo(address, deviceSpatialInfo);
     if (addressToSpatialEnabledMap_[address].headTrackingEnabled == enable) {
         WriteSpatializationStateToDb(WRITE_DEVICESPATIAL_INFO);
         return SPATIALIZATION_SERVICE_OK;
@@ -630,7 +630,7 @@ void AudioSpatializationService::WriteSpatializationStateToDb(WriteToDbOperation
             for (const auto& entry : addressToDeviceSpatialInfoMap_) {
                 ErrCode ret = settingProvider.PutStringValue(
                     SPATIALIZATION_STATE_SETTINGKEY + "_device" + std::to_string(++i), entry.second);
-                CHECK_AND_RETURN_LOG(ret == SUCCESS, "Failed to write spatialization_state_device%{public}d to 
+                CHECK_AND_RETURN_LOG(ret == SUCCESS, "Failed to write spatialization_state_device%{public}d to
                     setting db: %{public}d", i, ret);
             }
             break;
@@ -722,12 +722,11 @@ std::string AudioSpatializationService::EnCapsulateDeviceInfo(const std::string 
     std::stringstream value;
     value << address;
     value << "|" << addressToSpatialEnabledMap_[address].spatializationEnabled;
-    value << "|" << addressToSpatialEnabledMap_[address].headTrackingEnabled
-    value << "|" << addressToSpatialDeviceStateMap_[address].isSpatializationSupported
-    value << "|" << addressToSpatialDeviceStateMap_[address].isSpatializationSupported
+    value << "|" << addressToSpatialEnabledMap_[address].headTrackingEnabled;
+    value << "|" << addressToSpatialDeviceStateMap_[address].isSpatializationSupported;
+    value << "|" << addressToSpatialDeviceStateMap_[address].isSpatializationSupported;
     value << "|" << addressToSpatialDeviceStateMap_[address].spatialDeviceType;
     value << "|" << GetCurrTimestamp();
-    AUDIO_INFO_LOG("value is %{public}s", oss.str());
     return value.str();
 }
 
