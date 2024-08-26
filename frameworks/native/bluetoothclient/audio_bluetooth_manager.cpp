@@ -264,6 +264,14 @@ void AudioA2dpManager::CheckA2dpDeviceReconnect()
     }
 }
 
+int32_t AudioA2dpManager::Connect(const std::string &macAddress)
+{
+    CHECK_AND_RETURN_RET_LOG(a2dpInstance_ != nullptr, ERROR, "A2DP profile instance unavailable");
+    int32_t ret = a2dpInstance_->Connect(BluetoothRemoteDevice(macAddress));
+    CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "A2dp Connect Failed");
+    return SUCCESS;
+}
+
 void AudioA2dpListener::OnConnectionStateChanged(const BluetoothRemoteDevice &device, int state, int cause)
 {
     AUDIO_INFO_LOG("AudioA2dpListener OnConnectionStateChanged: state: %{public}d", state);
@@ -300,6 +308,19 @@ void AudioA2dpListener::OnMediaStackChanged(const BluetoothRemoteDevice &device,
 {
     AUDIO_INFO_LOG("OnMediaStackChanged, action: %{public}d", action);
     MediaBluetoothDeviceManager::SetMediaStack(device, action);
+}
+
+void AudioA2dpListener::OnVirtualDeviceChanged(int32_t action, std::string address)
+{
+    AUDIO_INFO_LOG("AudioA2dpListener: action: %{public}d", action);
+    if (action == static_cast<int32_t>(Bluetooth::BT_VIRTUAL_DEVICE_ADD)) {
+        MediaBluetoothDeviceManager::SetMediaStack(BluetoothRemoteDevice(address),
+            BluetoothDeviceAction::VIRTUAL_DEVICE_ADD_ACTION);
+    }
+    if (action == static_cast<int32_t>(Bluetooth::BT_VIRTUAL_DEVICE_REMOVE)) {
+        MediaBluetoothDeviceManager::SetMediaStack(BluetoothRemoteDevice(address),
+            BluetoothDeviceAction::VIRTUAL_DEVICE_REMOVE_ACTION);
+    }
 }
 
 void AudioHfpManager::RegisterBluetoothScoListener()
@@ -506,6 +527,14 @@ AudioStandard::AudioScene AudioHfpManager::GetPolicyAudioScene()
     return sceneFromPolicy_;
 }
 
+int32_t AudioHfpManager::Connect(const std::string &macAddress)
+{
+    CHECK_AND_RETURN_RET_LOG(hfpInstance_ != nullptr, ERROR, "HFP AG profile instance unavailable");
+    int32_t ret = hfpInstance_->Connect(BluetoothRemoteDevice(macAddress));
+    CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "Hfp Connect Failed");
+    return SUCCESS;
+}
+
 void AudioHfpListener::OnScoStateChanged(const BluetoothRemoteDevice &device, int state, int reason)
 {
     AUDIO_INFO_LOG("AudioHfpListener::OnScoStateChanged: state: [%{public}d] reason: [%{public}d]", state, reason);
@@ -549,6 +578,19 @@ void AudioHfpListener::OnHfpStackChanged(const BluetoothRemoteDevice &device, in
 {
     AUDIO_INFO_LOG("OnHfpStackChanged, action: %{public}d", action);
     HfpBluetoothDeviceManager::SetHfpStack(device, action);
+}
+
+void AudioHfpListener::OnVirtualDeviceChanged(int32_t action, std::string macAddress)
+{
+    AUDIO_INFO_LOG("AudioHfpListener: action: %{public}d", action);
+    if (action == static_cast<int32_t>(Bluetooth::BT_VIRTUAL_DEVICE_ADD)) {
+        HfpBluetoothDeviceManager::SetHfpStack(BluetoothRemoteDevice(macAddress),
+            BluetoothDeviceAction::VIRTUAL_DEVICE_ADD_ACTION);
+    }
+    if (action == static_cast<int32_t>(Bluetooth::BT_VIRTUAL_DEVICE_REMOVE)) {
+        HfpBluetoothDeviceManager::SetHfpStack(BluetoothRemoteDevice(macAddress),
+            BluetoothDeviceAction::VIRTUAL_DEVICE_REMOVE_ACTION);
+    }
 }
 // LCOV_EXCL_STOP
 } // namespace Bluetooth

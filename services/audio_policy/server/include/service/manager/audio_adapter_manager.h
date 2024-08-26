@@ -37,6 +37,7 @@ class AudioOsAccountInfo;
 
 class AudioAdapterManager : public IAudioPolicyInterface {
 public:
+    static constexpr std::string_view SPLIT_STREAM_SINK = "libmodule-split-stream-sink.z.so";
     static constexpr std::string_view HDI_SINK = "libmodule-hdi-sink.z.so";
     static constexpr std::string_view HDI_SOURCE = "libmodule-hdi-source.z.so";
     static constexpr std::string_view PIPE_SINK = "libmodule-pipe-sink.z.so";

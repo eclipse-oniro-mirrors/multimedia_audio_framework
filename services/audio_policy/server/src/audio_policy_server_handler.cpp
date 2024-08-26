@@ -602,7 +602,11 @@ void AudioPolicyServerHandler::HandleAudioSessionDeactiveCallback(const AppExecF
     if (iterator == audioPolicyClientProxyAPSCbsMap_.end()) {
         AUDIO_ERR_LOG("AudioSessionDeactiveCallback: no client callback for client pid %{public}d", clientPid);
         return;
-    } else {
+    }
+    if (clientCallbacksMap_.count(iterator->first) > 0 &&
+        clientCallbacksMap_[iterator->first].count(CALLBACK_AUDIO_SESSION) > 0 &&
+        clientCallbacksMap_[iterator->first][CALLBACK_AUDIO_SESSION]) {
+        // the client has registered audio session callback.
         sptr<IAudioPolicyClient> audioSessionCb = iterator->second;
         if (audioSessionCb == nullptr) {
             AUDIO_ERR_LOG("AudioSessionDeactiveCallback: nullptr for client pid %{public}d", clientPid);
@@ -610,6 +614,8 @@ void AudioPolicyServerHandler::HandleAudioSessionDeactiveCallback(const AppExecF
         }
         AUDIO_INFO_LOG("Trigger AudioSessionDeactiveCallback for client pid : %{public}d", clientPid);
         audioSessionCb->OnAudioSessionDeactive(eventContextObj->sessionDeactivePair.second);
+    } else {
+        AUDIO_ERR_LOG("AudioSessionDeactiveCallback: no registered callback for pid %{public}d", clientPid);
     }
 }
 
@@ -802,6 +808,26 @@ void AudioPolicyServerHandler::HandleRendererInfoEvent(const AppExecFwk::InnerEv
             clientCallbacksMap_[it->first][CALLBACK_RENDERER_STATE_CHANGE]) {
                 Trace traceCallback("rendererStateChangeCb->OnRendererStateChange");
             rendererStateChangeCb->OnRendererStateChange(eventContextObj->audioRendererChangeInfos);
+            ResetRingerModeMute(eventContextObj->audioRendererChangeInfos);
+        }
+    }
+}
+
+void AudioPolicyServerHandler::ResetRingerModeMute(const std::vector<std::unique_ptr<AudioRendererChangeInfo>>
+    &audioRendererChangeInfos)
+{
+    for (const std::unique_ptr<AudioRendererChangeInfo> &rendererChangeInfo: audioRendererChangeInfos) {
+        if (!rendererChangeInfo) {
+            AUDIO_ERR_LOG("Renderer change info null, something wrong!!");
+            continue;
+        }
+        StreamUsage streamUsage = rendererChangeInfo->rendererInfo.streamUsage;
+        RendererState rendererState = rendererChangeInfo->rendererState;
+        if (Util::IsRingerOrAlarmerStreamUsage(streamUsage) && (rendererState == RENDERER_PAUSED ||
+            rendererState == RENDERER_STOPPED || rendererState == RENDERER_RELEASED)) {
+            AUDIO_INFO_LOG("reset ringer mode mute, stream usage:%{public}d, renderer state:%{public}d",
+                streamUsage, rendererState);
+            AudioPolicyService::GetAudioPolicyService().ResetRingerModeMute();
         }
     }
 }
@@ -879,6 +905,7 @@ void AudioPolicyServerHandler::HandleSendRecreateRendererStreamEvent(const AppEx
     std::lock_guard<std::mutex> lock(runnerMutex_);
     if (audioPolicyClientProxyAPSCbsMap_.count(eventContextObj->clientId) == 0) {
         AUDIO_ERR_LOG("No client id %{public}d", eventContextObj->clientId);
+        return;
     }
     sptr<IAudioPolicyClient> rendererCb = audioPolicyClientProxyAPSCbsMap_.at(eventContextObj->clientId);
     CHECK_AND_RETURN_LOG(rendererCb != nullptr, "Callback for id %{public}d is null", eventContextObj->clientId);
@@ -894,6 +921,7 @@ void AudioPolicyServerHandler::HandleSendRecreateCapturerStreamEvent(const AppEx
     std::lock_guard<std::mutex> lock(runnerMutex_);
     if (audioPolicyClientProxyAPSCbsMap_.count(eventContextObj->clientId) == 0) {
         AUDIO_ERR_LOG("No client id %{public}d", eventContextObj->clientId);
+        return;
     }
     sptr<IAudioPolicyClient> capturerCb = audioPolicyClientProxyAPSCbsMap_.at(eventContextObj->clientId);
     CHECK_AND_RETURN_LOG(capturerCb != nullptr, "Callback for id %{public}d is null", eventContextObj->clientId);

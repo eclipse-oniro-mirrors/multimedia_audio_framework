@@ -42,7 +42,7 @@ public:
     int32_t GetParams(AudioRendererParams &params) const override;
     int32_t GetRendererInfo(AudioRendererInfo &rendererInfo) const override;
     int32_t GetStreamInfo(AudioStreamInfo &streamInfo) const override;
-    bool Start(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
+    bool Start(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
     int32_t Write(uint8_t *buffer, size_t bufferSize) override;
     int32_t Write(uint8_t *pcmBuffer, size_t pcmSize, uint8_t *metaBuffer, size_t metaSize) override;
     RendererState GetStatus() const override;
@@ -53,7 +53,7 @@ public:
     bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
     bool Stop() const override;
     bool Flush() const override;
-    bool Release() const override;
+    bool Release() override;
     int32_t GetBufferSize(size_t &bufferSize) const override;
     int32_t GetAudioStreamId(uint32_t &sessionID) const override;
     int32_t SetAudioRendererDesc(AudioRendererDesc audioRendererDesc) override;
@@ -114,7 +114,7 @@ public:
     int32_t SetVolumeWithRamp(float volume, int32_t duration) override;
 
     int32_t RegisterRendererPolicyServiceDiedCallback();
-    int32_t RemoveRendererPolicyServiceDiedCallback() const;
+    int32_t RemoveRendererPolicyServiceDiedCallback();
 
     void GetAudioInterrupt(AudioInterrupt &audioInterrupt);
 
@@ -125,6 +125,10 @@ public:
 
     void SetSilentModeAndMixWithOthers(bool on) override;
     bool GetSilentModeAndMixWithOthers() override;
+
+    void EnableVoiceModemCommunicationStartStream(bool enable) override;
+
+    int32_t SetDefaultOutputDevice(DeviceType deviceType) override;
 
     static inline AudioStreamParams ConvertToAudioStreamParams(const AudioRendererParams params)
     {
@@ -162,6 +166,7 @@ private:
     int32_t InitAudioConcurrencyCallback();
     void SetSwitchInfo(IAudioStream::SwitchInfo info, std::shared_ptr<IAudioStream> audioStream);
     void UpdateRendererAudioStream(const std::shared_ptr<IAudioStream> &audioStream);
+    void InitSwitchInfo(IAudioStream::StreamClass targetClass, IAudioStream::SwitchInfo &info);
     bool SwitchToTargetStream(IAudioStream::StreamClass targetClass, uint32_t &newSessionId,
         const AudioStreamDeviceChangeReasonExt reason);
     void WriteSwitchStreamLogMsg();
@@ -194,12 +199,14 @@ private:
     mutable AudioRenderMode audioRenderMode_ = RENDER_MODE_NORMAL;
     bool isFastVoipSupported_ = false;
     bool isDirectVoipSupported_ = false;
+    bool isEnableVoiceModemCommunicationStartStream_ = false;
 
     float speed_ = 1.0;
 
     std::shared_ptr<AudioRendererPolicyServiceDiedCallback> policyServiceDiedCallback_ = nullptr;
 
     std::vector<uint32_t> usedSessionId_ = {};
+    std::mutex silentModeAndMixWithOthersMutex_;
 };
 
 class AudioRendererInterruptCallbackImpl : public AudioInterruptCallback {
@@ -283,7 +290,7 @@ private:
     std::mutex callbackMutex_;
 };
 
-class RendererPolicyServiceDiedCallback : public RendererOrCapturerPolicyServiceDiedCallback {
+class RendererPolicyServiceDiedCallback : public AudioStreamPolicyServiceDiedCallback {
 public:
     RendererPolicyServiceDiedCallback();
     virtual ~RendererPolicyServiceDiedCallback();

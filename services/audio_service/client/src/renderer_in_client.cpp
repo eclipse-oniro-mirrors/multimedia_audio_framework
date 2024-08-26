@@ -438,8 +438,6 @@ int32_t RendererInClientInner::DeinitIpcStream()
 {
     Trace trace("RendererInClientInner::DeinitIpcStream");
     ipcStream_->Release();
-    // in plan:
-    ipcStream_ = nullptr;
     ringCache_->ResetBuffer();
     return SUCCESS;
 }
@@ -1152,8 +1150,8 @@ int32_t RendererInClientInner::UnsetOffloadMode()
 
 float RendererInClientInner::GetSingleStreamVolume()
 {
-    // in plan
-    return 0.0;
+    // in plan. For now, keep it consistent with fast_audio_stream
+    return 1.0f;
 }
 
 AudioEffectMode RendererInClientInner::GetAudioEffectMode()
@@ -1321,7 +1319,6 @@ bool RendererInClientInner::StopAudioStream()
 {
     Trace trace("RendererInClientInner::StopAudioStream " + std::to_string(sessionId_));
     AUDIO_INFO_LOG("Stop begin for sessionId %{public}d uid: %{public}d", sessionId_, clientUid_);
-    ResetRingerModeMute();
     if (!offloadEnable_) {
         DrainAudioStream(true);
     }
@@ -2135,6 +2132,7 @@ void RendererInClientInner::GetStreamSwitchInfo(IAudioStream::SwitchInfo& info)
     info.clientPid = clientPid_;
     info.clientUid = clientUid_;
     info.volume = clientVolume_;
+    info.silentModeAndMixWithOthers = silentModeAndMixWithOthers_;
 
     info.frameMarkPosition = static_cast<uint64_t>(rendererMarkPosition_);
     info.renderPositionCb = rendererPositionCallback_;
@@ -2248,56 +2246,11 @@ void SpatializationStateChangeCallbackImpl::OnSpatializationStateChange(
     }
 }
 
-int32_t RendererInClientInner::RegisterRendererInClientPolicyServerDiedCb()
-{
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ == nullptr,
-        ERROR, "policyServiceDiedCB_ existence, do not create duplicate");
-
-    policyServiceDiedCB_ = std::make_shared<RendererInClientPolicyServiceDiedCallbackImpl>();
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ != nullptr,
-        ERROR, "create policyServiceDiedCB_ failed");
-
-    return AudioPolicyManager::GetInstance().RegisterAudioStreamPolicyServerDiedCb(policyServiceDiedCB_);
-}
-
-int32_t RendererInClientInner::UnregisterRendererInClientPolicyServerDiedCb()
-{
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ != nullptr,
-        ERROR, "audioStreamPolicyServiceDiedCB_ is null");
-    return AudioPolicyManager::GetInstance().UnregisterAudioStreamPolicyServerDiedCb(policyServiceDiedCB_);
-}
-
-int32_t RendererInClientInner::RegisterRendererOrCapturerPolicyServiceDiedCB(
-    const std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> &callback)
-{
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERROR, "Callback is null");
-
-    int32_t ret = RegisterRendererInClientPolicyServerDiedCb();
-    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERROR, "RegisterRendererInClientPolicyServerDiedCb failed");
-
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ != nullptr,
-        ERROR, "policyServiceDiedCB_ is null");
-    policyServiceDiedCB_->SaveRendererOrCapturerPolicyServiceDiedCB(callback);
-    return SUCCESS;
-}
-
-int32_t RendererInClientInner::RemoveRendererOrCapturerPolicyServiceDiedCB()
-{
-    CHECK_AND_RETURN_RET_LOG(policyServiceDiedCB_ != nullptr,
-        ERROR, "policyServiceDiedCB_ is null");
-    policyServiceDiedCB_->RemoveRendererOrCapturerPolicyServiceDiedCB();
-
-    int32_t ret = UnregisterRendererInClientPolicyServerDiedCb();
-    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERROR, "UnregisterRendererInClientPolicyServerDiedCb failed");
-
-    return SUCCESS;
-}
-
 bool RendererInClientInner::RestoreAudioStream()
 {
     CHECK_AND_RETURN_RET_LOG(proxyObj_ != nullptr, false, "proxyObj_ is null");
-    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID, true,
-        "state_ is NEW/INVALID, no need for restore");
+    CHECK_AND_RETURN_RET_LOG(state_ != NEW && state_ != INVALID && state_ != RELEASED, true,
+        "state_ is %{public}d, no need for restore", state_.load());
     bool result = false;
     State oldState = state_;
     state_ = NEW;
@@ -2333,14 +2286,6 @@ error:
     AUDIO_ERR_LOG("RestoreAudioStream failed");
     state_ = oldState;
     return false;
-}
-
-void RendererInClientInner::ResetRingerModeMute()
-{
-    if (Util::IsDualToneStreamType(eStreamType_)) {
-        AUDIO_INFO_LOG("reset ringer tone mode, stream type %{public}d", eStreamType_);
-        AudioPolicyManager::GetInstance().ResetRingerModeMute();
-    }
 }
 } // namespace AudioStandard
 } // namespace OHOS

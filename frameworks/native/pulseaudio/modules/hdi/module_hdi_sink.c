@@ -91,7 +91,6 @@ static pa_hook_result_t SinkInputNewCb(pa_core *c, pa_sink_input *si)
     const uint32_t channels = si->sample_spec.channels;
     const char *channelLayout = pa_proplist_gets(si->proplist, "stream.channelLayout");
     const char *spatializationEnabled = pa_proplist_gets(si->proplist, "spatialization.enabled");
-    uint32_t volume = si->volume.values[0];
     if (pa_safe_streq(deviceString, "remote")) {
         EffectChainManagerReleaseCb(sceneType, sessionID);
         return PA_HOOK_OK;
@@ -109,7 +108,7 @@ static pa_hook_result_t SinkInputNewCb(pa_core *c, pa_sink_input *si)
             EffectChainManagerInitCb(sceneType);
         }
         EffectChainManagerCreateCb(sceneType, sessionID);
-        SessionInfoPack pack = {channels, channelLayout, sceneMode, spatializationEnabled, volume};
+        SessionInfoPack pack = {channels, channelLayout, sceneMode, spatializationEnabled};
         if (si->state == PA_SINK_INPUT_RUNNING && !EffectChainManagerAddSessionInfo(sceneType, sessionID, pack)) {
             EffectChainManagerMultichannelUpdate(sceneType);
             EffectChainManagerEffectUpdate();
@@ -159,13 +158,12 @@ static pa_hook_result_t SinkInputStateChangedCb(pa_core *c, pa_sink_input *si, v
     const char *spatializationEnabled = pa_proplist_gets(si->proplist, "spatialization.enabled");
     const char *clientUid = pa_proplist_gets(si->proplist, "stream.client.uid");
     const char *bootUpMusic = "1003";
-    uint32_t volume = si->volume.values[0];
 
     if (si->state == PA_SINK_INPUT_RUNNING && si->sink && !pa_safe_streq(clientUid, bootUpMusic)) {
-        SessionInfoPack pack = {channels, channelLayout, sceneMode, spatializationEnabled, volume};
+        SessionInfoPack pack = {channels, channelLayout, sceneMode, spatializationEnabled};
         if (!EffectChainManagerAddSessionInfo(sceneType, sessionID, pack)) {
             EffectChainManagerMultichannelUpdate(sceneType);
-            EffectChainManagerVolumeUpdate(sessionID, volume);
+            EffectChainManagerVolumeUpdate(sessionID);
         }
     }
 
@@ -173,17 +171,9 @@ static pa_hook_result_t SinkInputStateChangedCb(pa_core *c, pa_sink_input *si, v
         !pa_safe_streq(clientUid, bootUpMusic)) {
         if (!EffectChainManagerDeleteSessionInfo(sceneType, sessionID)) {
             EffectChainManagerMultichannelUpdate(sceneType);
+            EffectChainManagerVolumeUpdate(sessionID);
         }
     }
-    return PA_HOOK_OK;
-}
-
-static pa_hook_result_t SinkInputVolumeChangedCb(pa_core *c, pa_sink_input *si, void *u)
-{
-    AUDIO_DEBUG_LOG("volume changed.");
-    const char *sessionID = pa_proplist_gets(si->proplist, "stream.sessionID");
-    const uint32_t volume = si->volume.values[0];
-    EffectChainManagerVolumeUpdate(sessionID, volume);
     return PA_HOOK_OK;
 }
 
@@ -208,8 +198,6 @@ int pa__init(pa_module *m)
     // SourceOutputStateChangedCb will be replaced by UpdatePlaybackCaptureConfig in CapturerInServer
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SINK_INPUT_STATE_CHANGED], PA_HOOK_LATE,
         (pa_hook_cb_t)SinkInputStateChangedCb, NULL);
-    pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SINK_INPUT_VOLUME_CHANGED], PA_HOOK_LATE,
-        (pa_hook_cb_t)SinkInputVolumeChangedCb, NULL);
 
     pa_modargs_free(ma);
 

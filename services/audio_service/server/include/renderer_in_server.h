@@ -96,6 +96,9 @@ public:
     int32_t SetClientVolume();
     
     void OnDataLinkConnectionUpdate(IOperation operation);
+
+    bool Dump(std::string &dumpString);
+
 public:
     const AudioProcessConfig processConfig_;
 private:

@@ -32,6 +32,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "hisysevent.h"
+#include "parameters.h"
 
 #include "audio_capturer_source.h"
 #include "fast_audio_capturer_source.h"
@@ -69,6 +70,9 @@ std::map<std::string, std::string> AudioServer::audioParameters;
 std::unordered_map<std::string, std::unordered_map<std::string, std::set<std::string>>> AudioServer::audioParameterKeys;
 const string DEFAULT_COOKIE_PATH = "/data/data/.pulse_dir/state/cookie";
 const std::string CHECK_FAST_BLOCK_PREFIX = "Is_Fast_Blocked_For_AppName#";
+constexpr const char *TEL_SATELLITE_SUPPORT = "const.telephony.satellite.supported";
+const std::string SATEMODEM_PARAMETER = "usedmodem=satemodem";
+constexpr int32_t UID_FOUNDATION_SA = 5523;
 const unsigned int TIME_OUT_SECONDS = 10;
 const unsigned int SCHEDULE_REPORT_TIME_OUT_SECONDS = 2;
 static const std::vector<StreamUsage> STREAMS_NEED_VERIFY_SYSTEM_PERMISSION = {
@@ -284,6 +288,11 @@ void AudioServer::OnStart()
     if (!res) {
         AUDIO_ERR_LOG("start err");
         WriteServiceStartupError();
+    }
+    int32_t fastControlFlag = 0;
+    GetSysPara("persist.multimedia.audioflag.fastcontrolled", fastControlFlag);
+    if (fastControlFlag == 1) {
+        isFastControlled_ = true;
     }
     AddSystemAbilityListener(AUDIO_POLICY_SERVICE_ID);
     AddSystemAbilityListener(RES_SCHED_SYS_ABILITY_ID);
@@ -1494,8 +1503,20 @@ sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &co
         ":%{public}s", ProcessConfig::DumpProcessConfig(resetConfig).c_str());
     CHECK_AND_RETURN_RET_LOG(PermissionChecker(resetConfig), nullptr, "Create audio process failed, no permission");
 
-    if ((IsNormalIpcStream(resetConfig)) || IsFastBlocked(resetConfig.appInfo.appUid)) {
-        AUDIO_INFO_LOG("Create normal ipc stream.");
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    if (config.rendererInfo.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION) {
+        if (callingUid == UID_FOUNDATION_SA) {
+            bool isSupportSate = OHOS::system::GetBoolParameter(TEL_SATELLITE_SUPPORT, false);
+            CHECK_AND_RETURN_RET_LOG(isSupportSate, nullptr, "DO not support satellite");
+            if (config.rendererInfo.isSatellite && isSupportSate) {
+                IAudioRendererSink* audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
+                audioRendererSinkInstance->SetAudioParameter(AudioParamKey::NONE, "", SATEMODEM_PARAMETER);
+            }
+        }
+    }
+
+    if (IsNormalIpcStream(resetConfig) || (isFastControlled_ && IsFastBlocked(resetConfig.appInfo.appUid))) {
+        AUDIO_INFO_LOG("Create normal ipc stream, isFastControlled: %{public}d", isFastControlled_);
         int32_t ret = 0;
         sptr<IpcStreamInServer> ipcStream = AudioService::GetInstance()->GetIpcStream(resetConfig, ret);
         CHECK_AND_RETURN_RET_LOG(ipcStream != nullptr, nullptr, "GetIpcStream failed.");
@@ -1939,7 +1960,43 @@ int32_t AudioServer::NotifyStreamVolumeChanged(AudioStreamType streamType, float
         AUDIO_ERR_LOG("NotifyStreamVolumeChanged refused for %{public}d", callingUid);
         return ERR_NOT_SUPPORTED;
     }
+
+    SetSystemVolumeToEffect(streamType, volume);
+
     return AudioService::GetInstance()->NotifyStreamVolumeChanged(streamType, volume);
+}
+
+int32_t AudioServer::SetSystemVolumeToEffect(const AudioStreamType streamType, float volume)
+{
+    std::string sceneType;
+    switch (streamType) {
+        case STREAM_RING:
+        case STREAM_ALARM:
+            sceneType = "SCENE_RING";
+            break;
+        case STREAM_VOICE_ASSISTANT:
+            sceneType = "SCENE_SPEECH";
+            break;
+        case STREAM_MUSIC:
+            sceneType = "SCENE_MUSIC";
+            break;
+        case STREAM_ACCESSIBILITY:
+            sceneType = "SCENE_OTHERS";
+            break;
+        default:
+            return SUCCESS;
+    }
+
+    AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEffectChainManager != nullptr, ERROR, "audioEffectChainManager is nullptr");
+    AUDIO_INFO_LOG("streamType : %{public}d , systemVolume : %{public}f", streamType, volume);
+    audioEffectChainManager->SetSceneTypeSystemVolume(sceneType, volume);
+    
+    std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
+    CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
+    audioEffectChainManager->EffectVolumeUpdate(audioEffectVolume);
+
+    return SUCCESS;
 }
 
 int32_t AudioServer::SetSpatializationSceneType(AudioSpatializationSceneType spatializationSceneType)

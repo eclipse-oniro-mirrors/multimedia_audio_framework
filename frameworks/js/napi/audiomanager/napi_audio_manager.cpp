@@ -37,7 +37,9 @@
 #include "napi_audio_ringermode_callback.h"
 #include "napi_audio_manager_interrupt_callback.h"
 #include "napi_audio_volume_key_event.h"
+#if !defined(ANDROID_PLATFORM) && !defined(IOS_PLATFORM)
 #include "napi_audio_session_manager.h"
+#endif
 
 namespace OHOS {
 namespace AudioStandard {
@@ -123,7 +125,9 @@ napi_status NapiAudioManager::InitNapiAudioManager(napi_env env, napi_value &con
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("off", Off),
         DECLARE_NAPI_FUNCTION("getStreamManager", GetStreamManager),
+#if !defined(ANDROID_PLATFORM) && !defined(IOS_PLATFORM)
         DECLARE_NAPI_FUNCTION("getSessionManager", GetSessionManager),
+#endif
         DECLARE_NAPI_FUNCTION("getRoutingManager", GetRoutingManager),
         DECLARE_NAPI_FUNCTION("getVolumeManager", GetVolumeManager),
         DECLARE_NAPI_FUNCTION("getInterruptManager", GetInterruptManager),
@@ -253,6 +257,7 @@ napi_value NapiAudioManager::GetStreamManager(napi_env env, napi_callback_info i
     return NapiAudioStreamMgr::CreateStreamManagerWrapper(env);
 }
 
+#if !defined(ANDROID_PLATFORM) && !defined(IOS_PLATFORM)
 napi_value NapiAudioManager::GetSessionManager(napi_env env, napi_callback_info info)
 {
     napi_status status;
@@ -266,6 +271,7 @@ napi_value NapiAudioManager::GetSessionManager(napi_env env, napi_callback_info 
 
     return NapiAudioSessionMgr::CreateSessionManagerWrapper(env);
 }
+#endif
 
 napi_value NapiAudioManager::GetRoutingManager(napi_env env, napi_callback_info info)
 {
@@ -737,7 +743,11 @@ napi_value NapiAudioManager::GetAudioScene(napi_env env, napi_callback_info info
         auto *napiAudioManager = objectGuard.GetPtr();
         CHECK_AND_RETURN_LOG(CheckAudioManagerStatus(napiAudioManager, context),
             "audio manager state is error.");
-        context->intValue = napiAudioManager->audioMngr_->GetAudioScene();
+        AudioScene audioScene = napiAudioManager->audioMngr_->GetAudioScene();
+        if (audioScene == AUDIO_SCENE_VOICE_RINGING) {
+            audioScene = AUDIO_SCENE_RINGING;
+        }
+        context->intValue = audioScene;
     };
 
     auto complete = [env, context](napi_value &output) {
@@ -759,6 +769,9 @@ napi_value NapiAudioManager::GetAudioSceneSync(napi_env env, napi_callback_info 
     CHECK_AND_RETURN_RET_LOG(napiAudioManager != nullptr, result, "napiAudioManager is nullptr");
     CHECK_AND_RETURN_RET_LOG(napiAudioManager->audioMngr_ != nullptr, result, "audioMngr_ is nullptr");
     AudioScene audioScene = napiAudioManager->audioMngr_->GetAudioScene();
+    if (audioScene == AUDIO_SCENE_VOICE_RINGING) {
+        audioScene = AUDIO_SCENE_RINGING;
+    }
     NapiParamUtils::SetValueInt32(env, audioScene, result);
     return result;
 }

@@ -278,6 +278,11 @@ void AudioAdapterManager::SaveRingtoneVolumeToLocal(AudioVolumeType volumeType, 
 
 int32_t AudioAdapterManager::SetSystemVolumeLevel(AudioStreamType streamType, int32_t volumeLevel)
 {
+    if (GetSystemVolumeLevel(streamType) == volumeLevel && currentActiveDevice_ != DEVICE_TYPE_BLUETOOTH_SCO &&
+        currentActiveDevice_ != DEVICE_TYPE_BLUETOOTH_A2DP) {
+        AUDIO_INFO_LOG("The volume is the same as before.");
+        return SUCCESS;
+    }
     AUDIO_INFO_LOG("SetSystemVolumeLevel: streamType: %{public}d, deviceType: %{public}d, volumeLevel:%{public}d",
         streamType, currentActiveDevice_, volumeLevel);
     if (volumeLevel == 0 &&
@@ -731,6 +736,11 @@ void UpdateSinkArgs(const AudioModuleInfo &audioModuleInfo, std::string &args)
         args.append(" device_type=");
         args.append(audioModuleInfo.deviceType);
     }
+
+    if (!audioModuleInfo.extra.empty()) {
+        args.append(" split_mode=");
+        args.append(audioModuleInfo.extra);
+    }
 }
 
 void UpdateSourceArgs(const AudioModuleInfo &audioModuleInfo, std::string &args)
@@ -829,6 +839,9 @@ std::string AudioAdapterManager::GetModuleArgs(const AudioModuleInfo &audioModul
             args.append(" test_mode_on=");
             args.append("1");
         }
+    } else if (audioModuleInfo.lib == SPLIT_STREAM_SINK) {
+        UpdateCommonArgs(audioModuleInfo, args);
+        UpdateSinkArgs(audioModuleInfo, args);
     } else if (audioModuleInfo.lib == HDI_SOURCE) {
         UpdateCommonArgs(audioModuleInfo, args);
         UpdateSourceArgs(audioModuleInfo, args);

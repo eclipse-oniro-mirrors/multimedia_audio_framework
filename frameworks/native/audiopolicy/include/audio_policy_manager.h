@@ -411,9 +411,13 @@ public:
 
     int32_t ActivateAudioConcurrency(const AudioPipeType &pipeType);
 
-    int32_t ResetRingerModeMute();
-
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event);
+
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId);
+
+    int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
+        const StreamUsage streamUsage, bool isRunning);
+
 private:
     AudioPolicyManager() {}
     ~AudioPolicyManager() {}
@@ -430,7 +434,7 @@ private:
 
     static std::unordered_map<int32_t, std::weak_ptr<AudioRendererPolicyServiceDiedCallback>> rendererCBMap_;
     static sptr<AudioPolicyClientStubImpl> audioStaticPolicyClientStubCB_;
-    static std::vector<std::shared_ptr<AudioStreamPolicyServiceDiedCallback>> audioStreamCBMap_;
+    static std::vector<std::weak_ptr<AudioStreamPolicyServiceDiedCallback>> audioStreamCBMap_;
 
     bool isAudioRendererEventListenerRegistered = false;
     bool isAudioCapturerEventListenerRegistered = false;

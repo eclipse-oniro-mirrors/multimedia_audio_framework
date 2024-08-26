@@ -24,6 +24,7 @@ class AudioPolicyManagerStub : public IRemoteStub<IAudioPolicy> {
 public:
     virtual int32_t OnRemoteRequest(uint32_t code, MessageParcel &data,
         MessageParcel &reply, MessageOption &option) override;
+    virtual bool IsArmUsbDevice(const AudioDeviceDescriptor &desc) = 0;
 
 private:
     void GetMaxVolumeLevelInternal(MessageParcel &data, MessageParcel &reply);
@@ -164,6 +165,8 @@ private:
     void ActivateAudioSessionInternal(MessageParcel &data, MessageParcel &reply);
     void DeactivateAudioSessionInternal(MessageParcel &data, MessageParcel &reply);
     void IsAudioSessionActivatedInternal(MessageParcel &data, MessageParcel &reply);
+    void LoadSplitModuleInternal(MessageParcel &data, MessageParcel &reply);
+    void SetDefaultOutputDeviceInternal(MessageParcel &data, MessageParcel &reply);
 
     void OnMiddleNinRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleEigRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);

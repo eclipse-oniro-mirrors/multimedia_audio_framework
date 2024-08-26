@@ -292,6 +292,7 @@ enum CallbackChange : int32_t {
     CALLBACK_RENDERER_STATE_CHANGE,
     CALLBACK_CAPTURER_STATE_CHANGE,
     CALLBACK_MICMUTE_STATE_CHANGE,
+    CALLBACK_AUDIO_SESSION,
     CALLBACK_MAX,
 };
 
@@ -343,6 +344,7 @@ struct AudioRendererInfo {
     uint64_t channelLayout = 0ULL;
     AudioSampleFormat format = SAMPLE_S16LE;
     bool isOffloadAllowed = true;
+    bool isSatellite = false;
 
     bool Marshalling(Parcel &parcel) const
     {
