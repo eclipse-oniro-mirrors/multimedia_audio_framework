@@ -4443,11 +4443,6 @@ void AudioPolicyService::OnServiceConnected(AudioServiceIndex serviceIndex)
 void AudioPolicyService::OnServiceDisconnected(AudioServiceIndex serviceIndex)
 {
     AUDIO_WARNING_LOG("Start for [%{public}d]", serviceIndex);
-    CHECK_AND_RETURN_LOG(serviceIndex >= HDI_SERVICE_INDEX && serviceIndex <= AUDIO_SERVICE_INDEX, "invalid index");
-    if (serviceIndex == HDI_SERVICE_INDEX) {
-        AUDIO_ERR_LOG("Auto exit audio policy service for hdi service stopped!");
-        _Exit(0);
-    }
 }
 
 void AudioPolicyService::OnForcedDeviceSelected(DeviceType devType, const std::string &macAddress)
