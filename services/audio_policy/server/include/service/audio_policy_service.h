@@ -1001,6 +1001,8 @@ private:
         AudioStreamDeviceChangeReasonExt &reason);
     void UpdateDefaultOutputDeviceWhenStopping(int32_t uid);
 
+    void SetDefaultDeviceLoadFlag(bool isLoad);
+
     bool isUpdateRouteSupported_ = true;
     bool isCurrentRemoteRenderer = false;
     bool remoteCapturerSwitch_ = false;
