@@ -617,7 +617,7 @@ int32_t AudioRendererSinkInner::InitAudioManager()
         hdfDeathRecipient_ = (struct HdfDeathRecipient *)calloc(1, sizeof(*hdfDeathRecipient_));
         hdfDeathRecipient_->OnRemoteDied = AudioHostOnRemoteDied;
 
-        HdfRemoteServiceAddDeathRecipient(remote, recipient);
+        HdfRemoteServiceAddDeathRecipient(hdfRemoteService_, hdfDeathRecipient_);
     }
 
     return 0;
