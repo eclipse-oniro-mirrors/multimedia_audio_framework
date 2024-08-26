@@ -842,6 +842,8 @@ private:
 
     void MuteDefaultSinkPort();
 
+    void SetVoiceCallMuteForSwitchDevice();
+
     void MuteSinkPortForSwtichDevice(unique_ptr<AudioRendererChangeInfo>& rendererChangeInfo,
         vector<std::unique_ptr<AudioDeviceDescriptor>>& outputDevices, const AudioStreamDeviceChangeReasonExt reason);
 
