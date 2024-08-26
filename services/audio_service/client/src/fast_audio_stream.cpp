@@ -372,11 +372,13 @@ void FastAudioStream::SetPreferredFrameSize(int32_t frameSize)
 {
     std::lock_guard<std::mutex> lockSetPreferredFrameSize(setPreferredFrameSizeMutex_);
     userSettedPreferredFrameSize_ = frameSize;
+    CHECK_AND_RETURN_LOG(processClient_ != nullptr, "process client is null.");
     processClient_->SetPreferredFrameSize(frameSize);
 }
 
 void FastAudioStream::UpdateLatencyTimestamp(std::string &timestamp, bool isRenderer)
 {
+    CHECK_AND_RETURN_LOG(processClient_ != nullptr, "process client is null.");
     processClient_->UpdateLatencyTimestamp(timestamp, isRenderer);
 }
 
