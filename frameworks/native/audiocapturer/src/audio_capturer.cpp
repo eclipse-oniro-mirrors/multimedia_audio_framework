@@ -1039,7 +1039,7 @@ int32_t AudioCapturerPrivate::RegisterCapturerPolicyServiceDiedCallback()
             AUDIO_ERR_LOG("Memory allocation failed!!");
             return ERROR;
         }
-        audioStream_->RegisterRendererOrCapturerPolicyServiceDiedCB(audioPolicyServiceDiedCallback_);
+        AudioPolicyManager::GetInstance().RegisterAudioStreamPolicyServerDiedCb(audioPolicyServiceDiedCallback_);
         audioPolicyServiceDiedCallback_->SetAudioCapturerObj(this);
         audioPolicyServiceDiedCallback_->SetAudioInterrupt(audioInterrupt_);
     }
@@ -1050,9 +1050,11 @@ int32_t AudioCapturerPrivate::RemoveCapturerPolicyServiceDiedCallback()
 {
     AUDIO_DEBUG_LOG("AudioCapturerPrivate::RemoveCapturerPolicyServiceDiedCallback");
     if (audioPolicyServiceDiedCallback_) {
-        int32_t ret = audioStream_->RemoveRendererOrCapturerPolicyServiceDiedCB();
+        int32_t ret = AudioPolicyManager::GetInstance().UnregisterAudioStreamPolicyServerDiedCb(
+            audioPolicyServiceDiedCallback_);
         if (ret != 0) {
             AUDIO_ERR_LOG("RemoveCapturerPolicyServiceDiedCallback failed");
+            audioPolicyServiceDiedCallback_ = nullptr;
             return ERROR;
         }
     }
@@ -1136,7 +1138,6 @@ bool AudioCapturerPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
             CHECK_AND_RETURN_RET_LOG(switchResult, false, "start new stream failed.");
         }
         audioStream_ = newAudioStream;
-        RegisterCapturerPolicyServiceDiedCallback();
         if (audioInterruptCallback_ != nullptr) {
             std::shared_ptr<AudioCapturerInterruptCallbackImpl> interruptCbImpl =
                 std::static_pointer_cast<AudioCapturerInterruptCallbackImpl>(audioInterruptCallback_);

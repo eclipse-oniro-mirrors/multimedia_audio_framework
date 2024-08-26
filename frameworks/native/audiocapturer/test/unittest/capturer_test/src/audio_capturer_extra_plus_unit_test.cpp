@@ -74,7 +74,6 @@ public:
     TestAudioStremStub() : FastAudioStream(AudioStreamType::STREAM_MUSIC,
         AudioMode::AUDIO_MODE_RECORD, 0) {}
     uint32_t GetOverflowCount() override { return g_writeOverflowNum; }
-    int32_t RemoveRendererOrCapturerPolicyServiceDiedCB() override { return ERROR; }
     State GetState() override { return state_; }
     bool StopAudioStream() override { return true; }
     bool StartAudioStream(StateChangeCmdType cmdType,

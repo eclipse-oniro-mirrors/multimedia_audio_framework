@@ -248,17 +248,6 @@ public:
 
     virtual void UpdateLatencyTimestamp(std::string &timestamp, bool isRenderer) = 0;
 
-    virtual int32_t RegisterRendererOrCapturerPolicyServiceDiedCB(
-        const std::shared_ptr<RendererOrCapturerPolicyServiceDiedCallback> &callback)
-    {
-        return 0;
-    }
-
-    virtual int32_t RemoveRendererOrCapturerPolicyServiceDiedCB()
-    {
-        return 0;
-    }
-
     virtual bool RestoreAudioStream()
     {
         return 0;
