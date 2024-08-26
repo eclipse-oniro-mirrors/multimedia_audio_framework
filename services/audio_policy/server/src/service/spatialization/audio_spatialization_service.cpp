@@ -614,7 +614,7 @@ void AudioSpatializationService::InitSpatializationState()
         UpdateSpatializationSceneType();
     }
 
-    for (int i = 1; i <= 10; ++i) {
+    for (int i = 1; i <= maxDevices_; ++i) {
         ret = settingProvider.GetStringValue(SPATIALIZATION_STATE_SETTINGKEY + "_device" + std::to_string(i),
             deviceSpatialInfo);
         if (ret != SUCCESS) {
