@@ -515,7 +515,7 @@ int32_t AudioSpatializationService::UpdateSpatializationSceneType()
     return SPATIALIZATION_SERVICE_OK;
 }
 
-int32_t AudioSpatializationService::UpdateDeviceSpatialInfo(const std::string deviceSpatialInfo)
+void AudioSpatializationService::UpdateDeviceSpatialInfo(const std::string deviceSpatialInfo)
 {
     std::stringstream ss(deviceSpatialInfo);
     std::string token;
@@ -649,8 +649,8 @@ void AudioSpatializationService::WriteSpatializationStateToDb(WriteToDbOperation
             for (const auto& entry : addressToDeviceSpatialInfoMap_) {
                 ErrCode ret = settingProvider.PutStringValue(
                     SPATIALIZATION_STATE_SETTINGKEY + "_device" + std::to_string(++i), entry.second);
-                CHECK_AND_RETURN_LOG(ret == SUCCESS, "Failed to write spatialization_state_device%{public}d to
-                    setting db: %{public}d", i, ret);
+                CHECK_AND_RETURN_LOG(ret == SUCCESS, "Failed to write spatialization_state_device%{public}d to"
+                    "setting db: %{public}d", i, ret);
             }
             break;
         }
