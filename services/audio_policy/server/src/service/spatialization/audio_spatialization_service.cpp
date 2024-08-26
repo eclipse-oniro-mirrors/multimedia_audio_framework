@@ -531,7 +531,6 @@ void AudioSpatializationService::UpdateDeviceSpatialInfo(const std::string devic
     addressToSpatialDeviceStateMap_[address].isSpatializationSupported = std::stoi(token);
     std::getline(ss, token, '|');
     addressToSpatialDeviceStateMap_[address].spatialDeviceType = static_cast<AudioSpatialDeviceType>(std::stoi(token));
-
 }
 
 void AudioSpatializationService::UpdateSpatialDeviceType(AudioSpatialDeviceType spatialDeviceType)
@@ -774,7 +773,6 @@ void AudioSpatializationService::UpdateDeviceSpatialMapInfo(std::string address,
         }
     }
     addressToDeviceSpatialInfoMap_[address] = deviceSpatialInfo;
-
 }
 } // namespace AudioStandard
 } // namespace OHOS
