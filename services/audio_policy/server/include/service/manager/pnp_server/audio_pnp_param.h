@@ -52,6 +52,7 @@
 #define UEVENT_SWITCH_NAME      "SWITCH_NAME="
 #define UEVENT_SWITCH_STATE     "SWITCH_STATE="
 #define UEVENT_HDI_NAME         "HID_NAME="
+#define UEVENT_ANAHS            "ANAHS="
 #define UEVENT_ACTION_ADD       "add"
 #define UEVENT_ACTION_REMOVE    "remove"
 #define UEVENT_ACTION_CHANGE    "change"
@@ -69,7 +70,10 @@
 #define UEVENT_ID_MODEL         "ID_MODEL="
 #define UEVENT_USB_AUDIO        "USB Audio"
 #define UEVENT_USB_HEADSET      "HEADSET"
-#define UEVENT_ARR_SIZE 9
+#define UEVENT_PLATFORM         "platform"
+#define UEVENT_INSERT           "INSERT"
+#define UEVENT_REMOVE           "REMOVE"
+#define UEVENT_ARR_SIZE 10
 #define UEVENT_POLL_WAIT_TIME 100
 #define WAIT_THREAD_END_TIME_MS 1
 
@@ -95,6 +99,7 @@ struct AudioPnpUevent {
     const char *switchState;
     const char *hidName;
     const char *devName;
+    const char *anahsName;
 };
 
 struct AudioDevBusUsbDevice {
@@ -107,6 +112,7 @@ struct AudioEvent {
     uint32_t deviceType;
     std::string name;
     std::string address;
+    std::string anahsName;
 };
 } // namespace AudioStandard
 } // namespace OHOS

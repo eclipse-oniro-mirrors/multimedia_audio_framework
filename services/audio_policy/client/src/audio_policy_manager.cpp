@@ -1904,6 +1904,37 @@ int32_t AudioPolicyManager::TriggerFetchDevice(AudioStreamDeviceChangeReasonExt 
     return gsp->TriggerFetchDevice(reason);
 }
 
+int32_t AudioPolicyManager::SetAudioDeviceAnahsCallback(const std::shared_ptr<AudioDeviceAnahs> &callback)
+{
+    const sptr<IAudioPolicy> gsp = GetAudioPolicyManagerProxy();
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERROR, "audio policy manager proxy is NULL.");
+    if (callback == nullptr) {
+        return ERR_INVALID_PARAM;
+    };
+
+    std::unique_lock<std::mutex> lock(listenerStubMutex_);
+    auto activeDistributedRoutingRoleCb = new (std::nothrow) AudioRoutingManagerListenerStub();
+    if (activeDistributedRoutingRoleCb == nullptr) {
+        AUDIO_ERR_LOG("object is nullptr");
+        return ERROR;
+    }
+    activeDistributedRoutingRoleCb->SetAudioDeviceAnahsCallback(callback);
+    sptr<IRemoteObject> object = activeDistributedRoutingRoleCb->AsObject();
+    if (object == nullptr) {
+        AUDIO_ERR_LOG("listenerStub is nullptr");
+        delete activeDistributedRoutingRoleCb;
+        return ERROR;
+    }
+    return gsp->SetAudioDeviceAnahsCallback(object);
+}
+
+int32_t AudioPolicyManager::UnsetAudioDeviceAnahsCallback()
+{
+    const sptr<IAudioPolicy> gsp = GetAudioPolicyManagerProxy();
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERROR, "audio policy manager proxy is NULL.");
+    return gsp->UnsetAudioDeviceAnahsCallback();
+}
+
 int32_t AudioPolicyManager::MoveToNewPipe(const uint32_t sessionId, const AudioPipeType pipeType)
 {
     const sptr<IAudioPolicy> gsp = GetAudioPolicyManagerProxy();

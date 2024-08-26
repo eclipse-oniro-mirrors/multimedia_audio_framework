@@ -408,6 +408,13 @@ public:
         RouterType routerType, SourceType sourceType, int32_t clientUid, AudioPipeType audioPipeType) = 0;
 };
 
+class AudioDeviceAnahs {
+public:
+    virtual ~AudioDeviceAnahs() = default;
+
+    virtual int32_t OnExtPnpDeviceStatusChanged(std::string anahsStatus) = 0;
+};
+
 /**
  * @brief The AudioSystemManager class is an abstract definition of audio manager.
  *        Provides a series of client/interfaces for audio management

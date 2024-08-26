@@ -2788,6 +2788,25 @@ int32_t AudioPolicyServer::TriggerFetchDevice(AudioStreamDeviceChangeReasonExt r
     return audioPolicyService_.TriggerFetchDevice(reason);
 }
 
+int32_t AudioPolicyServer::SetAudioDeviceAnahsCallback(const sptr<IRemoteObject> &object)
+{
+    CHECK_AND_RETURN_RET_LOG(object != nullptr, ERR_INVALID_PARAM, "SetAudioDeviceAnahsCallback object is nullptr");
+    auto callerUid = IPCSkeleton::GetCallingUid();
+    if (callerUid != UID_AUDIO) {
+        return ERROR;
+    }
+    return audioPolicyService_.SetAudioDeviceAnahsCallback(object);
+}
+
+int32_t AudioPolicyServer::UnsetAudioDeviceAnahsCallback()
+{
+    auto callerUid = IPCSkeleton::GetCallingUid();
+    if (callerUid != UID_AUDIO) {
+        return ERROR;
+    }
+    return audioPolicyService_.UnsetAudioDeviceAnahsCallback();
+}
+
 void AudioPolicyServer::NotifyAccountsChanged(const int &id)
 {
     audioPolicyService_.NotifyAccountsChanged(id);

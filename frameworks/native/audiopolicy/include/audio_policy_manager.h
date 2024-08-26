@@ -408,6 +408,10 @@ public:
 
     int32_t TriggerFetchDevice(AudioStreamDeviceChangeReasonExt reason);
 
+    int32_t SetAudioDeviceAnahsCallback(const std::shared_ptr<AudioDeviceAnahs> &callback);
+
+    int32_t UnsetAudioDeviceAnahsCallback();
+
     int32_t MoveToNewPipe(const uint32_t sessionId, const AudioPipeType pipeType);
 
     int32_t SetAudioConcurrencyCallback(const uint32_t sessionID,
