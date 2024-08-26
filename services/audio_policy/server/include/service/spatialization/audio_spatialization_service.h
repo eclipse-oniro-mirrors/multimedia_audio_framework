@@ -85,8 +85,9 @@ private:
     enum WriteToDbOperation {
         WRITE_SPATIALIZATION_STATE = 0,
         WRITE_SPATIALIZATION_SCENE = 1,
+        WRITE_DEVICESPATIAL_INFO = 2,
     };
-
+    const int32_t maxDevices_ = 10;
     int32_t UpdateSpatializationStateReal(bool outputDeviceChange, std::string preDeviceAddress = "");
     int32_t UpdateSpatializationState();
     int32_t UpdateSpatializationSceneType();
@@ -96,6 +97,13 @@ private:
     bool IsHeadTrackingDataRequestedForCurrentDevice();
     void UpdateHeadTrackingDeviceState(bool outputDeviceChange, std::string preDeviceAddress = "");
     void HandleHeadTrackingDeviceChange(const std::unordered_map<std::string, bool> &changeInfo);
+    void removeOldestDevice();
+    void UpdateDeviceSpatialInfo(std::string address, std::string deviceSpatialInfo);
+    std::string GetCurrTimestamp();
+    std::string EnCapsulateDeviceInfo(const std::string address);
+    void extractAddress(const std::string deviceSpatialInfo);
+    extractTimestamp(const std::string deviceSpatialInfo);
+    std::map<std::string, std::string> addressToDeviceSpatialInfoMap_;
     std::shared_ptr<AudioPolicyServerHandler> audioPolicyServerHandler_;
     std::string currentDeviceAddress_ = "";
     std::string preSettingSpatialAddress_ = "NO_PREVIOUS_SET_DEVICE";
