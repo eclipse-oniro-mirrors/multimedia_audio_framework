@@ -469,6 +469,10 @@ napi_value NapiAudioSpatializationManager::IsSpatializationSupportedForDevice(na
     CHECK_AND_RETURN_RET_LOG(argTransFlag == true, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_INVALID_PARAM,
         "parameter verification failed: The param of deviceDescriptor must be interface AudioDeviceDescriptor"),
         "invalid parameter");
+    CHECK_AND_RETURN_RET_LOG(napiAudioSpatializationManager != nullptr, result,
+        "napiAudioSpatializationManager is nullptr");
+    CHECK_AND_RETURN_RET_LOG(napiAudioSpatializationManager->audioSpatializationMngr_ != nullptr, result,
+        "napiAudioSpatializationManager->audioSpatializationMngr_ is nullptr");
 
     bool isSpatializationSupportedForDevice = napiAudioSpatializationManager
         ->audioSpatializationMngr_->IsSpatializationSupportedForDevice(selectedAudioDevice);
@@ -544,6 +548,12 @@ napi_value NapiAudioSpatializationManager::UpdateSpatialDeviceState(napi_env env
     if (NapiParamUtils::GetSpatialDeviceState(env, &audioSpatialDeviceState, args[PARAM0]) != napi_ok) {
         NapiAudioError::ThrowError(env, NAPI_ERR_INVALID_PARAM,
             "parameter verification failed: The param of spatialDeviceState must be interface AudioSpatialDeviceState");
+    }
+    if (napiAudioSpatializationManager == nullptr || napiAudioSpatializationManager
+            ->audioSpatializationMngr_ == nullptr) {
+        AUDIO_ERR_LOG("napiAudioSpatializationManager or  napiAudioSpatializationManager"
+           "->audioSpatializationMngr_ is  nullptr");
+        return nullptr;
     }
     int32_t ret = napiAudioSpatializationManager->audioSpatializationMngr_->UpdateSpatialDeviceState(
         audioSpatialDeviceState);

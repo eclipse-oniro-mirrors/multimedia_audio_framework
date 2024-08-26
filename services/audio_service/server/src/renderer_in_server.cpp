@@ -189,12 +189,13 @@ void RendererInServer::WriterRenderStreamStandbySysEvent()
 
 void RendererInServer::OnStatusUpdate(IOperation operation)
 {
-    AUDIO_INFO_LOG("%{public}u recv operation:%{public}d standByEnable_:%{public}s", streamIndex_, operation,
-        (standByEnable_ ? "true" : "false"));
+    OnStatusUpdateExt(operation);
     Trace trace(traceTag_ + " OnStatusUpdate:" + std::to_string(operation));
     CHECK_AND_RETURN_LOG(operation != OPERATION_RELEASED, "Stream already released");
     std::shared_ptr<IStreamListener> stateListener = streamListener_.lock();
     CHECK_AND_RETURN_LOG(stateListener != nullptr, "StreamListener is nullptr");
+    CHECK_AND_RETURN_LOG(audioServerBuffer_->GetStreamStatus() != nullptr,
+        "audioServerBuffer_->GetStreamStatus() is nullptr");
     switch (operation) {
         case OPERATION_STARTED:
             if (standByEnable_) {
@@ -239,6 +240,11 @@ void RendererInServer::OnStatusUpdate(IOperation operation)
         default:
             OnStatusUpdateSub(operation);
     }
+}
+void RendererInServer::OnStatusUpdateExt(IOperation operation)
+{
+    AUDIO_INFO_LOG("%{public}u recv operation:%{public}d standByEnable_:%{public}s", streamIndex_, operation,
+        (standByEnable_ ? "true" : "false"));
 }
 
 void RendererInServer::OnStatusUpdateSub(IOperation operation)
@@ -444,7 +450,10 @@ int32_t RendererInServer::WriteData()
     }
 
     BufferDesc bufferDesc = {nullptr, 0, 0}; // will be changed in GetReadbuffer
-
+    if (bufferDesc.buffer == nullptr) {
+        AUDIO_ERR_LOG("The bufferDesc.buffer is null!");
+        return ERROR;
+    }
     if (audioServerBuffer_->GetReadbuffer(currentReadFrame, bufferDesc) == SUCCESS) {
         VolumeHandle(bufferDesc);
         if (processConfig_.streamType != STREAM_ULTRASONIC) {
@@ -452,6 +461,7 @@ int32_t RendererInServer::WriteData()
                 DoFadingOut(bufferDesc);
             }
         }
+
         Trace::CountVolume(traceTag_, *bufferDesc.buffer);
         stream_->EnqueueBuffer(bufferDesc);
         DumpFileUtil::WriteDumpFile(dumpC2S_, static_cast<void *>(bufferDesc.buffer), bufferDesc.bufLength);

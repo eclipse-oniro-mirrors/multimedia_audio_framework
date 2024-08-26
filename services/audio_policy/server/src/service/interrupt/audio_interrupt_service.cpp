@@ -1049,6 +1049,10 @@ void AudioInterruptService::ProcessAudioScene(const AudioInterrupt &audioInterru
         }
         itZone->second->audioFocusInfoList = audioFocusInfoList;
         zonesMap_[zoneId] = itZone->second;
+        if (sessionService_->GetAudioSessionByPid(pid) == nullptr) {
+            AUDIO_ERR_LOG("sessionService_->GetAudioSessionByPid(pid) is nullptr!");
+            return;
+        }
         if (sessionService_ != nullptr && sessionService_->IsAudioSessionActivated(pid)) {
             sessionService_->GetAudioSessionByPid(pid)->RemoveAudioInterrptByStreamId(incomingSessionId);
         }
@@ -1154,9 +1158,13 @@ void AudioInterruptService::AddToAudioFocusInfoList(std::shared_ptr<AudioInterru
     audioInterruptZone->audioFocusInfoList.emplace_back(std::make_pair(incomingInterrupt, incomingState));
     zonesMap_[zoneId] = audioInterruptZone;
     SendFocusChangeEvent(zoneId, AudioPolicyServerHandler::REQUEST_CALLBACK_CATEGORY, incomingInterrupt);
-
+  
     if (sessionService_ != nullptr && sessionService_->IsAudioSessionActivated(incomingInterrupt.pid)) {
         auto audioSession = sessionService_->GetAudioSessionByPid(incomingInterrupt.pid);
+        if (audioSession == nullptr) {
+            AUDIO_ERR_LOG("audioSession is nullptr!");
+            return;
+        }
         audioSession->AddAudioInterrpt(std::make_pair(incomingInterrupt, incomingState));
     }
 }
