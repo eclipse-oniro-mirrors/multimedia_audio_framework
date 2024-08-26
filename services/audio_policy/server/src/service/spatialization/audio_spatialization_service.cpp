@@ -161,9 +161,9 @@ int32_t AudioSpatializationService::SetSpatializationEnabled(const sptr<AudioDev
     AUDIO_INFO_LOG("Device %{public}s Spatialization enabled is set to be: %{public}d", address.c_str(), enable);
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     preSettingSpatialAddress_ = address;
-    std::string deviceSpatialInfo = EnCapsulateDeviceInfo(address);
-    UpdateDeviceSpatialInfo(address, deviceSpatialInfo);
     if (addressToSpatialEnabledMap_[address].spatializationEnabled == enable) {
+        std::string deviceSpatialInfo = EnCapsulateDeviceInfo(address);
+        UpdateDeviceSpatialMapInfo(address, deviceSpatialInfo);
         WriteSpatializationStateToDb(WRITE_DEVICESPATIAL_INFO);
         return SPATIALIZATION_SERVICE_OK;
     }
@@ -220,9 +220,9 @@ int32_t AudioSpatializationService::SetHeadTrackingEnabled(const sptr<AudioDevic
     AUDIO_INFO_LOG("Device %{public}s Head tracking enabled is set to be: %{public}d", address.c_str(), enable);
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     preSettingSpatialAddress_ = address;
-    std::string deviceSpatialInfo = EnCapsulateDeviceInfo(address);
-    UpdateDeviceSpatialInfo(address, deviceSpatialInfo);
     if (addressToSpatialEnabledMap_[address].headTrackingEnabled == enable) {
+        std::string deviceSpatialInfo = EnCapsulateDeviceInfo(address);
+        UpdateDeviceSpatialMapInfo(address, deviceSpatialInfo);
         WriteSpatializationStateToDb(WRITE_DEVICESPATIAL_INFO);
         return SPATIALIZATION_SERVICE_OK;
     }
@@ -515,6 +515,25 @@ int32_t AudioSpatializationService::UpdateSpatializationSceneType()
     return SPATIALIZATION_SERVICE_OK;
 }
 
+int32_t AudioSpatializationService::UpdateDeviceSpatialInfo(const std::string deviceSpatialInfo)
+{
+    std::stringstream ss(deviceSpatialInfo);
+    std::string token;
+    std::string address;
+    std::getline(ss, address, '|');
+    std::getline(ss, token, '|');
+    addressToSpatialEnabledMap_[address].spatializationEnabled = std::stoi(token);
+    std::getline(ss, token, '|');
+    addressToSpatialEnabledMap_[address].headTrackingEnabled = std::stoi(token);
+    std::getline(ss, token, '|');
+    addressToSpatialDeviceStateMap_[address].isSpatializationSupported = std::stoi(token);
+    std::getline(ss, token, '|');
+    addressToSpatialDeviceStateMap_[address].isSpatializationSupported = std::stoi(token);
+    std::getline(ss, token, '|');
+    addressToSpatialDeviceStateMap_[address].spatialDeviceType = static_cast<AudioSpatialDeviceType>(std::stoi(token));
+
+}
+
 void AudioSpatializationService::UpdateSpatialDeviceType(AudioSpatialDeviceType spatialDeviceType)
 {
     const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
@@ -747,7 +766,7 @@ void AudioSpatializationService::removeOldestDevice()
     }
 }
 
-void AudioSpatializationService::UpdateDeviceSpatialInfo(std::string address, std::string deviceSpatialInfo)
+void AudioSpatializationService::UpdateDeviceSpatialMapInfo(std::string address, std::string deviceSpatialInfo)
 {
     if (!addressToDeviceSpatialInfoMap_.count(address)) {
         if (addressToDeviceSpatialInfoMap_.size() >= maxDevices_) {
