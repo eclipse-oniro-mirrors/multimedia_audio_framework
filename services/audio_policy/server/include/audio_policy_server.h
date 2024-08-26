@@ -589,7 +589,7 @@ private:
 class AudioOsAccountInfo : public AccountSA::OsAccountSubscriber {
 public:
     explicit AudioOsAccountInfo(const AccountSA::OsAccountSubscribeInfo &subscribeInfo,
-        sptr<AudioPolicyServer> audioPolicyServer) : AccountSA::OsAccountSubscriber(subscribeInfo),
+        AudioPolicyServer *audioPolicyServer) : AccountSA::OsAccountSubscriber(subscribeInfo),
         audioPolicyServer_(audioPolicyServer) {}
 
     ~AudioOsAccountInfo()
@@ -611,7 +611,7 @@ public:
         }
     }
 private:
-    sptr<AudioPolicyServer> audioPolicyServer_;
+    AudioPolicyServer *audioPolicyServer_;
 };
 
 class AudioCommonEventSubscriber : public EventFwk::CommonEventSubscriber {

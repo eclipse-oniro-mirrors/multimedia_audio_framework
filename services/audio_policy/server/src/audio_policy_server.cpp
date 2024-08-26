@@ -377,7 +377,7 @@ bool AudioPolicyServer::IsVolumeLevelValid(AudioStreamType streamType, int32_t v
 
 void AudioPolicyServer::SubscribeOsAccountChangeEvents()
 {
-    if (!accountObserver_){
+    if (accountObserver_ == nullptr) {
         AccountSA::OsAccountSubscribeInfo osAccountSubscribeInfo;
         osAccountSubscribeInfo.SetOsAccountSubscribeType(AccountSA::OS_ACCOUNT_SUBSCRIBE_TYPE::SWITCHED);
         accountObserver_ = std::make_shared<AudioOsAccountInfo>(osAccountSubscribeInfo, this);
