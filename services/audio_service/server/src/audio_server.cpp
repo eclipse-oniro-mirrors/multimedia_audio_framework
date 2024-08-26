@@ -354,14 +354,12 @@ void AudioServer::OnStop()
 void AudioServer::RecognizeAudioEffectType(const std::string &mainkey, const std::string &subkey,
     const std::string &extraSceneType)
 {
-    AUDIO_DEBUG_LOG("mainkey is %{public}s, subkey is %{public}s, extraSceneType is %{public}s",
-        mainkey.c_str(), subkey.c_str(), extraSceneType.c_str());
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
     if (audioEffectChainManager == nullptr) {
         AUDIO_ERR_LOG("audioEffectChainManager is nullptr");
         return;
     }
-    audioEffectChainManager->UpdateExtraSceneType(extraSceneType);
+    audioEffectChainManager->UpdateExtraSceneType(mainkey, subkey, extraSceneType);
 }
 
 int32_t AudioServer::SetExtraParameters(const std::string& key,

@@ -1106,21 +1106,36 @@ AudioEffectScene AudioEffectChainManager::GetSceneTypeFromSpatializationSceneTyp
     return sceneType;
 }
 
-void AudioEffectChainManager::UpdateExtraSceneType(const std::string &extraSceneType)
+void AudioEffectChainManager::UpdateExtraSceneType(const std::string &mainkey, const std::string &subkey,
+    const std::string &extraSceneType)
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-    AUDIO_INFO_LOG("Update scene type: %{public}s to effect chain", extraSceneType.c_str());
-    extraSceneType_ = extraSceneType;
-    for (auto it = SceneTypeToEffectChainMap_.begin(); it != SceneTypeToEffectChainMap_.end(); ++it) {
-        auto audioEffectChain = it->second;
-        if (audioEffectChain == nullptr) {
-            continue;
+    if (mainkey == "audio_effect" && subkey == "update_audio_effect_type") {
+        AUDIO_INFO_LOG("Set scene type: %{public}s to hdi", extraSceneType.c_str());
+        int32_t ret{ SUCCESS };
+        effectHdiInput_[0] = HDI_EXTRA_SCENE_TYPE;
+        effectHdiInput_[1] = static_cast<int32_t>(std::stoi(extraSceneType));
+        ret = audioEffectHdiParam_->UpdateHdiState(effectHdiInput_, DEVICE_TYPE_SPEAKER);
+        if (ret != SUCCESS) {
+            AUDIO_WARNING_LOG("set hdi update rss scene type failed");
         }
-        audioEffectChain->SetExtraSceneType(extraSceneType);
-        if (audioEffectChain->UpdateEffectParam() != SUCCESS) {
-            AUDIO_WARNING_LOG("Update scene type to effect chain failed");
-            continue;
+        AUDIO_INFO_LOG("Set scene type: %{public}s to arm", extraSceneType.c_str());
+        extraSceneType_ = extraSceneType;
+        for (auto it = SceneTypeToEffectChainMap_.begin(); it != SceneTypeToEffectChainMap_.end(); ++it) {
+            auto audioEffectChain = it->second;
+            if (audioEffectChain == nullptr) {
+                continue;
+            }
+            audioEffectChain->SetExtraSceneType(extraSceneType);
+            if (audioEffectChain->UpdateEffectParam() != SUCCESS) {
+                AUDIO_WARNING_LOG("Update scene type to effect chain failed");
+                continue;
+            }
         }
+    } else {
+        AUDIO_INFO_LOG("UpdateExtraSceneType failed, mainkey is %{public}s, subkey is %{public}s, "
+            "extraSceneType is %{public}s", mainkey.c_str(), subkey.c_str(), extraSceneType.c_str());
+        return;
     }
 }
 

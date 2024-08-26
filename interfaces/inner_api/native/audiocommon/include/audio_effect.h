@@ -52,6 +52,7 @@ constexpr int32_t HDI_UPDATE_SPATIAL_DEVICE_TYPE = 6;
 
 constexpr int32_t HDI_VOLUME = 7;
 constexpr int32_t HDI_ROTATION = 8;
+constexpr int32_t HDI_EXTRA_SCENE_TYPE = 9;
 
 enum AudioSpatialDeviceType {
     EARPHONE_TYPE_NONE = 0,
