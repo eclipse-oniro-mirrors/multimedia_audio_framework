@@ -229,8 +229,6 @@ private:
 
     void ResetFramePosition();
 
-    void ReportDataToResSched();
-
     int32_t SetInnerVolume(float volume);
 
     bool IsHighResolution() const noexcept;
