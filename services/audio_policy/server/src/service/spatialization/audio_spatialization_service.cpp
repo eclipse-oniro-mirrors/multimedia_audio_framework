@@ -528,7 +528,7 @@ void AudioSpatializationService::UpdateDeviceSpatialInfo(const std::string devic
     std::getline(ss, token, '|');
     addressToSpatialDeviceStateMap_[address].isSpatializationSupported = std::stoi(token);
     std::getline(ss, token, '|');
-    addressToSpatialDeviceStateMap_[address].isSpatializationSupported = std::stoi(token);
+    addressToSpatialDeviceStateMap_[address].isHeadTrackingSupported = std::stoi(token);
     std::getline(ss, token, '|');
     addressToSpatialDeviceStateMap_[address].spatialDeviceType = static_cast<AudioSpatialDeviceType>(std::stoi(token));
 }
@@ -742,7 +742,7 @@ std::string AudioSpatializationService::EnCapsulateDeviceInfo(const std::string 
     value << "|" << addressToSpatialEnabledMap_[address].spatializationEnabled;
     value << "|" << addressToSpatialEnabledMap_[address].headTrackingEnabled;
     value << "|" << addressToSpatialDeviceStateMap_[address].isSpatializationSupported;
-    value << "|" << addressToSpatialDeviceStateMap_[address].isSpatializationSupported;
+    value << "|" << addressToSpatialDeviceStateMap_[address].isHeadTrackingSupported;
     value << "|" << addressToSpatialDeviceStateMap_[address].spatialDeviceType;
     value << "|" << GetCurrTimestamp();
     return value.str();
