@@ -225,6 +225,10 @@ bool AudioDeviceManager::IsArmUsbDevice(const AudioDeviceDescriptor &desc)
         return connDesc->deviceId_ == desc.deviceId_;
     };
     auto itr = std::find_if(connectedDevices_.begin(), connectedDevices_.end(), isPresent);
+    if (itr == connectedDevices_.end()) {
+        return false;
+    }
+
     return (*itr)->deviceType_ == DEVICE_TYPE_USB_ARM_HEADSET;
 }
 
