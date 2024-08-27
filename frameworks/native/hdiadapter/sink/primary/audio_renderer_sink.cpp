@@ -36,6 +36,7 @@
 #include "audio_running_lock_manager.h"
 #endif
 #include "v4_0/iaudio_manager.h"
+#include "hdf_remote_service.h"
 #include "audio_errors.h"
 #include "audio_hdi_log.h"
 #include "audio_utils.h"
@@ -141,6 +142,17 @@ static HdiAdapterFormat ParseAudioFormat(const std::string &format)
     } else {
         return HdiAdapterFormat::SAMPLE_S16;
     }
+}
+
+static void AudioHostOnRemoteDied(struct HdfDeathRecipient *recipient, struct HdfRemoteService *service)
+{
+    if (recipient == nullptr || service == nullptr) {
+        AUDIO_ERR_LOG("Receive die message but params are null");
+        return;
+    }
+
+    AUDIO_ERR_LOG("Auto exit for audio host die");
+    _Exit(0);
 }
 
 class AudioRendererSinkInner : public AudioRendererSink {
@@ -265,12 +277,19 @@ private:
     AudioPortPin GetAudioPortPin() const noexcept;
     int32_t SetAudioRoute(DeviceType outputDevice, AudioRoute route);
 
+    // use static because only register once for primary hal
+    static struct HdfRemoteService *hdfRemoteService_;
+    static struct HdfDeathRecipient *hdfDeathRecipient_;
+
     FILE *dumpFile_ = nullptr;
     std::string dumpFileName_ = "";
     DeviceType currentActiveDevice_ = DEVICE_TYPE_NONE;
     AudioScene currentAudioScene_ = AUDIO_SCENE_INVALID;
     int32_t currentDevicesSize_ = 0;
 };
+
+struct HdfRemoteService *AudioRendererSinkInner::hdfRemoteService_ = nullptr;
+struct HdfDeathRecipient *AudioRendererSinkInner::hdfDeathRecipient_ = nullptr;
 
 AudioRendererSinkInner::AudioRendererSinkInner(const std::string &halName)
     : sinkInited_(false), adapterInited_(false), renderInited_(false), started_(false), paused_(false),
@@ -565,8 +584,6 @@ void AudioRendererSinkInner::DeInit()
     audioAdapter_ = nullptr;
     audioManager_ = nullptr;
     adapterInited_ = false;
-
-    DumpFileUtil::CloseDumpFile(&dumpFile_);
 }
 
 void InitAttrs(struct AudioSampleAttributes &attrs)
@@ -590,6 +607,18 @@ int32_t AudioRendererSinkInner::InitAudioManager()
 
     audioManager_ = IAudioManagerGet(false);
     CHECK_AND_RETURN_RET(audioManager_ != nullptr, ERR_INVALID_HANDLE);
+
+    // Only primary sink register death recipient once
+    if (halName_ == PRIMARY_HAL_NAME && hdfRemoteService_ == nullptr) {
+        AUDIO_INFO_LOG("Add death recipient for primary hdf");
+
+        hdfRemoteService_ = audioManager_->AsObject(audioManager_);
+        // Don't need to free, existing with process
+        hdfDeathRecipient_ = (struct HdfDeathRecipient *)calloc(1, sizeof(*hdfDeathRecipient_));
+        hdfDeathRecipient_->OnRemoteDied = AudioHostOnRemoteDied;
+
+        HdfRemoteServiceAddDeathRecipient(hdfRemoteService_, hdfDeathRecipient_);
+    }
 
     return 0;
 }
@@ -1177,6 +1206,9 @@ int32_t AudioRendererSinkInner::Stop(void)
         return ERR_OPERATION_FAILED;
     }
     started_ = false;
+
+    DumpFileUtil::CloseDumpFile(&dumpFile_);
+
     return SUCCESS;
 }
 
