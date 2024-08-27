@@ -583,6 +583,7 @@ private:
     std::map<std::u16string, DumpFunc> dumpFuncMap;
     pid_t lastMicMuteSettingPid_ = 0;
     std::string GetBundleName();
+    std::shared_ptr<AudioOsAccountInfo> accountObserver_ = nullptr;
 };
 
 class AudioOsAccountInfo : public AccountSA::OsAccountSubscriber {
