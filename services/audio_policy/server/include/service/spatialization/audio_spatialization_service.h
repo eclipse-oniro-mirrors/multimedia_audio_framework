@@ -102,7 +102,6 @@ private:
     void UpdateDeviceSpatialInfo(const std::string deviceSpatialInfo);
     std::string GetCurrTimestamp();
     std::string EnCapsulateDeviceInfo(const std::string address);
-    std::string extractAddress(const std::string deviceSpatialInfo);
     std::string extractTimestamp(const std::string deviceSpatialInfo);
     std::map<std::string, std::string> addressToDeviceSpatialInfoMap_;
     std::shared_ptr<AudioPolicyServerHandler> audioPolicyServerHandler_;

@@ -521,6 +521,7 @@ void AudioSpatializationService::UpdateDeviceSpatialInfo(const std::string devic
     std::string token;
     std::string address;
     std::getline(ss, address, '|');
+    addressToDeviceSpatialInfoMap_[address] = deviceSpatialInfo;
     std::getline(ss, token, '|');
     addressToSpatialEnabledMap_[address].spatializationEnabled = std::stoi(token);
     std::getline(ss, token, '|');
@@ -620,8 +621,7 @@ void AudioSpatializationService::InitSpatializationState()
             AUDIO_WARNING_LOG("Failed to read spatialization_state from setting db! Err: %{public}d", ret);
             break;
         }
-        std::string address = extractAddress(deviceSpatialInfo);
-        addressToDeviceSpatialInfoMap_[address] = deviceSpatialInfo;
+        UpdateDeviceSpatialInfo(deviceSpatialInfo);
     }
     UpdateSpatializationStateReal(false);
     isLoadedfromDb_ = true;
@@ -715,15 +715,6 @@ std::string AudioSpatializationService::GetCurrTimestamp()
     std::ostringstream oss;
     oss << now;
     return oss.str();
-}
-
-std::string AudioSpatializationService::extractAddress(const std::string deviceSpatialInfo)
-{
-    size_t pos = deviceSpatialInfo.find("|");
-    if (pos != std::string::npos) {
-        return deviceSpatialInfo.substr(0, pos);
-    }
-    return "";
 }
 
 std::string AudioSpatializationService::extractTimestamp(const std::string deviceSpatialInfo)
