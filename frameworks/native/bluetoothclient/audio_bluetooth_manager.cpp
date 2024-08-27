@@ -262,6 +262,13 @@ void AudioA2dpManager::CheckA2dpDeviceReconnect()
         AUDIO_INFO_LOG("reconnect a2dp device:%{public}s, wear state:%{public}d",
             GetEncryptAddr(device.GetDeviceAddr()).c_str(), wearState);
     }
+
+    std::vector<std::string> virtualDevices;
+    a2dpInstance_->GetVirtualDeviceList(virtualDevices);
+    for (auto &macAddress : virtualDevices) {
+        AUDIO_PRERELEASE_LOGI("reconnect virtual a2dp device:%{public}s", GetEncryptAddr(macAddress).c_str());
+        a2dpListener_->OnVirtualDeviceChanged(static_cast<int32_t>(Bluetooth::BT_VIRTUAL_DEVICE_ADD), macAddress);
+    }
 }
 
 int32_t AudioA2dpManager::Connect(const std::string &macAddress)
@@ -362,6 +369,13 @@ void AudioHfpManager::CheckHfpDeviceReconnect()
         }
         AUDIO_INFO_LOG("reconnect hfp device:%{public}s, wear state:%{public}d",
             GetEncryptAddr(device.GetDeviceAddr()).c_str(), wearState);
+    }
+
+    std::vector<std::string> virtualDevices;
+    hfpInstance_->GetVirtualDeviceList(virtualDevices);
+    for (auto &macAddress : virtualDevices) {
+        AUDIO_PRERELEASE_LOGI("reconnect virtual hfp device:%{public}s", GetEncryptAddr(macAddress).c_str());
+        hfpListener_->OnVirtualDeviceChanged(static_cast<int32_t>(Bluetooth::BT_VIRTUAL_DEVICE_ADD), macAddress);
     }
 }
 
