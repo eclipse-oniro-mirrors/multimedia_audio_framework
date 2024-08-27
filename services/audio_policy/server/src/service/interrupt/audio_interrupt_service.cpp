@@ -910,22 +910,27 @@ void AudioInterruptService::ProcessExistInterrupt(std::list<std::pair<AudioInter
 
     // if the callerPid has an active audio session, the hint type need to be updated.
     UpdateHintTypeForExistingSession(incomingInterrupt, focusEntry);
-    interruptEvent.hintType = focusEntry.hintType;
     switch (focusEntry.hintType) {
         case INTERRUPT_HINT_STOP:
             if (IsAudioSourceConcurrency(existSourceType, incomingSourceType, existConcurrentSources,
                 incomingConcurrentSources)) {
-                interruptEvent.hintType = INTERRUPT_HINT_NONE;
                 break;
             }
+            interruptEvent.hintType = focusEntry.hintType;
             removeFocusInfo = true;
             break;
         case INTERRUPT_HINT_PAUSE:
-            iterActive->second = PAUSE;
+            if (iterActive->second == ACTIVE || iterActive->second == DUCK) {
+                iterActive->second = PAUSE;
+                interruptEvent.hintType = focusEntry.hintType;
+            }
             break;
         case INTERRUPT_HINT_DUCK:
-            iterActive->second = DUCK;
-            interruptEvent.duckVolume = DUCK_FACTOR;
+            if (iterActive->second == ACTIVE) {
+                iterActive->second = DUCK;
+                interruptEvent.duckVolume = DUCK_FACTOR;
+                interruptEvent.hintType = focusEntry.hintType;
+            }
             break;
         default:
             break;
@@ -946,14 +951,13 @@ void AudioInterruptService::ProcessActiveInterrupt(const int32_t zoneId, const A
     for (auto iterActive = tmpFocusInfoList.begin(); iterActive != tmpFocusInfoList.end();) {
         AudioFocusEntry focusEntry =
             focusCfgMap_[std::make_pair((iterActive->first).audioFocusType, incomingInterrupt.audioFocusType)];
-        if (iterActive->second == PAUSE || focusEntry.actionOn != CURRENT ||
-            IsSameAppInShareMode(incomingInterrupt, iterActive->first) ||
+        if (focusEntry.actionOn != CURRENT || IsSameAppInShareMode(incomingInterrupt, iterActive->first) ||
             iterActive->second == PLACEHOLDER || CanMixForSession(incomingInterrupt, iterActive->first, focusEntry)) {
             ++iterActive;
             continue;
         }
 
-        InterruptEventInternal interruptEvent {INTERRUPT_TYPE_BEGIN, focusEntry.forceType, focusEntry.hintType, 1.0f};
+        InterruptEventInternal interruptEvent {INTERRUPT_TYPE_BEGIN, focusEntry.forceType, INTERRUPT_HINT_NONE, 1.0f};
         uint32_t activeSessionId = (iterActive->first).sessionId;
         bool removeFocusInfo = false;
         ProcessExistInterrupt(iterActive, focusEntry, incomingInterrupt, removeFocusInfo, interruptEvent);
@@ -1108,8 +1112,8 @@ int32_t AudioInterruptService::ProcessFocusEntry(const int32_t zoneId, const Aud
         CHECK_AND_RETURN_RET_LOG(focusCfgMap_.find(audioFocusTypePair) != focusCfgMap_.end(), ERR_INVALID_PARAM,
             "audio focus type pair is invalid");
         AudioFocusEntry focusEntry = focusCfgMap_[audioFocusTypePair];
-        if (iterActive->second == PAUSE || focusEntry.actionOn == CURRENT ||
-            iterActive->second == PLACEHOLDER || CanMixForSession(incomingInterrupt, iterActive->first, focusEntry)) {
+        if (focusEntry.actionOn == CURRENT || iterActive->second == PLACEHOLDER ||
+            CanMixForSession(incomingInterrupt, iterActive->first, focusEntry)) {
             continue;
         }
         if (focusEntry.isReject) {
