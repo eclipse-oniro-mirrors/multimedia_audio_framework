@@ -35,11 +35,6 @@
 #include "securec.h"
 #include "hisysevent.h"
 
-#ifdef RESSCHE_ENABLE
-#include "res_type.h"
-#include "res_sched_client.h"
-#endif
-
 #include "audio_errors.h"
 #include "audio_policy_manager.h"
 #include "audio_manager_base.h"
@@ -1742,27 +1737,10 @@ void RendererInClientInner::WriteMuteDataSysEvent(uint8_t *buffer, size_t buffer
                 Media::MediaMonitor::FREQUENCY_AGGREGATION_EVENT);
             bean->Add("CLIENT_UID", appUid_);
             Media::MediaMonitor::MediaMonitorManager::GetInstance().WriteLogMsg(bean);
-            ReportDataToResSched();
         }
     } else if (buffer[0] != 0 && startMuteTime_ != 0) {
         startMuteTime_ = 0;
     }
-}
-
-void RendererInClientInner::ReportDataToResSched()
-{
-    #ifdef RESSCHE_ENABLE
-    std::unordered_map<std::string, std::string> payload;
-    int32_t uid;
-    if (clientUid_ == MEDIA_SERVICE_UID) {
-        uid = appUid_;
-    } else {
-        uid = clientUid_;
-    }
-    payload["uid"] = std::to_string(uid);
-    uint32_t type = ResourceSchedule::ResType::RES_TYPE_AUDIO_SILENT_PLAYBACK;
-    ResourceSchedule::ResSchedClient::GetInstance().ReportData(type, 0, payload);
-    #endif
 }
 
 int32_t RendererInClientInner::WriteCacheData(bool isDrain)
