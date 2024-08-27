@@ -172,6 +172,8 @@ int32_t AudioSpatializationService::SetSpatializationEnabled(const sptr<AudioDev
     if (UpdateSpatializationStateReal(false) != 0) {
         return ERROR;
     }
+    std::string deviceSpatialInfo = EnCapsulateDeviceInfo(address);
+    UpdateDeviceSpatialMapInfo(address, deviceSpatialInfo);
     WriteSpatializationStateToDb(WRITE_DEVICESPATIAL_INFO);
     return SPATIALIZATION_SERVICE_OK;
 }
@@ -231,6 +233,8 @@ int32_t AudioSpatializationService::SetHeadTrackingEnabled(const sptr<AudioDevic
     if (UpdateSpatializationStateReal(false) != 0) {
         return ERROR;
     }
+    std::string deviceSpatialInfo = EnCapsulateDeviceInfo(address);
+    UpdateDeviceSpatialMapInfo(address, deviceSpatialInfo);
     WriteSpatializationStateToDb(WRITE_DEVICESPATIAL_INFO);
     return SPATIALIZATION_SERVICE_OK;
 }
