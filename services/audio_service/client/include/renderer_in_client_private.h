@@ -75,6 +75,7 @@ public:
     int32_t SetVolume(float volume) override;
     float GetVolume() override;
     int32_t SetDuckVolume(float volume) override;
+    int32_t SetMute(bool mute) override;
     int32_t SetRenderRate(AudioRendererRate renderRate) override;
     AudioRendererRate GetRenderRate() override;
     int32_t SetStreamCallback(const std::shared_ptr<AudioStreamCallback> &callback) override;
@@ -310,6 +311,7 @@ private:
     int32_t continueDownCount_ = 0;
     float lowPowerVolume_ = 1.0;
     float duckVolume_ = 1.0;
+    float muteVolume_ = 1.0;
     float clientVolume_ = 1.0;
     bool silentModeAndMixWithOthers_ = false;
 

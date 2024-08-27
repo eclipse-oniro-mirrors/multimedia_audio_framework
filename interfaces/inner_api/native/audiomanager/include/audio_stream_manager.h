@@ -64,6 +64,20 @@ public:
     virtual ~AudioClientTracker() = default;
 
     /**
+     * Mute Stream was controlled by system application
+     *
+     * @param streamSetStateEventInternal Contains the set even information.
+     */
+    virtual void MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) = 0;
+
+    /**
+     * Unmute Stream was controlled by system application
+     *
+     * @param streamSetStateEventInternal Contains the set even information.
+     */
+    virtual void UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) = 0;
+
+    /**
      * Paused Stream was controlled by system application
      *
      * @param streamSetStateEventInternal Contains the set even information.

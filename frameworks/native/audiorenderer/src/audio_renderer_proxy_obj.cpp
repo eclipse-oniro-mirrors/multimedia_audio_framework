@@ -30,6 +30,20 @@ void AudioRendererProxyObj::UnsetRendererObj()
     renderer = nullptr;
 }
 
+void AudioRendererProxyObj::MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    if (renderer != nullptr) {
+        renderer->Mute(CMD_FROM_SYSTEM);
+    }
+}
+
+void AudioRendererProxyObj::UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    if (renderer != nullptr) {
+        renderer->Unmute(CMD_FROM_SYSTEM);
+    }
+}
+
 void AudioRendererProxyObj::PausedStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal)
 {
     if (renderer != nullptr) {

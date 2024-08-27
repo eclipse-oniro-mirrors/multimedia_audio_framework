@@ -274,6 +274,7 @@ int32_t OHAudioBuffer::Init(int dataFd, int infoFd)
 
     basicBufferInfo_->streamVolume.store(MAX_FLOAT_VOLUME);
     basicBufferInfo_->duckFactor.store(MAX_FLOAT_VOLUME);
+    basicBufferInfo_->muteFactor.store(MAX_FLOAT_VOLUME);
 
     if (bufferHolder_ == AUDIO_SERVER_SHARED || bufferHolder_ == AUDIO_SERVER_ONLY) {
         basicBufferInfo_->handlePos.store(0);
@@ -428,6 +429,31 @@ bool OHAudioBuffer::SetStreamVolume(float streamVolume)
         return false;
     }
     basicBufferInfo_->streamVolume.store(streamVolume);
+    return true;
+}
+
+float OHAudioBuffer::GetMuteFactor()
+{
+    CHECK_AND_RETURN_RET_LOG(basicBufferInfo_ != nullptr, MAX_FLOAT_VOLUME, "buffer is not inited!");
+    float factor = basicBufferInfo_->muteFactor.load();
+    if (factor < MIN_FLOAT_VOLUME) {
+        AUDIO_WARNING_LOG("vol < 0.0, invalid muteFactor! using 0.0 instead.");
+        return MIN_FLOAT_VOLUME;
+    } else if (factor > MAX_FLOAT_VOLUME) {
+        AUDIO_WARNING_LOG("vol > 0.0, invalid muteFactor! using 1.0 instead.");
+        return MAX_FLOAT_VOLUME;
+    }
+    return factor;
+}
+
+bool OHAudioBuffer::SetMuteFactor(float muteFactor)
+{
+    CHECK_AND_RETURN_RET_LOG(basicBufferInfo_ != nullptr, false, "buffer is not inited!");
+    if (muteFactor != MIN_FLOAT_VOLUME || muteFactor != MAX_FLOAT_VOLUME) {
+        AUDIO_ERR_LOG("invlaid factor:%{public}f", muteFactor);
+        return false;
+    }
+    basicBufferInfo_->muteFactor.store(muteFactor);
     return true;
 }
 

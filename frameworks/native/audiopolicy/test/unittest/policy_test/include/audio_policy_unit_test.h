@@ -136,6 +136,18 @@ class AudioClientTrackerTest : public AudioClientTracker {
 public:
     virtual ~AudioClientTrackerTest() = default;
     /**
+     * Mute Stream was controlled by system application
+     *
+     * @param streamSetStateEventInternal Contains the set even information.
+     */
+    virtual void MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) {};
+     /**
+     * Unmute Stream was controlled by system application
+     *
+     * @param streamSetStateEventInternal Contains the set even information.
+     */
+    virtual void UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) {};
+    /**
      * Paused Stream was controlled by system application
      *
      * @param streamSetStateEventInternal Contains the set even information.

@@ -29,6 +29,8 @@ public:
             MessageParcel &reply, MessageOption &option) override;
     void SetClientTrackerCallback(const std::weak_ptr<AudioClientTracker> &callback);
 
+    void MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
+    void UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
     void PausedStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
     void ResumeStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
 
@@ -40,6 +42,7 @@ public:
 
     int OffloadRemoteRequest(uint32_t code, MessageParcel &data,
         MessageParcel &reply, MessageOption &option);
+    void AudioClientTrackerCallbackStub::SelectCodeCase(uint32_t code);
 private:
     std::weak_ptr<AudioClientTracker> callback_;
 };

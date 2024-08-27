@@ -29,6 +29,23 @@ AudioClientTrackerCallbackStub::~AudioClientTrackerCallbackStub()
 {
 }
 
+void AudioClientTrackerCallbackStub::SelectCodeCase(uint32_t code) {
+    switch (code) {
+        case PAUSEDSTREAM: 
+            return PausedStreamImpl(sreamSetStateEventInternal);
+        case RESUMESTREAM: 
+            return ResumeStreamImpl(sreamSetStateEventInternal);
+        case MUTESTREAM: 
+            return MuteStreamImpl(sreamSetStateEventInternal);
+        case UNMUTESTREAM: 
+            return UnmuteStreamImpl(sreamSetStateEventInternal);
+        default:
+            AUDIO_ERR_LOG("default case, need check AudioListenerStub");
+            return;
+    }
+    return;
+}
+
 int AudioClientTrackerCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -36,18 +53,14 @@ int AudioClientTrackerCallbackStub::OnRemoteRequest(
         "AudioClientTrackerCallbackStub: ReadInterfaceToken failed");
 
     switch (code) {
-        case PAUSEDSTREAM: {
+        case PAUSEDSTREAM: 
+        case RESUMESTREAM: 
+        case MUTESTREAM: 
+        case UNMUTESTREAM: {
             StreamSetStateEventInternal sreamSetStateEventInternal = {};
             sreamSetStateEventInternal.streamSetState= static_cast<StreamSetState>(data.ReadInt32());
             sreamSetStateEventInternal.streamUsage = static_cast<StreamUsage>(data.ReadInt32());
-            PausedStreamImpl(sreamSetStateEventInternal);
-            return AUDIO_OK;
-        }
-        case RESUMESTREAM: {
-            StreamSetStateEventInternal sreamSetStateEventInternal = {};
-            sreamSetStateEventInternal.streamSetState= static_cast<StreamSetState>(data.ReadInt32());
-            sreamSetStateEventInternal.streamUsage = static_cast<StreamUsage>(data.ReadInt32());
-            ResumeStreamImpl(sreamSetStateEventInternal);
+            SelectCodeCase(code);
             return AUDIO_OK;
         }
         case SETLOWPOWERVOL: {
@@ -101,6 +114,28 @@ void AudioClientTrackerCallbackStub::SetClientTrackerCallback(
     const std::weak_ptr<AudioClientTracker> &callback)
 {
     callback_ = callback;
+}
+
+void AudioClientTrackerCallbackStub::MuteStreamImpl(
+    const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    std::shared_ptr<AudioClientTracker> cb = callback_.lock();
+    if (cb != nullptr) {
+        cb->MuteStreamImpl(streamSetStateEventInternal);
+    } else {
+        AUDIO_WARNING_LOG("AudioClientTrackerCallbackStub: MuteStreamImpl callback_ is nullptr");
+    }
+}
+
+void AudioClientTrackerCallbackStub::UnmuteStreamImpl(
+    const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    std::shared_ptr<AudioClientTracker> cb = callback_.lock();
+    if (cb != nullptr) {
+        cb->UnmuteStreamImpl(streamSetStateEventInternal);
+    } else {
+        AUDIO_WARNING_LOG("AudioClientTrackerCallbackStub: UnmuteStreamImpl callback_ is nullptr");
+    }
 }
 
 void AudioClientTrackerCallbackStub::PausedStreamImpl(

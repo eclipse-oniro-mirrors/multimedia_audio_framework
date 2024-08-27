@@ -24,6 +24,40 @@ namespace AudioStandard {
 AudioClientTrackerCallbackProxy::AudioClientTrackerCallbackProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<IStandardClientTracker>(impl) { }
 
+void AudioClientTrackerCallbackProxy::MuteStreamImpl(
+    const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_ASYNC);
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_LOG(ret, "WriteInterfaceToken failed");
+
+    data.WriteInt32(static_cast<int32_t>(streamSetStateEventInternal.streamSetState));
+    data.WriteInt32(static_cast<int32_t>(streamSetStateEventInternal.streamUsage));
+    int error = Remote()->SendRequest(MUTESTREAM, data, reply, option);
+    if (error != ERR_NONE) {
+        AUDIO_WARNING_LOG("PausedStreamImpl failed, error: %{public}d", error);
+    }
+}
+
+void AudioClientTrackerCallbackProxy::UnmuteStreamImpl(
+    const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_ASYNC);
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_LOG(ret, "WriteInterfaceToken failed");
+
+    data.WriteInt32(static_cast<int32_t>(streamSetStateEventInternal.streamSetState));
+    data.WriteInt32(static_cast<int32_t>(streamSetStateEventInternal.streamUsage));
+    int error = Remote()->SendRequest(UNMUTESTREAM, data, reply, option);
+    if (error != ERR_NONE) {
+        AUDIO_WARNING_LOG("ResumeStreamImpl failed, error: %{public}d", error);
+    }
+}
+
 void AudioClientTrackerCallbackProxy::PausedStreamImpl(
     const StreamSetStateEventInternal &streamSetStateEventInternal)
 {
@@ -145,6 +179,21 @@ ClientTrackerCallbackListener::~ClientTrackerCallbackListener()
 {
 }
 
+void ClientTrackerCallbackListener::MuteStreamImpl(
+    const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    if (listener_ != nullptr) {
+        listener_->MuteStreamImpl(streamSetStateEventInternal);
+    }
+}
+
+void ClientTrackerCallbackListener::UnmuteStreamImpl(
+    const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    if (listener_ != nullptr) {
+        listener_->UnmutedStreamImpl(streamSetStateEventInternal);
+    }
+}
 
 void ClientTrackerCallbackListener::PausedStreamImpl(
     const StreamSetStateEventInternal &streamSetStateEventInternal)

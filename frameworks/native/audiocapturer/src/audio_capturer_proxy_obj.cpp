@@ -28,6 +28,13 @@ void AudioCapturerProxyObj::SaveCapturerObj(const AudioCapturer *capturerObj)
     capturer = capturerObj;
 }
 
+void AudioCapturerProxyObj::MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+}
+
+void AudioCapturerProxyObj::UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+}
 
 void AudioCapturerProxyObj::PausedStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal)
 {

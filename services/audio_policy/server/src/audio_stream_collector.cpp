@@ -811,6 +811,10 @@ int32_t AudioStreamCollector::UpdateStreamState(int32_t clientUid,
             streamSetStateEventInternal.streamUsage == changeInfo->rendererInfo.streamUsage) {
             AUDIO_INFO_LOG("UpdateStreamState Found matching uid=%{public}d and usage=%{public}d",
                 clientUid, streamSetStateEventInternal.streamUsage);
+            if (std::count(EXEMPT_MUTE_STREAM_USAGE.begin(), EXEMPT_MUTE_STREAM_USAGE.end(), 
+                streamSetStateEventInternal.streamUsage) != 0) {
+                continue;
+            }
             std::shared_ptr<AudioClientTracker> callback = clientTracker_[changeInfo->sessionId];
             if (callback == nullptr) {
                 AUDIO_ERR_LOG("UpdateStreamState callback failed sId:%{public}d",
@@ -821,6 +825,10 @@ int32_t AudioStreamCollector::UpdateStreamState(int32_t clientUid,
                 callback->PausedStreamImpl(streamSetStateEventInternal);
             } else if (streamSetStateEventInternal.streamSetState == StreamSetState::STREAM_RESUME) {
                 callback->ResumeStreamImpl(streamSetStateEventInternal);
+            } else if (streamSetStateEventInternal.streamSetState == StreamSetState::STREAM_MUTE) {
+                callback->MuteStreamImpl(streamSetStateEventInternal);
+            } else if (streamSetStateEventInternal.streamSetState == StreamSetState::STREAM_UNMUTE) {
+                callback->UnmuteStreamImpl(streamSetStateEventInternal);
             }
         }
     }

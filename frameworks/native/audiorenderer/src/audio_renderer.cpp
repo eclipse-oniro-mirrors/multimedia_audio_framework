@@ -767,6 +767,26 @@ bool AudioRendererPrivate::PauseTransitent(StateChangeCmdType cmdType) const
     return result;
 }
 
+bool AudioRendererPrivate::Mute(StateChangeCmdType cmdType) const
+{
+    Trace trace("AudioRenderer::Mute");
+    std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
+
+    AUDIO_INFO_LOG("StreamClientState for Renderer::Mute. id: %{public}u", sessionID_);
+    (void)audioStream_->SetMute(true);
+    return true;
+}
+
+bool AudioRendererPrivate::Unmute(StateChangeCmdType cmdType) const
+{
+    Trace trace("AudioRenderer::Unmute");
+    std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
+
+    AUDIO_INFO_LOG("StreamClientState for Renderer::Unmute. id: %{public}u", sessionID_);
+    (void)audioStream_->SetMute(false);
+    return true;
+}
+
 bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType) const
 {
     Trace trace("AudioRenderer::Pause");
