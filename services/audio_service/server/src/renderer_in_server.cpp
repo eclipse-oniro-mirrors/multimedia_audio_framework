@@ -189,13 +189,14 @@ void RendererInServer::WriterRenderStreamStandbySysEvent()
 
 void RendererInServer::OnStatusUpdate(IOperation operation)
 {
-    OnStatusUpdateExt(operation);
+    AUDIO_INFO_LOG("%{public}u recv operation:%{public}d standByEnable_:%{public}s", streamIndex_, operation,
+        (standByEnable_ ? "true" : "false"));
     Trace trace(traceTag_ + " OnStatusUpdate:" + std::to_string(operation));
     CHECK_AND_RETURN_LOG(operation != OPERATION_RELEASED, "Stream already released");
     std::shared_ptr<IStreamListener> stateListener = streamListener_.lock();
     CHECK_AND_RETURN_LOG(stateListener != nullptr, "StreamListener is nullptr");
     CHECK_AND_RETURN_LOG(audioServerBuffer_->GetStreamStatus() != nullptr,
-        "audioServerBuffer_->GetStreamStatus() is nullptr");
+        "stream status is nullptr");
     switch (operation) {
         case OPERATION_STARTED:
             if (standByEnable_) {
@@ -231,20 +232,20 @@ void RendererInServer::OnStatusUpdate(IOperation operation)
             // Client's StopAudioStream will call Drain first and then Stop. If server's drain times out,
             // Stop will be completed first. After a period of time, when Drain's callback goes here,
             // state of server should not be changed to STARTED while the client state is Stopped.
-            if (status_ == I_STATUS_DRAINING) {
-                status_ = I_STATUS_STARTED;
-                stateListener->OnOperationHandled(DRAIN_STREAM, 0);
-            }
-            afterDrain = true;
+            OnStatusUpdateExt(operation, stateListener);
             break;
         default:
             OnStatusUpdateSub(operation);
     }
 }
-void RendererInServer::OnStatusUpdateExt(IOperation operation)
+
+void RendererInServer::OnStatusUpdateExt(IOperation operation, std::shared_ptr<IStreamListener> stateListener)
 {
-    AUDIO_INFO_LOG("%{public}u recv operation:%{public}d standByEnable_:%{public}s", streamIndex_, operation,
-        (standByEnable_ ? "true" : "false"));
+    if (status_ == I_STATUS_DRAINING) {
+        status_ = I_STATUS_STARTED;
+        stateListener->OnOperationHandled(DRAIN_STREAM, 0);
+    }
+    afterDrain = true;
 }
 
 void RendererInServer::OnStatusUpdateSub(IOperation operation)
@@ -450,18 +451,17 @@ int32_t RendererInServer::WriteData()
     }
 
     BufferDesc bufferDesc = {nullptr, 0, 0}; // will be changed in GetReadbuffer
-    if (bufferDesc.buffer == nullptr) {
-        AUDIO_ERR_LOG("The bufferDesc.buffer is null!");
-        return ERROR;
-    }
     if (audioServerBuffer_->GetReadbuffer(currentReadFrame, bufferDesc) == SUCCESS) {
+        if (bufferDesc.buffer == nullptr) {
+            AUDIO_ERR_LOG("The buffer is null!");
+            return ERR_INVALID_PARAM;
+        }
         VolumeHandle(bufferDesc);
         if (processConfig_.streamType != STREAM_ULTRASONIC) {
             if (currentReadFrame + spanSizeInFrame_ == currentWriteFrame) {
                 DoFadingOut(bufferDesc);
             }
         }
-
         Trace::CountVolume(traceTag_, *bufferDesc.buffer);
         stream_->EnqueueBuffer(bufferDesc);
         DumpFileUtil::WriteDumpFile(dumpC2S_, static_cast<void *>(bufferDesc.buffer), bufferDesc.bufLength);

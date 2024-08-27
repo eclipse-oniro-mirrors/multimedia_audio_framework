@@ -307,10 +307,6 @@ int32_t AudioEffectChain::UpdateMultichannelIoBufferConfig(const uint32_t &chann
     ioBufferConfig_.outputCfg.channels = 0;
     ioBufferConfig_.outputCfg.channelLayout = 0;
     for (AudioEffectHandle handle : standByEffectHandles_) {
-            if (preHandle == nullptr) {
-                AUDIO_ERR_LOG("The preHandle is undefined!");
-                return ERROR;
-            }
         if (preHandle != nullptr) {
             int32_t ret = (*preHandle)->command(preHandle, EFFECT_CMD_SET_CONFIG, &cmdInfo, &replyInfo);
             CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "Multichannel effect chain update EFFECT_CMD_SET_CONFIG fail");
@@ -323,6 +319,10 @@ int32_t AudioEffectChain::UpdateMultichannelIoBufferConfig(const uint32_t &chann
     }
     ioBufferConfig_.outputCfg.channels = DEFAULT_NUM_CHANNEL;
     ioBufferConfig_.outputCfg.channelLayout = DEFAULT_NUM_CHANNELLAYOUT;
+    if (preHandle == nullptr) {
+        AUDIO_ERR_LOG("The preHandle is nullptr!");
+        return ERROR;
+    }
     int32_t ret = (*preHandle)->command(preHandle, EFFECT_CMD_SET_CONFIG, &cmdInfo, &replyInfo);
     CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "last effect update EFFECT_CMD_SET_CONFIG fail");
     // recover bufferconfig

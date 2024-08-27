@@ -272,7 +272,6 @@ int32_t FastAudioRendererSinkInner::InitAudioManager()
 
     audioManager_ = IAudioManagerGet(false);
     if (audioManager_ == nullptr) {
-        AUDIO_ERR_LOG("The audioManager_ is undefined!");
         return ERR_INVALID_HANDLE;
     }
 
@@ -479,6 +478,7 @@ int32_t FastAudioRendererSinkInner::Init(const IAudioSinkAttr &attr)
     uint32_t size = MAX_AUDIO_ADAPTER_NUM;
     AudioAdapterDescriptor descs[MAX_AUDIO_ADAPTER_NUM];
     if (audioManager_ == nullptr) {
+        AUDIO_ERR_LOG("The audioManager is nullptr!");
         return ERROR;
     }
     int32_t ret = audioManager_->GetAllAdapters(audioManager_,

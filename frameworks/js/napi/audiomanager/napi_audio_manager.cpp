@@ -1397,7 +1397,6 @@ void NapiAudioManager::UnregisterDeviceChangeCallback(napi_env env, napi_value c
         AUDIO_ERR_LOG("audioMgrNapi is nullptr");
         return;
     }
-    
     CHECK_AND_RETURN_LOG(audioMgrNapi->deviceChangeCallbackNapi_ != nullptr,
         "UnregisterDeviceChangeCallback: audio manager deviceChangeCallbackNapi_ is null");
     std::shared_ptr<NapiAudioManagerCallback> cb =

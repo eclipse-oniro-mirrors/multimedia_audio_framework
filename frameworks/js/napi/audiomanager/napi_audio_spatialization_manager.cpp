@@ -54,7 +54,7 @@ bool NapiAudioSpatializationManager::CheckAudioSpatializationManagerStatus(NapiA
     CHECK_AND_RETURN_RET_LOG(napi != nullptr, false, "napi object is nullptr.");
     if (napi->audioSpatializationMngr_ == nullptr) {
         context->SignError(NAPI_ERR_SYSTEM);
-        AUDIO_ERR_LOG("audioSpatializationMngr_ is nullptr.");
+        AUDIO_ERR_LOG("audioSpatializationMngr is nullptr.");
         return false;
     }
     return true;
@@ -196,7 +196,7 @@ napi_value NapiAudioSpatializationManager::IsSpatializationEnabled(napi_env env,
     CHECK_AND_RETURN_RET_LOG(napiAudioSpatializationManager != nullptr, result,
         "napiAudioSpatializationManager is nullptr");
     CHECK_AND_RETURN_RET_LOG(napiAudioSpatializationManager->audioSpatializationMngr_ != nullptr, result,
-        "audioSpatializationMngr_ is nullptr");
+        "audioSpatializationMngr is nullptr");
 
     if (argc == requireArgc) {
         bool argTransFlag = true;
@@ -472,7 +472,7 @@ napi_value NapiAudioSpatializationManager::IsSpatializationSupportedForDevice(na
     CHECK_AND_RETURN_RET_LOG(napiAudioSpatializationManager != nullptr, result,
         "napiAudioSpatializationManager is nullptr");
     CHECK_AND_RETURN_RET_LOG(napiAudioSpatializationManager->audioSpatializationMngr_ != nullptr, result,
-        "napiAudioSpatializationManager->audioSpatializationMngr_ is nullptr");
+        "audioSpatializationMngr_ is nullptr");
 
     bool isSpatializationSupportedForDevice = napiAudioSpatializationManager
         ->audioSpatializationMngr_->IsSpatializationSupportedForDevice(selectedAudioDevice);
@@ -551,8 +551,7 @@ napi_value NapiAudioSpatializationManager::UpdateSpatialDeviceState(napi_env env
     }
     if (napiAudioSpatializationManager == nullptr || napiAudioSpatializationManager
             ->audioSpatializationMngr_ == nullptr) {
-        AUDIO_ERR_LOG("napiAudioSpatializationManager or  napiAudioSpatializationManager"
-           "->audioSpatializationMngr_ is  nullptr");
+        AUDIO_ERR_LOG("napiAudioSpatializationManager or audioSpatializationMngr_ is  nullptr");
         return nullptr;
     }
     int32_t ret = napiAudioSpatializationManager->audioSpatializationMngr_->UpdateSpatialDeviceState(

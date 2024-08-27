@@ -221,7 +221,7 @@ napi_value NapiAudioVolumeManager::GetVolumeGroupInfosSync(napi_env env, napi_ca
 
     std::vector<sptr<VolumeGroupInfo>> volumeGroupInfos;
     if (napiAudioVolumeManager == nullptr || napiAudioVolumeManager->audioSystemMngr_ == nullptr) {
-        AUDIO_ERR_LOG("napiAudioVolumeManager or napiAudioVolumeManager->audioSystemMngr_  is undefined!");
+        AUDIO_ERR_LOG("napiAudioVolumeManager or audioSystemMngr  is nullptr!");
         return nullptr;
     }
     int32_t ret = napiAudioVolumeManager->audioSystemMngr_->GetVolumeGroups(networkId, volumeGroupInfos);

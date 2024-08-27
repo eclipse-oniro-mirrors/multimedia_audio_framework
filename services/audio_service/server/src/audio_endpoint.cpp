@@ -840,7 +840,8 @@ int32_t AudioEndpointInner::PrepareDeviceBuffer(const DeviceInfo &deviceInfo)
         AudioBufferHolder::AUDIO_SERVER_ONLY, ERR_ILLEGAL_STATE, "create buffer from remote fail.");
 
     if (dstAudioBuffer_ == nullptr || dstAudioBuffer_->GetStreamStatus() == nullptr) {
-        return ERROR;
+        AUDIO_ERR_LOG("The stream status is null!");
+        return ERR_INVALID_PARAM;
     }
 
     dstAudioBuffer_->GetStreamStatus()->store(StreamStatus::STREAM_IDEL);
@@ -1170,7 +1171,7 @@ int32_t AudioEndpointInner::LinkProcessStream(IAudioProcessStream *processStream
     std::shared_ptr<OHAudioBuffer> processBuffer = processStream->GetStreamBuffer();
     CHECK_AND_RETURN_RET_LOG(processBuffer != nullptr, ERR_INVALID_PARAM, "processBuffer is null");
     CHECK_AND_RETURN_RET_LOG(processBuffer->GetStreamStatus() != nullptr, ERR_INVALID_PARAM,
-        "processBuffer->GetStreamStatus() is null");
+        "the stream status is null");
 
     CHECK_AND_RETURN_RET_LOG(processList_.size() < MAX_LINKED_PROCESS, ERR_OPERATION_FAILED, "reach link limit.");
 
@@ -1225,6 +1226,7 @@ int32_t AudioEndpointInner::LinkProcessStream(IAudioProcessStream *processStream
     AUDIO_INFO_LOG("LinkProcessStream success with status:%{public}s", GetStatusStr(endpointStatus_).c_str());
     return SUCCESS;
 }
+
 void AudioEndpointInner::LinkProcessStreamExt(IAudioProcessStream *processStream,
     const std::shared_ptr<OHAudioBuffer>& processBuffer)
 {

@@ -1372,7 +1372,7 @@ int32_t AudioRendererSinkInner::InitAdapter()
     AudioAdapterDescriptor descs[MAX_AUDIO_ADAPTER_NUM];
     uint32_t size = MAX_AUDIO_ADAPTER_NUM;
     if (audioManager_ == nullptr) {
-        AUDIO_ERR_LOG("The audioManager_ id null");
+        AUDIO_ERR_LOG("The audioManager is null");
         return ERROR;
     }
     int32_t ret = audioManager_->GetAllAdapters(audioManager_, (struct AudioAdapterDescriptor *)&descs, &size);

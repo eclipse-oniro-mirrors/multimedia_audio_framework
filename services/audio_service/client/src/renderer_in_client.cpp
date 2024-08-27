@@ -1683,8 +1683,8 @@ int32_t RendererInClientInner::WriteInner(uint8_t *buffer, size_t bufferSize)
     Trace::CountVolume(traceTag_, *buffer);
     CHECK_AND_RETURN_RET_LOG(gServerProxy_ != nullptr, ERROR, "server is died");
     if (clientBuffer_->GetStreamStatus() == nullptr) {
-        AUDIO_ERR_LOG("clientBuffer_->GetStreamStatus() is null!");
-        return ERROR;
+        AUDIO_ERR_LOG("The stream status is null!");
+        return ERR_INVALID_PARAM;
     }
     
     if (clientBuffer_->GetStreamStatus()->load() == STREAM_STAND_BY) {
