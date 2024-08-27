@@ -1502,15 +1502,12 @@ sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &co
     CHECK_AND_RETURN_RET_LOG(PermissionChecker(resetConfig), nullptr, "Create audio process failed, no permission");
 
     int32_t callingUid = IPCSkeleton::GetCallingUid();
-    if (config.rendererInfo.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION) {
-        if (callingUid == UID_FOUNDATION_SA) {
-            bool isSupportSate = OHOS::system::GetBoolParameter(TEL_SATELLITE_SUPPORT, false);
-            CHECK_AND_RETURN_RET_LOG(isSupportSate, nullptr, "DO not support satellite");
-            if (config.rendererInfo.isSatellite && isSupportSate) {
-                IAudioRendererSink* audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
-                audioRendererSinkInstance->SetAudioParameter(AudioParamKey::NONE, "", SATEMODEM_PARAMETER);
-            }
-        }
+    if (config.rendererInfo.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION && callingUid == UID_FOUNDATION_SA
+        && config.rendererInfo.isSatellite) {
+        bool isSupportSate = OHOS::system::GetBoolParameter(TEL_SATELLITE_SUPPORT, false);
+        CHECK_AND_RETURN_RET_LOG(isSupportSate, nullptr, "Do not support satellite");
+        IAudioRendererSink* audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
+        audioRendererSinkInstance->SetAudioParameter(AudioParamKey::NONE, "", SATEMODEM_PARAMETER);
     }
 
     if (IsNormalIpcStream(resetConfig) || (isFastControlled_ && IsFastBlocked(resetConfig.appInfo.appUid))) {
