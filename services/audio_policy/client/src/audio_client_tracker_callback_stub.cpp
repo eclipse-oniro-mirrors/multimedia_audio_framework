@@ -29,7 +29,8 @@ AudioClientTrackerCallbackStub::~AudioClientTrackerCallbackStub()
 {
 }
 
-void AudioClientTrackerCallbackStub::SelectCodeCase(uint32_t code) {
+void AudioClientTrackerCallbackStub::SelectCodeCase(uint32_t code,
+    StreamSetStateEventInternal &streamSetStateEventInternal) {
     switch (code) {
         case PAUSEDSTREAM: 
             return PausedStreamImpl(sreamSetStateEventInternal);
@@ -60,7 +61,7 @@ int AudioClientTrackerCallbackStub::OnRemoteRequest(
             StreamSetStateEventInternal sreamSetStateEventInternal = {};
             sreamSetStateEventInternal.streamSetState= static_cast<StreamSetState>(data.ReadInt32());
             sreamSetStateEventInternal.streamUsage = static_cast<StreamUsage>(data.ReadInt32());
-            SelectCodeCase(code);
+            SelectCodeCase(code, streamSetStateEventInternal);
             return AUDIO_OK;
         }
         case SETLOWPOWERVOL: {

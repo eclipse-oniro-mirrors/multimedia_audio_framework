@@ -42,7 +42,7 @@ public:
 
     int OffloadRemoteRequest(uint32_t code, MessageParcel &data,
         MessageParcel &reply, MessageOption &option);
-    void AudioClientTrackerCallbackStub::SelectCodeCase(uint32_t code);
+    void SelectCodeCase(uint32_t code, StreamSetStateEventInternal &streamSetStateEventInternal);
 private:
     std::weak_ptr<AudioClientTracker> callback_;
 };

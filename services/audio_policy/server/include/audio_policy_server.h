@@ -253,6 +253,8 @@ public:
 
     bool IsAudioRendererLowLatencySupported(const AudioStreamInfo &audioStreamInfo) override;
 
+    int32_t ResumeStreamState();
+
     int32_t UpdateStreamState(const int32_t clientUid, StreamSetState streamSetState,
         StreamUsage streamUsage) override;
 

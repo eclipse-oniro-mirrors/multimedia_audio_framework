@@ -410,14 +410,14 @@ void RendererInServer::VolumeHandle(BufferDesc &desc)
     }
     float applyVolume = audioServerBuffer_->GetStreamVolume();
     float duckVolume = audioServerBuffer_->GetDuckFactor();
-    float muteVolume = audioServerBuffer_->GetDuckFactor();
+    float muteVolume = audioServerBuffer_->GetMuteFactor();
     if (!IsVolumeSame(MAX_FLOAT_VOLUME, lowPowerVolume_, AUDIO_VOLOMUE_EPSILON)) {
         applyVolume *= lowPowerVolume_;
     }
     if (!IsVolumeSame(MAX_FLOAT_VOLUME, duckVolume, AUDIO_VOLOMUE_EPSILON)) {
         applyVolume *= duckVolume;
     }
-    if (!IsVolumeSame(MAX_FLOAT_VOLUME, duckVolume, AUDIO_VOLOMUE_EPSILON)) {
+    if (!IsVolumeSame(MAX_FLOAT_VOLUME, muteVolume, AUDIO_VOLOMUE_EPSILON)) {
         applyVolume *= muteVolume;
     }
 

@@ -1749,6 +1749,12 @@ void AudioPolicyServer::RegisteredStreamListenerClientDied(pid_t pid)
     audioPolicyService_.ReduceAudioPolicyClientProxyMap(pid);
 }
 
+int32_t AudioPolicyServer::ResumeStreamState()
+{
+    AUDIO_INFO_LOG("AVSession is not alive.");
+    return audioPolicyService_.ResumeStreamState(clientUid, setStateEvent);
+}
+
 int32_t AudioPolicyServer::UpdateStreamState(const int32_t clientUid,
     StreamSetState streamSetState, StreamUsage streamUsage)
 {

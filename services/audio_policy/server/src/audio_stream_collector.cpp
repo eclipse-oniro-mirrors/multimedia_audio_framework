@@ -802,6 +802,22 @@ int32_t AudioStreamCollector::GetUid(int32_t sessionId)
     return defaultUid;
 }
 
+int32_t AudioStreamCollector::ResumeStreamState()
+{
+    std::lock_guard<std::mutex> lock(streamsInfoMutex_);
+    for (const auto &changeInfo : audioRendererChangeInfos_) {
+        std::shared_ptr<AudioClientTracker> callback = clientTracker_[changeInfo->sessionId];
+        if (callback == nullptr) {
+            AUDIO_ERR_LOG("AVSession is not alive,UpdateStreamState callback failed sId:%{public}d",
+                changeInfo->sessionId);
+            continue;
+        }
+        callback->UnmuteStreamImpl(streamSetStateEventInternal);
+    }
+
+    return SUCCESS;
+}
+
 int32_t AudioStreamCollector::UpdateStreamState(int32_t clientUid,
     StreamSetStateEventInternal &streamSetStateEventInternal)
 {

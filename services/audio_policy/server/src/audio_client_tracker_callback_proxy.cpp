@@ -37,7 +37,7 @@ void AudioClientTrackerCallbackProxy::MuteStreamImpl(
     data.WriteInt32(static_cast<int32_t>(streamSetStateEventInternal.streamUsage));
     int error = Remote()->SendRequest(MUTESTREAM, data, reply, option);
     if (error != ERR_NONE) {
-        AUDIO_WARNING_LOG("PausedStreamImpl failed, error: %{public}d", error);
+        AUDIO_WARNING_LOG("MuteStreamImpl failed, error: %{public}d", error);
     }
 }
 
@@ -54,7 +54,7 @@ void AudioClientTrackerCallbackProxy::UnmuteStreamImpl(
     data.WriteInt32(static_cast<int32_t>(streamSetStateEventInternal.streamUsage));
     int error = Remote()->SendRequest(UNMUTESTREAM, data, reply, option);
     if (error != ERR_NONE) {
-        AUDIO_WARNING_LOG("ResumeStreamImpl failed, error: %{public}d", error);
+        AUDIO_WARNING_LOG("UnmuteStreamImpl failed, error: %{public}d", error);
     }
 }
 
@@ -191,7 +191,7 @@ void ClientTrackerCallbackListener::UnmuteStreamImpl(
     const StreamSetStateEventInternal &streamSetStateEventInternal)
 {
     if (listener_ != nullptr) {
-        listener_->UnmutedStreamImpl(streamSetStateEventInternal);
+        listener_->UnmuteStreamImpl(streamSetStateEventInternal);
     }
 }
 
