@@ -1003,6 +1003,9 @@ private:
 
     void SetDefaultDeviceLoadFlag(bool isLoad);
 
+    int32_t SetPreferredDevice(const PreferredType preferredType, const sptr<AudioDeviceDescriptor> &desc);
+    int32_t ErasePreferredDeviceByType(const PreferredType preferredType);
+
     bool isUpdateRouteSupported_ = true;
     bool isCurrentRemoteRenderer = false;
     bool remoteCapturerSwitch_ = false;
@@ -1181,6 +1184,8 @@ private:
     bool ringerModeMute_ = true;
     std::atomic<bool> isPolicyConfigParsered_ = false;
     std::shared_ptr<AudioA2dpOffloadManager> audioA2dpOffloadManager_ = nullptr;
+
+    bool isBTReconnecting_ = false;
 };
 
 class AudioA2dpOffloadManager final : public Bluetooth::AudioA2dpPlayingStateChangedListener,
