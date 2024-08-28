@@ -585,17 +585,17 @@ void AudioInterruptService::ClearAudioFocusInfoListOnAccountsChanged(const int &
     AUDIO_INFO_LOG("start DeactivateAudioInterrupt, current id:%{public}d", id);
     InterruptEventInternal interruptEvent {INTERRUPT_TYPE_BEGIN, INTERRUPT_FORCE, INTERRUPT_HINT_STOP, 1.0f};
     for (const auto&[zoneId, audioInterruptZone] : zonesMap_) {
+        CHECK_AND_CONTINUE_LOG(audioInterruptZone != nullptr, "audioInterruptZone is nullptr");
         std::list<std::pair<AudioInterrupt, AudioFocuState>>::iterator it =
             audioInterruptZone->audioFocusInfoList.begin();
         while (it != audioInterruptZone->audioFocusInfoList.end()) {
             if ((*it).first.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION ||
                 (*it).first.streamUsage == STREAM_USAGE_VOICE_RINGTONE) {
                 AUDIO_INFO_LOG("usage is voice modem communication or voice ring, skip");
-                it++;
+                ++it;
             } else {
                 CHECK_AND_RETURN_LOG(handler_ != nullptr, "handler is nullptr");
                 handler_->SendInterruptEventWithSessionIdCallback(interruptEvent, (*it).first.sessionId);
-                CHECK_AND_RETURN_LOG(audioInterruptZone != nullptr, "audioInterruptZone is nullptr");
                 it = audioInterruptZone->audioFocusInfoList.erase(it);
             }
         }
