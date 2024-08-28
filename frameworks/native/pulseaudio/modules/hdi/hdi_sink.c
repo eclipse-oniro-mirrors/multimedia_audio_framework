@@ -1714,7 +1714,7 @@ static void UpdateSceneToCountMap(pa_hashmap *sceneMap)
                 pa_hashmap_put(sceneMap, sceneType, num);
             }
         } else {
-            if ((num = (uint32_t *)pa_hashmap_get(sceneMap, SCENE_TYPE_SET[i])) != NULL){
+            if ((num = (uint32_t *)pa_hashmap_get(sceneMap, SCENE_TYPE_SET[i])) != NULL) {
                 pa_hashmap_remove_and_free(sceneMap, SCENE_TYPE_SET[i]);
             }
         }
@@ -3930,7 +3930,7 @@ static int32_t PaHdiSinkNewInitUserDataAndSink(pa_module *m, pa_modargs *ma, con
     u->sceneToCountMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,
         pa_xfree, pa_xfree);
     
-    char * sceneType = strdup("EFFECT_NONE");
+    char *sceneType = strdup("EFFECT_NONE");
     uint32_t *num = NULL;
     num = pa_xnew0(uint32_t, 1);
     *num = 1;

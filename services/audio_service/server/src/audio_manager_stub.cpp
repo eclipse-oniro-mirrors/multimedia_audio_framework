@@ -495,7 +495,7 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
     EffectChainManagerParam enhanceParam;
     if (!UnmarshellEffectChainMgrParam(effectParam, data) || !UnmarshellEffectChainMgrParam(enhanceParam, data)) {
         return AUDIO_ERR;
-
+    }
     bool createSuccess = CreateEffectChainManager(effectChains, effectParam, enhanceParam);
     CHECK_AND_RETURN_RET_LOG(createSuccess, AUDIO_ERR,
         "Create audio effect chain manager failed, please check log");
