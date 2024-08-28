@@ -123,6 +123,9 @@ public:
      *   case5: endpointStatus_ = RUNNING; RUNNING-->RUNNING
     */
     int32_t LinkProcessStream(IAudioProcessStream *processStream) override;
+    void LinkProcessStreamExt(IAudioProcessStream *processStream,
+    const std::shared_ptr<OHAudioBuffer>& processBuffer);
+
     int32_t UnlinkProcessStream(IAudioProcessStream *processStream) override;
 
     int32_t GetPreferBufferInfo(uint32_t &totalSizeInframe, uint32_t &spanSizeInframe) override;
@@ -835,6 +838,12 @@ int32_t AudioEndpointInner::PrepareDeviceBuffer(const DeviceInfo &deviceInfo)
         AUDIO_SERVER_ONLY, dstBufferFd_, OHAudioBuffer::INVALID_BUFFER_FD);
     CHECK_AND_RETURN_RET_LOG(dstAudioBuffer_ != nullptr && dstAudioBuffer_->GetBufferHolder() ==
         AudioBufferHolder::AUDIO_SERVER_ONLY, ERR_ILLEGAL_STATE, "create buffer from remote fail.");
+
+    if (dstAudioBuffer_ == nullptr || dstAudioBuffer_->GetStreamStatus() == nullptr) {
+        AUDIO_ERR_LOG("The stream status is null!");
+        return ERR_INVALID_PARAM;
+    }
+
     dstAudioBuffer_->GetStreamStatus()->store(StreamStatus::STREAM_IDEL);
 
     // clear data buffer
@@ -1161,6 +1170,8 @@ int32_t AudioEndpointInner::LinkProcessStream(IAudioProcessStream *processStream
     CHECK_AND_RETURN_RET_LOG(processStream != nullptr, ERR_INVALID_PARAM, "IAudioProcessStream is null");
     std::shared_ptr<OHAudioBuffer> processBuffer = processStream->GetStreamBuffer();
     CHECK_AND_RETURN_RET_LOG(processBuffer != nullptr, ERR_INVALID_PARAM, "processBuffer is null");
+    CHECK_AND_RETURN_RET_LOG(processBuffer->GetStreamStatus() != nullptr, ERR_INVALID_PARAM,
+        "the stream status is null");
 
     CHECK_AND_RETURN_RET_LOG(processList_.size() < MAX_LINKED_PROCESS, ERR_OPERATION_FAILED, "reach link limit.");
 
@@ -1178,10 +1189,7 @@ int32_t AudioEndpointInner::LinkProcessStream(IAudioProcessStream *processStream
     }
 
     if (endpointStatus_ == RUNNING) {
-        std::lock_guard<std::mutex> lock(listLock_);
-        processList_.push_back(processStream);
-        processBufferList_.push_back(processBuffer);
-        AUDIO_INFO_LOG("LinkProcessStream success in RUNNING.");
+        LinkProcessStreamExt(processStream, processBuffer);
         return SUCCESS;
     }
 
@@ -1217,6 +1225,15 @@ int32_t AudioEndpointInner::LinkProcessStream(IAudioProcessStream *processStream
 
     AUDIO_INFO_LOG("LinkProcessStream success with status:%{public}s", GetStatusStr(endpointStatus_).c_str());
     return SUCCESS;
+}
+
+void AudioEndpointInner::LinkProcessStreamExt(IAudioProcessStream *processStream,
+    const std::shared_ptr<OHAudioBuffer>& processBuffer)
+{
+    std::lock_guard<std::mutex> lock(listLock_);
+    processList_.push_back(processStream);
+    processBufferList_.push_back(processBuffer);
+    AUDIO_INFO_LOG("LinkProcessStream success in RUNNING.");
 }
 
 int32_t AudioEndpointInner::UnlinkProcessStream(IAudioProcessStream *processStream)
