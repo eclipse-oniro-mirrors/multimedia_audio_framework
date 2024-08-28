@@ -508,22 +508,23 @@ HWTEST(AudioInterruptUnitTest, AudioInterruptService_014, TestSize.Level1)
 */
 HWTEST(AudioInterruptUnitTest, AudioInterruptService_015, TestSize.Level1)
 {
+    bool removeFocusInfo = false;
     auto interruptServiceTest = GetTnterruptServiceTest();
     std::list<std::pair<AudioInterrupt, AudioFocuState>> pairList;
     pairList.emplace_back(AudioInterrupt(), AudioFocuState::ACTIVE);
     AudioFocuState oldState{};
     AudioFocuState newState{};
     auto it = pairList.begin();
-    interruptServiceTest->SendInterruptEvent(oldState, newState, it);
+    interruptServiceTest->SendInterruptEvent(oldState, newState, it, removeFocusInfo);
     interruptServiceTest->SetCallbackHandler(GetServerHandlerTest());
-    interruptServiceTest->SendInterruptEvent(oldState, newState, it);
+    interruptServiceTest->SendInterruptEvent(oldState, newState, it, removeFocusInfo);
 
-    interruptServiceTest->SendInterruptEvent(PAUSE, ACTIVE, it);
-    interruptServiceTest->SendInterruptEvent(DUCK, ACTIVE, it);
-    interruptServiceTest->SendInterruptEvent(PAUSE, DUCK, it);
-    interruptServiceTest->SendInterruptEvent(DUCK, PAUSE, it);
-    interruptServiceTest->SendInterruptEvent(DUCK, PLACEHOLDER, it);
-    interruptServiceTest->SendInterruptEvent(DUCK, STOP, it);
+    interruptServiceTest->SendInterruptEvent(PAUSE, ACTIVE, it, removeFocusInfo);
+    interruptServiceTest->SendInterruptEvent(DUCK, ACTIVE, it, removeFocusInfo);
+    interruptServiceTest->SendInterruptEvent(PAUSE, DUCK, it, removeFocusInfo);
+    interruptServiceTest->SendInterruptEvent(DUCK, PAUSE, it, removeFocusInfo);
+    interruptServiceTest->SendInterruptEvent(DUCK, PLACEHOLDER, it, removeFocusInfo);
+    interruptServiceTest->SendInterruptEvent(DUCK, STOP, it, removeFocusInfo);
     EXPECT_NE(interruptServiceTest->handler_, nullptr);
 }
 
