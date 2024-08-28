@@ -129,6 +129,14 @@ struct StreamEffectMode {
     std::vector<Device> devicePort;
 };
 
+struct EffectChainManagerParam {
+    uint32_t maxExtraNum = 0;
+    std::string defaultSceneName;
+    std::vector<std::string> priorSceneList;
+    std::unordered_map<std::string, std::string> sceneTypeToChainNameMap;
+    std::unordered_map<std::string, std::string> effectDefaultProperty;
+};
+
 struct Stream {
     std::string scene;
     std::vector<StreamEffectMode> streamEffectMode;
