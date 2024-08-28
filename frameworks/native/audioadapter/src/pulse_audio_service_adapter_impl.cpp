@@ -442,7 +442,8 @@ int32_t PulseAudioServiceAdapterImpl::MoveSinkInputByIndexOrName(uint32_t sinkIn
     std::string sinkName)
 {
     lock_guard<mutex> lock(lock_);
-    Trace trace("PulseAudioServiceAdapterImpl::MoveSinkInputByIndexOrName");
+    Trace trace("PulseAudioServiceAdapterImpl::MoveSinkInputByIndexOrName:id:" + std::to_string(sinkInputId) +
+        +":index:" + std::to_string(sinkIndex) + ":name:" + sinkName);
 
     unique_ptr<UserData> userData = make_unique<UserData>();
     userData->thiz = this;
@@ -483,7 +484,8 @@ int32_t PulseAudioServiceAdapterImpl::MoveSourceOutputByIndexOrName(uint32_t sou
     std::string sourceName)
 {
     lock_guard<mutex> lock(lock_);
-    Trace trace("PulseAudioServiceAdapterImpl::MoveSourceOutputByIndexOrName");
+    Trace trace("PulseAudioServiceAdapterImpl::MoveSourceOutputByIndexOrName:id:" + std::to_string(sourceOutputId) +
+        +":index:" + std::to_string(sourceIndex) + ":name:" + sourceName);
 
     unique_ptr<UserData> userData = make_unique<UserData>();
     userData->thiz = this;

@@ -1254,19 +1254,17 @@ std::vector<SinkInput> AudioPolicyService::FilterSinkInputs(int32_t sessionId)
     return targetSinkInputs;
 }
 
-static bool CheckIsSource(const std::string &sourceName)
-{
-    return sourceName == PRIMARY_MIC || sourceName == USB_MIC || sourceName == PRIMARY_WAKEUP ||
-        sourceName == FILE_SOURCE;
-}
-
 std::vector<SourceOutput> AudioPolicyService::FilterSourceOutputs(int32_t sessionId)
 {
     std::vector<SourceOutput> targetSourceOutputs = {};
     std::vector<SourceOutput> sourceOutputs;
-    if (std::any_of(IOHandles_.cbegin(), IOHandles_.cend(),
-        [](const auto &pair) { return CheckIsSource(pair.first); })) {
-        sourceOutputs = audioPolicyManager_.GetAllSourceOutputs();
+    {
+        std::lock_guard<std::mutex> ioHandleLock(ioHandlesMutex_);
+        if (std::any_of(IOHandles_.cbegin(), IOHandles_.cend(), [](const auto &pair) {
+                return std::find(SourceNames.cbegin(), SourceNames.cend(), pair.first) != SourceNames.cend();
+            })) {
+            sourceOutputs = audioPolicyManager_.GetAllSourceOutputs();
+        }
     }
 
     for (size_t i = 0; i < sourceOutputs.size(); i++) {
@@ -5219,9 +5217,13 @@ void AudioPolicyService::WriteDeviceChangedSysEvents(const vector<sptr<AudioDevi
                 }
             } else if (deviceDescriptor->deviceRole_ == INPUT_DEVICE) {
                 vector<SourceOutput> sourceOutputs;
-                if (std::any_of(IOHandles_.cbegin(), IOHandles_.cend(),
-                    [](const auto &pair) { return CheckIsSource(pair.first); })) {
-                    sourceOutputs = audioPolicyManager_.GetAllSourceOutputs();
+                {
+                    std::lock_guard<std::mutex> ioHandleLock(ioHandlesMutex_);
+                    if (std::any_of(IOHandles_.cbegin(), IOHandles_.cend(), [](const auto &pair) {
+                            return std::find(SourceNames.cbegin(), SourceNames.cend(), pair.first) != SourceNames.end();
+                        })) {
+                        sourceOutputs = audioPolicyManager_.GetAllSourceOutputs();
+                    }
                 }
                 for (SourceOutput sourceOutput : sourceOutputs) {
                     WriteInDeviceChangedSysEvents(deviceDescriptor, sourceOutput);
