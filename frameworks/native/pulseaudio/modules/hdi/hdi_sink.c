@@ -1545,7 +1545,7 @@ static char *HandleSinkSceneType(struct Userdata *u, time_t currentTime, int32_t
 }
 
 
-static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime, int32_t i)
+static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime, const char *sceneType)
 {
     int32_t i;
     for (i = 0; i < SCENE_TYPE_NUM; i++) {

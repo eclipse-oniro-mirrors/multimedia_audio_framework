@@ -336,7 +336,6 @@ int32_t AudioEffectChainManager::CreateAudioEffectChainDynamic(const std::string
     if (!isPriorScene && !sceneTypeToSpecialEffectSet_.count(sceneType) && defaultEffectChainCount_ > 1) {
         return SUCCESS;
     }
-    std::string createSceneType = sceneTypeToSpecialEffectSet_.count(sceneType) ? sceneType : COMMON_SCENE_TYPE;
     std::string createSceneType = (isPriorScene || sceneTypeToSpecialEffectSet_.count(sceneType) > 0) ?
         sceneType : DEFAULT_SCENE_TYPE;
     if (SetAudioEffectChainDynamic(createSceneType, effectMode) != SUCCESS) {
@@ -1429,10 +1428,10 @@ uint32_t AudioEffectChainManager::GetSceneTypeToChainCount(const std::string &sc
         return defaultEffectChainCount_;
     }
 
-    if (sceneTypeToSpecialEffectSet_.find(sceneType ! = sceneTypeToSpecialEffectSet_.end())) {
+    if (sceneTypeToSpecialEffectSet_.find(sceneType) != sceneTypeToSpecialEffectSet_.end()) {
         std::string sceneTypeAndDeviceKey = sceneType + "_&_" + GetDeviceTypeName();
-        if (SceneTypeToEffectChainCountMap_.count(sceneTypeAndDeviceKey)) {
-            return SceneTypeToEffectChainCountMap_[sceneTypeAndDeviceKey];
+        if (sceneTypeToEffectChainCountMap_.count(sceneTypeAndDeviceKey)) {
+            return sceneTypeToEffectChainCountMap_[sceneTypeAndDeviceKey];
         }
     }
 
