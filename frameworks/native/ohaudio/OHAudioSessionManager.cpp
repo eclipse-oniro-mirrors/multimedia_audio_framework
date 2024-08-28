@@ -34,7 +34,7 @@ static OHOS::AudioStandard::OHAudioSessionManager *convertManager(OH_AudioSessio
 OH_AudioCommon_Result OH_AudioManager_GetAudioSessionManager(OH_AudioSessionManager **audioSessionManager)
 {
     OHAudioSessionManager* ohAudioSessionManager = OHAudioSessionManager::GetInstance();
-    *audioSessionManager = (OH_AudioSessionManager*)ohAudioSessionManager;
+    *audioSessionManager = reinterpret_cast<OH_AudioSessionManager*>(ohAudioSessionManager);
     return AUDIOCOMMON_RESULT_SUCCESS;
 }
 
@@ -108,7 +108,7 @@ OH_AudioCommon_Result OHAudioSessionManager::SetAudioSessionCallback(OH_AudioSes
         AUDIOCOMMON_RESULT_ERROR_INVALID_PARAM, "failed, audioSessionManager_ is null");
     std::shared_ptr<OHAudioSessionCallback> ohAudioSessionCallback =
         std::make_shared<OHAudioSessionCallback>(callback);
-    if (ohAudioSessionCallback) {
+    if (ohAudioSessionCallback != nullptr) {
         audioSessionManager_->SetAudioSessionCallback(ohAudioSessionCallback);
         return AUDIOCOMMON_RESULT_SUCCESS;
     }
