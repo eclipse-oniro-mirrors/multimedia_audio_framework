@@ -197,21 +197,6 @@ std::string AudioEffectChainManager::GetDeviceTypeName()
     return name;
 }
 
-void AudioEffectChainManager::UpdateSpkOffloadEnabled()
-{
-    if (debugArmFlag_ && spkOffloadEnabled_) {
-        std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-        RecoverAllChains();
-        spkOffloadEnabled_ = false;
-        return;
-    }
-}
-
-std::string AudioEffectChainManager::GetDeviceSinkName()
-{
-    return deviceSink_;
-}
-
 bool AudioEffectChainManager::GetOffloadEnabled()
 {
     if (deviceType_ == DEVICE_TYPE_SPEAKER) {
