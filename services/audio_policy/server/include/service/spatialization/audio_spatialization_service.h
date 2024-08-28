@@ -35,6 +35,7 @@
 
 namespace OHOS {
 namespace AudioStandard {
+#define MAX_DEVICE_NUM 10
 class AudioSpatializationService {
 public:
     static AudioSpatializationService& GetAudioSpatializationService()
@@ -87,23 +88,23 @@ private:
         WRITE_SPATIALIZATION_SCENE = 1,
         WRITE_DEVICESPATIAL_INFO = 2,
     };
-    const int32_t maxDevices_ = 10;
     int32_t UpdateSpatializationStateReal(bool outputDeviceChange, std::string preDeviceAddress = "");
     int32_t UpdateSpatializationState();
     int32_t UpdateSpatializationSceneType();
     void UpdateSpatialDeviceType(AudioSpatialDeviceType audioSpatialDeviceType);
     void HandleSpatializationStateChange(bool outputDeviceChange);
-    void WriteSpatializationStateToDb(WriteToDbOperation operation);
+    void WriteSpatializationStateToDb(WriteToDbOperation operation, std::string address = "");
     bool IsHeadTrackingDataRequestedForCurrentDevice();
     void UpdateHeadTrackingDeviceState(bool outputDeviceChange, std::string preDeviceAddress = "");
     void HandleHeadTrackingDeviceChange(const std::unordered_map<std::string, bool> &changeInfo);
-    void removeOldestDevice();
-    void UpdateDeviceSpatialMapInfo(const std::string address, const std::string deviceSpatialInfo);
-    void UpdateDeviceSpatialInfo(const std::string deviceSpatialInfo);
+    void UpdateDeviceSpatialInfo(const uint32_t deviceID, const std::string deviceSpatialInfo);
+    uint32_t UpdateDeviceSpatialMapInfo(const std::string address, const std::string deviceSpatialInfo);
+    std::string RemoveOldestDevice();
     std::string GetCurrTimestamp();
     std::string EnCapsulateDeviceInfo(const std::string address);
     std::string extractTimestamp(const std::string deviceSpatialInfo);
     std::map<std::string, std::string> addressToDeviceSpatialInfoMap_;
+    std::map<std::string, uint32_t> addressToDeviceIDMap_;
     std::shared_ptr<AudioPolicyServerHandler> audioPolicyServerHandler_;
     std::string currentDeviceAddress_ = "";
     std::string preSettingSpatialAddress_ = "NO_PREVIOUS_SET_DEVICE";
