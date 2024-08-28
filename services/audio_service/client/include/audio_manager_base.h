@@ -303,8 +303,7 @@ public:
      * @return true/false.
      */
     virtual bool CreateEffectChainManager(std::vector<EffectChain> &effectChains,
-        std::unordered_map<std::string, std::string> &effectMap,
-        std::unordered_map<std::string, std::string> &enhanceMap) = 0;
+        const EffectChainManagerParam &effectParam, const EffectChainManagerParam &enhanceParam) = 0;
 
     /**
      * Set output device sink for effect chain manager.

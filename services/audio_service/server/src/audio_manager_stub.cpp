@@ -435,6 +435,38 @@ int AudioManagerStub::HandleRequestThreadPriority(MessageParcel &data, MessagePa
     return AUDIO_OK;
 }
 
+static bool UnmarshellEffectChainMgrParam(EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
+{
+    effectChainMgrParam.maxExtraNum = data.ReadInt32();
+    effectChainMgrParam.defaultSceneName = data.ReadString();
+
+    int32_t containSize = data.ReadInt32();
+    CHECK_AND_RETURN_RET_LOG(containSize >= 0 && containSize <= AUDIO_EFFECT_PRIOR_SCENE_UPPER_LIMIT,
+        false, "Create audio effect prioscene failed, please check log");
+    while (containSize--) {
+        effectChainMgrParam.priorSceneList.emplace_back(data.ReadString());
+    }
+
+    containSize = data.ReadInt32();
+    CHECK_AND_RETURN_RET_LOG(containSize >= 0 && containSize <= AUDIO_EFFECT_CHAIN_CONFIG_UPPER_LIMIT,
+        false, "Create audio effect chain name map failed, please check log");
+    while (containSize--) {
+        string key = data.ReadString();
+        string value = data.ReadString();
+        effectChainMgrParam.sceneTypeToChainNameMap[key] = value;
+    }
+
+    containSize = data.ReadInt32();
+    CHECK_AND_RETURN_RET_LOG(containSize >= 0 && containSize <= AUDIO_EFFECT_COUNT_PROPERTY_UPPER_LIMIT,
+        false, "Create audio effect default property failed, please check log");
+    while (containSize--) {
+        string key = data.ReadString();
+        string value = data.ReadString();
+        effectChainMgrParam.effectDefaultProperty[key] = value;
+    }
+    return true;
+}
+
 int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, MessageParcel &reply)
 {
     int32_t i;
@@ -442,11 +474,11 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
     vector<int32_t> countEffect = {};
     int32_t countChains = data.ReadInt32();
     CHECK_AND_RETURN_RET_LOG(countChains >= 0 && countChains <= AUDIO_EFFECT_CHAIN_COUNT_UPPER_LIMIT,
-        AUDIO_ERR, "Create audio effect chain manager failed, please check log");
+        AUDIO_ERR, "Create audio effect chains failed, invalid countChains");
     for (i = 0; i < countChains; i++) {
         int32_t count = data.ReadInt32();
         CHECK_AND_RETURN_RET_LOG(count >= 0 && count <= AUDIO_EFFECT_COUNT_PER_CHAIN_UPPER_LIMIT,
-            AUDIO_ERR, "Create audio effect chain manager failed, please check log");
+            AUDIO_ERR, "Create audio effect chains failed, invalid countChains");
         countEffect.emplace_back(count);
     }
 
@@ -459,28 +491,12 @@ int AudioManagerStub::HandleCreateAudioEffectChainManager(MessageParcel &data, M
         effectChains.emplace_back(effectChain);
     }
 
-    unordered_map<string, string> sceneTypeToEffectChainNameMap;
-    int32_t mapSize = data.ReadInt32();
-    CHECK_AND_RETURN_RET_LOG(mapSize >= 0 && mapSize <= AUDIO_EFFECT_CHAIN_CONFIG_UPPER_LIMIT,
-        AUDIO_ERR, "Create audio effect chain manager failed, please check log");
-    for (i = 0; i < mapSize; i++) {
-        string key = data.ReadString();
-        string value = data.ReadString();
-        sceneTypeToEffectChainNameMap[key] = value;
-    }
+    EffectChainManagerParam effectParam;
+    EffectChainManagerParam enhanceParam;
+    if (!UnmarshellEffectChainMgrParam(effectParam, data) || !UnmarshellEffectChainMgrParam(enhanceParam, data)) {
+        return AUDIO_ERR;
 
-    unordered_map<string, string> sceneTypeToEnhanceChainNameMap;
-    mapSize = data.ReadInt32();
-    CHECK_AND_RETURN_RET_LOG(mapSize >= 0 && mapSize <= AUDIO_EFFECT_CHAIN_CONFIG_UPPER_LIMIT,
-        AUDIO_ERR, "Create audio enhance chain manager failed, please check log");
-    for (i = 0; i < mapSize; i++) {
-        string key = data.ReadString();
-        string value = data.ReadString();
-        sceneTypeToEnhanceChainNameMap[key] = value;
-    }
-
-    bool createSuccess = CreateEffectChainManager(effectChains, sceneTypeToEffectChainNameMap,
-        sceneTypeToEnhanceChainNameMap);
+    bool createSuccess = CreateEffectChainManager(effectChains, effectParam, enhanceParam);
     CHECK_AND_RETURN_RET_LOG(createSuccess, AUDIO_ERR,
         "Create audio effect chain manager failed, please check log");
     return AUDIO_OK;
