@@ -110,7 +110,6 @@ int32_t EffectChainManagerCreateCb(const char *sceneType, const char *sessionID)
     if (!audioEffectChainManager->CheckAndAddSessionID(sessionIDString)) {
         return SUCCESS;
     }
-    audioEffectChainManager->UpdateSceneTypeList(sceneTypeString, ADD_SCENE_TYPE);
     bool curSpatializationEnabled = audioEffectChainManager->GetCurSpatializationEnabled();
     std::string curDeviceType = audioEffectChainManager->GetDeviceTypeName();
     if (audioEffectChainManager->GetOffloadEnabled() ||
