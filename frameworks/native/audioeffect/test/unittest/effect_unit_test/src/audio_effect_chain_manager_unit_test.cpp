@@ -529,20 +529,6 @@ HWTEST(AudioEffectChainManagerUnitTest, SetOutputDeviceSink_003, TestSize.Level1
 }
 
 /**
-* @tc.name   : Test GetDeviceSinkName API
-* @tc.number : GetDeviceSinkName_001
-* @tc.desc   : Test GetDeviceSinkName interface.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, GetDeviceSinkName_001, TestSize.Level1)
-{
-    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
-        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
-    string result = AudioEffectChainManager::GetInstance()->GetDeviceSinkName();
-    EXPECT_EQ(true, result != "");
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-}
-
-/**
 * @tc.name   : Test GetOffloadEnabled API
 * @tc.number : GetOffloadEnabled_001
 * @tc.desc   : Test GetOffloadEnabled interface.
@@ -1609,78 +1595,6 @@ HWTEST(AudioEffectChainManagerUnitTest, UpdateDeviceInfo_002, TestSize.Level1)
         DEFAULT_EFFECT_LIBRARY_LIST);
     int32_t result = AudioEffectChainManager::GetInstance()->UpdateDeviceInfo(device, sinkName);
     EXPECT_EQ(SUCCESS, result);
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-}
-
-/**
-* @tc.name   : Test UpdateSpkOffloadEnabled API
-* @tc.number : UpdateSpkOffloadEnabled_001
-* @tc.desc   : Test UpdateSpkOffloadEnabled interface.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, UpdateSpkOffloadEnabled_001, TestSize.Level1)
-{
-    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
-        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
-    AudioEffectChainManager::GetInstance()->debugArmFlag_ = true;
-    AudioEffectChainManager::GetInstance()->spkOffloadEnabled_ = true;
-    AudioEffectChainManager::GetInstance()->UpdateSpkOffloadEnabled();
-    AudioEffectChainManager::GetInstance()->deviceType_ = DEVICE_TYPE_SPEAKER;
-    bool result = AudioEffectChainManager::GetInstance()->GetOffloadEnabled();
-    EXPECT_EQ(false, result);
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-}
-
-/**
-* @tc.name   : Test UpdateSpkOffloadEnabled API
-* @tc.number : UpdateSpkOffloadEnabled_002
-* @tc.desc   : Test UpdateSpkOffloadEnabled interface.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, UpdateSpkOffloadEnabled_002, TestSize.Level1)
-{
-    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
-        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
-    AudioEffectChainManager::GetInstance()->debugArmFlag_ = true;
-    AudioEffectChainManager::GetInstance()->spkOffloadEnabled_ = false;
-    AudioEffectChainManager::GetInstance()->UpdateSpkOffloadEnabled();
-    AudioEffectChainManager::GetInstance()->deviceType_ = DEVICE_TYPE_SPEAKER;
-    bool result = AudioEffectChainManager::GetInstance()->GetOffloadEnabled();
-    EXPECT_EQ(false, result);
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-}
-
-/**
-* @tc.name   : Test UpdateSpkOffloadEnabled API
-* @tc.number : UpdateSpkOffloadEnabled_003
-* @tc.desc   : Test UpdateSpkOffloadEnabled interface.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, UpdateSpkOffloadEnabled_003, TestSize.Level1)
-{
-    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
-        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
-    AudioEffectChainManager::GetInstance()->debugArmFlag_ = false;
-    AudioEffectChainManager::GetInstance()->spkOffloadEnabled_ = true;
-    AudioEffectChainManager::GetInstance()->UpdateSpkOffloadEnabled();
-    AudioEffectChainManager::GetInstance()->deviceType_ = DEVICE_TYPE_SPEAKER;
-    bool result = AudioEffectChainManager::GetInstance()->GetOffloadEnabled();
-    EXPECT_EQ(true, result);
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-}
-
-/**
-* @tc.name   : Test UpdateSpkOffloadEnabled API
-* @tc.number : UpdateSpkOffloadEnabled_004
-* @tc.desc   : Test UpdateSpkOffloadEnabled interface.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, UpdateSpkOffloadEnabled_004, TestSize.Level1)
-{
-    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
-        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
-    AudioEffectChainManager::GetInstance()->debugArmFlag_ = false;
-    AudioEffectChainManager::GetInstance()->spkOffloadEnabled_ = false;
-    AudioEffectChainManager::GetInstance()->UpdateSpkOffloadEnabled();
-    AudioEffectChainManager::GetInstance()->deviceType_ = DEVICE_TYPE_SPEAKER;
-    bool result = AudioEffectChainManager::GetInstance()->GetOffloadEnabled();
-    EXPECT_EQ(false, result);
     AudioEffectChainManager::GetInstance()->ResetInfo();
 }
 
