@@ -53,10 +53,10 @@ static const std::string ROLE_SINK = "sink";
 static const std::string PORT_NONE = "none";
 
 const std::vector<std::string> SourceNames = {
-	std::string(PRIMARY_MIC),
-	std::string(USB_MIC),
-	std::string(PRIMARY_WAKEUP),
-	std::string(FILE_SOURCE)
+    std::string(PRIMARY_MIC),
+    std::string(USB_MIC),
+    std::string(PRIMARY_WAKEUP),
+    std::string(FILE_SOURCE)
 };
 
 enum NodeName {
