@@ -59,6 +59,8 @@ void AudioEnhanceChain::InitAudioEnhanceChain()
     uint32_t byteLenPerFrame = algoSupportedConfig_.frameLength * (algoSupportedConfig_.sampleRate / MILLISECOND)
         * bitDepth;
     algoAttr_ = {bitDepth, batchLen, byteLenPerFrame};
+    AUDIO_INFO_LOG("bitDepth:%{public}u batchLen:%{public}u byteLenPerFrame:%{public}u",
+        bitDepth, batchLen, byteLenPerFrame);
 }
 
 AudioEnhanceChain::~AudioEnhanceChain()
