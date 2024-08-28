@@ -36,6 +36,11 @@ ohos_fuzztest("AudioPolicyFuzzTest") {
 
   configs = [ "../../../services/audio_policy:audio_policy_public_config" ]
 
+  defines = []
+  if (audio_framework_feature_dtmf_tone) {
+    defines += [ "FEATURE_DTMF_TONE" ]
+  }
+
   sources = [ "audio_policy_fuzzer.cpp" ]
 
   deps = [ "../../../services/audio_policy:audio_policy_service" ]
