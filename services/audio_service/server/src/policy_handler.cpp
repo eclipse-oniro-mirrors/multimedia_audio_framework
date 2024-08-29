@@ -24,6 +24,7 @@
 #include "audio_errors.h"
 #include "audio_service_log.h"
 #include "audio_utils.h"
+#include "audio_core.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -188,6 +189,12 @@ bool PolicyHandler::GetHighResolutionExist()
 void PolicyHandler::SetHighResolutionExist(bool isHighResExist)
 {
     isHighResolutionExist_ = isHighResExist;
+}
+
+int32_t PolicyHandler::GetAndSavaClientType(uint32_t uid, const std::string &bundleName)
+{
+    CHECK_AND_RETURN_RET_LOG(IPolicyProvider_ != nullptr, ERROR, "IPolicyProvider_ is nullptr");
+    return IPolicyProvider_->GetAndSaveClientType(uid, bundleName);
 }
 } // namespace AudioStandard
 } // namespace OHOS

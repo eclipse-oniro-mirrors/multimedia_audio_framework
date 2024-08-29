@@ -1884,13 +1884,12 @@ int32_t AudioEndpointInner::WriteToSpecialProcBuf(const std::shared_ptr<OHAudioB
     if (muteFlag) {
         memcpy_s(static_cast<void *>(writeBuf.buffer), writeBuf.bufLength, 0, readBuf.bufLength);
     } else {
-        if (endPointType)
-    }
-    if (endpointType_ == TYPE_VOIP_MMAP) {
-        ret = HandleCapturerDataParams(writeBuf, readBuf, convertedBuffer);
-    } else {
-        ret = memcpy_s(static_cast<void *>(writeBuf.buffer), writeBuf.bufLength,
-            static_cast<void *>(readBuf.buffer), readBuf.bufLength);
+        if (endpointType_ == TYPE_VOIP_MMAP) {
+            ret = HandleCapturerDataParams(writeBuf, readBuf, convertedBuffer);
+        } else {
+            ret = memcpy_s(static_cast<void *>(writeBuf.buffer), writeBuf.bufLength,
+                static_cast<void *>(readBuf.buffer), readBuf.bufLength);
+        }
     }
 
     CHECK_AND_RETURN_RET_LOG(ret == EOK, ERR_WRITE_FAILED, "memcpy data to process buffer fail, "
@@ -1943,7 +1942,8 @@ void AudioEndpointInner::WriteToProcessBuffers(const BufferDesc &readBuf)
             continue;
         }
 
-        int32_t ret = WriteToSpecialProcBuf(processBufferList_[i], readBuf, processList_[i]->GetConvertedBuffer());
+        int32_t ret = WriteToSpecialProcBuf(processBufferList_[i], readBuf, processList_[i]->GetConvertedBuffer(),
+            processList_[i]->GetMuteFlag());
         CHECK_AND_CONTINUE_LOG(ret == SUCCESS,
             "endpoint write to process buffer %{public}zu fail, ret %{public}d.", i, ret);
         AUDIO_DEBUG_LOG("endpoint process buffer %{public}zu write success.", i);

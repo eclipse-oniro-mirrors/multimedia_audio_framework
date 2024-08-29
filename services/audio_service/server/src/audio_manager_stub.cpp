@@ -690,6 +690,8 @@ int AudioManagerStub::HandleFourthPartCode(uint32_t code, MessageParcel &data, M
             return HandleSetRotationToEffect(data, reply);
         case static_cast<uint32_t>(AudioServerInterfaceCode::UPDATE_SESSION_CONNECTION_STATE):
             return HandleUpdateSessionConnectionState(data, reply);
+        case static_cast<uint32_t>(AudioServerInterfaceCode::SET_SINGLE_STREAM_MUTE):
+            return HandleSetNonInterruptMute(data, reply);
         default:
             AUDIO_ERR_LOG("default case, need check AudioManagerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -838,6 +840,14 @@ int AudioManagerStub::HandleUpdateSessionConnectionState(MessageParcel &data, Me
     int32_t sessionID = data.ReadInt32();
     int32_t state = data.ReadInt32();
     UpdateSessionConnectionState(sessionID, state);
+    return AUDIO_OK;
+}
+
+int AudioManagerStub::HandleSetNonInterruptMute(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t sessionId = data.ReadUint32();
+    bool muteFlag = data.ReadBool();
+    SetNonInterruptMute(sessionId, muteFlag);
     return AUDIO_OK;
 }
 } // namespace AudioStandard

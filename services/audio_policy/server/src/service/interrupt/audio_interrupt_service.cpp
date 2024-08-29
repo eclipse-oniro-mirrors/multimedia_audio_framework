@@ -940,6 +940,12 @@ void AudioInterruptService::ProcessExistInterrupt(std::list<std::pair<AudioInter
                 break;
             }
             interruptEvent.hintType = focusEntry.hintType;
+            if (IsInGameMap((iterActive->first).sessionId)) {
+                InterruptEvent.hintType = INTERRUPT_HINT_PAUSE;
+                iterActive->second = PAUSE;
+                AUDIO_INFO_LOG("incomingInterrupt.hintType: %{public}d", InterruptEvent.hintType);
+                break;
+            }
             removeFocusInfo = true;
             break;
         case INTERRUPT_HINT_PAUSE:
@@ -1152,6 +1158,11 @@ int32_t AudioInterruptService::ProcessFocusEntry(const int32_t zoneId, const Aud
                 incomingConcurrentSources)) {
                 continue;
             }
+            if (IsInGameMap((iterActive->first).sessionId)) {
+                incomingState = PAUSE;
+                AUDIO_INFO_LOG("incomingState: %{public}d", incomingState);
+                continue;
+            }
 
             AUDIO_INFO_LOG("the incoming stream is rejected by sessionId:%{public}d, pid:%{public}d",
                 (iterActive->first).sessionId, (iterActive->first).pid);
@@ -1349,6 +1360,10 @@ std::list<std::pair<AudioInterrupt, AudioFocuState>> AudioInterruptService::Simu
                 continue;
             }
             UpdateHintTypeForExistingSession(incoming, focusEntry);
+            if (isInGame((iterActive->first).sessionId) && focusEntry.hintType == INTERRUPT_HINT_STOP) {
+                focusEntry.hintType = INTERRUPT_HINT_PAUSE;
+                AUDIO_INFO_LOG("focusEntry.hintType: %{public}d", focusEntry.hintType);
+            } 
             auto pos = HINT_STATE_MAP.find(focusEntry.hintType);
             if (pos == HINT_STATE_MAP.end()) {
                 continue;

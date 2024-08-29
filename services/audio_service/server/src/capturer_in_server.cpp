@@ -229,9 +229,12 @@ void CapturerInServer::ReadData(size_t length)
     if (audioServerBuffer_->GetWriteBuffer(curWritePos, dstBuffer) < 0) {
         return;
     }
-    if (processConfig_.capturerInfo.sourceType == SOURCE_TYPE_PLAYBACK_CAPTURE && processConfig_.innerCapMode ==
-        LEGACY_MUTE_CAP) {
+    if ((processConfig_.capturerInfo.sourceType == SOURCE_TYPE_PLAYBACK_CAPTURE && processConfig_.innerCapMode ==
+        LEGACY_MUTE_CAP) || muteFlag_) {
         dstBuffer.buffer = dischargeBuffer_.get(); // discharge valid data.
+    }
+    if (muteFlag_) {
+        memset_s(static_cast<void *>(dstBuffer.buffer), dstBuffer.bufLength, 0, dstBuffer.bufLength);
     }
     ringCache_->Dequeue({dstBuffer.buffer, dstBuffer.bufLength});
     DumpFileUtil::WriteDumpFile(dumpS2C_, static_cast<void *>(dstBuffer.buffer), dstBuffer.bufLength);
@@ -388,6 +391,7 @@ int32_t CapturerInServer::Stop()
 
 int32_t CapturerInServer::Release()
 {
+    AudioService::GetInstance()->RemoveCapturer(streamIndex_);
     {
         std::unique_lock<std::mutex> lock(statusLock_);
         if (status_ == I_STATUS_RELEASED) {
@@ -515,6 +519,12 @@ int32_t CapturerInServer::InitCacheBuffer(size_t targetSize)
     }
 
     return SUCCESS;
+}
+
+void CapturerInServer::SetNonInterruptMute(const bool muteFlag)
+{
+    AUDIO_INFO_LOG("muteFlag: %{public}d", muteFlag);
+    muteFlag_ = muteFlag;
 }
 } // namespace AudioStandard
 } // namespace OHOS
