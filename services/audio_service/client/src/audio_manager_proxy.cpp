@@ -705,9 +705,30 @@ void AudioManagerProxy::RequestThreadPriority(uint32_t tid, string bundleName)
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "RequestThreadPriority failed, error: %{public}d", error);
 }
 
+static void MarshellEffectChainMgrParam(const EffectChainManagerParam &effectChainMgrParam, MessageParcel &data)
+{
+    data.WriteInt32(effectChainMgrParam.maxExtraNum);
+    data.WriteString(effectChainMgrParam.defaultSceneName);
+    data.WriteInt32(effectChainMgrParam.priorSceneList.size());
+    for (const auto &prioScene : effectChainMgrParam.priorSceneList) {
+        data.WriteString(prioScene);
+    }
+
+    data.WriteInt32(effectChainMgrParam.sceneTypeToChainNameMap.size());
+    for (const auto &[scene, chain] : effectChainMgrParam.sceneTypeToChainNameMap) {
+        data.WriteString(scene);
+        data.WriteString(chain);
+    }
+
+    data.WriteInt32(effectChainMgrParam.effectDefaultProperty.size());
+    for (const auto &[effect, prop] : effectChainMgrParam.effectDefaultProperty) {
+        data.WriteString(effect);
+        data.WriteString(prop);
+    }
+}
+
 bool AudioManagerProxy::CreateEffectChainManager(std::vector<EffectChain> &effectChains,
-    std::unordered_map<std::string, std::string> &effectMap,
-    std::unordered_map<std::string, std::string> &enhanceMap)
+    const EffectChainManagerParam &effectParam, const EffectChainManagerParam &enhanceParam)
 {
     int32_t error;
 
@@ -737,16 +758,8 @@ bool AudioManagerProxy::CreateEffectChainManager(std::vector<EffectChain> &effec
         }
     }
 
-    dataParcel.WriteInt32(effectMap.size());
-    for (auto item = effectMap.begin(); item != effectMap.end(); ++item) {
-        dataParcel.WriteString(item->first);
-        dataParcel.WriteString(item->second);
-    }
-    dataParcel.WriteInt32(enhanceMap.size());
-    for (auto item = enhanceMap.begin(); item != enhanceMap.end(); ++item) {
-        dataParcel.WriteString(item->first);
-        dataParcel.WriteString(item->second);
-    }
+    MarshellEffectChainMgrParam(effectParam, dataParcel);
+    MarshellEffectChainMgrParam(enhanceParam, dataParcel);
 
     error = Remote()->SendRequest(
         static_cast<uint32_t>(AudioServerInterfaceCode::CREATE_AUDIO_EFFECT_CHAIN_MANAGER),
