@@ -51,6 +51,15 @@ unordered_map<string, string> DEFAULT_MAP = {
     {"SCENE_MOVIE_&_EFFECT_DEFAULT_&_DEVICE_TYPE_BLUETOOTH_A2DP", "EFFECTCHAIN_BT_MUSIC"},
 };
 
+EffectChainManagerParam DEFAULT_EFFECT_CHAIN_MANAGER_PARAM{
+    3,
+    "SCENE_DEFAULT",
+    {},
+    {{"SCENE_MOVIE_&_EFFECT_DEFAULT_&_DEVICE_TYPE_SPEAKER", "EFFECTCHAIN_SPK_MUSIC"},
+        {"SCENE_MOVIE_&_EFFECT_DEFAULT_&_DEVICE_TYPE_BLUETOOTH_A2DP", "EFFECTCHAIN_BT_MUSIC"}},
+    {{"effect1", "property1"}, {"effect4", "property5"}, {"effect1", "property4"}}
+};
+
 vector<shared_ptr<AudioEffectLibEntry>> DEFAULT_EFFECT_LIBRARY_LIST = {};
 }
 
@@ -66,8 +75,8 @@ void AudioEffectChainAdapterUnitTest::TearDown(void) {}
 */
 HWTEST(AudioEffectChainAdapterUnitTest, EffectChainManagerInitCb_001, TestSize.Level1)
 {
-    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS, DEFAULT_MAP,
-        DEFAULT_EFFECT_LIBRARY_LIST);
+    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
+        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
 
     const char *sceneType = "SCENE_MUSIC";
     int32_t result = EffectChainManagerInitCb(sceneType);
