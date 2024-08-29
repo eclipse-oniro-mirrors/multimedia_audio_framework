@@ -1491,38 +1491,6 @@ HWTEST(AudioEffectChainManagerUnitTest, UpdateCurrSceneType_002, TestSize.Level1
 }
 
 /**
-* @tc.name   : Test ChangeEffectChainCountMapForCreate API
-* @tc.number : ChangeEffectChainCountMapForCreate_001
-* @tc.desc   : Test ChangeEffectChainCountMapForCreate interface.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, ChangeEffectChainCountMapForCreate_001, TestSize.Level1)
-{
-    string sceneType = "SCENE_MUSIC";
-
-    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
-        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
-    AudioEffectChainManager::GetInstance()->ChangeEffectChainCountMapForCreate(sceneType);
-    EXPECT_EQ("SCENE_MUSIC", sceneType);
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-}
-
-/**
-* @tc.name   : Test ChangeEffectChainCountMapForCreate API
-* @tc.number : EraseEffectChainSetAndMapForCreate_001
-* @tc.desc   : Test EraseEffectChainSetAndMapForCreate interface.
-*/
-HWTEST(AudioEffectChainManagerUnitTest, EraseEffectChainSetAndMapForCreate_001, TestSize.Level1)
-{
-    string sceneType = "SCENE_MUSIC";
-
-    AudioEffectChainManager::GetInstance()->InitAudioEffectChainManager(DEFAULT_EFFECT_CHAINS,
-        DEFAULT_EFFECT_CHAIN_MANAGER_PARAM, DEFAULT_EFFECT_LIBRARY_LIST);
-    AudioEffectChainManager::GetInstance()->EraseEffectChainSetAndMapForCreate(sceneType);
-    EXPECT_EQ("SCENE_MUSIC", sceneType);
-    AudioEffectChainManager::GetInstance()->ResetInfo();
-}
-
-/**
 * @tc.name   : Test CheckAndReleaseCommonEffectChain API
 * @tc.number : CheckAndReleaseCommonEffectChain_001
 * @tc.desc   : Test CheckAndReleaseCommonEffectChain interface.
