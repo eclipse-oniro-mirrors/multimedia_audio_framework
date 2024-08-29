@@ -372,9 +372,11 @@ void AudioSpatializationService::UpdateCurrentDevice(const std::string macAddres
 {
     AUDIO_INFO_LOG("UpdateCurrentDevice Entered");
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
-    std::string deviceSpatialInfo = EnCapsulateDeviceInfo(macAddress);
-    UpdateDeviceSpatialMapInfo(macAddress, deviceSpatialInfo);
-    WriteSpatializationStateToDb(WRITE_DEVICESPATIAL_INFO, macAddress);
+    if(!macAddress.empty()) {
+        std::string deviceSpatialInfo = EnCapsulateDeviceInfo(macAddress);
+        UpdateDeviceSpatialMapInfo(macAddress, deviceSpatialInfo);
+        WriteSpatializationStateToDb(WRITE_DEVICESPATIAL_INFO, macAddress);
+    }
     if (currentDeviceAddress_ == macAddress) {
         AUDIO_INFO_LOG("no need to UpdateCurrentDevice");
         return;
@@ -746,7 +748,7 @@ std::string AudioSpatializationService::RemoveOldestDevice()
     std::string oldestTimestamp = "";
     for (const auto& entry : addressToDeviceSpatialInfoMap_) {
         std::string currTimestamp = extractTimestamp(entry.second);
-        if (oldestTimestamp.empty() || static_cast<uint32_t>(currTimestamp) < static_cast<uint32_t>(oldestTimestamp)) {
+        if (oldestTimestamp.empty() || std::stoul(currTimestamp) < std::stoul(oldestTimestamp)) {
             oldestTimestamp = currTimestamp;
             oldestAddr = entry.first;
         }

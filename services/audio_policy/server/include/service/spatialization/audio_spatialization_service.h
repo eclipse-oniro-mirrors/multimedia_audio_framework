@@ -98,7 +98,7 @@ private:
     void UpdateHeadTrackingDeviceState(bool outputDeviceChange, std::string preDeviceAddress = "");
     void HandleHeadTrackingDeviceChange(const std::unordered_map<std::string, bool> &changeInfo);
     void UpdateDeviceSpatialInfo(const uint32_t deviceID, const std::string deviceSpatialInfo);
-    uint32_t UpdateDeviceSpatialMapInfo(const std::string address, const std::string deviceSpatialInfo);
+    void UpdateDeviceSpatialMapInfo(const std::string address, const std::string deviceSpatialInfo);
     std::string RemoveOldestDevice();
     std::string GetCurrTimestamp();
     std::string EnCapsulateDeviceInfo(const std::string address);
