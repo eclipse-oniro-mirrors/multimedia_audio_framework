@@ -1113,5 +1113,22 @@ void AudioManagerProxy::UpdateSessionConnectionState(const int32_t &sessionID, c
         static_cast<uint32_t>(AudioServerInterfaceCode::UPDATE_SESSION_CONNECTION_STATE), data, reply, option);
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "failed, error:%{public}d", error);
 }
+
+void AudioManagerProxy::SetNonInterruptMute(const int32_t sessionId, const bool muteFlag)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_LOG(ret, "WriteInterfaceToken failed");
+    data.WriteInt32(sessionId);
+    data.WriteBool(muteFlag);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioServerInterfaceCode::SET_SINGLE_STREAM_MUTE), data, reply, option);
+    CHECK_AND_RETURN_LOG(error == ERR_NONE, "failed, error:%{public}d", error);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

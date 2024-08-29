@@ -33,6 +33,7 @@
 #include "audio_converter_parser.h"
 #include "audio_dialog_ability_connection.h"
 #include "media_monitor_manager.h"
+#include "client_type_manager.h"
 
 namespace OHOS {
 namespace AudioStandard {

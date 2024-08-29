@@ -55,6 +55,7 @@ public:
     // for inner-cap.
     int32_t UpdatePlaybackCaptureConfig(const AudioPlaybackCaptureConfig &config);
     int32_t UpdatePlaybackCaptureConfigInLegacy(const AudioPlaybackCaptureConfig &config);
+    void SetNonInterruptMute(const bool muteFlag);
 
 private:
     int32_t InitCacheBuffer(size_t targetSize);
@@ -88,6 +89,7 @@ private:
     std::unique_ptr<uint8_t []> dischargeBuffer_ = nullptr;
     FILE *dumpS2C_ = nullptr; // server to client dump file
     std::string dumpFileName_ = "";
+    bool muteFlag_ = false;
 };
 } // namespace AudioStandard
 } // namespace OHOS

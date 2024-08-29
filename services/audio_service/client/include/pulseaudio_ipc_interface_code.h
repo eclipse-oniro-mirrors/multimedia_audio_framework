@@ -77,6 +77,7 @@ namespace AudioStandard {
         SET_SINK_MUTE_FOR_SWITCH_DEVICE,
         SET_ROTATION_TO_EFFECT,
         UPDATE_SESSION_CONNECTION_STATE,
+        SET_SINGLE_STREAM_MUTE,
         AUDIO_SERVER_CODE_MAX = UPDATE_SESSION_CONNECTION_STATE,
     };
 } // namespace AudioStandard

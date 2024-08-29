@@ -1861,5 +1861,21 @@ int32_t AudioPolicyProxy::SetDefaultOutputDevice(const DeviceType deviceType, co
     return reply.ReadInt32();
 }
 
+int32_t AudioPolicyProxy::GetAndSaveClientType(unit32_t uid)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, -1, "WriteInterfaceToken failed");
+    data.WriteUint32(uid);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::GET_AND_SAVE_CLIENT_VALUE), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "SendRequest failed, error: %{public}d", error);
+    return reply.ReadInt32();
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

@@ -50,6 +50,8 @@ public:
     AudioInterruptService();
     virtual ~AudioInterruptService();
 
+    const sptr<IStandardAudioService> GetAudioServerProxy();
+    
     // callback run in handler thread
     void DispatchInterruptEventWithSessionId(
         uint32_t sessionId, const InterruptEventInternal &interruptEvent) override;
@@ -74,7 +76,7 @@ public:
 
     // modern interrupt interfaces
     int32_t SetAudioInterruptCallback(const int32_t zoneId, const uint32_t sessionId,
-        const sptr<IRemoteObject> &object);
+        const sptr<IRemoteObject> &object, const std::string bundleName, uint32_t uid);
     int32_t UnsetAudioInterruptCallback(const int32_t zoneId, const uint32_t sessionId);
     int32_t ActivateAudioInterrupt(const int32_t zoneId, const AudioInterrupt &audioInterrupt);
     int32_t DeactivateAudioInterrupt(const int32_t zoneId, const AudioInterrupt &audioInterrupt);
@@ -95,6 +97,7 @@ public:
     void ClearAudioFocusInfoListOnAccountsChanged(const int &id);
     void AudioInterruptZoneDump(std::string &dumpString);
     AudioScene GetHighestPriorityAudioScene(const int32_t zoneId) const;
+    bool IsInGameMap(const uint32_t sessionId);
 
 private:
     static constexpr int32_t ZONEID_DEFAULT = 0;
@@ -103,6 +106,7 @@ private:
     static constexpr int64_t OFFLOAD_NO_SESSION_ID = -1;
     static constexpr uid_t UID_AUDIO = 1041;
     static constexpr int32_t STREAM_DEFAULT_PRIORITY = 100;
+    std::mutex audioServerProxyMutex_;
 
     // Inner class for death handler
     class AudioInterruptDeathRecipient : public IRemoteObject::DeathRecipient {
@@ -218,6 +222,8 @@ private:
     // deprecated interrupt members
     std::unique_ptr<AudioInterrupt> focussedAudioInterruptInfo_;
     int32_t clientOnFocus_ = 0;
+    std::unordered_map<int32_t, bool> isCallbackUidMap_;
+    std::unordered_map<uint32_t, bool> isCallbackSessionidMap_;
 
     std::mutex mutex_;
 };

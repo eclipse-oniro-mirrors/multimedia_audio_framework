@@ -82,6 +82,10 @@ public:
     int32_t AddProcessStatusListener(std::shared_ptr<IProcessStatusListener> listener);
     int32_t RemoveProcessStatusListener(std::shared_ptr<IProcessStatusListener> listener);
 
+    void SetNonInterruptMute(const bool muteFlag);
+    bool GetMuteFlag() override;
+    uint32_t GetSessionId();
+
     // for inner-cap
     void SetInnerCapState(bool isInnerCapped) override;
     bool GetInnerCapState() override;
@@ -91,6 +95,7 @@ public:
     int32_t RegisterThreadPriority(uint32_t tid, const std::string &bundleName) override;
 public:
     const AudioProcessConfig processConfig_;
+    bool muteFlag_ = false;
 
 private:
     AudioProcessInServer(const AudioProcessConfig &processConfig, ProcessReleaseCallback *releaseCallback);

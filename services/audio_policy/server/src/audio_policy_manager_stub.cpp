@@ -163,6 +163,7 @@ const char *g_audioPolicyCodeStrs[] = {
     "IS_AUDIO_SESSION_ACTIVATED",
     "LOAD_SPLIT_MODULE",
     "SET_DEFAULT_OUTPUT_DEVICE",
+    "GET_AND_SAVE_CLIENT_VALUE",
 };
 
 constexpr size_t codeNums = sizeof(g_audioPolicyCodeStrs) / sizeof(const char *);
@@ -567,8 +568,9 @@ void AudioPolicyManagerStub::SetInterruptCallbackInternal(MessageParcel &data, M
     uint32_t sessionID = data.ReadUint32();
     sptr<IRemoteObject> object = data.ReadRemoteObject();
     uint32_t zoneID = data.ReadUint32();
+    uint32_t clientUid = data.ReadUint32();
     CHECK_AND_RETURN_LOG(object != nullptr, "AudioPolicyManagerStub: AudioInterruptCallback obj is null");
-    int32_t result = SetAudioInterruptCallback(sessionID, object, zoneID);
+    int32_t result = SetAudioInterruptCallback(sessionID, object, clientUid, zoneID);
     reply.WriteInt32(result);
 }
 
@@ -1295,6 +1297,12 @@ void AudioPolicyManagerStub::SetDefaultOutputDeviceInternal(MessageParcel &data,
     reply.WriteInt32(result);
 }
 
+void GetAndSaveClientTypeInternal(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t uid = data.ReadUint32();
+    GetAndSaveClientType(uid);
+}
+
 void AudioPolicyManagerStub::OnMiddleNinRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -1313,6 +1321,9 @@ void AudioPolicyManagerStub::OnMiddleNinRemoteRequest(
             break;
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_DEFAULT_OUTPUT_DEVICE):
             SetDefaultOutputDeviceInternal(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::GET_AND_SAVE_CLIENT_VALUE):
+            GetAndSaveClientTypeInternal(data, reply);
             break;
         default:
             AUDIO_ERR_LOG("default case, need check AudioPolicyManagerStub");

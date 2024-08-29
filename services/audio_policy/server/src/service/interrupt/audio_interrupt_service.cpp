@@ -22,10 +22,12 @@
 #include "audio_policy_manager_listener_proxy.h"
 #include "audio_utils.h"
 #include "media_monitor_manager.h"
+#include "client_type_manager.h"
 
 namespace OHOS {
 namespace AudioStandard {
 const int32_t DEFAULT_ZONE_ID = 0;
+static sptr<IStandardAudioService> g_adProxy = nullptr;
 
 static const map<InterruptHint, AudioFocuState> HINT_STATE_MAP = {
     {INTERRUPT_HINT_PAUSE, PAUSE},
@@ -122,6 +124,27 @@ void AudioInterruptService::Init(sptr<AudioPolicyServer> server)
     sessionService_ = std::make_shared<AudioSessionService>();
     sessionService_->Init();
     sessionService_->SetSessionTimeOutCallback(shared_from_this());
+}
+
+const sptr<IStandardAudioService> AudioInterruptService::GetAudioServerProxy()
+{
+    AUDIO_DEBUG_LOG("[Policy Service] Start get audio policy service proxy.");
+    lock_guard<mutex> lock(audioServerProxyMutex_);
+
+    if (g_adProxy == nullptr) {
+        auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        CHECK_AND_RETURN_RET_LOG(samgr != nullptr, nullptr, "[Policy Service] Get samgr failed.");
+
+        sptr<IRemoteObject> object = samgr->GetSystemAbility(AUDIO_DISTRIBUTED_SERVICE_ID);
+        CHECK_AND_RETURN_RET_LOG(object != nullptr, nullptr,
+            "[Policy Service] audio service remote object is NULL.");
+
+        g_adProxy = iface_cast<IStandardAudioService>(object);
+        CHECK_AND_RETURN_RET_LOG(g_adProxy != nullptr, nullptr,
+            "[Policy Service] init g_adProxy is NULL.");
+    }
+    const sptr<IStandardAudioService> gsp = g_adProxy;
+    return gsp;
 }
 
 void AudioInterruptService::OnSessionTimeout(const int32_t pid)
@@ -465,7 +488,7 @@ int32_t AudioInterruptService::AbandonAudioFocus(const int32_t clientId, const A
 }
 
 int32_t AudioInterruptService::SetAudioInterruptCallback(const int32_t zoneId, const uint32_t sessionId,
-    const sptr<IRemoteObject> &object)
+    const sptr<IRemoteObject> &object, const std::string bundleName, uint32_t uid)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -1653,10 +1676,47 @@ int32_t AudioInterruptService::ArchiveToNewAudioInterruptZone(const int32_t &fro
     return SUCCESS;
 }
 
+bool AudioInterruptService::IsInGameMap(const uint32_t sessionId)
+{
+    auto it = isCallbackSessionidMap_.find(sessionId);
+    if (it != isCallbackSessionidMap_.end()) {
+        AUDIO_INFO_LOG("Found sessionId in sessionIdMap %{public}d", isCallbackSessionidMap_[sessionId]);
+        return isCallbackSessionidMap_[sessionId];
+    }
+    AUDIO_INFO_LOG("Not found sessionId %{public}u", sessionId);
+    return false;
+}
+
 void AudioInterruptService::DispatchInterruptEventWithSessionId(uint32_t sessionId,
     const InterruptEventInternal &interruptEvent)
 {
+    AUDIO_INFO_LOG("SessionId: %{public}u, interruptEvent.hintType: %{public}d",
+        sessionId, interruptEvent.hintType);
     std::lock_guard<std::mutex> lock(mutex_);
+    uint32_t uid = AudioStreamCollector::GetAudioStreamCollector().GetRealUid(sessionId);
+    AUDIO_INFO_LOG("Uid from streamCollector %{public}u", uid);
+    ClientType clientType = ClientTypeManager::GetInstance()->GetClientTypeByUid(uid);
+
+    if (clientType == ClientType::CLIENT_TYPE_GAME) {
+        bool muteFlag = true;
+        const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
+        std::string identity = IPCSkeleton::ResetCallingIdentity();
+        CHECK_AND_RETURN_LOG(gsp != nullptr, "error for g_adProxy null");
+        switch (InterruptEvent.hintType) {
+            case INTERRUPT_HINT_RESUME:
+                muteFlag = false;
+            case INTERRUPT_HINT_PAUSE:
+            case INTERRUPT_HINT_STOP:
+                AUDIO_INFO_LOG("mute flag is: %{public}d", muteFlag);
+                gsp->SetNonInterrupt(sessionId, muteFlag);
+                IPCSkeleton::SetCallingIdentity(identity);
+                break;
+            default:
+                break;
+        }
+        return;
+    }
+    
 
     // call all clients
     if (sessionId == 0) {
