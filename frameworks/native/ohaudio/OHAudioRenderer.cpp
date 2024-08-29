@@ -346,7 +346,13 @@ OH_AudioStream_Result OH_AudioRenderer_SetDefaultOutputDevice(
         deviceType == AUDIO_DEVICE_TYPE_DEFAULT) ? true : false;
     CHECK_AND_RETURN_RET_LOG(result != false, AUDIOSTREAM_ERROR_ILLEGAL_STATE, "unsupport params");
     int32_t ret = audioRenderer->SetDefaultOutputDevice((OHOS::AudioStandard::DeviceType)deviceType);
-    CHECK_AND_RETURN_RET_LOG(ret != AUDIOSTREAM_SUCCESS, AUDIOSTREAM_ERROR_INVALID_PARAM, "err illegal state");
+    if (ret == OHOS::AudioStandard::ERR_NOT_SUPPORTED) {
+        AUDIO_ERR_LOG("This audiorenderer can not reset the output device");
+        return AUDIOSTREAM_ERROR_ILLEGAL_STATE;
+    } else if (ret != AUDIOSTREAM_SUCCESS) {
+        AUDIO_ERR_LOG("system error when calling this function");
+        return AUDIOSTREAM_ERROR_SYSTEM;
+    }
     return AUDIOSTREAM_SUCCESS;
 }
 
