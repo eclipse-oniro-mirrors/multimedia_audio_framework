@@ -1424,17 +1424,21 @@ void AudioEffectChainManager::UpdateSceneTypeList(const std::string &sceneType, 
 uint32_t AudioEffectChainManager::GetSceneTypeToChainCount(const std::string &sceneType)
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
+
     if (sceneType == DEFAULT_SCENE_TYPE) {
         return defaultEffectChainCount_;
     }
+    std::string sceneTypeAndDeviceKey = sceneType + "_&_" + GetDeviceTypeName();
+    std::string defaultSceneTypeAndDeviceKey = DEFAULT_SCENE_TYPE + "_&_" + GetDeviceTypeName();
 
-    if (sceneTypeToSpecialEffectSet_.find(sceneType) != sceneTypeToSpecialEffectSet_.end()) {
-        std::string sceneTypeAndDeviceKey = sceneType + "_&_" + GetDeviceTypeName();
-        if (sceneTypeToEffectChainCountMap_.count(sceneTypeAndDeviceKey)) {
+    if (sceneTypeToEffectChainMap_.count(sceneTypeAndDeviceKey)) {
+        if (sceneTypeToEffectChainMap_.count(defaultSceneTypeAndDeviceKey) &&
+            (sceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] == sceneTypeToEffectChainMap_[defaultSceneTypeAndDeviceKey])) {
+            return 0;
+        } else {
             return sceneTypeToEffectChainCountMap_[sceneTypeAndDeviceKey];
         }
     }
-
     return 0;
 }
 } // namespace AudioStandard
