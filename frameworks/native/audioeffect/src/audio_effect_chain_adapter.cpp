@@ -181,8 +181,6 @@ int32_t EffectChainManagerVolumeUpdate(const char *sessionID)
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectChainManager != nullptr, ERR_INVALID_HANDLE, "null audioEffectChainManager");
-    std::string sessionIDString = "";
-    sessionIDString = sessionID;
     if (audioEffectChainManager->EffectVolumeUpdate(audioEffectVolume) != SUCCESS) {
         return ERROR;
     }
@@ -356,5 +354,5 @@ bool EffectChainManagerSceneCheck(const char *sinkSceneType, const char *sceneTy
     CHECK_AND_RETURN_RET_LOG(audioEffectChainManager != nullptr, false, "null audioEffectChainManager");
     std::string sceneTypeString = sceneType;
     std::string sinkSceneTypeString = sinkSceneType;
-    return audioEffectChainManager->CheckSceneTypeMatch(sinkSceneType, sceneType);
+    return audioEffectChainManager->CheckSceneTypeMatch(sinkSceneTypeString, sceneTypeString);
 }

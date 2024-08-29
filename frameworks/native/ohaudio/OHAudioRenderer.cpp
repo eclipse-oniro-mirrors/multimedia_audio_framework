@@ -344,7 +344,7 @@ OH_AudioStream_Result OH_AudioRenderer_SetDefaultOutputDevice(
     CHECK_AND_RETURN_RET_LOG(audioRenderer != nullptr, AUDIOSTREAM_ERROR_INVALID_PARAM, "convert renderer failed");
     bool result = (deviceType == AUDIO_DEVICE_TYPE_EARPIECE || deviceType == AUDIO_DEVICE_TYPE_SPEAKER ||
         deviceType == AUDIO_DEVICE_TYPE_DEFAULT) ? true : false;
-    CHECK_AND_RETURN_RET_LOG(result != true, AUDIOSTREAM_ERROR_ILLEGAL_STATE, "unsupport params");
+    CHECK_AND_RETURN_RET_LOG(result != false, AUDIOSTREAM_ERROR_ILLEGAL_STATE, "unsupport params");
     int32_t ret = audioRenderer->SetDefaultOutputDevice((OHOS::AudioStandard::DeviceType)deviceType);
     CHECK_AND_RETURN_RET_LOG(ret != AUDIOSTREAM_SUCCESS, AUDIOSTREAM_ERROR_INVALID_PARAM, "err illegal state");
     return AUDIOSTREAM_SUCCESS;
