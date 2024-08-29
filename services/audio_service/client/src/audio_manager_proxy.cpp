@@ -1129,6 +1129,5 @@ void AudioManagerProxy::SetNonInterruptMute(const int32_t sessionId, const bool 
         static_cast<uint32_t>(AudioServerInterfaceCode::SET_SINGLE_STREAM_MUTE), data, reply, option);
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "failed, error:%{public}d", error);
 }
-
 } // namespace AudioStandard
 } // namespace OHOS

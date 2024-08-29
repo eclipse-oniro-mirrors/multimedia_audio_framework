@@ -78,7 +78,7 @@ namespace AudioStandard {
         SET_ROTATION_TO_EFFECT,
         UPDATE_SESSION_CONNECTION_STATE,
         SET_SINGLE_STREAM_MUTE,
-        AUDIO_SERVER_CODE_MAX = UPDATE_SESSION_CONNECTION_STATE,
+        AUDIO_SERVER_CODE_MAX = SET_SINGLE_STREAM_MUTE,
     };
 } // namespace AudioStandard
 } // namespace OHOS

@@ -515,7 +515,6 @@ private:
     int32_t SetAudioSceneInternal(AudioScene audioScene);
 
     AppExecFwk::BundleInfo GetBundleInfoFromUid();
-    std::string GetBundleNameForUid(int32_t uid);
     int32_t GetApiTargerVersion();
 
     // externel function call

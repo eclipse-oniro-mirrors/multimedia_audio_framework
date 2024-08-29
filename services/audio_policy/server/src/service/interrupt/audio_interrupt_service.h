@@ -76,7 +76,7 @@ public:
 
     // modern interrupt interfaces
     int32_t SetAudioInterruptCallback(const int32_t zoneId, const uint32_t sessionId,
-        const sptr<IRemoteObject> &object, const std::string bundleName, uint32_t uid);
+        const sptr<IRemoteObject> &object, uint32_t uid);
     int32_t UnsetAudioInterruptCallback(const int32_t zoneId, const uint32_t sessionId);
     int32_t ActivateAudioInterrupt(const int32_t zoneId, const AudioInterrupt &audioInterrupt);
     int32_t DeactivateAudioInterrupt(const int32_t zoneId, const AudioInterrupt &audioInterrupt);
@@ -97,7 +97,7 @@ public:
     void ClearAudioFocusInfoListOnAccountsChanged(const int &id);
     void AudioInterruptZoneDump(std::string &dumpString);
     AudioScene GetHighestPriorityAudioScene(const int32_t zoneId) const;
-    bool IsInGameMap(const uint32_t sessionId);
+    bool ShouldCallbackToClient(uint32_t uid, int32_t sessionId, InterruptHint hintType);
 
 private:
     static constexpr int32_t ZONEID_DEFAULT = 0;
@@ -138,10 +138,14 @@ private:
 
         void OnInterrupt(const InterruptEventInternal &interruptEvent);
 
+        void SetCallingUid(uint32_t uid);
+        uitn32_t GetCallingUid();
+
     private:
         const std::shared_ptr<AudioInterruptCallback> callback_;
         const sptr<IRemoteObject> object_;
         sptr<AudioInterruptDeathRecipient> deathRecipient_;
+        uint32_t callingUid_ = 0;
     };
 
     // deprecated interrupt interfaces

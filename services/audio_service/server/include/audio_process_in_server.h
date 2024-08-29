@@ -95,13 +95,13 @@ public:
     int32_t RegisterThreadPriority(uint32_t tid, const std::string &bundleName) override;
 public:
     const AudioProcessConfig processConfig_;
-    bool muteFlag_ = false;
 
 private:
     AudioProcessInServer(const AudioProcessConfig &processConfig, ProcessReleaseCallback *releaseCallback);
     int32_t InitBufferStatus();
 
 private:
+    bool muteFlag_ = false;
     bool isInnerCapped_ = false;
     ProcessReleaseCallback *releaseCallback_ = nullptr;
 

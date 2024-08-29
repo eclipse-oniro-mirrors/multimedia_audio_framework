@@ -34,7 +34,7 @@ private:
     int32_t HandleWakeupCapturerRemoved(MessageParcel &data, MessageParcel &reply);
     int32_t HandleIsAbsVolumeSupported(MessageParcel &data, MessageParcel &reply);
     int32_t HandleOffloadGetRenderPosition(MessageParcel &data, MessageParcel &reply);
-    int32_t HandlGetAndSaveClientType(MessageParcel &data, MessageParcel &reply);
+    int32_t HandleGetAndSaveClientType(MessageParcel &data, MessageParcel &reply);
 };
 
 class PolicyProviderWrapper : public PolicyProviderStub {

@@ -415,7 +415,12 @@ void RendererInServer::VolumeHandle(BufferDesc &desc)
         AUDIO_WARNING_LOG("buffer in not inited");
         return;
     }
-    float applyVolume = audioServerBuffer_->GetStreamVolume();
+    float applyVolume = 0.0f;
+    if (muteFlag_) {
+        applyVolume = 0.0f;
+    } else {
+        applyVolume = audioServerBuffer_->GetStreamVolume();
+    }
     float duckVolume_ = audioServerBuffer_->GetDuckFactor();
     if (!IsVolumeSame(MAX_FLOAT_VOLUME, lowPowerVolume_, AUDIO_VOLOMUE_EPSILON)) {
         applyVolume *= lowPowerVolume_;
@@ -1234,6 +1239,12 @@ bool RendererInServer::Dump(std::string &dumpString)
 
     dumpString += "\n";
     return true;
+}
+
+void RendererInServer::SetNonInterruptMute(const bool muteFlag)
+{
+    AUDIO_INFO_LOG("mute flag %{public}d", muteFlag);
+    muteFlag_ = muteFlag;
 }
 } // namespace AudioStandard
 } // namespace OHOS

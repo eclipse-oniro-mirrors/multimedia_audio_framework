@@ -1232,8 +1232,7 @@ int32_t AudioPolicyServer::SetAudioInterruptCallback(const uint32_t sessionID, c
     uint32_t clientUid, const int32_t zoneID)
 {
     if (interruptService_ != nullptr) {
-        std::string bundleName = "GetBundleNameForUid(callingUid)";
-        return interruptService_->SetAudioInterruptCallback(zoneID, sessionID, object, bundleName, clientUid);
+        return interruptService_->SetAudioInterruptCallback(zoneID, sessionID, object, clientUid);
     }
     return ERR_UNKNOWN;
 }

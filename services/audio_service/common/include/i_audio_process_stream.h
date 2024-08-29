@@ -42,9 +42,9 @@ public:
 
     virtual BufferDesc &GetConvertedBuffer() = 0;
 
-    virtual ~IAudioProcessStream() = default;
-
     virtual bool GetMuteFlag() = 0;
+
+    virtual ~IAudioProcessStream() = default;
 };
 } // namespace AudioStandard
 } // namespace OHOS

@@ -1876,6 +1876,5 @@ int32_t AudioPolicyProxy::GetAndSaveClientType(unit32_t uid)
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "SendRequest failed, error: %{public}d", error);
     return reply.ReadInt32();
 }
-
 } // namespace AudioStandard
 } // namespace OHOS
