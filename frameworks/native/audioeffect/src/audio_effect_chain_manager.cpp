@@ -1433,7 +1433,8 @@ uint32_t AudioEffectChainManager::GetSceneTypeToChainCount(const std::string &sc
 
     if (sceneTypeToEffectChainMap_.count(sceneTypeAndDeviceKey)) {
         if (sceneTypeToEffectChainMap_.count(defaultSceneTypeAndDeviceKey) &&
-            (sceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] == sceneTypeToEffectChainMap_[defaultSceneTypeAndDeviceKey])) {
+            (sceneTypeToEffectChainMap_[sceneTypeAndDeviceKey] ==
+            sceneTypeToEffectChainMap_[defaultSceneTypeAndDeviceKey])) {
             return 0;
         } else {
             return sceneTypeToEffectChainCountMap_[sceneTypeAndDeviceKey];
