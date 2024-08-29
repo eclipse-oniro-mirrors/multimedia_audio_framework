@@ -174,9 +174,11 @@ ohos_shared_library("remote_audio_renderer_sink") {
     "../devicemanager/interface",
     "../../audioutils/include",
     "../../../../interfaces/inner_api/native/audiocommon/include",
+    "../../../../services/audio_service/common/include/",
   ]
 
   deps = [
+    "../../../../services/audio_service:audio_common",
     "../../audioutils:audio_utils",
     "../devicemanager:audio_device_manager",
   ]

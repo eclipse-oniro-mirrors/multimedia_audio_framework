@@ -39,6 +39,7 @@
 #include "audio_utils.h"
 #include "i_audio_device_adapter.h"
 #include "i_audio_device_manager.h"
+#include "audio_log_utils.h"
 
 using namespace std;
 using OHOS::HDI::DistributedAudio::Audio::V1_0::IAudioAdapter;
@@ -139,6 +140,7 @@ private:
     void ClearRender();
 
     void CheckUpdateState(char *frame, uint64_t replyBytes);
+    void DfxOperation(BufferDesc &buffer, AudioSampleFormat format, AudioChannel channel) const;
 private:
     std::string deviceNetworkId_ = "";
     std::atomic<bool> rendererInited_ = false;
@@ -168,6 +170,8 @@ private:
     int64_t last10FrameStartTime_ = 0;
     bool startUpdate_ = false;
     int renderFrameNum_ = 0;
+    std::string logUtilsTag_ = "Remote";
+    mutable int64_t volumeDataCount_ = 0;
 };
 
 RemoteAudioRendererSinkInner::RemoteAudioRendererSinkInner(const std::string &deviceNetworkId)
@@ -445,6 +449,7 @@ int32_t RemoteAudioRendererSinkInner::RenderFrameLogic(char &data, uint64_t len,
     const char *streamType)
 {
     AUDIO_INFO_LOG("RemoteAudioRendererSinkInner::RenderFrameLogic, streamType is %{public}s", streamType);
+    Trace trace("RemoteAudioRendererSinkInner::RenderFrameLogic");
     int64_t start = ClockTime::GetCurNano();
     sptr<IAudioRender> audioRender_ = audioRenderMap_[splitStreamMap_[streamType]];
     CHECK_AND_RETURN_RET_LOG(audioRender_ != nullptr, ERR_INVALID_HANDLE, "RenderFrame: Audio render is null.");
@@ -459,7 +464,9 @@ int32_t RemoteAudioRendererSinkInner::RenderFrameLogic(char &data, uint64_t len,
         return ERR_OPERATION_FAILED;
     }
 
-    Trace::CountVolume("RemoteAudioRendererSinkInner::RenderFrameLogic", static_cast<uint8_t>(data));
+    BufferDesc buffer = { reinterpret_cast<uint8_t*>(&data), len, len };
+    DfxOperation(buffer, static_cast<AudioSampleFormat>(attr_.format), static_cast<AudioChannel>(attr_.channel));
+    Trace traceRenderFrame("audioRender_->RenderFrame");
     ret = audioRender_->RenderFrame(frameHal, writeLen);
     CHECK_AND_RETURN_RET_LOG(ret == 0, ERR_WRITE_FAILED, "Render frame fail, ret %{public}x.", ret);
     writeLen = len;
@@ -942,15 +949,24 @@ int32_t RemoteAudioRendererSinkInner::SetPriPaPower()
 
 int32_t RemoteAudioRendererSinkInner::UpdateAppsUid(const int32_t appsUid[MAX_MIX_CHANNELS], const size_t size)
 {
-    AUDIO_WARNING_LOG("not supported.");
     return ERR_NOT_SUPPORTED;
 }
 
 int32_t RemoteAudioRendererSinkInner::UpdateAppsUid(const std::vector<int32_t> &appsUid)
 {
-    AUDIO_WARNING_LOG("not supported.");
     return ERR_NOT_SUPPORTED;
 }
 
+void RemoteAudioRendererSinkInner::DfxOperation(BufferDesc &buffer, AudioSampleFormat format,
+    AudioChannel channel) const
+{
+    ChannelVolumes vols = VolumeTools::CountVolumeLevel(buffer, format, channel);
+    if (channel == MONO) {
+        Trace::Count(logUtilsTag_, vols.volStart[0]);
+    } else {
+        Trace::Count(logUtilsTag_, (vols.volStart[0] + vols.volStart[1]) / HALF_FACTOR);
+    }
+    AudioLogUtils::ProcessVolumeData(logUtilsTag_, vols, volumeDataCount_);
+}
 } // namespace AudioStandard
 } // namespace OHOS

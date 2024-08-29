@@ -1718,6 +1718,7 @@ AudioModuleInfo AudioPolicyService::ConstructRemoteAudioModuleInfo(std::string n
     audioModuleInfo.channels = "2";
     audioModuleInfo.rate = "48000";
     audioModuleInfo.bufferSize = "3840";
+    audioModuleInfo.renderInIdleState = "1";
 
     return audioModuleInfo;
 }
