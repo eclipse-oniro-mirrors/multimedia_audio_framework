@@ -384,7 +384,7 @@ void RendererInServer::WriteMuteDataSysEvent(uint8_t *buffer, size_t bufferSize)
             AUDIO_WARNING_LOG("write invalid data for some time in server");
             ReportDataToResSched(true);
         }
-    } else if (buffer[0] != 0) {
+    } else {
         if (startMuteTime_ != 0) {
             startMuteTime_ = 0;
         }
