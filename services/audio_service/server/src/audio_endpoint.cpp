@@ -1310,6 +1310,7 @@ bool AudioEndpointInner::CheckAllBufferReady(int64_t checkTime, uint64_t curWrit
             if (current - lastWrittenTime > WAIT_CLIENT_STANDBY_TIME_NS) {
                 Trace trace("AudioEndpoint::MarkClientStandby");
                 AUDIO_INFO_LOG("Find one process did not write data for more than 1s, change the status to stand-by");
+                CHECK_AND_RETURN_RET_LOG(tempBuffer->GetStreamStatus() != nullptr, false, "GetStreamStatus failed");
                 tempBuffer->GetStreamStatus()->store(StreamStatus::STREAM_STAND_BY);
                 needCheckStandby = true;
                 continue;
