@@ -634,6 +634,8 @@ int32_t RendererInServer::Start()
     if (isDualToneEnabled_) {
         std::lock_guard<std::mutex> lock(dualToneMutex_);
         if (dualToneStream_ != nullptr) {
+            stream_->GetAudioEffectMode(effectModeWhenDual_);
+            stream_->SetAudioEffectMode(EFFECT_NONE);
             dualToneStream_->Start();
         }
     }
@@ -664,6 +666,7 @@ int32_t RendererInServer::Pause()
     if (isDualToneEnabled_) {
         std::lock_guard<std::mutex> lock(dualToneMutex_);
         if (dualToneStream_ != nullptr) {
+            stream_->SetAudioEffectMode(effectModeWhenDual_);
             dualToneStream_->Pause();
         }
     }
@@ -792,6 +795,7 @@ int32_t RendererInServer::Stop()
     if (isDualToneEnabled_) {
         std::lock_guard<std::mutex> lock(dualToneMutex_);
         if (dualToneStream_ != nullptr) {
+            stream_->SetAudioEffectMode(effectModeWhenDual_);
             dualToneStream_->Stop();
         }
     }
@@ -989,6 +993,8 @@ int32_t RendererInServer::InitDualToneStream()
 
     if (status_ == I_STATUS_STARTED) {
         AUDIO_INFO_LOG("Renderer %{public}u is already running, let's start the dual stream", dualToneStreamIndex_);
+        stream_->GetAudioEffectMode(effectModeWhenDual_);
+        stream_->SetAudioEffectMode(EFFECT_NONE);
         dualToneStream_->Start();
     }
     return SUCCESS;

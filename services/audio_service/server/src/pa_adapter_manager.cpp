@@ -536,9 +536,6 @@ int32_t PaAdapterManager::SetPaProplist(pa_proplist *propList, pa_channel_map &m
         std::string streamMode = managerType_ == DUP_PLAYBACK ? DUP_STREAM
             : (managerType_ == DUAL_PLAYBACK ? DUAL_TONE_STREAM : NORMAL_STREAM);
         pa_proplist_sets(propList, "stream.mode", streamMode.c_str());
-        if (streamMode == DUAL_TONE_STREAM) {
-            pa_proplist_sets(propList, "scene.mode", "EFFECT_NONE");
-        }
         pa_proplist_sets(propList, "stream.flush", "false");
         pa_proplist_sets(propList, "fadeoutPause", "0");
         pa_proplist_sets(propList, "stream.privacyType", std::to_string(processConfig.privacyType).c_str());
