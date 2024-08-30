@@ -4659,10 +4659,8 @@ void AudioPolicyService::LoadEffectLibrary()
     audioEffectManager_.ConstructSceneTypeToEnhanceChainNameMap(sceneTypeToEnhanceChainNameMap);
 
     identity = IPCSkeleton::ResetCallingIdentity();
-    EffectChainManagerParam effectChainManagerParam;
-    EffectChainManagerParam enhanceChainManagerParam;
     bool ret = gsp->CreateEffectChainManager(supportedEffectConfig.effectChains,
-        effectChainManagerParam, enhanceChainManagerParam);
+        sceneTypeToEffectChainNameMap, sceneTypeToEnhanceChainNameMap);
     IPCSkeleton::SetCallingIdentity(identity);
 
     CHECK_AND_RETURN_LOG(ret, "EffectChainManager create failed");

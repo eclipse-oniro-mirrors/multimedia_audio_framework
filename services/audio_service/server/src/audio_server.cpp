@@ -977,17 +977,18 @@ bool AudioServer::LoadAudioEffectLibraries(const std::vector<Library> libraries,
 }
 
 bool AudioServer::CreateEffectChainManager(std::vector<EffectChain> &effectChains,
-    const EffectChainManagerParam &effectParam, const EffectChainManagerParam &enhanceParam)
+    std::unordered_map<std::string, std::string> &effectMap,
+    std::unordered_map<std::string, std::string> &enhanceMap)
 {
     if (!PermissionUtil::VerifyIsAudio()) {
         AUDIO_ERR_LOG("not audio calling!");
         return false;
     }
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
-    audioEffectChainManager->InitAudioEffectChainManager(effectChains, effectParam,
+    audioEffectChainManager->InitAudioEffectChainManager(effectChains, effectMap,
         audioEffectServer_->GetEffectEntries());
     AudioEnhanceChainManager *audioEnhanceChainManager = AudioEnhanceChainManager::GetInstance();
-    audioEnhanceChainManager->InitAudioEnhanceChainManager(effectChains, enhanceParam,
+    audioEnhanceChainManager->InitAudioEnhanceChainManager(effectChains, enhanceMap,
         audioEffectServer_->GetEffectEntries());
     return true;
 }

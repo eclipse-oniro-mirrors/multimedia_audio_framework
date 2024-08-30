@@ -61,7 +61,6 @@ bool EffectChainManagerGetSpatializationEnabled();
 void EffectChainManagerFlush(void);
 void EffectChainManagerEffectUpdate(void);
 bool EffectChainManagerSceneCheck(const char *sinkSceneType, const char *sceneType);
-uint32_t EffectChainManagerGetSceneCount(const char *sceneType);
 
 #ifdef __cplusplus
 }

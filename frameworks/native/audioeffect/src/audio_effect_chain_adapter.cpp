@@ -110,15 +110,16 @@ int32_t EffectChainManagerCreateCb(const char *sceneType, const char *sessionID)
     if (!audioEffectChainManager->CheckAndAddSessionID(sessionIDString)) {
         return SUCCESS;
     }
-    audioEffectChainManager->UpdateSceneTypeList(sceneTypeString, ADD_SCENE_TYPE);
     bool curSpatializationEnabled = audioEffectChainManager->GetCurSpatializationEnabled();
     std::string curDeviceType = audioEffectChainManager->GetDeviceTypeName();
     if (audioEffectChainManager->GetOffloadEnabled() ||
         ((curDeviceType == "DEVICE_TYPE_BLUETOOTH_A2DP") && !curSpatializationEnabled)) {
+        audioEffectChainManager->RegisterEffectChainCountBackupMap(sceneTypeString, "Register");
+        AUDIO_DEBUG_LOG("registerEffectChainCountBackupMap");
         return SUCCESS;
     }
     if (audioEffectChainManager->CreateAudioEffectChainDynamic(sceneTypeString) != SUCCESS) {
-        AUDIO_ERR_LOG("create effect chain fail");
+        AUDIO_DEBUG_LOG("createAudioEffectChainDynamic");
         return ERROR;
     }
     AUDIO_INFO_LOG("Create Audio Effect Chain Success, sessionID is %{public}s, sceneType is %{public}s",
@@ -141,15 +142,16 @@ int32_t EffectChainManagerReleaseCb(const char *sceneType, const char *sessionID
     if (!audioEffectChainManager->CheckAndRemoveSessionID(sessionIDString)) {
         return SUCCESS;
     }
-    audioEffectChainManager->UpdateSceneTypeList(sceneTypeString, REMOVE_SCENE_TYPE);
     bool curSpatializationEnabled = audioEffectChainManager->GetCurSpatializationEnabled();
     std::string curDeviceType = audioEffectChainManager->GetDeviceTypeName();
     if (audioEffectChainManager->GetOffloadEnabled() ||
         ((curDeviceType == "DEVICE_TYPE_BLUETOOTH_A2DP") && !curSpatializationEnabled)) {
+        audioEffectChainManager->RegisterEffectChainCountBackupMap(sceneTypeString, "Deregister");
+        AUDIO_DEBUG_LOG("deRegisterEffectChainCountBackupMap");
         return SUCCESS;
     }
     if (audioEffectChainManager->ReleaseAudioEffectChainDynamic(sceneTypeString) != SUCCESS) {
-        AUDIO_ERR_LOG("release effect chain fail");
+        AUDIO_DEBUG_LOG("releaseAudioEffectChainDynamic");
         return ERROR;
     }
     AUDIO_INFO_LOG("Release Audio Effect Chain Success, sessionID is %{public}s, sceneType is %{public}s",
@@ -353,15 +355,4 @@ bool EffectChainManagerSceneCheck(const char *sinkSceneType, const char *sceneTy
     std::string sceneTypeString = sceneType;
     std::string sinkSceneTypeString = sinkSceneType;
     return audioEffectChainManager->CheckSceneTypeMatch(sinkSceneTypeString, sceneTypeString);
-}
-
-uint32_t EffectChainManagerGetSceneCount(const char *sceneType)
-{
-    if (sceneType == nullptr) {
-        return 0;
-    }
-    AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
-    CHECK_AND_RETURN_RET_LOG(audioEffectChainManager != nullptr, false, "null audioEffectChainManager");
-    std::string sceneTypeString = sceneType;
-    return audioEffectChainManager->GetSceneTypeToChainCount(sceneType);
 }
