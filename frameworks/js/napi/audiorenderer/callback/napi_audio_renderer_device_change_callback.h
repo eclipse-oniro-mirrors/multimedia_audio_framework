@@ -40,7 +40,6 @@ private:
         DeviceInfo deviceInfo_;
     };
 
-    static void WorkCallbackCompleted(uv_work_t* work, int status);
     void OnJsCallbackRendererDeviceInfo(napi_ref method, const DeviceInfo &deviceInfo);
 
     std::mutex mutex_;
@@ -66,7 +65,6 @@ private:
         AudioStreamDeviceChangeReason reason_;
     };
 
-    static void WorkCallbackCompleted(uv_work_t* work, int status);
     void OnJsCallbackOutputDeviceInfo(napi_ref method, const DeviceInfo &deviceInfo,
         const AudioStreamDeviceChangeReason reason);
 

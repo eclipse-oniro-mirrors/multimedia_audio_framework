@@ -36,7 +36,6 @@ private:
         int64_t position = 0;
     };
     void OnJsRendererPeriodPositionCallback(std::unique_ptr<RendererPeriodPositionJsCallback> &jsCb);
-    static void WorkCallbackRendererPeriodPosition(uv_work_t *work, int status);
 
     std::mutex mutex_;
     napi_env env_ = nullptr;
