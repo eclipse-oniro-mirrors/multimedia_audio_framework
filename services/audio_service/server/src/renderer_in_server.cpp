@@ -201,7 +201,7 @@ void RendererInServer::OnStatusUpdate(IOperation operation)
         case OPERATION_STARTED:
             if (standByEnable_) {
                 standByEnable_ = false;
-                AUDIO_INFO_LOG("%{public}u recv stand by started", streamIndex_);
+                AUDIO_INFO_LOG("%{public}u recv stand-by started", streamIndex_);
                 audioServerBuffer_->GetStreamStatus()->store(STREAM_RUNNING);
                 WriterRenderStreamStandbySysEvent();
                 return;
@@ -212,7 +212,7 @@ void RendererInServer::OnStatusUpdate(IOperation operation)
             break;
         case OPERATION_PAUSED:
             if (standByEnable_) {
-                AUDIO_INFO_LOG("%{public}s recv stand by paused", traceTag_.c_str());
+                AUDIO_INFO_LOG("%{public}u recv stand-by paused", streamIndex_);
                 audioServerBuffer_->GetStreamStatus()->store(STREAM_STAND_BY);
                 WriterRenderStreamStandbySysEvent();
                 return;
