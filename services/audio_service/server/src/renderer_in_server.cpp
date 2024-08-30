@@ -1221,7 +1221,7 @@ bool RendererInServer::Dump(std::string &dumpString)
     }
     // dump audio stream info
     dumpString += "audio stream info:\n";
-    AppendFormat(dumpString, "  - session id:%d\n", streamIndex_);
+    AppendFormat(dumpString, "  - session id:%u\n", streamIndex_);
     AppendFormat(dumpString, "  - appid:%d\n", processConfig_.appInfo.appPid);
     AppendFormat(dumpString, "  - stream type:%d\n", processConfig_.streamType);
 
