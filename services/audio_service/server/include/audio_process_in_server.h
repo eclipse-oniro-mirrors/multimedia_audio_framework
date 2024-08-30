@@ -82,6 +82,10 @@ public:
     int32_t AddProcessStatusListener(std::shared_ptr<IProcessStatusListener> listener);
     int32_t RemoveProcessStatusListener(std::shared_ptr<IProcessStatusListener> listener);
 
+    void SetNonInterruptMute(const bool muteFlag);
+    bool GetMuteFlag() override;
+    uint32_t GetSessionId();
+
     // for inner-cap
     void SetInnerCapState(bool isInnerCapped) override;
     bool GetInnerCapState() override;
@@ -97,6 +101,7 @@ private:
     int32_t InitBufferStatus();
 
 private:
+    bool muteFlag_ = false;
     bool isInnerCapped_ = false;
     ProcessReleaseCallback *releaseCallback_ = nullptr;
 

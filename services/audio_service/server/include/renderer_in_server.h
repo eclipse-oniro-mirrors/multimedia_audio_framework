@@ -100,6 +100,7 @@ public:
     void OnDataLinkConnectionUpdate(IOperation operation);
 
     bool Dump(std::string &dumpString);
+    void SetNonInterruptMute(const bool muteFlag);
 
 public:
     const AudioProcessConfig processConfig_;
@@ -122,6 +123,7 @@ private:
     IStatus status_ = I_STATUS_IDLE;
     bool offloadEnable_ = false;
     std::atomic<bool> standByEnable_ = false;
+    bool muteFlag_ = false;
 
     // for inner-cap
     std::mutex dupMutex_;

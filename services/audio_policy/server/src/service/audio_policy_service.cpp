@@ -33,6 +33,7 @@
 #include "audio_converter_parser.h"
 #include "audio_dialog_ability_connection.h"
 #include "media_monitor_manager.h"
+#include "client_type_manager.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -7129,6 +7130,14 @@ int32_t AudioPolicyService::OffloadGetRenderPosition(uint32_t &delayValue, uint6
 #else
     return SUCCESS;
 #endif
+}
+
+int32_t AudioPolicyService::GetAndSaveClientType(uint32_t uid, const std::string &bundleName)
+{
+#ifdef FEATURE_APPGALLERY
+    ClientTypeManager::GetInstance()->GetAndSaveClientType(uid, bundleName);
+#endif
+    return SUCCESS;
 }
 
 void AudioPolicyService::GetA2dpOffloadCodecAndSendToDsp()

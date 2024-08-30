@@ -60,6 +60,22 @@ int32_t AudioProcessInServer::GetSessionId(uint32_t &sessionId)
     return SUCCESS;
 }
 
+void AudioProcessInServer::SetNonInterruptMute(const bool muteFlag)
+{
+    AUDIO_INFO_LOG("muteFlag_: %{public}d", muteFlag_);
+    muteFlag_ = muteFlag;
+}
+
+bool AudioProcessInServer::GetMuteFlag()
+{
+    return muteFlag_;
+}
+
+uint32_t AudioProcessInServer::GetSessionId()
+{
+    return sessionId_;
+}
+
 int32_t AudioProcessInServer::ResolveBuffer(std::shared_ptr<OHAudioBuffer> &buffer)
 {
     AUDIO_INFO_LOG("ResolveBuffer start");

@@ -441,6 +441,11 @@ public:
      * Update Session Connection State
      */
     virtual void UpdateSessionConnectionState(const int32_t &sessionID, const int32_t &state) = 0;
+
+    /**
+     * Set Non Interrupt Mute
+     */
+    virtual void SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag) = 0;
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"IStandardAudioService");
 };
@@ -506,6 +511,7 @@ private:
     int HandleSetSinkMuteForSwitchDevice(MessageParcel &data, MessageParcel &reply);
     int HandleSetRotationToEffect(MessageParcel &data, MessageParcel &reply);
     int HandleUpdateSessionConnectionState(MessageParcel &data, MessageParcel &reply);
+    int HandleSetNonInterruptMute(MessageParcel &data, MessageParcel &reply);
     int HandleSecondPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     int HandleThirdPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     int HandleFourthPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);

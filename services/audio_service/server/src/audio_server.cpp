@@ -1508,6 +1508,10 @@ sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &co
         IAudioRendererSink* audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
         audioRendererSinkInstance->SetAudioParameter(AudioParamKey::NONE, "", SATEMODEM_PARAMETER);
     }
+#ifdef FEATURE_APPGALLERY
+    PolicyHandler::GetInstance().GetAndSaveClientType(resetConfig.appInfo.appUid,
+        GetBundleNameFromUid(resetConfig.appInfo.appUid));
+#endif
 
     if (IsNormalIpcStream(resetConfig) || (isFastControlled_ && IsFastBlocked(resetConfig.appInfo.appUid))) {
         AUDIO_INFO_LOG("Create normal ipc stream, isFastControlled: %{public}d", isFastControlled_);
@@ -2176,6 +2180,14 @@ void AudioServer::UpdateSessionConnectionState(const int32_t &sessionId, const i
         return;
     }
     renderer->OnDataLinkConnectionUpdate(static_cast<IOperation>(state));
+}
+
+void AudioServer::SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag)
+{
+    AUDIO_INFO_LOG("sessionId_: %{public}u, muteFlag: %{public}d", sessionId, muteFlag);
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_LOG(PermissionUtil::VerifyIsAudio(), "Refused for %{public}d", callingUid);
+    AudioService::GetInstance()->SetNonInterruptMute(sessionId, muteFlag);
 }
 } // namespace AudioStandard
 } // namespace OHOS

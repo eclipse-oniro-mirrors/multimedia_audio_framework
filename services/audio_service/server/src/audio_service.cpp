@@ -60,6 +60,7 @@ int32_t AudioService::OnProcessRelease(IAudioProcessStream *process)
     bool needRelease = false;
     while (paired != linkedPairedList_.end()) {
         if ((*paired).first == process) {
+            AUDIO_INFO_LOG("SessionId %{public}u", (*paired).first->GetSessionId());
             ret = UnlinkProcessToEndpoint((*paired).first, (*paired).second);
             if ((*paired).second->GetStatus() == AudioEndpoint::EndpointStatus::UNLINKED) {
                 needRelease = true;
@@ -115,6 +116,13 @@ sptr<IpcStreamInServer> AudioService::GetIpcStream(const AudioProcessConfig &con
             CheckInnerCapForRenderer(sessionId, renderer);
         }
     }
+    if (ipcStreamInServer != nullptr && config.audioMode == AUDIO_MODE_RECORD) {
+        uint32_t sessionId = 0;
+        std::shared_ptr<CapturerInServer> capturer = ipcStreamInServer->GetCapturer();
+        if (capturer != nullptr && capturer->GetSessionId(sessionId) == SUCCESS) {
+            InsertCapturer(sessionId, capturer); // for all capturers
+        }
+    }
 
     return ipcStreamInServer;
 }
@@ -135,6 +143,24 @@ void AudioService::RemoveRenderer(uint32_t sessionId)
         return;
     }
     allRendererMap_.erase(sessionId);
+}
+
+void AudioService::InsertCapturer(uint32_t sessionId, std::shared_ptr<CapturerInServer> capturer)
+{
+    std::unique_lock<std::mutex> lock(capturerMapMutex_);
+    AUDIO_INFO_LOG("Insert capturer:%{public}u into map", sessionId);
+    allCapturerMap_[sessionId] = capturer;
+}
+
+void AudioService::RemoveCapturer(uint32_t sessionId)
+{
+    std::unique_lock<std::mutex> lock(capturerMapMutex_);
+    AUDIO_INFO_LOG("Capturer: %{public}u will be removed.", sessionId);
+    if (!allCapturerMap_.count(sessionId)) {
+        AUDIO_WARNING_LOG("Capturer in not in map!");
+        return;
+    }
+    allCapturerMap_.erase(sessionId);
 }
 
 void AudioService::CheckInnerCapForRenderer(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer)
@@ -701,6 +727,29 @@ std::shared_ptr<RendererInServer> AudioService::GetRendererBySessionID(const uin
     } else {
         return std::shared_ptr<RendererInServer>();
     }
+}
+
+void AudioService::SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag)
+{
+    AUDIO_INFO_LOG("SessionId: %{public}u, muteFlag: %{public}d", sessionId, muteFlag);
+    if (allRendererMap_.count(sessionId)) {
+        allRendererMap_[sessionId].lock()->SetNonInterruptMute(muteFlag);
+        AUDIO_INFO_LOG("allRendererMap_ has sessionId");
+        return;
+    }
+    if (allCapturerMap_.count(sessionId)) {
+        allCapturerMap_[sessionId].lock()->SetNonInterruptMute(muteFlag);
+        AUDIO_INFO_LOG("allCapturerMap_ has sessionId");
+        return;
+    }
+    for (auto paired : linkedPairedList_) {
+        if (paired.first->GetSessionId() == sessionId) {
+            AUDIO_INFO_LOG("linkedPairedList_ has sessionId");
+            paired.first->SetNonInterruptMute(muteFlag);
+            return;
+        }
+    }
+    AUDIO_INFO_LOG("Cannot find sessionId");
 }
 } // namespace AudioStandard
 } // namespace OHOS

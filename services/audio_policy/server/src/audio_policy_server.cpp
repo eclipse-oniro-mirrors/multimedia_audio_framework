@@ -30,6 +30,7 @@
 #include "audio_utils.h"
 #include "parameters.h"
 #include "media_monitor_manager.h"
+#include "client_type_manager.h"
 
 using OHOS::Security::AccessToken::PrivacyKit;
 using OHOS::Security::AccessToken::TokenIdKit;
@@ -1237,10 +1238,10 @@ AudioScene AudioPolicyServer::GetAudioScene()
 }
 
 int32_t AudioPolicyServer::SetAudioInterruptCallback(const uint32_t sessionID, const sptr<IRemoteObject> &object,
-    const int32_t zoneID)
+    uint32_t clientUid, const int32_t zoneID)
 {
     if (interruptService_ != nullptr) {
-        return interruptService_->SetAudioInterruptCallback(zoneID, sessionID, object);
+        return interruptService_->SetAudioInterruptCallback(zoneID, sessionID, object, clientUid);
     }
     return ERR_UNKNOWN;
 }
@@ -2846,6 +2847,5 @@ int32_t AudioPolicyServer::SetDefaultOutputDevice(const DeviceType deviceType, c
 {
     return audioPolicyService_.SetDefaultOutputDevice(deviceType, sessionID, streamUsage, isRunning);
 }
-
 } // namespace AudioStandard
 } // namespace OHOS

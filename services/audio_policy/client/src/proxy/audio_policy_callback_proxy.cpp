@@ -26,7 +26,7 @@ namespace AudioStandard {
 using namespace std;
 
 int32_t AudioPolicyProxy::SetAudioInterruptCallback(const uint32_t sessionID, const sptr<IRemoteObject> &object,
-    const int32_t zoneID)
+    uint32_t clientUid, const int32_t zoneID)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -39,6 +39,7 @@ int32_t AudioPolicyProxy::SetAudioInterruptCallback(const uint32_t sessionID, co
     data.WriteUint32(sessionID);
     (void)data.WriteRemoteObject(object);
     data.WriteInt32(zoneID);
+    data.WriteUint32(clientUid);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_CALLBACK), data, reply, option);
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error,
