@@ -1293,7 +1293,10 @@ void AudioInterruptService::UpdateAudioSceneFromInterrupt(const AudioScene audio
         AUDIO_INFO_LOG("default scene is blocked for call state set by avsession");
         return;
     }
-    policyServer_->SetAudioSceneInternal(audioScene);
+    std::thread setAudioSceneThread([this, audioScene] {
+        this->policyServer_->SetAudioSceneInternal(audioScene);
+    });
+    setAudioSceneThread.detach();
 }
 
 std::list<std::pair<AudioInterrupt, AudioFocuState>> AudioInterruptService::SimulateFocusEntry(const int32_t zoneId)
