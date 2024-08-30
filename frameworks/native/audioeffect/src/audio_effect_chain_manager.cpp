@@ -787,7 +787,7 @@ int32_t AudioEffectChainManager::UpdateSpatialDeviceType(AudioSpatialDeviceType 
     }
 
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-    for (auto& sceneType2EffectChain : sceneTypeToEffectChainMap_) {
+    for (const auto& sceneType2EffectChain : sceneTypeToEffectChainMap_) {
         auto audioEffectChain = sceneType2EffectChain.second;
         if (audioEffectChain != nullptr) {
             audioEffectChain->SetSpatialDeviceType(spatialDeviceType_);
@@ -1241,7 +1241,6 @@ std::shared_ptr<AudioEffectChain> AudioEffectChainManager::CreateAudioEffectChai
     bool isPriorScene)
 {
     std::shared_ptr<AudioEffectChain> audioEffectChain = nullptr;
-    std::string sceneTypeAndDeviceKey = sceneType + "_&_" + GetDeviceTypeName();
     std::string defaultSceneTypeAndDeviceKey = DEFAULT_SCENE_TYPE + "_&_" + GetDeviceTypeName();
 
     if (isPriorScene) {
