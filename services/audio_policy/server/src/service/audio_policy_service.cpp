@@ -7115,7 +7115,7 @@ int32_t AudioPolicyService::OffloadGetRenderPosition(uint32_t &delayValue, uint6
 
 int32_t AudioPolicyService::GetAndSaveClientType(uint32_t uid, const std::string &bundleName)
 {
-    ClientTypeManager::GetInsatnce()->GetAndSaveClientType(uid, bundleName);
+    ClientTypeManager::GetInstance()->GetAndSaveClientType(uid, bundleName);
     return SUCCESS;
 }
 

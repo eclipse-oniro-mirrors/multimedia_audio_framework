@@ -76,7 +76,7 @@ private:
     void DelayCallReleaseEndpoint(std::string endpointName, int32_t delayInMs);
 
     void InsertRenderer(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer);
-    void InsertCapturer(uint32_t sessionId, std::shared_ptr<RendererInServer> capturer);
+    void InsertCapturer(uint32_t sessionId, std::shared_ptr<CapturerInServer> capturer);
     // for inner-capturer
     void CheckInnerCapForRenderer(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer);
     void CheckInnerCapForProcess(sptr<AudioProcessInServer> process, std::shared_ptr<AudioEndpoint> endpoint);

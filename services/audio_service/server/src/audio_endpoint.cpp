@@ -1523,8 +1523,8 @@ void AudioEndpointInner::GetAllReadyProcessData(std::vector<AudioStreamData> &au
         if (curReadSpan->spanStatus.compare_exchange_strong(targetStatus, SpanStatus::SPAN_READING)) {
             processBufferList_[i]->GetReadbuffer(curRead, streamData.bufferDesc); // check return?
             if (muteFlag) {
-                memset_s(static_cast<void *>(streamData.bufferDesc.buffer), streamData.bufferDesc.bufferLength,
-                    0, streamData.bufferDesc.bufferLength);
+                memset_s(static_cast<void *>(streamData.bufferDesc.buffer), streamData.bufferDesc.bufLength,
+                    0, streamData.bufferDesc.bufLength);
             }
             CheckPlaySignal(streamData.bufferDesc.buffer, streamData.bufferDesc.bufLength);
             audioDataList.push_back(streamData);

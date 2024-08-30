@@ -203,7 +203,7 @@ int32_t PolicyProviderWrapper::OffloadGetRenderPosition(uint32_t &delayValue, ui
 int32_t PolicyProviderWrapper::GetAndSaveClientType(uint32_t uid, const std::string &bundleName)
 {
     CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
-    return policyWorker_->OffloadGetRenderPosition(uid, bundleName);
+    return policyWorker_->GetAndSaveClientType(uid, bundleName);
 }
 } // namespace AudioStandard
 } // namespace OHOS

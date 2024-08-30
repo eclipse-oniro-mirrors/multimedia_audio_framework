@@ -86,6 +86,7 @@ const char *g_audioServerCodeStrs[] = {
     "SET_SINK_MUTE_FOR_SWITCH_DEVICE",
     "SET_ROTATION_TO_EFFECT",
     "UPDATE_SESSION_CONNECTION_STATE",
+    "SET_SINGLE_STREAM_MUTE",
 };
 constexpr size_t codeNums = sizeof(g_audioServerCodeStrs) / sizeof(const char *);
 static_assert(codeNums == (static_cast<size_t> (AudioServerInterfaceCode::AUDIO_SERVER_CODE_MAX) + 1),

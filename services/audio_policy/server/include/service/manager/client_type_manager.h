@@ -24,12 +24,12 @@ using namespace std;
 enum ClientType {
     CLIENT_TYPE_OTHERS = 0,
     CLIENT_TYPE_GAME = 1,
-}
+};
 
 class ClientTypeManager {
 public:
-    static std::shared_ptr<ClientTypeManager> GetInstance();
-    void GetAndSaveClientType(uitn32_t uid, const std::string &bundleName);
+    static ClientTypeManager *GetInstance();
+    void GetAndSaveClientType(uint32_t uid, const std::string &bundleName);
     ClientType GetClientTypeByUid(uint32_t uid);
 
 private:

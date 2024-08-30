@@ -97,6 +97,7 @@ public:
     void ClearAudioFocusInfoListOnAccountsChanged(const int &id);
     void AudioInterruptZoneDump(std::string &dumpString);
     AudioScene GetHighestPriorityAudioScene(const int32_t zoneId) const;
+    ClientType GetClientTypeBySessionId(int32_t sessionId);
     bool ShouldCallbackToClient(uint32_t uid, int32_t sessionId, InterruptHint hintType);
 
 private:
@@ -139,7 +140,7 @@ private:
         void OnInterrupt(const InterruptEventInternal &interruptEvent);
 
         void SetCallingUid(uint32_t uid);
-        uitn32_t GetCallingUid();
+        uint32_t GetCallingUid();
 
     private:
         const std::shared_ptr<AudioInterruptCallback> callback_;
@@ -226,8 +227,6 @@ private:
     // deprecated interrupt members
     std::unique_ptr<AudioInterrupt> focussedAudioInterruptInfo_;
     int32_t clientOnFocus_ = 0;
-    std::unordered_map<int32_t, bool> isCallbackUidMap_;
-    std::unordered_map<uint32_t, bool> isCallbackSessionidMap_;
 
     std::mutex mutex_;
 };

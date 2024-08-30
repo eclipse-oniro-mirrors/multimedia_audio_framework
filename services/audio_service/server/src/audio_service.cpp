@@ -25,7 +25,6 @@
 #include "audio_utils.h"
 #include "policy_handler.h"
 #include "ipc_stream_in_server.h"
-#include "audio_core.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -62,7 +61,6 @@ int32_t AudioService::OnProcessRelease(IAudioProcessStream *process)
     while (paired != linkedPairedList_.end()) {
         if ((*paired).first == process) {
             AUDIO_INFO_LOG("SessionId %{public}u", (*paired).first->GetSessionId());
-            AudioCore::GetInstance()->UnlinkSessionIdWithUid((*paired).first->GetSessionId());
             ret = UnlinkProcessToEndpoint((*paired).first, (*paired).second);
             if ((*paired).second->GetStatus() == AudioEndpoint::EndpointStatus::UNLINKED) {
                 needRelease = true;
@@ -146,7 +144,6 @@ void AudioService::RemoveRenderer(uint32_t sessionId)
         AUDIO_WARNING_LOG("Renderer in not in map!");
         return;
     }
-    Audiocore::GetInstance()->UnlinkSessionIdWithUid(sessionId);
     allRendererMap_.erase(sessionId);
 }
 
@@ -165,7 +162,6 @@ void AudioService::RemoveCapturer(uint32_t sessionId)
         AUDIO_WARNING_LOG("Capturer in not in map!");
         return;
     }
-    Audiocore::GetInstance()->UnlinkSessionIdWithUid(sessionId);
     allCapturerMap_.erase(sessionId);
 }
 

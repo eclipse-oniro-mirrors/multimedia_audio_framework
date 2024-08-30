@@ -22,6 +22,7 @@
 #include "audio_errors.h"
 #include "audio_utils.h"
 #include "audio_service_log.h"
+#include "audio_service.h"
 #include "audio_process_config.h"
 #include "i_stream_manager.h"
 #include "playback_capturer_manager.h"

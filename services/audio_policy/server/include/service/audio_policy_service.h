@@ -441,7 +441,7 @@ public:
 
     int32_t OffloadGetRenderPosition(uint32_t &delayValue, uint64_t &sendDataSize, uint32_t &timeStamp);
 
-    int32_t GetAndSaveClientType(uinte32_t uid, const std::string &bundleName);
+    int32_t GetAndSaveClientType(uint32_t uid, const std::string &bundleName);
 #ifdef BLUETOOTH_ENABLE
     void UpdateA2dpOffloadFlag(const std::vector<Bluetooth::A2dpStreamInfo> &allActiveSessions,
         DeviceType deviceType = DEVICE_TYPE_NONE);

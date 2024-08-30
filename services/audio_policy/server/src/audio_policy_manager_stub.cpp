@@ -163,7 +163,6 @@ const char *g_audioPolicyCodeStrs[] = {
     "IS_AUDIO_SESSION_ACTIVATED",
     "LOAD_SPLIT_MODULE",
     "SET_DEFAULT_OUTPUT_DEVICE",
-    "GET_AND_SAVE_CLIENT_VALUE",
 };
 
 constexpr size_t codeNums = sizeof(g_audioPolicyCodeStrs) / sizeof(const char *);
@@ -1297,12 +1296,6 @@ void AudioPolicyManagerStub::SetDefaultOutputDeviceInternal(MessageParcel &data,
     reply.WriteInt32(result);
 }
 
-void GetAndSaveClientTypeInternal(MessageParcel &data, MessageParcel &reply)
-{
-    uint32_t uid = data.ReadUint32();
-    GetAndSaveClientType(uid);
-}
-
 void AudioPolicyManagerStub::OnMiddleNinRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -1321,9 +1314,6 @@ void AudioPolicyManagerStub::OnMiddleNinRemoteRequest(
             break;
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_DEFAULT_OUTPUT_DEVICE):
             SetDefaultOutputDeviceInternal(data, reply);
-            break;
-        case static_cast<uint32_t>(AudioPolicyInterfaceCode::GET_AND_SAVE_CLIENT_VALUE):
-            GetAndSaveClientTypeInternal(data, reply);
             break;
         default:
             AUDIO_ERR_LOG("default case, need check AudioPolicyManagerStub");

@@ -22,7 +22,6 @@
 #include "audio_policy_manager_listener_proxy.h"
 #include "audio_utils.h"
 #include "media_monitor_manager.h"
-#include "client_type_manager.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -514,7 +513,7 @@ int32_t AudioInterruptService::SetAudioInterruptCallback(const int32_t zoneId, c
         if (callingUid == MEDIA_SA_UID) {
             callingUid = uid;
         }
-        client->SetCallingUid(callerUid);
+        client->SetCallingUid(callingUid);
 
         interruptClients_[sessionId] = client;
 
@@ -946,7 +945,7 @@ void AudioInterruptService::ProcessExistInterrupt(std::list<std::pair<AudioInter
                 break;
             }
             interruptEvent.hintType = focusEntry.hintType;
-            if (IsInGameMap((iterActive->first).sessionId)) {
+            if (GetClientTypeBySessionId((iterActive->first).sessionId) == CLIENT_TYPE_GAME) {
                 InterruptEvent.hintType = INTERRUPT_HINT_PAUSE;
                 iterActive->second = PAUSE;
                 AUDIO_INFO_LOG("incomingInterrupt.hintType: %{public}d", InterruptEvent.hintType);
@@ -1164,7 +1163,7 @@ int32_t AudioInterruptService::ProcessFocusEntry(const int32_t zoneId, const Aud
                 incomingConcurrentSources)) {
                 continue;
             }
-            if (IsInGameMap((iterActive->first).sessionId)) {
+            if (GetClientTypeBySessionId((iterActive->first).sessionId) == CLIENT_TYPE_GAME) {
                 incomingState = PAUSE;
                 AUDIO_INFO_LOG("incomingState: %{public}d", incomingState);
                 continue;
@@ -1366,7 +1365,8 @@ std::list<std::pair<AudioInterrupt, AudioFocuState>> AudioInterruptService::Simu
                 continue;
             }
             UpdateHintTypeForExistingSession(incoming, focusEntry);
-            if (isInGame((iterActive->first).sessionId) && focusEntry.hintType == INTERRUPT_HINT_STOP) {
+            if (GetClientTypeBySessionId((iterActive->first).sessionId) == CLIENT_TYPE_GAME &&
+                focusEntry.hintType == INTERRUPT_HINT_STOP) {
                 focusEntry.hintType = INTERRUPT_HINT_PAUSE;
                 AUDIO_INFO_LOG("focusEntry.hintType: %{public}d", focusEntry.hintType);
             } 
@@ -1711,9 +1711,23 @@ void AudioInterruptService::DispatchInterruptEventWithSessionId(uint32_t session
     }
 
     if (interruptClients_.find(sessionId) != interruptClients_.end()) {
-        
-        interruptClients_[sessionId]->OnInterrupt(interruptEvent);
+        if (ShouldCallbackToClient(interruptClients_[sessionId]->GetCallingUid(), sessionId, interruptEvent.hintType)) {
+            interruptClients_[sessionId]->OnInterrupt(interruptEvent);
+        }
     }
+}
+
+ClientType AudioInterruptService::GetClientTypeBySessionId(int32_t sessionId)
+{
+    uint32_t uid = 0;
+    if (interruptClients_.find(sessionId) != interruptClients_.end()) {
+        uid = interruptClients_[sessionId]->GetCallingUid();
+    }
+    if (uid == 0) {
+        AUDIO_ERR_LOG("Cannot find sessionid %{public}d", sessionId);
+        return CLIENT_TYPE_OTHERS;
+    }
+    return ClientTypeManager::GetInstance()->GetClientTypeByUid(uid);
 }
 
 bool AudioInterruptService::ShouldCallbackToClient(uint32_t uid, int32_t sessionId, InterruptHint hintType)
@@ -1728,7 +1742,7 @@ bool AudioInterruptService::ShouldCallbackToClient(uint32_t uid, int32_t session
     const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
     std::string identity = IPCSkeleton::ResetCallingIdentity();
     CHECK_AND_RETURN_LOG(gsp != nullptr, "error for g_adProxy null");
-    switch (InterruptEvent.hintType) {
+    switch (hintType) {
         case INTERRUPT_HINT_RESUME:
             muteFlag = false;
         case INTERRUPT_HINT_PAUSE:

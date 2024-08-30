@@ -1114,7 +1114,7 @@ void AudioManagerProxy::UpdateSessionConnectionState(const int32_t &sessionID, c
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "failed, error:%{public}d", error);
 }
 
-void AudioManagerProxy::SetNonInterruptMute(const int32_t sessionId, const bool muteFlag)
+void AudioManagerProxy::SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -1122,7 +1122,7 @@ void AudioManagerProxy::SetNonInterruptMute(const int32_t sessionId, const bool 
 
     bool ret = data.WriteInterfaceToken(GetDescriptor());
     CHECK_AND_RETURN_LOG(ret, "WriteInterfaceToken failed");
-    data.WriteInt32(sessionId);
+    data.WriteUint32(sessionId);
     data.WriteBool(muteFlag);
 
     int32_t error = Remote()->SendRequest(

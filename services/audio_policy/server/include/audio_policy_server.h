@@ -45,6 +45,7 @@
 #include "session_processor.h"
 #include "audio_spatialization_service.h"
 #include "audio_policy_server_handler.h"
+#include "client_type_manager.h"
 #include "audio_interrupt_service.h"
 
 namespace OHOS {
@@ -401,8 +402,6 @@ public:
 
     int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
         const StreamUsage streamUsage, bool isRunning) override;
-    
-    int32_t GetAndSaveClientType(uint32_t uid) override;
 
     class RemoteParameterCallback : public AudioParameterCallback {
     public:

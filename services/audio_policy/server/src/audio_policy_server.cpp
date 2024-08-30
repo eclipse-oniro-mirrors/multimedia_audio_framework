@@ -2838,12 +2838,5 @@ int32_t AudioPolicyServer::SetDefaultOutputDevice(const DeviceType deviceType, c
 {
     return audioPolicyService_.SetDefaultOutputDevice(deviceType, sessionID, streamUsage, isRunning);
 }
-
-int32_t AudioPolicyServer::GetAndSaveClientType(uint32_t uid)
-{
-    ClientTypeManager::GetInstance()->GetAndSaveClientType(uid, "");
-    return SUCCESS;
-}
-
 } // namespace AudioStandard
 } // namespace OHOS
