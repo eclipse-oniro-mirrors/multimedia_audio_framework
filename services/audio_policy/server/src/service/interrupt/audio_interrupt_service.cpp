@@ -222,7 +222,7 @@ void AudioInterruptService::RemovePlaceholderInterruptForSession(const int32_t c
         audioFocusInfoList = itZone->second->audioFocusInfoList;
     }
 
-    auto isPresent = [callerPid] (std::pair<AudioInterrupt, AudioFocuState> &pair) {
+    auto isPresent = [callerPid] (const std::pair<AudioInterrupt, AudioFocuState> &pair) {
         return pair.first.pid == callerPid && pair.second == PLACEHOLDER;
     };
     auto iter = std::find_if(audioFocusInfoList.begin(), audioFocusInfoList.end(), isPresent);
@@ -1174,7 +1174,7 @@ void AudioInterruptService::AddToAudioFocusInfoList(std::shared_ptr<AudioInterru
     }
 }
 
-void AudioInterruptService::HandleIncomingState(const int32_t &zoneId, AudioFocuState &incomingState,
+void AudioInterruptService::HandleIncomingState(const int32_t &zoneId, const AudioFocuState &incomingState,
     InterruptEventInternal &interruptEvent, const AudioInterrupt &incomingInterrupt)
 {
     if (incomingState == STOP) {
@@ -1229,7 +1229,7 @@ void AudioInterruptService::DeactivateAudioInterruptInternal(const int32_t zoneI
         }
     }
 
-    auto isPresent = [audioInterrupt] (std::pair<AudioInterrupt, AudioFocuState> &pair) {
+    auto isPresent = [audioInterrupt] (const std::pair<AudioInterrupt, AudioFocuState> &pair) {
         return pair.first.sessionId == audioInterrupt.sessionId;
     };
     auto iter = std::find_if(audioFocusInfoList.begin(), audioFocusInfoList.end(), isPresent);
