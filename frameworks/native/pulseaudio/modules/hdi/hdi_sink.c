@@ -1703,7 +1703,7 @@ static void UpdateSceneToCountMap(pa_hashmap *sceneMap)
     }
     uint32_t curNum;
     uint32_t *num = NULL;
-    for (int32_t i = 0; i < SCENE_TYPE_NUM; i++) {
+    for (int32_t i = 0; i < SCENE_TYPE_NUM - 1; i++) {
         if ((curNum = EffectChainManagerGetSceneCount(SCENE_TYPE_SET[i]))) {
             if ((num = (uint32_t *)pa_hashmap_get(sceneMap, SCENE_TYPE_SET[i])) != NULL) {
                 (*num) = curNum;
