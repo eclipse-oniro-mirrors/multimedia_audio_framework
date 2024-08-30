@@ -299,7 +299,8 @@ static uint32_t PcmFormatToBits(AudioSampleFormat format)
 
 AudioPolicyService::~AudioPolicyService()
 {
-    AUDIO_DEBUG_LOG("~AudioPolicyService()");
+    AUDIO_INFO_LOG("~AudioPolicyService()");
+    Deinit();
 }
 
 bool AudioPolicyService::Init(void)
@@ -484,6 +485,7 @@ void AudioPolicyService::Deinit(void)
     std::for_each(IOHandles_.begin(), IOHandles_.end(), [&](std::pair<std::string, AudioIOHandle> handle) {
         audioPolicyManager_.CloseAudioPort(handle.second);
     });
+    audioPolicyManager_.Deinit();
 
     IOHandles_.clear();
     ioHandleLock.unlock();
