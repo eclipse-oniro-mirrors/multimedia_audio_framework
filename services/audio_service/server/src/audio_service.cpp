@@ -120,7 +120,7 @@ sptr<IpcStreamInServer> AudioService::GetIpcStream(const AudioProcessConfig &con
         uint32_t sessionId = 0;
         std::shared_ptr<CapturerInServer> capturer = ipcStreamInServer->GetCapturer();
         if (capturer != nullptr && capturer->GetSessionId(sessionId) == SUCCESS) {
-            InsertCapturer(sessionId, capturer); // for all renderers
+            InsertCapturer(sessionId, capturer); // for all capturers
         }
     }
 
@@ -155,7 +155,7 @@ void AudioService::InsertCapturer(uint32_t sessionId, std::shared_ptr<CapturerIn
 void AudioService::RemoveCapturer(uint32_t sessionId)
 {
     std::unique_lock<std::mutex> lock(capturerMapMutex_);
-    AUDIO_INFO_LOG("Renderer:%{public}u will be removed.", sessionId);
+    AUDIO_INFO_LOG("Capturer: %{public}u will be removed.", sessionId);
     if (!allCapturerMap_.count(sessionId)) {
         AUDIO_WARNING_LOG("Capturer in not in map!");
         return;

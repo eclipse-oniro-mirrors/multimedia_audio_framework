@@ -1137,16 +1137,12 @@ int32_t AudioInterruptService::ProcessFocusEntry(const int32_t zoneId, const Aud
     auto itZone = zonesMap_.find(zoneId);
     CHECK_AND_RETURN_RET_LOG(itZone != zonesMap_.end(), ERROR, "can not find zoneid");
     std::list<std::pair<AudioInterrupt, AudioFocuState>> audioFocusInfoList {};
-    if (itZone != zonesMap_.end()) {
-        audioFocusInfoList = itZone->second->audioFocusInfoList;
-    }
+    if (itZone != zonesMap_.end()) { audioFocusInfoList = itZone->second->audioFocusInfoList; }
 
     SourceType incomingSourceType = incomingInterrupt.audioFocusType.sourceType;
     std::vector<SourceType> incomingConcurrentSources = incomingInterrupt.currencySources.sourcesTypes;
     for (auto iterActive = audioFocusInfoList.begin(); iterActive != audioFocusInfoList.end(); ++iterActive) {
-        if (IsSameAppInShareMode(incomingInterrupt, iterActive->first)) {
-            continue;
-        }
+        if (IsSameAppInShareMode(incomingInterrupt, iterActive->first)) { continue; }
         std::pair<AudioFocusType, AudioFocusType> audioFocusTypePair =
             std::make_pair((iterActive->first).audioFocusType, incomingInterrupt.audioFocusType);
         CHECK_AND_RETURN_RET_LOG(focusCfgMap_.find(audioFocusTypePair) != focusCfgMap_.end(), ERR_INVALID_PARAM,
@@ -1180,13 +1176,18 @@ int32_t AudioInterruptService::ProcessFocusEntry(const int32_t zoneId, const Aud
     }
     HandleIncomingState(zoneId, incomingState, interruptEvent, incomingInterrupt);
     AddToAudioFocusInfoList(itZone->second, zoneId, incomingInterrupt, incomingState);
+    SendInterruptEventToIncomingStream(interruptEvent, incomingInterrupt);
+    return incomingState >= PAUSE ? ERR_FOCUS_DENIED : SUCCESS;
+}
+
+void AudioInterruptService::SendInterruptEventToIncomingStream(InterruptEventInternal &interruptEvent,
+    const AudioInterrupt &incomingInterrupt)
+{
     if (interruptEvent.hintType != INTERRUPT_HINT_NONE && handler_ != nullptr) {
         AUDIO_INFO_LOG("OnInterrupt for incoming sessionId: %{public}d, hintType: %{public}d",
             incomingInterrupt.sessionId, interruptEvent.hintType);
-        handler_->SendInterruptEventWithSessionIdCallback(interruptEvent,
-            incomingInterrupt.sessionId);
+        handler_->SendInterruptEventWithSessionIdCallback(interruptEvent, incomingInterrupt.sessionId);
     }
-    return incomingState >= PAUSE ? ERR_FOCUS_DENIED : SUCCESS;
 }
 
 void AudioInterruptService::AddToAudioFocusInfoList(std::shared_ptr<AudioInterruptZone> &audioInterruptZone,
@@ -1361,9 +1362,7 @@ std::list<std::pair<AudioInterrupt, AudioFocuState>> AudioInterruptService::Simu
                 break;
             }
             AudioFocusEntry focusEntry = focusCfgMap_[audioFocusTypePair];
-            if (CanMixForSession(incoming, inprocessing, focusEntry)) {
-                continue;
-            }
+            if (CanMixForSession(incoming, inprocessing, focusEntry)) { continue; }
             UpdateHintTypeForExistingSession(incoming, focusEntry);
             if (GetClientTypeBySessionId((iterActive->first).sessionId) == CLIENT_TYPE_GAME &&
                 focusEntry.hintType == INTERRUPT_HINT_STOP) {
@@ -1371,9 +1370,7 @@ std::list<std::pair<AudioInterrupt, AudioFocuState>> AudioInterruptService::Simu
                 AUDIO_INFO_LOG("focusEntry.hintType: %{public}d", focusEntry.hintType);
             }
             auto pos = HINT_STATE_MAP.find(focusEntry.hintType);
-            if (pos == HINT_STATE_MAP.end()) {
-                continue;
-            }
+            if (pos == HINT_STATE_MAP.end()) { continue; }
             if (focusEntry.actionOn == CURRENT) {
                 iter->second = pos->second;
             } else {
@@ -1382,12 +1379,8 @@ std::list<std::pair<AudioInterrupt, AudioFocuState>> AudioInterruptService::Simu
             }
         }
 
-        if (incomingState == PAUSE) {
-            newAudioFocuInfoList = tmpAudioFocuInfoList;
-        }
-        if (iterActive->second == PLACEHOLDER) {
-            incomingState = PLACEHOLDER;
-        }
+        if (incomingState == PAUSE) { newAudioFocuInfoList = tmpAudioFocuInfoList; }
+        if (iterActive->second == PLACEHOLDER) { incomingState = PLACEHOLDER; }
         newAudioFocuInfoList.emplace_back(std::make_pair(incoming, incomingState));
     }
 

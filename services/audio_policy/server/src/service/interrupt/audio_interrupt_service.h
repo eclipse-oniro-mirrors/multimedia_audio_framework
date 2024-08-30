@@ -161,6 +161,8 @@ private:
         const std::vector<SourceType> &existConcurrentSources,
         const std::vector<SourceType> &incomingConcurrentSources);
     int32_t ProcessFocusEntry(const int32_t zoneId, const AudioInterrupt &incomingInterrupt);
+    void SendInterruptEventToIncomingStream(InterruptEventInternal &interruptEvent,
+        const AudioInterrupt &incomingInterrupt);
     void AddToAudioFocusInfoList(std::shared_ptr<AudioInterruptZone> &audioInterruptZone,
         const int32_t &zoneId, const AudioInterrupt &incomingInterrupt, const AudioFocuState &incomingState);
     void HandleIncomingState(const int32_t &zoneId, AudioFocuState &incomingState,

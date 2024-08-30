@@ -59,6 +59,8 @@ public:
 
 private:
     int32_t InitCacheBuffer(size_t targetSize);
+    bool IsReadDataOverFlow(size_t length, uint64_t currentWriteFrame,
+        std::shared_ptr<IStreamListener> stateListener);
 
     std::mutex statusLock_;
     std::condition_variable statusCv_;

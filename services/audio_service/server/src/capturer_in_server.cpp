@@ -192,15 +192,9 @@ BufferDesc CapturerInServer::DequeueBuffer(size_t length)
     return stream_->DequeueBuffer(length);
 }
 
-void CapturerInServer::ReadData(size_t length)
+bool CapturerInServer::IsReadDataOverFlow(size_t length, uint64_t currentWriteFrame,
+    std::shared_ptr<IStreamListener> stateListener)
 {
-    CHECK_AND_RETURN_LOG(length >= spanSizeInBytes_,
-        "Length %{public}zu is less than spanSizeInBytes %{public}zu", length, spanSizeInBytes_);
-    std::shared_ptr<IStreamListener> stateListener = streamListener_.lock();
-    CHECK_AND_RETURN_LOG(stateListener != nullptr, "IStreamListener is nullptr");
-
-    uint64_t currentWriteFrame = audioServerBuffer_->GetCurWriteFrame();
-
     if (audioServerBuffer_->GetAvailableDataFrames() <= static_cast<int32_t>(spanSizeInFrame_)) {
         if (overFlowLogFlag_ == 0) {
             AUDIO_INFO_LOG("OverFlow!!!");
@@ -211,9 +205,22 @@ void CapturerInServer::ReadData(size_t length)
         BufferDesc dstBuffer = stream_->DequeueBuffer(length);
         stream_->EnqueueBuffer(dstBuffer);
         stateListener->OnOperationHandled(UPDATE_STREAM, currentWriteFrame);
+        return true;
+    }
+    return false;
+}
+
+void CapturerInServer::ReadData(size_t length)
+{
+    CHECK_AND_RETURN_LOG(length >= spanSizeInBytes_,
+        "Length %{public}zu is less than spanSizeInBytes %{public}zu", length, spanSizeInBytes_);
+    std::shared_ptr<IStreamListener> stateListener = streamListener_.lock();
+    CHECK_AND_RETURN_LOG(stateListener != nullptr, "IStreamListener is nullptr");
+
+    uint64_t currentWriteFrame = audioServerBuffer_->GetCurWriteFrame();
+    if (IsReadDataOverFlow(length, currentWriteFrame, stateListener)) {
         return;
     }
-
     Trace trace("CapturerInServer::ReadData:" + std::to_string(currentWriteFrame));
     OptResult result = ringCache_->GetWritableSize();
     CHECK_AND_RETURN_LOG(result.ret == OPERATION_SUCCESS, "RingCache write invalid size %{public}zu", result.size);

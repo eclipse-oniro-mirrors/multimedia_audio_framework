@@ -11,8 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (!defined(global_parts_info) ||
-    defined(global_parts_info.cloud_appgallery)) {
+if (defined(global_parts_info) && defined(global_parts_info.cloud_appgallery)) {
   appgallery_part_enable = true
 } else {
   appgallery_part_enable = false
