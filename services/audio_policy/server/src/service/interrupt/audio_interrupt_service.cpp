@@ -946,9 +946,9 @@ void AudioInterruptService::ProcessExistInterrupt(std::list<std::pair<AudioInter
             }
             interruptEvent.hintType = focusEntry.hintType;
             if (GetClientTypeBySessionId((iterActive->first).sessionId) == CLIENT_TYPE_GAME) {
-                InterruptEvent.hintType = INTERRUPT_HINT_PAUSE;
+                interruptEvent.hintType = INTERRUPT_HINT_PAUSE;
                 iterActive->second = PAUSE;
-                AUDIO_INFO_LOG("incomingInterrupt.hintType: %{public}d", InterruptEvent.hintType);
+                AUDIO_INFO_LOG("incomingInterrupt.hintType: %{public}d", interruptEvent.hintType);
                 break;
             }
             removeFocusInfo = true;
@@ -1369,7 +1369,7 @@ std::list<std::pair<AudioInterrupt, AudioFocuState>> AudioInterruptService::Simu
                 focusEntry.hintType == INTERRUPT_HINT_STOP) {
                 focusEntry.hintType = INTERRUPT_HINT_PAUSE;
                 AUDIO_INFO_LOG("focusEntry.hintType: %{public}d", focusEntry.hintType);
-            } 
+            }
             auto pos = HINT_STATE_MAP.find(focusEntry.hintType);
             if (pos == HINT_STATE_MAP.end()) {
                 continue;
@@ -1741,14 +1741,14 @@ bool AudioInterruptService::ShouldCallbackToClient(uint32_t uid, int32_t session
     bool muteFlag = true;
     const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
     std::string identity = IPCSkeleton::ResetCallingIdentity();
-    CHECK_AND_RETURN_LOG(gsp != nullptr, "error for g_adProxy null");
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, true, "error for g_adProxy null");
     switch (hintType) {
         case INTERRUPT_HINT_RESUME:
             muteFlag = false;
         case INTERRUPT_HINT_PAUSE:
         case INTERRUPT_HINT_STOP:
             AUDIO_INFO_LOG("mute flag is: %{public}d", muteFlag);
-            gsp->SetNonInterrupt(sessionId, muteFlag);
+            gsp->SetNonInterruptMute(sessionId, muteFlag);
             break;
         default:
             break;

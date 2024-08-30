@@ -190,10 +190,10 @@ void PolicyHandler::SetHighResolutionExist(bool isHighResExist)
     isHighResolutionExist_ = isHighResExist;
 }
 
-int32_t PolicyHandler::GetAndSavaClientType(uint32_t uid, const std::string &bundleName)
+int32_t PolicyHandler::GetAndSaveClientType(uint32_t uid, const std::string &bundleName)
 {
-    CHECK_AND_RETURN_RET_LOG(IPolicyProvider_ != nullptr, ERROR, "IPolicyProvider_ is nullptr");
-    return IPolicyProvider_->GetAndSaveClientType(uid, bundleName);
+    CHECK_AND_RETURN_RET_LOG(iPolicyProvider_ != nullptr, ERROR, "iPolicyProvider_ is nullptr");
+    return iPolicyProvider_->GetAndSaveClientType(uid, bundleName);
 }
 } // namespace AudioStandard
 } // namespace OHOS

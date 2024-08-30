@@ -142,7 +142,7 @@ int32_t PolicyProviderStub::HandleGetAndSaveClientType(MessageParcel &data, Mess
 {
     uint32_t uid = data.ReadUint32();
     std::string bundleName = data.ReadString();
-    int32_t ret = GetAndSavaClientType(uid, bundleName);
+    int32_t ret = GetAndSaveClientType(uid, bundleName);
     reply.WriteInt32(ret);
     return AUDIO_OK;
 }

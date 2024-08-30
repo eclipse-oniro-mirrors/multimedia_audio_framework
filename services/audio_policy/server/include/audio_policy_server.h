@@ -45,7 +45,6 @@
 #include "session_processor.h"
 #include "audio_spatialization_service.h"
 #include "audio_policy_server_handler.h"
-#include "client_type_manager.h"
 #include "audio_interrupt_service.h"
 
 namespace OHOS {

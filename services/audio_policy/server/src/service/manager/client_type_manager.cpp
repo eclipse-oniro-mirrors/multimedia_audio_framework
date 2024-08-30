@@ -29,7 +29,7 @@ const std::string SERVICE_NAME = "audio_service";
 
 ClientTypeManager *ClientTypeManager::GetInstance()
 {
-    static ClientTypeManager *clientTypeManager;
+    static ClientTypeManager clientTypeManager;
     return &clientTypeManager;
 }
 
@@ -57,7 +57,7 @@ void ClientTypeManager::GetAndSaveClientType(uint32_t uid, const std::string &bu
         return;
     }
     for (AppGalleryServiceClient::AppCategoryInfo &item : resultArray) {
-        if (item.primaryCategoryId = GAME_CATEGORY_ID) {
+        if (item.primaryCategoryId == GAME_CATEGORY_ID) {
             AUDIO_INFO_LOG("Is game type");
             clientTypeMap_.insert_or_assign(uid, CLIENT_TYPE_GAME);
         } else {

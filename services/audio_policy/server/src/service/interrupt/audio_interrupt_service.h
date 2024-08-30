@@ -25,6 +25,7 @@
 #include "audio_policy_server_handler.h"
 #include "audio_policy_server.h"
 #include "audio_session_service.h"
+#include "client_type_manager.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -51,7 +52,7 @@ public:
     virtual ~AudioInterruptService();
 
     const sptr<IStandardAudioService> GetAudioServerProxy();
-    
+
     // callback run in handler thread
     void DispatchInterruptEventWithSessionId(
         uint32_t sessionId, const InterruptEventInternal &interruptEvent) override;

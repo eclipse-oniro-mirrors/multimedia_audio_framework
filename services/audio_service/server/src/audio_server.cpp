@@ -2185,7 +2185,7 @@ void AudioServer::SetNonInterruptMute(const uint32_t sessionId, const bool muteF
 {
     AUDIO_INFO_LOG("sessionId_: %{public}u, muteFlag: %{public}d", sessionId, muteFlag);
     int32_t callingUid = IPCSkeleton::GetCallingUid();
-    CHECK_AND_RENTURN_LOG(PermissionUtil::VerifyIsAudio(), "Refused for %{public}d", callingUid);
+    CHECK_AND_RETURN_LOG(PermissionUtil::VerifyIsAudio(), "Refused for %{public}d", callingUid);
     AudioService::GetInstance()->SetNonInterruptMute(sessionId, muteFlag);
 }
 } // namespace AudioStandard

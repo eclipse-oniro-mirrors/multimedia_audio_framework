@@ -113,7 +113,6 @@ sptr<IpcStreamInServer> AudioService::GetIpcStream(const AudioProcessConfig &con
         std::shared_ptr<RendererInServer> renderer = ipcStreamInServer->GetRenderer();
         if (renderer != nullptr && renderer->GetSessionId(sessionId) == SUCCESS) {
             InsertRenderer(sessionId, renderer); // for all renderers
-            AudioCore::GetInstance()->linkSessionIdWithUid(sessionId, config.appInfo.appUid);
             CheckInnerCapForRenderer(sessionId, renderer);
         }
     }
@@ -122,7 +121,6 @@ sptr<IpcStreamInServer> AudioService::GetIpcStream(const AudioProcessConfig &con
         std::shared_ptr<CapturerInServer> capturer = ipcStreamInServer->GetCapturer();
         if (capturer != nullptr && capturer->GetSessionId(sessionId) == SUCCESS) {
             InsertCapturer(sessionId, capturer); // for all renderers
-            AudioCore::GetInstance()->linkSessionIdWithUid(sessionId, config.appInfo.appUid);
         }
     }
 
@@ -476,7 +474,6 @@ sptr<AudioProcessInServer> AudioService::GetAudioProcess(const AudioProcessConfi
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, nullptr, "LinkProcessToEndpoint failed");
 
     linkedPairedList_.push_back(std::make_pair(process, audioEndpoint));
-    AudioCore::GetInstance()->LinkSessionIdWithUid(process->GetSessionId(), config.appInfo.appUid);
     CheckInnerCapForProcess(process, audioEndpoint);
     return process;
 }
