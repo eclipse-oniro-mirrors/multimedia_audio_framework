@@ -99,7 +99,6 @@ public:
     void AudioInterruptZoneDump(std::string &dumpString);
     AudioScene GetHighestPriorityAudioScene(const int32_t zoneId) const;
     ClientType GetClientTypeBySessionId(int32_t sessionId);
-    bool ShouldCallbackToClient(uint32_t uid, int32_t sessionId, InterruptHint hintType);
 
 private:
     static constexpr int32_t ZONEID_DEFAULT = 0;
@@ -214,6 +213,7 @@ private:
     void HandleLowPriorityEvent(const int32_t pid, const uint32_t streamId);
     void SendSessionTimeOutStopEvent(const int32_t zoneId, const AudioInterrupt &audioInterrupt,
         const std::list<std::pair<AudioInterrupt, AudioFocuState>> &audioFocusInfoList);
+    bool ShouldCallbackToClient(uint32_t uid, int32_t sessionId, InterruptHint hintType);
 
     // interrupt members
     sptr<AudioPolicyServer> policyServer_;

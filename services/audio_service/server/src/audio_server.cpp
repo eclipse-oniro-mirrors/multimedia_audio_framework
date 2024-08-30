@@ -1509,8 +1509,10 @@ sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &co
         IAudioRendererSink* audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
         audioRendererSinkInstance->SetAudioParameter(AudioParamKey::NONE, "", SATEMODEM_PARAMETER);
     }
+#ifdef FEATURE_APPGALLERY
     PolicyHandler::GetInstance().GetAndSaveClientType(resetConfig.appInfo.appUid,
         GetBundleNameFromUid(resetConfig.appInfo.appUid));
+#endif
 
     if (IsNormalIpcStream(resetConfig) || (isFastControlled_ && IsFastBlocked(resetConfig.appInfo.appUid))) {
         AUDIO_INFO_LOG("Create normal ipc stream, isFastControlled: %{public}d", isFastControlled_);

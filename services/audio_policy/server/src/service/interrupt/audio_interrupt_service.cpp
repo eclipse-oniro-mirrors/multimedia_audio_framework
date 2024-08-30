@@ -1711,14 +1711,19 @@ void AudioInterruptService::DispatchInterruptEventWithSessionId(uint32_t session
     }
 
     if (interruptClients_.find(sessionId) != interruptClients_.end()) {
+#ifdef FEATURE_APPGALLERY
         if (ShouldCallbackToClient(interruptClients_[sessionId]->GetCallingUid(), sessionId, interruptEvent.hintType)) {
             interruptClients_[sessionId]->OnInterrupt(interruptEvent);
         }
+#else
+        interruptClients_[sessionId]->OnInterrupt(interruptEvent);
+#endif
     }
 }
 
 ClientType AudioInterruptService::GetClientTypeBySessionId(int32_t sessionId)
 {
+#ifdef FEATURE_APPGALLERY
     uint32_t uid = 0;
     if (interruptClients_.find(sessionId) != interruptClients_.end()) {
         uid = interruptClients_[sessionId]->GetCallingUid();
@@ -1728,6 +1733,9 @@ ClientType AudioInterruptService::GetClientTypeBySessionId(int32_t sessionId)
         return CLIENT_TYPE_OTHERS;
     }
     return ClientTypeManager::GetInstance()->GetClientTypeByUid(uid);
+#else
+    return CLIENT_TYPE_OTHERS;
+#endif
 }
 
 bool AudioInterruptService::ShouldCallbackToClient(uint32_t uid, int32_t sessionId, InterruptHint hintType)

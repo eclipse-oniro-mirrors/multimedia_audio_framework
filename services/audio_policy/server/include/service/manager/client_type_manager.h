@@ -17,6 +17,7 @@
 #define CLIENT_TYPE_MANAGER_H
 
 #include <unordered_map>
+#include <string>
 
 namespace OHOS {
 namespace AudioStandard {

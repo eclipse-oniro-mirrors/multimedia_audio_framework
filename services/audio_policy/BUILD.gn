@@ -13,6 +13,7 @@
 
 import("//build/ohos.gni")
 import("../../accessibility.gni")
+import("../../appgallery.gni")
 import("../../bluetooth_part.gni")
 import("../../config.gni")
 
@@ -197,7 +198,6 @@ ohos_shared_library("audio_policy_service") {
     "access_token:libprivacy_sdk",
     "access_token:libtokenid_sdk",
     "access_token:libtokensetproc_shared",
-    "appgallery:appinfomanager_client",
     "bounds_checking_function:libsec_shared",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
@@ -240,6 +240,11 @@ ohos_shared_library("audio_policy_service") {
       "accessibility:accessibility_common",
       "accessibility:accessibilityconfig",
     ]
+  }
+
+  if (appgallery_part_enable == true) {
+    defines += [ "FEATURE_APPGALLERY" ]
+    external_deps += [ "appgallery:appinfomanager_client" ]
   }
 
   if (bluetooth_part_enable == true) {

@@ -17,15 +17,19 @@
 #endif
 
 #include "client_type_manager.h"
-
-#include "audio_policy_log.h"
+#ifdef FEATURE_APPGALLERY
 #include "appgallery_service_client_appinfo_category.h"
 #include "appgallery_service_client_param.h"
+#endif
+
+#include "audio_policy_log.h"
 
 namespace OHOS {
 namespace AudioStandard {
+#ifdef FEATURE_APPGALLERY
 const int32_t GAME_CATEGORY_ID = 2;
 const std::string SERVICE_NAME = "audio_service";
+#endif
 
 ClientTypeManager *ClientTypeManager::GetInstance()
 {
@@ -36,6 +40,7 @@ ClientTypeManager *ClientTypeManager::GetInstance()
 void ClientTypeManager::GetAndSaveClientType(uint32_t uid, const std::string &bundleName)
 {
     AUDIO_INFO_LOG("uid: %{public}u, bundle name %{public}s", uid, bundleName.c_str());
+#ifdef FEATURE_APPGALLERY
     auto it = clientTypeMap_.find(uid);
     if (it != clientTypeMap_.end()) {
         AUDIO_INFO_LOG("Uid already in map");
@@ -65,6 +70,9 @@ void ClientTypeManager::GetAndSaveClientType(uint32_t uid, const std::string &bu
             clientTypeMap_.insert_or_assign(uid, CLIENT_TYPE_OTHERS);
         }
     }
+#else
+    AUDIO_WARNING_LOG("Get client type is not supported");
+#endif
 }
 
 ClientType ClientTypeManager::GetClientTypeByUid(uint32_t uid)
