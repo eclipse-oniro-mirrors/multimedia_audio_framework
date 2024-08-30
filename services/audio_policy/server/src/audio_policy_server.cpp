@@ -439,6 +439,9 @@ void AudioPolicyServer::SubscribeCommonEvent(const std::string event)
     EventFwk::MatchingSkills matchingSkills;
     matchingSkills.AddEvent(event);
     EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+    if (event == "usual.event.dms.rotation_changed") {
+        subscribeInfo.SetPermission("ohos.permission.PUBLISH_DISPLAY_ROTATION_EVENT");
+    }
     auto commonSubscribePtr = std::make_shared<AudioCommonEventSubscriber>(subscribeInfo,
         std::bind(&AudioPolicyServer::OnReceiveEvent, this, std::placeholders::_1));
     if (commonSubscribePtr == nullptr) {
