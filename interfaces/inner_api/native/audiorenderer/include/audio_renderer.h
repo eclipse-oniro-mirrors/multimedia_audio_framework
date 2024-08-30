@@ -422,22 +422,6 @@ public:
     virtual bool PauseTransitent(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const = 0;
 
     /**
-     * @brief Mute audio rendering.
-     *
-     * @return Returns <b>true</b> if the rendering is successfully Paused; returns <b>false</b> otherwise.
-     * @since 10
-     */
-    virtual bool Mute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const = 0;
-
-    /**
-     * @brief Unmute audio rendering.
-     *
-     * @return Returns <b>true</b> if the rendering is successfully Paused; returns <b>false</b> otherwise.
-     * @since 10
-     */
-    virtual bool Unmute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const = 0;
-
-    /**
      * @brief Pauses audio rendering.
      *
      * @return Returns <b>true</b> if the rendering is successfully Paused; returns <b>false</b> otherwise.
@@ -952,6 +936,22 @@ public:
      * @since 12
      */
     virtual int32_t SetDefaultOutputDevice(DeviceType deviceType) = 0;
+
+    /**
+     * @brief Mute audio rendering.
+     *
+     * @return Returns <b>true</b> if the rendering is successfully Paused; returns <b>false</b> otherwise.
+     * @since 10
+     */
+    virtual bool Mute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const {return false;};
+
+    /**
+     * @brief Unmute audio rendering.
+     *
+     * @return Returns <b>true</b> if the rendering is successfully Paused; returns <b>false</b> otherwise.
+     * @since 10
+     */
+    virtual bool Unmute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const {return false;};
 
 private:
     static int32_t CreateCheckParam(const AudioRendererOptions &rendererOptions,
