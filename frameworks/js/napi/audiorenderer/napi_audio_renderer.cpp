@@ -261,7 +261,7 @@ napi_value NapiAudioRenderer::CreateAudioRendererWrapper(napi_env env, const Aud
     *sRendererOptions_ = rendererOptions;
     status = napi_new_instance(env, constructor, 0, nullptr, &result);
     if (status != napi_ok) {
-        AUDIO_ERR_LOG("napi_new_instance failed, sttaus:%{public}d", status);
+        AUDIO_ERR_LOG("napi_new_instance failed, status:%{public}d", status);
         goto fail;
     }
     return result;
@@ -1646,7 +1646,7 @@ napi_value NapiAudioRenderer::UnregisterCallback(napi_env env, napi_value jsThis
     NapiAudioRenderer *napiRenderer = nullptr;
     napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void **>(&napiRenderer));
     CHECK_AND_RETURN_RET_LOG(status == napi_ok, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_SYSTEM),
-        "sttaus error");
+        "status error");
     CHECK_AND_RETURN_RET_LOG(napiRenderer != nullptr, NapiAudioError::ThrowErrorAndReturn(env, NAPI_ERR_NO_MEMORY),
         "napiRenderer is nullptr");
     CHECK_AND_RETURN_RET_LOG(napiRenderer->audioRenderer_ != nullptr, NapiAudioError::ThrowErrorAndReturn(env,
