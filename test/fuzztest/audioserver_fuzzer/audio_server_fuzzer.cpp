@@ -465,6 +465,46 @@ void AudioServerSetAudioSceneTest(const uint8_t *rawData, size_t size)
     AudioServerPtr->OnRemoteRequest(static_cast<uint32_t>(AudioServerInterfaceCode::SET_AUDIO_SCENE),
         data, reply, option);
 }
+
+void AudioServerSetOffloadModeTest(const uint8_t *rawData, size_t size)
+{
+    if (rawData == nullptr || size < LIMITSIZE) {
+        return;
+    }
+
+    MessageParcel data;
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    uint32_t sessionId = *reinterpret_cast<const uint32_t*>(rawData);
+    int32_t state = *reinterpret_cast<const int32_t*>(rawData);
+    bool isAppBack = *reinterpret_cast<const bool*>(rawData);
+    data.WriteUint32(sessionId);
+    data.WriteInt32(state);
+    data.WriteBool(isAppBack);
+
+    std::shared_ptr<AudioServer> AudioServerPtr = std::make_shared<AudioServer>(SYSTEM_ABILITY_ID, RUN_ON_CREATE);
+    MessageParcel reply;
+    MessageOption option;
+    AudioServerPtr->OnRemoteRequest(static_cast<uint32_t>(AudioServerInterfaceCode::SET_OFFLOAD_MODE),
+        data, reply, option);
+}
+
+void AudioServerUnsetOffloadTest(const uint8_t *rawData, size_t size)
+{
+    if (rawData == nullptr || size < LIMITSIZE) {
+        return;
+    }
+
+    MessageParcel data;
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    uint32_t sessionId = *reinterpret_cast<const uint32_t*>(rawData);
+    data.WriteUint32(sessionId);
+
+    std::shared_ptr<AudioServer> AudioServerPtr = std::make_shared<AudioServer>(SYSTEM_ABILITY_ID, RUN_ON_CREATE);
+    MessageParcel reply;
+    MessageOption option;
+    AudioServerPtr->OnRemoteRequest(static_cast<uint32_t>(AudioServerInterfaceCode::UNSET_OFFLOAD_MODE),
+        data, reply, option);
+}
 } // namespace AudioStandard
 } // namesapce OHOS
 
@@ -493,5 +533,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     OHOS::AudioStandard::AudioServerSetAudioBalanceValueTest(data, size);
     OHOS::AudioStandard::AudioServerSetAudioSceneTest(data, size);
     OHOS::AudioStandard::AudioServerUpdateLatencyTimestampTest(data, size);
+    OHOS::AudioStandard::AudioServerSetOffloadModeTest(data, size);
+    OHOS::AudioStandard::AudioServerUnsetOffloadTest(data, size);
     return 0;
 }

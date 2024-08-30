@@ -446,6 +446,10 @@ public:
      * Set Non Interrupt Mute
      */
     virtual void SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag) = 0;
+
+    virtual int32_t SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack) = 0;
+
+    virtual int32_t UnsetOffloadMode(uint32_t sessionId) = 0;
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"IStandardAudioService");
 };
@@ -497,6 +501,8 @@ private:
     int HandleSetAsrAecMode(MessageParcel &data, MessageParcel &reply);
     int HandleGetAsrAecMode(MessageParcel &data, MessageParcel &reply);
     int HandleSetAsrNoiseSuppressionMode(MessageParcel &data, MessageParcel &reply);
+    int HandleSetOffloadMode(MessageParcel &data, MessageParcel &reply);
+    int HandleUnsetOffloadMode(MessageParcel &data, MessageParcel &reply);
     int HandleGetAsrNoiseSuppressionMode(MessageParcel &data, MessageParcel &reply);
     int HandleSetAsrWhisperDetectionMode(MessageParcel &data, MessageParcel &reply);
     int HandleGetAsrWhisperDetectionMode(MessageParcel &data, MessageParcel &reply);

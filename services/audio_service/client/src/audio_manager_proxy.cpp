@@ -1142,5 +1142,39 @@ void AudioManagerProxy::SetNonInterruptMute(const uint32_t sessionId, const bool
         static_cast<uint32_t>(AudioServerInterfaceCode::SET_SINGLE_STREAM_MUTE), data, reply, option);
     CHECK_AND_RETURN_LOG(error == ERR_NONE, "failed, error:%{public}d", error);
 }
+
+int32_t AudioManagerProxy::SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, -1, "AudioManagerProxy: WriteInterfaceToken failed");
+    data.WriteUint32(sessionId);
+    data.WriteInt32(state);
+    data.WriteBool(isAppBack);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioServerInterfaceCode::SET_OFFLOAD_MODE), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "SetOffloadMode failed, error: %{public}d", error);
+    return reply.ReadInt32();
+}
+
+int32_t AudioManagerProxy::UnsetOffloadMode(uint32_t sessionId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, -1, "AudioManagerProxy: WriteInterfaceToken failed");
+    data.WriteUint32(sessionId);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioServerInterfaceCode::UNSET_OFFLOAD_MODE), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "UnsetOffloadMode failed, error: %{public}d", error);
+    return reply.ReadInt32();
+}
 } // namespace AudioStandard
 } // namespace OHOS

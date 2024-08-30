@@ -738,9 +738,12 @@ void AudioPolicyService::SetOffloadMode()
 
     AUDIO_INFO_LOG("sessionId: %{public}d, PowerState: %{public}d, isAppBack: %{public}d",
         *offloadSessionID_, static_cast<int32_t>(currentPowerState_), currentOffloadSessionIsBackground_);
-
-    streamCollector_.SetOffloadMode(*offloadSessionID_, static_cast<int32_t>(currentPowerState_),
+    const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
+    CHECK_AND_RETURN_LOG(gsp != nullptr, "Service proxy unavailable");
+    std::string identity = IPCSkeleton::ResetCallingIdentity();
+    gsp->SetOffloadMode(*offloadSessionID_, static_cast<int32_t>(currentPowerState_),
         currentOffloadSessionIsBackground_);
+    IPCSkeleton::SetCallingIdentity(identity);
 }
 
 void AudioPolicyService::ResetOffloadMode(int32_t sessionId)
@@ -818,7 +821,11 @@ void AudioPolicyService::OffloadStreamReleaseCheck(uint32_t sessionId)
 
     if (((*offloadSessionID_) == sessionId) && offloadSessionID_.has_value()) {
         AUDIO_DEBUG_LOG("Doing unset offload mode!");
-        streamCollector_.UnsetOffloadMode(*offloadSessionID_);
+        const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
+        CHECK_AND_RETURN_LOG(gsp != nullptr, "Service proxy unavailable");
+        std::string identity = IPCSkeleton::ResetCallingIdentity();
+        gsp->UnsetOffloadMode(*offloadSessionID_);
+        IPCSkeleton::SetCallingIdentity(identity);
         AudioPipeType normalPipe = PIPE_TYPE_NORMAL_OUT;
         MoveToNewPipe(sessionId, normalPipe);
         streamCollector_.UpdateRendererPipeInfo(sessionId, normalPipe);
@@ -841,7 +848,11 @@ void AudioPolicyService::RemoteOffloadStreamRelease(uint32_t sessionId)
 {
     if (offloadSessionID_.has_value() && ((*offloadSessionID_) == sessionId)) {
         AUDIO_DEBUG_LOG("Doing unset offload mode!");
-        streamCollector_.UnsetOffloadMode(*offloadSessionID_);
+        const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
+        CHECK_AND_RETURN_LOG(gsp != nullptr, "Service proxy unavailable");
+        std::string identity = IPCSkeleton::ResetCallingIdentity();
+        gsp->UnsetOffloadMode(*offloadSessionID_);
+        IPCSkeleton::SetCallingIdentity(identity);
         AudioPipeType normalPipe = PIPE_TYPE_UNKNOWN;
         MoveToNewPipe(sessionId, normalPipe);
         streamCollector_.UpdateRendererPipeInfo(sessionId, normalPipe);

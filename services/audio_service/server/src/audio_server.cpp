@@ -2189,5 +2189,21 @@ void AudioServer::SetNonInterruptMute(const uint32_t sessionId, const bool muteF
     CHECK_AND_RETURN_LOG(PermissionUtil::VerifyIsAudio(), "Refused for %{public}d", callingUid);
     AudioService::GetInstance()->SetNonInterruptMute(sessionId, muteFlag);
 }
+
+int32_t AudioServer::SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_RET_LOG(PermissionUtil::VerifyIsAudio(), ERR_NOT_SUPPORTED, "refused for %{public}d",
+        callingUid);
+    return AudioService::GetInstance()->SetOffloadMode(sessionId, state, isAppBack);
+}
+
+int32_t AudioServer::UnsetOffloadMode(uint32_t sessionId)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_RET_LOG(PermissionUtil::VerifyIsAudio(), ERR_NOT_SUPPORTED, "refused for %{public}d",
+        callingUid);
+    return AudioService::GetInstance()->UnsetOffloadMode(sessionId);
+}
 } // namespace AudioStandard
 } // namespace OHOS

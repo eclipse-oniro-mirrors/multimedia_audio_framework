@@ -751,5 +751,29 @@ void AudioService::SetNonInterruptMute(const uint32_t sessionId, const bool mute
     }
     AUDIO_INFO_LOG("Cannot find sessionId");
 }
+
+int32_t AudioService::SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack)
+{
+    std::unique_lock<std::mutex> lock(rendererMapMutex_);
+    if (!allRendererMap_.count(sessionId)) {
+        AUDIO_WARNING_LOG("Renderer %{public}u is not in map", sessionId);
+        return ERR_INVALID_INDEX;
+    }
+    AUDIO_INFO_LOG("Set offload mode for renderer %{public}u", sessionId);
+    std::shared_ptr<RendererInServer> renderer = allRendererMap_[sessionId].lock();
+    return renderer->SetOffloadMode(state, isAppBack);
+}
+
+int32_t AudioService::UnsetOffloadMode(uint32_t sessionId)
+{
+    std::unique_lock<std::mutex> lock(rendererMapMutex_);
+    if (!allRendererMap_.count(sessionId)) {
+        AUDIO_WARNING_LOG("Renderer %{public}u is not in map", sessionId);
+        return ERR_INVALID_INDEX;
+    }
+    AUDIO_INFO_LOG("Set offload mode for renderer %{public}u", sessionId);
+    std::shared_ptr<RendererInServer> renderer = allRendererMap_[sessionId].lock();
+    return renderer->UnsetOffloadMode();
+}
 } // namespace AudioStandard
 } // namespace OHOS
