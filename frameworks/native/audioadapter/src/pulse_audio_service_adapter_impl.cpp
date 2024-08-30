@@ -829,8 +829,7 @@ void PulseAudioServiceAdapterImpl::HandleSinkInputInfoVolume(pa_context *c, cons
 
     if (streamTypeID == userData->streamType || userData->isSubscribingCb) {
         AUDIO_INFO_LOG("set pa volume type:%{public}d id:%{public}d vol:%{public}f db:%{public}f stream:%{public}f " \
-            "power:%{public}f duck:%{public}f", streamTypeID, sessionID, vol, volumeDbCb, volumeFactor,
-            powerVolumeFactor, duckVolumeFactor);
+            "volumelevel:%{public}d", streamTypeID, sessionID, vol, volumeDbCb, volumeFactor, volumeLevel);
         pa_operation_unref(pa_context_set_sink_input_volume(c, i->index, &cv, nullptr, nullptr));
     }
     std::shared_ptr<Media::MediaMonitor::EventBean> bean = std::make_shared<Media::MediaMonitor::EventBean>(
