@@ -246,6 +246,10 @@ int32_t AudioCapturerPrivate::SetParams(const AudioCapturerParams params)
 {
     Trace trace("AudioCapturer::SetParams");
     AUDIO_INFO_LOG("StreamClientState for Capturer::SetParams.");
+
+    std::shared_lock<std::shared_mutex> lockShared(switchStreamMutex_);
+    std::lock_guard<std::mutex> lock(setParamsMutex_);
+
     AudioStreamParams audioStreamParams = ConvertToAudioStreamParams(params);
 
     IAudioStream::StreamClass streamClass = IAudioStream::PA_STREAM;
@@ -347,6 +351,7 @@ int32_t AudioCapturerPrivate::InitAudioStream(const AudioStreamParams &audioStre
 
 void AudioCapturerPrivate::CheckSignalData(uint8_t *buffer, size_t bufferSize) const
 {
+    std::lock_guard lock(signalDetectAgentMutex_);
     if (!latencyMeasEnabled_) {
         return;
     }
@@ -364,6 +369,7 @@ void AudioCapturerPrivate::CheckSignalData(uint8_t *buffer, size_t bufferSize) c
 
 void AudioCapturerPrivate::InitLatencyMeasurement(const AudioStreamParams &audioStreamParams)
 {
+    std::lock_guard lock(signalDetectAgentMutex_);
     latencyMeasEnabled_ = AudioLatencyMeasurement::CheckIfEnabled();
     AUDIO_INFO_LOG("LatencyMeas enabled in capturer:%{public}d", latencyMeasEnabled_);
     if (!latencyMeasEnabled_) {
@@ -399,11 +405,13 @@ int32_t AudioCapturerPrivate::InitAudioInterruptCallback()
         CHECK_AND_RETURN_RET_LOG(audioInterruptCallback_ != nullptr, ERROR,
             "Failed to allocate memory for audioInterruptCallback_");
     }
-    return AudioPolicyManager::GetInstance().SetAudioInterruptCallback(sessionID_, audioInterruptCallback_);
+    return AudioPolicyManager::GetInstance().SetAudioInterruptCallback(sessionID_, audioInterruptCallback_,
+        appInfo_.appUid);
 }
 
 int32_t AudioCapturerPrivate::SetCapturerCallback(const std::shared_ptr<AudioCapturerCallback> &callback)
 {
+    std::lock_guard<std::mutex> lock(setCapturerCbMutex_);
     // If the client is using the deprecated SetParams API. SetCapturerCallback must be invoked, after SetParams.
     // In general, callbacks can only be set after the capturer state is  PREPARED.
     CapturerState state = GetStatus();
@@ -1004,6 +1012,7 @@ int32_t AudioCapturerPrivate::UnregisterAudioCapturerEventListener()
         int32_t ret =
             AudioPolicyManager::GetInstance().UnregisterAudioCapturerEventListener(getpid());
         CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "failed");
+        audioStateChangeCallback_->HandleCapturerDestructor();
         audioStateChangeCallback_ = nullptr;
     }
     return SUCCESS;
@@ -1113,7 +1122,7 @@ bool AudioCapturerPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
             switchResult = audioStream_->StopAudioStream();
             CHECK_AND_RETURN_RET_LOG(switchResult, false, "StopAudioStream failed.");
         }
-        std::lock_guard<std::mutex> lock(switchStreamMutex_);
+        std::lock_guard lock(switchStreamMutex_);
         // switch new stream
         IAudioStream::SwitchInfo info;
         audioStream_->GetSwitchInfo(info);

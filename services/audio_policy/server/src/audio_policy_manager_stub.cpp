@@ -567,8 +567,9 @@ void AudioPolicyManagerStub::SetInterruptCallbackInternal(MessageParcel &data, M
     uint32_t sessionID = data.ReadUint32();
     sptr<IRemoteObject> object = data.ReadRemoteObject();
     uint32_t zoneID = data.ReadUint32();
+    uint32_t clientUid = data.ReadUint32();
     CHECK_AND_RETURN_LOG(object != nullptr, "AudioPolicyManagerStub: AudioInterruptCallback obj is null");
-    int32_t result = SetAudioInterruptCallback(sessionID, object, zoneID);
+    int32_t result = SetAudioInterruptCallback(sessionID, object, clientUid, zoneID);
     reply.WriteInt32(result);
 }
 

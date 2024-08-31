@@ -99,6 +99,7 @@ bool PulseAudioServiceAdapterImpl::Connect()
     int32_t XcollieFlag = (1 | 2); // flag 1 generate log file, flag 2 die when timeout, restart server
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::Connect");
 
     while (true) {
         pa_context_state_t state;
@@ -186,6 +187,7 @@ uint32_t PulseAudioServiceAdapterImpl::OpenAudioPort(string audioPortName, strin
     userData->thiz = this;
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::OpenAudioPort");
     if (mContext == nullptr) {
         AUDIO_ERR_LOG("mContext is nullptr");
         return ERROR;
@@ -261,6 +263,7 @@ bool PulseAudioServiceAdapterImpl::SetSinkMute(const std::string &sinkName, bool
     int32_t XcollieFlag = (1 | 2); // flag 1 generate log file, flag 2 die when timeout, restart server
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::SetSinkMute");
 
     int muteFlag = isMute ? 1 : 0;
 
@@ -368,11 +371,10 @@ void PulseAudioServiceAdapterImpl::PaGetSinksCb(pa_context *c, const pa_sink_inf
 std::vector<SinkInfo> PulseAudioServiceAdapterImpl::GetAllSinks()
 {
     AUDIO_PRERELEASE_LOGI("GetAllSinks enter.");
-    int32_t XcollieFlag = 2; // flag 1 generate log file, flag 2 die when timeout, restart server
+    int32_t XcollieFlag = (1 | 2); // flag 1 generate log file, flag 2 die when timeout, restart server
     AudioXCollie audioXCollie("PulseAudioServiceAdapterImpl::GetAllSinks", PA_SERVICE_IMPL_TIMEOUT,
-        [this](void *) {
+        [](void *) {
             AUDIO_ERR_LOG("GetAllSinks timeout, trigger signal");
-            pa_threaded_mainloop_signal(this->mMainLoop, 0);
         }, nullptr, XcollieFlag);
     lock_guard<mutex> lock(lock_);
     unique_ptr<UserData> userData = make_unique<UserData>();
@@ -382,6 +384,7 @@ std::vector<SinkInfo> PulseAudioServiceAdapterImpl::GetAllSinks()
     CHECK_AND_RETURN_RET_LOG(mContext != nullptr, userData->sinkInfos, "mContext is nullptr");
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::GetAllSinks");
 
     pa_operation *operation = pa_context_get_sink_info_list(mContext,
         PulseAudioServiceAdapterImpl::PaGetSinksCb, reinterpret_cast<void*>(userData.get()));
@@ -438,6 +441,8 @@ int32_t PulseAudioServiceAdapterImpl::MoveSinkInputByIndexOrName(uint32_t sinkIn
     std::string sinkName)
 {
     lock_guard<mutex> lock(lock_);
+    Trace trace("PulseAudioServiceAdapterImpl::MoveSinkInputByIndexOrName:id:" + std::to_string(sinkInputId) +
+        +":index:" + std::to_string(sinkIndex) + ":name:" + sinkName);
 
     unique_ptr<UserData> userData = make_unique<UserData>();
     userData->thiz = this;
@@ -478,6 +483,8 @@ int32_t PulseAudioServiceAdapterImpl::MoveSourceOutputByIndexOrName(uint32_t sou
     std::string sourceName)
 {
     lock_guard<mutex> lock(lock_);
+    Trace trace("PulseAudioServiceAdapterImpl::MoveSourceOutputByIndexOrName:id:" + std::to_string(sourceOutputId) +
+        +":index:" + std::to_string(sourceIndex) + ":name:" + sourceName);
 
     unique_ptr<UserData> userData = make_unique<UserData>();
     userData->thiz = this;
@@ -576,6 +583,7 @@ vector<SinkInput> PulseAudioServiceAdapterImpl::GetAllSinkInputs()
     CHECK_AND_RETURN_RET_LOG(mContext != nullptr, userData->sinkInputList, "mContext is nullptr");
 
     PaLockGuard palock(mMainLoop);
+    Trace trace("PulseAudioServiceAdapterImpl::GetAllSinkInputs");
 
     pa_operation *operation = pa_context_get_sink_input_info_list(mContext,
         PulseAudioServiceAdapterImpl::PaGetAllSinkInputsCb, reinterpret_cast<void*>(userData.get()));
@@ -602,6 +610,7 @@ vector<SinkInput> PulseAudioServiceAdapterImpl::GetAllSinkInputs()
 vector<SourceOutput> PulseAudioServiceAdapterImpl::GetAllSourceOutputs()
 {
     lock_guard<mutex> lock(lock_);
+    Trace trace("PulseAudioServiceAdapterImpl::GetAllSourceOutputs");
 
     unique_ptr<UserData> userData = make_unique<UserData>();
     userData->thiz = this;
@@ -820,8 +829,7 @@ void PulseAudioServiceAdapterImpl::HandleSinkInputInfoVolume(pa_context *c, cons
 
     if (streamTypeID == userData->streamType || userData->isSubscribingCb) {
         AUDIO_INFO_LOG("set pa volume type:%{public}d id:%{public}d vol:%{public}f db:%{public}f stream:%{public}f " \
-            "power:%{public}f duck:%{public}f", streamTypeID, sessionID, vol, volumeDbCb, volumeFactor,
-            powerVolumeFactor, duckVolumeFactor);
+            "volumelevel:%{public}d", streamTypeID, sessionID, vol, volumeDbCb, volumeFactor, volumeLevel);
         pa_operation_unref(pa_context_set_sink_input_volume(c, i->index, &cv, nullptr, nullptr));
     }
     std::shared_ptr<Media::MediaMonitor::EventBean> bean = std::make_shared<Media::MediaMonitor::EventBean>(

@@ -543,6 +543,7 @@ int32_t OHAudioBuffer::ResetCurReadWritePos(uint64_t readFrame, uint64_t writeFr
 
 uint64_t OHAudioBuffer::GetCurWriteFrame()
 {
+    CHECK_AND_RETURN_RET_LOG(basicBufferInfo_ != nullptr, 0, "basicBufferInfo_ is null");
     return basicBufferInfo_->curWriteFrame.load();
 }
 
@@ -638,6 +639,18 @@ int32_t OHAudioBuffer::GetBufferByFrame(uint64_t posInFrame, BufferDesc &bufferD
     bufferDesc.buffer = dataBase_ + offset;
     bufferDesc.bufLength = spanSizeInByte_;
     bufferDesc.dataLength = spanSizeInByte_;
+
+    return SUCCESS;
+}
+
+uint32_t OHAudioBuffer::GetSessionId()
+{
+    return sessionId_;
+}
+
+int32_t OHAudioBuffer::SetSessionId(uint32_t sessionId)
+{
+    sessionId_ = sessionId;
 
     return SUCCESS;
 }

@@ -12,27 +12,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AUDIO_INNER_CALL_H
-#define AUDIO_INNER_CALL_H
 
-#include <atomic>
-#include <iostream>
-#include <chrono>
+#ifndef CLIENT_TYPE_MANAGER_H
+#define CLIENT_TYPE_MANAGER_H
+
+#include <unordered_map>
+#include <string>
+
 namespace OHOS {
 namespace AudioStandard {
-class IAudioServerInnerCall {
-public:
-    virtual int32_t SetSinkRenderEmpty(const std::string &devceClass, int32_t durationUs) = 0;
+using namespace std;
+enum ClientType {
+    CLIENT_TYPE_OTHERS = 0,
+    CLIENT_TYPE_GAME = 1,
 };
-class AudioInnerCall {
+
+class ClientTypeManager {
 public:
-    static AudioInnerCall *GetInstance();
-    IAudioServerInnerCall *GetIAudioServerInnerCall();
-    void RegisterAudioServer(IAudioServerInnerCall *audioServer);
+    static ClientTypeManager *GetInstance();
+    void GetAndSaveClientType(uint32_t uid, const std::string &bundleName);
+    ClientType GetClientTypeByUid(uint32_t uid);
+
 private:
-    IAudioServerInnerCall *audioServer_ = nullptr;
-    std::atomic<bool> isAudioServerRegistered_ = false;
+    std::unordered_map<uint32_t, ClientType> clientTypeMap_;
 };
 } // namespace AudioStandard
 } // namespace OHOS
-#endif // AUDIO_INNER_CALL_H
+#endif // CLIENT_TYPE_MANAGER_H

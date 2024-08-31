@@ -35,6 +35,8 @@ public:
 
     virtual bool Init() = 0;
 
+    virtual void Deinit(void) = 0;
+
     virtual void InitKVStore() = 0;
 
     virtual bool ConnectServiceAdapter() = 0;

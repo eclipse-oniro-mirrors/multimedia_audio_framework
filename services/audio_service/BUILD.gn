@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../appgallery.gni")
 import("../../config.gni")
 import("../../ressche_part.gni")
 import("../../sensor.gni")
@@ -427,6 +428,10 @@ ohos_shared_library("audio_service") {
     defines += [ "AUDIO_BUILD_VARIANT_USER" ]
   } else if (build_variant == "root") {
     defines += [ "AUDIO_BUILD_VARIANT_ROOT" ]
+  }
+
+  if (appgallery_part_enable == true) {
+    defines += [ "FEATURE_APPGALLERY" ]
   }
 
   if (sensor_enable == true) {

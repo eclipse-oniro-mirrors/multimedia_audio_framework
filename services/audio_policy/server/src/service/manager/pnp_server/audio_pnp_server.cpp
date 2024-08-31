@@ -254,11 +254,11 @@ void AudioPnpServer::StopPnpServer()
     g_socketRunThread = false;
     g_inputRunThread = false;
     if (socketThread_ && socketThread_->joinable()) {
-        socketThread_->join();
+        socketThread_->detach();
     }
 
     if (inputThread_ && inputThread_->joinable()) {
-        inputThread_->join();
+        inputThread_->detach();
     }
 }
 } // namespace AudioStandard

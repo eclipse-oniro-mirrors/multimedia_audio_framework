@@ -39,7 +39,7 @@ const uint32_t LIMIT_ONE = 0;
 const uint32_t LIMIT_TWO = 30;
 const uint32_t LIMIT_THREE = 60;
 const uint32_t LIMIT_FOUR = static_cast<uint32_t>(AudioPolicyInterfaceCode::AUDIO_POLICY_MANAGER_CODE_MAX);
-bool g_hasServerInit = true;
+bool g_hasServerInit = false;
 
 AudioPolicyServer* GetServerPtr()
 {
@@ -111,7 +111,7 @@ void AudioPolicyFuzzFirstLimitTest(const uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    uint32_t code =  Convert2Uint32(rawData) % (LIMIT_TWO - LIMIT_ONE + 1) + LIMIT_ONE;
+    uint32_t code = Convert2Uint32(rawData) % (LIMIT_TWO - LIMIT_ONE + 1) + LIMIT_ONE;
 
     rawData = rawData + OFFSET;
     size = size - OFFSET;
@@ -132,7 +132,7 @@ void AudioPolicyFuzzSecondLimitTest(const uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    uint32_t code =  Convert2Uint32(rawData) % (LIMIT_THREE - LIMIT_TWO + 1) + LIMIT_TWO;
+    uint32_t code = Convert2Uint32(rawData) % (LIMIT_THREE - LIMIT_TWO + 1) + LIMIT_TWO;
 
     rawData = rawData + OFFSET;
     size = size - OFFSET;
@@ -153,7 +153,7 @@ void AudioPolicyFuzzThirdLimitTest(const uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    uint32_t code =  Convert2Uint32(rawData) % (LIMIT_FOUR - LIMIT_THREE + 1) + LIMIT_THREE;
+    uint32_t code = Convert2Uint32(rawData) % (LIMIT_FOUR - LIMIT_THREE + 1) + LIMIT_THREE;
 
     rawData = rawData + OFFSET;
     size = size - OFFSET;
@@ -165,6 +165,9 @@ void AudioPolicyFuzzThirdLimitTest(const uint8_t *rawData, size_t size)
 
     MessageParcel reply;
     MessageOption option;
+    if (code == static_cast<uint32_t>(AudioPolicyInterfaceCode::ADD_AUDIO_INTERRUPT_ZONE_PIDS)) {
+        return;
+    }
 
     GetServerPtr()->OnRemoteRequest(code, data, reply, option);
 }

@@ -907,7 +907,7 @@ int32_t AudioRendererSinkInner::SetVoiceVolume(float volume)
     Trace trace("AudioRendererSinkInner::SetVoiceVolume");
     CHECK_AND_RETURN_RET_LOG(audioAdapter_ != nullptr, ERR_INVALID_HANDLE,
         "SetVoiceVolume failed, audioAdapter_ is null");
-    AUDIO_DEBUG_LOG("SetVoiceVolume %{public}f", volume);
+    AUDIO_INFO_LOG("Set modem call volume %{public}f", volume);
     return audioAdapter_->SetVoiceVolume(audioAdapter_, volume);
 }
 
@@ -1097,7 +1097,12 @@ int32_t AudioRendererSinkInner::SetOutputRoutes(std::vector<std::pair<DeviceType
     route.sinks = sinks;
     route.sinksLen = static_cast<uint32_t>(sinksSize);
 
-    return SetAudioRoute(outputDevice, route);
+    int32_t ret = SetAudioRoute(outputDevice, route);
+    if (sinks != nullptr) {
+        delete [] sinks;
+        sinks = nullptr;
+    }
+    return ret;
 }
 
 int32_t AudioRendererSinkInner::SetAudioScene(AudioScene audioScene, std::vector<DeviceType> &activeDevices)
@@ -1403,6 +1408,10 @@ int32_t AudioRendererSinkInner::InitAdapter()
 
     AudioAdapterDescriptor descs[MAX_AUDIO_ADAPTER_NUM];
     uint32_t size = MAX_AUDIO_ADAPTER_NUM;
+    if (audioManager_ == nullptr) {
+        AUDIO_ERR_LOG("The audioManager is null");
+        return ERROR;
+    }
     int32_t ret = audioManager_->GetAllAdapters(audioManager_, (struct AudioAdapterDescriptor *)&descs, &size);
     CHECK_AND_RETURN_RET_LOG(size <= MAX_AUDIO_ADAPTER_NUM && size != 0 && ret == 0,
         ERR_NOT_STARTED, "Get adapters failed");

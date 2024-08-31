@@ -40,6 +40,8 @@ public:
 
     int32_t OffloadGetRenderPosition(uint32_t &delayValue, uint64_t &sendDataSize, uint32_t &timeStamp) override;
 
+    int32_t GetAndSaveClientType(uint32_t uid, const std::string &bundleName) override;
+
 private:
     static inline BrokerDelegator<PolicyProviderProxy> delegator_;
 };

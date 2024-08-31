@@ -442,6 +442,8 @@ public:
     int32_t OffloadStopPlaying(const std::vector<int32_t> &sessionIds);
 
     int32_t OffloadGetRenderPosition(uint32_t &delayValue, uint64_t &sendDataSize, uint32_t &timeStamp);
+
+    int32_t GetAndSaveClientType(uint32_t uid, const std::string &bundleName);
 #ifdef BLUETOOTH_ENABLE
     void UpdateA2dpOffloadFlag(const std::vector<Bluetooth::A2dpStreamInfo> &allActiveSessions,
         DeviceType deviceType = DEVICE_TYPE_NONE);
@@ -682,6 +684,9 @@ private:
     void FetchInputDevice(vector<unique_ptr<AudioCapturerChangeInfo>> &capturerChangeInfos,
         const AudioStreamDeviceChangeReasonExt reason = AudioStreamDeviceChangeReason::UNKNOWN);
 
+    int32_t HandleDeviceChangeForFetchInputDevice(unique_ptr<AudioDeviceDescriptor> &desc,
+        unique_ptr<AudioCapturerChangeInfo> &capturerChangeInfo);
+
     void BluetoothScoFetch(unique_ptr<AudioDeviceDescriptor> &desc,
         vector<unique_ptr<AudioCapturerChangeInfo>> &capturerChangeInfos, SourceType sourceType);
 
@@ -850,6 +855,8 @@ private:
 
     void MuteDefaultSinkPort();
 
+    void SetVoiceCallMuteForSwitchDevice();
+
     void MuteSinkPortForSwtichDevice(unique_ptr<AudioRendererChangeInfo>& rendererChangeInfo,
         vector<std::unique_ptr<AudioDeviceDescriptor>>& outputDevices, const AudioStreamDeviceChangeReasonExt reason);
 
@@ -1006,6 +1013,9 @@ private:
     void UpdateDefaultOutputDeviceWhenStopping(int32_t uid);
 
     void SetDefaultDeviceLoadFlag(bool isLoad);
+
+    int32_t SetPreferredDevice(const PreferredType preferredType, const sptr<AudioDeviceDescriptor> &desc);
+    int32_t ErasePreferredDeviceByType(const PreferredType preferredType);
 
     bool isUpdateRouteSupported_ = true;
     bool isCurrentRemoteRenderer = false;
@@ -1185,6 +1195,8 @@ private:
     bool ringerModeMute_ = true;
     std::atomic<bool> isPolicyConfigParsered_ = false;
     std::shared_ptr<AudioA2dpOffloadManager> audioA2dpOffloadManager_ = nullptr;
+
+    bool isBTReconnecting_ = false;
 };
 
 class AudioA2dpOffloadManager final : public Bluetooth::AudioA2dpPlayingStateChangedListener,

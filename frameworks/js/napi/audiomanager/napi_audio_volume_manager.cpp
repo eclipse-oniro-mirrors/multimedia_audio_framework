@@ -126,7 +126,7 @@ napi_value NapiAudioVolumeManager::CreateVolumeManagerWrapper(napi_env env)
     }
     status = napi_new_instance(env, constructor, PARAM0, nullptr, &result);
     if (status != napi_ok) {
-        AUDIO_ERR_LOG("napi_new_instance failed, sttaus:%{public}d", status);
+        AUDIO_ERR_LOG("napi_new_instance failed, status:%{public}d", status);
         goto fail;
     }
     return result;
@@ -220,6 +220,10 @@ napi_value NapiAudioVolumeManager::GetVolumeGroupInfosSync(napi_env env, napi_ca
         "parameter verification failed: The param of networkId is empty"), "get networkid failed");
 
     std::vector<sptr<VolumeGroupInfo>> volumeGroupInfos;
+    if (napiAudioVolumeManager == nullptr || napiAudioVolumeManager->audioSystemMngr_ == nullptr) {
+        AUDIO_ERR_LOG("napiAudioVolumeManager or audioSystemMngr  is nullptr!");
+        return nullptr;
+    }
     int32_t ret = napiAudioVolumeManager->audioSystemMngr_->GetVolumeGroups(networkId, volumeGroupInfos);
     CHECK_AND_RETURN_RET_LOG(ret == AUDIO_OK, result, "GetVolumeGroups failure!");
 

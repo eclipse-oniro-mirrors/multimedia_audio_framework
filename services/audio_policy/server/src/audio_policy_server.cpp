@@ -30,6 +30,7 @@
 #include "audio_utils.h"
 #include "parameters.h"
 #include "media_monitor_manager.h"
+#include "client_type_manager.h"
 
 using OHOS::Security::AccessToken::PrivacyKit;
 using OHOS::Security::AccessToken::TokenIdKit;
@@ -307,8 +308,14 @@ int32_t AudioPolicyServer::RegisterVolumeKeyMuteEvents()
         [this](std::shared_ptr<MMI::KeyEvent> keyEventCallBack) {
             AUDIO_INFO_LOG("Receive volume key event: mute");
             std::lock_guard<std::mutex> lock(keyEventMutex_);
-            bool isMuted = GetStreamMute(AudioStreamType::STREAM_ALL);
-            SetStreamMuteInternal(AudioStreamType::STREAM_ALL, !isMuted, true);
+            AudioStreamType streamInFocus = AudioStreamType::STREAM_MUSIC; // use STREAM_MUSIC as default stream type
+            if (volumeApplyToAll_) {
+                streamInFocus = AudioStreamType::STREAM_ALL;
+            } else {
+                streamInFocus = VolumeUtils::GetVolumeTypeFromStreamType(GetStreamInFocus());
+            }
+            bool isMuted = GetStreamMuteInternal(streamInFocus);
+            SetStreamMuteInternal(streamInFocus, !isMuted, true);
         });
     if (muteKeySubId < 0) {
         AUDIO_ERR_LOG("SubscribeKeyEvent: subscribing for mute failed ");
@@ -439,6 +446,9 @@ void AudioPolicyServer::SubscribeCommonEvent(const std::string event)
     EventFwk::MatchingSkills matchingSkills;
     matchingSkills.AddEvent(event);
     EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+    if (event == "usual.event.dms.rotation_changed") {
+        subscribeInfo.SetPermission("ohos.permission.PUBLISH_DISPLAY_ROTATION_EVENT");
+    }
     auto commonSubscribePtr = std::make_shared<AudioCommonEventSubscriber>(subscribeInfo,
         std::bind(&AudioPolicyServer::OnReceiveEvent, this, std::placeholders::_1));
     if (commonSubscribePtr == nullptr) {
@@ -1228,10 +1238,10 @@ AudioScene AudioPolicyServer::GetAudioScene()
 }
 
 int32_t AudioPolicyServer::SetAudioInterruptCallback(const uint32_t sessionID, const sptr<IRemoteObject> &object,
-    const int32_t zoneID)
+    uint32_t clientUid, const int32_t zoneID)
 {
     if (interruptService_ != nullptr) {
-        return interruptService_->SetAudioInterruptCallback(zoneID, sessionID, object);
+        return interruptService_->SetAudioInterruptCallback(zoneID, sessionID, object, clientUid);
     }
     return ERR_UNKNOWN;
 }
@@ -2854,6 +2864,5 @@ int32_t AudioPolicyServer::SetDefaultOutputDevice(const DeviceType deviceType, c
 {
     return audioPolicyService_.SetDefaultOutputDevice(deviceType, sessionID, streamUsage, isRunning);
 }
-
 } // namespace AudioStandard
 } // namespace OHOS

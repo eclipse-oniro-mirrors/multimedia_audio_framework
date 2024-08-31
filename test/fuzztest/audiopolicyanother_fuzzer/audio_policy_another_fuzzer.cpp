@@ -155,7 +155,8 @@ void AudioInterruptFuzzTest(const uint8_t *rawData, size_t size)
 
     sptr<IRemoteObject> object = data.ReadRemoteObject();
     uint32_t sessionID = *reinterpret_cast<const uint32_t *>(rawData);
-    GetServerPtr()->SetAudioInterruptCallback(sessionID, object);
+    uint32_t clientUid = *reinterpret_cast<const uint32_t *>(rawData);
+    GetServerPtr()->SetAudioInterruptCallback(sessionID, object, clientUid);
     GetServerPtr()->UnsetAudioInterruptCallback(sessionID);
 
     int32_t clientId = *reinterpret_cast<const uint32_t *>(rawData);
