@@ -1143,7 +1143,7 @@ static unsigned SinkRenderPrimaryCluster(pa_sink *si, size_t *length, pa_mix_inf
     unsigned maxInfo, const char *sceneType)
 {
     AUTO_CTRACE("hdi_sink::SinkRenderPrimaryCluster:%s len:%zu", sceneType, *length);
-    
+
     struct Userdata *u;
     pa_assert_se(u = si->userdata);
 
