@@ -52,6 +52,7 @@
 #include "renderer_sink_adapter.h"
 #include "audio_effect_chain_adapter.h"
 #include "playback_capturer_adapter.h"
+#include "sink_userdata.h"
 #include "time.h"
 
 #define DEFAULT_SINK_NAME "hdi_output"
@@ -69,7 +70,7 @@
 #define IN_CHANNEL_NUM_MAX 16
 #define OUT_CHANNEL_NUM_MAX 2
 #define DEFAULT_FRAMELEN 2048
-#define SCENE_TYPE_NUM 7
+#define SCENE_TYPE_NUM 9
 #define HDI_MIN_MS_MAINTAIN 30
 #define OFFLOAD_HDI_CACHE1 200 // ms, should equal with val in client
 #define OFFLOAD_HDI_CACHE2 7000 // ms, should equal with val in client
@@ -117,8 +118,8 @@ time_t g_speakerPaClosedTime = 0;
 bool g_effectAllStreamVolumeZeroMap[SCENE_TYPE_NUM] = {false, false, false, false, false, false, false};
 bool g_effectHaveDisabledMap[SCENE_TYPE_NUM] = {false, false, false, false, false, false, false};
 time_t g_effectStartVolZeroTimeMap[SCENE_TYPE_NUM] = {0, 0, 0, 0, 0, 0, 0};
-char *const SCENE_TYPE_SET[SCENE_TYPE_NUM] = {"SCENE_MUSIC", "SCENE_GAME", "SCENE_MOVIE", "SCENE_SPEECH", "SCENE_RING",
-    "SCENE_OTHERS", "EFFECT_NONE"};
+char *const SCENE_TYPE_SET[SCENE_TYPE_NUM] = {"SCENE_DEFAULT", "SCENE_MUSIC", "SCENE_GAME", "SCENE_MOVIE",
+    "SCENE_SPEECH", "SCENE_RING", "SCENE_VOIP", "SCENE_OTHERS", "EFFECT_NONE"};
 const int32_t COMMON_SCENE_TYPE_INDEX = 0;
 
 enum HdiInputType { HDI_INPUT_TYPE_PRIMARY, HDI_INPUT_TYPE_OFFLOAD, HDI_INPUT_TYPE_MULTICHANNEL };
@@ -151,106 +152,6 @@ enum AudioOffloadType {
     OFFLOAD_INACTIVE_BACKGROUND = 3,
 };
 
-struct Userdata {
-    const char *adapterName;
-    uint32_t buffer_size;
-    uint32_t fixed_latency;
-    uint32_t sink_latency;
-    uint32_t render_in_idle_state;
-    uint32_t open_mic_speaker;
-    bool offload_enable;
-    bool multichannel_enable;
-    const char *deviceNetworkId;
-    int32_t deviceType;
-    size_t bytes_dropped;
-    pa_thread_mq thread_mq;
-    pa_memchunk memchunk;
-    pa_usec_t block_usec;
-    pa_thread *thread;
-    pa_rtpoll *rtpoll;
-    pa_core *core;
-    pa_module *module;
-    pa_sink *sink;
-    pa_sample_spec ss;
-    pa_channel_map map;
-    bool test_mode_on;
-    uint32_t writeCount;
-    uint32_t renderCount;
-    pa_sample_format_t format;
-    BufferAttr *bufferAttr;
-    int32_t processLen;
-    size_t processSize;
-    int32_t sinkSceneType;
-    int32_t sinkSceneMode;
-    bool hdiEffectEnabled;
-    pthread_mutex_t mutexPa;
-    pthread_mutex_t mutexPa2;
-    pthread_rwlock_t rwlockSleep;
-    int64_t timestampSleep;
-    pa_usec_t timestampLastLog;
-    int8_t spatializationFadingState; // for indicating the fading state, =0:no fading, >0:fading in, <0:fading out
-    int8_t spatializationFadingCount; // for indicating the fading rate
-    bool actualSpatializationEnabled; // the spatialization state that actually applies effect
-    bool isFirstStarted;
-    struct {
-        int32_t sessionID;
-        bool firstWrite;
-        bool firstWriteHdi; // for set volume onstart, avoid mute
-        pa_usec_t pos;
-        pa_usec_t hdiPos;
-        pa_usec_t hdiPosTs;
-        pa_usec_t prewrite;
-        pa_thread *thread;
-        pa_asyncmsgq *msgq;
-        bool isHDISinkStarted;
-        struct RendererSinkAdapter *sinkAdapter;
-        pa_atomic_t hdistate; // 0:need_data 1:wait_consume 2:flushing
-        pa_usec_t fullTs;
-        bool runninglocked;
-        pa_memchunk chunk;
-        bool inited;
-        int32_t setHdiBufferSizeNum; // for set hdi buffer size count
-    } offload;
-    struct {
-        pa_usec_t timestamp;
-        pa_usec_t lastProcessDataTime; // The timestamp from the last time the data was prepared to HDI
-        pa_thread *thread;
-        pa_thread *thread_hdi;
-        pa_asyncmsgq *msgq;
-        bool isHDISinkStarted;
-        struct RendererSinkAdapter *sinkAdapter;
-        pa_asyncmsgq *dq;
-        pa_atomic_t dflag;
-        pa_usec_t writeTime;
-        pa_usec_t prewrite;
-        pa_sink_state_t previousState;
-        pa_atomic_t fadingFlagForPrimary; // 1：do fade in, 0: no need
-        int32_t primaryFadingInDone;
-        int32_t primarySinkInIndex;
-    } primary;
-    struct {
-        bool used;
-        pa_usec_t timestamp;
-        pa_thread *thread;
-        pa_thread *thread_hdi;
-        bool isHDISinkStarted;
-        bool isHDISinkInited;
-        struct RendererSinkAdapter *sinkAdapter;
-        pa_asyncmsgq *msgq;
-        pa_asyncmsgq *dq;
-        pa_atomic_t dflag;
-        pa_usec_t writeTime;
-        pa_usec_t prewrite;
-        pa_atomic_t hdistate;
-        pa_memchunk chunk;
-        SinkAttr sample_attrs;
-        pa_atomic_t fadingFlagForMultiChannel; // 1：do fade in, 0: no need
-        int32_t multiChannelFadingInDone;
-        int32_t multiChannelSinkInIndex;
-        int32_t multiChannelTmpSinkInIndex;
-    } multiChannel;
-};
-
 static int32_t g_effectProcessFrameCount = 0;
 static void UserdataFree(struct Userdata *u);
 static int32_t PrepareDevice(struct Userdata *u, const char *filePath);
@@ -270,7 +171,6 @@ static void StartOffloadHdi(struct Userdata *u, pa_sink_input *i);
 static void StartPrimaryHdiIfRunning(struct Userdata *u);
 static void StartMultiChannelHdiIfRunning(struct Userdata *u);
 static void CheckInputChangeToOffload(struct Userdata *u, pa_sink_input *i);
-static void CheckIfCommonSceneTypeZeroVolume();
 
 // BEGIN Utility functions
 #define FLOAT_EPS 1e-9f
@@ -1227,7 +1127,7 @@ static void RecordEffectChainStatus(bool existFlag, const char *sinkSceneType, c
 }
 
 static unsigned SinkRenderPrimaryCluster(pa_sink *si, size_t *length, pa_mix_info *infoIn,
-    unsigned maxInfo, char *sceneType)
+    unsigned maxInfo, const char *sceneType)
 {
     AUTO_CTRACE("hdi_sink::SinkRenderPrimaryCluster:%s len:%zu", sceneType, *length);
 
@@ -1257,7 +1157,7 @@ static unsigned SinkRenderPrimaryCluster(pa_sink *si, size_t *length, pa_mix_inf
         } else if ((sceneTypeFlag && existFlag) || (pa_safe_streq(sceneType, "EFFECT_NONE") && (!existFlag))) {
             RecordEffectChainStatus(existFlag, sinkSceneType, sinkSceneMode, u->actualSpatializationEnabled);
             pa_sink_input_assert_ref(sinkIn);
-            updateResampler(sinkIn, sinkSceneType, false);
+            updateResampler(sinkIn, sceneType, false);
 
             AUTO_CTRACE("hdi_sink::PrimaryCluster:%u len:%zu", sinkIn->index, *length);
             pa_sink_input_peek(sinkIn, *length, &infoIn->chunk, &infoIn->volume);
@@ -1396,7 +1296,7 @@ static unsigned SinkRenderMultiChannelCluster(pa_sink *si, size_t *length, pa_mi
     return n;
 }
 
-static int32_t SinkRenderPrimaryPeek(pa_sink *si, pa_memchunk *chunkIn, char *sceneType)
+static int32_t SinkRenderPrimaryPeek(pa_sink *si, pa_memchunk *chunkIn, const char *sceneType)
 {
     pa_mix_info info[MAX_MIX_CHANNELS];
     unsigned n;
@@ -1482,7 +1382,7 @@ static int32_t SinkRenderMultiChannelPeek(pa_sink *si, pa_memchunk *chunkIn)
     return n;
 }
 
-static int32_t SinkRenderPrimaryGetData(pa_sink *si, pa_memchunk *chunkIn, char *sceneType)
+static int32_t SinkRenderPrimaryGetData(pa_sink *si, pa_memchunk *chunkIn, const char *sceneType)
 {
     AUTO_CTRACE("hdi_sink::SinkRenderPrimaryGetData:%s", sceneType);
     pa_memchunk chunk;
@@ -1645,8 +1545,14 @@ static char *HandleSinkSceneType(struct Userdata *u, time_t currentTime, int32_t
 }
 
 
-static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime, int32_t i)
+static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime, const char *sceneType)
 {
+    int32_t i;
+    for (i = 0; i < SCENE_TYPE_NUM; i++) {
+        if (!strcmp(SCENE_TYPE_SET[i], sceneType)) {
+            break;
+        }
+    }
     void *state = NULL;
     pa_sink_input *input;
     g_effectAllStreamVolumeZeroMap[i] = true;
@@ -1660,7 +1566,7 @@ static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime
         pa_sw_cvolume_multiply(&vol, &input->sink->thread_info.soft_volume, &input->volume);
         bool isZeroVolume = input->sink->thread_info.soft_muted || pa_cvolume_is_muted(&vol) ||
             pa_safe_streq(clientVolumeIsZero, "true");
-        if (pa_safe_streq(sinkSceneTypeTmp, SCENE_TYPE_SET[i]) && !isZeroVolume) {
+        if (EffectChainManagerSceneCheck(sinkSceneTypeTmp, SCENE_TYPE_SET[i]) && !isZeroVolume) {
             g_effectAllStreamVolumeZeroMap[i] = false;
             g_effectStartVolZeroTimeMap[i] = 0;
             AUDIO_DEBUG_LOG("SCENE_TYPE_SET[%{public}d]:%{public}s for streamtype:[%{public}s]'s"
@@ -1669,7 +1575,7 @@ static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime
             break;
         }
     }
-    CheckIfCommonSceneTypeZeroVolume();
+
     if (g_effectAllStreamVolumeZeroMap[i] && !g_effectHaveDisabledMap[i] && (g_effectStartVolZeroTimeMap[i] == 0) &&
         PA_SINK_IS_RUNNING(u->sink->thread_info.state)) {
         AUDIO_INFO_LOG("Timing begins, will close [%{public}s] effect after [%{public}d]s", SCENE_TYPE_SET[i],
@@ -1679,17 +1585,6 @@ static char *CheckAndDealEffectZeroVolume(struct Userdata *u, time_t currentTime
     char *handledSceneType = HandleSinkSceneType(u, currentTime, i);
     AUDIO_DEBUG_LOG("handle sink scene type:%{public}s", handledSceneType);
     return handledSceneType;
-}
-
-static void CheckIfCommonSceneTypeZeroVolume()
-{
-    for (int32_t i = 0; i < SCENE_TYPE_NUM; i++) {
-        if (!g_effectAllStreamVolumeZeroMap[i] &&
-            EffectChainManagerSceneCheck(SCENE_TYPE_SET[i], SCENE_TYPE_SET[COMMON_SCENE_TYPE_INDEX])) {
-            g_effectAllStreamVolumeZeroMap[COMMON_SCENE_TYPE_INDEX] = false;
-            break;
-        }
-    }
 }
 
 static void CheckOnlyPrimarySpeakerPaLoading(struct Userdata *u)
@@ -1801,6 +1696,31 @@ static void PrimaryEffectProcess(struct Userdata *u, pa_memchunk *chunkIn, char 
     u->bufferAttr->numChanIn = DEFAULT_IN_CHANNEL_NUM;
 }
 
+static void UpdateSceneToCountMap(pa_hashmap *sceneMap)
+{
+    if (sceneMap == NULL) {
+        return;
+    }
+    uint32_t curNum;
+    uint32_t *num = NULL;
+    for (int32_t i = 0; i < SCENE_TYPE_NUM - 1; i++) {
+        if ((curNum = EffectChainManagerGetSceneCount(SCENE_TYPE_SET[i]))) {
+            if ((num = (uint32_t *)pa_hashmap_get(sceneMap, SCENE_TYPE_SET[i])) != NULL) {
+                (*num) = curNum;
+            } else {
+                char *sceneType = strdup(SCENE_TYPE_SET[i]);
+                num = pa_xnew0(uint32_t, 1);
+                *num = curNum;
+                pa_hashmap_put(sceneMap, sceneType, num);
+            }
+        } else {
+            if ((num = (uint32_t *)pa_hashmap_get(sceneMap, SCENE_TYPE_SET[i])) != NULL) {
+                pa_hashmap_remove_and_free(sceneMap, SCENE_TYPE_SET[i]);
+            }
+        }
+    }
+}
+
 static void SinkRenderPrimaryProcess(pa_sink *si, size_t length, pa_memchunk *chunkIn)
 {
     if (GetInnerCapturerState()) {
@@ -1826,15 +1746,19 @@ static void SinkRenderPrimaryProcess(pa_sink *si, size_t length, pa_memchunk *ch
     PrepareSpatializationFading(&u->spatializationFadingState, &u->spatializationFadingCount,
         &u->actualSpatializationEnabled);
     g_effectProcessFrameCount++;
-    for (int32_t i = 0; i < SCENE_TYPE_NUM; i++) {
+    const void *sceneType;
+    UpdateSceneToCountMap(u->sceneToCountMap);
+    // to do update resampler when output device change
+    void *state = NULL;
+    while ((pa_hashmap_iterate(u->sceneToCountMap, &state, &sceneType))) {
         uint32_t processChannels = DEFAULT_NUM_CHANNEL;
         uint64_t processChannelLayout = DEFAULT_CHANNELLAYOUT;
-        EffectChainManagerReturnEffectChannelInfo(SCENE_TYPE_SET[i], &processChannels, &processChannelLayout);
-        char *sinkSceneType = CheckAndDealEffectZeroVolume(u, currentTime, i);
+        EffectChainManagerReturnEffectChannelInfo((char *)sceneType, &processChannels, &processChannelLayout);
+        char *sinkSceneType = CheckAndDealEffectZeroVolume(u, currentTime, (char *)sceneType);
         size_t tmpLength = length * processChannels / DEFAULT_IN_CHANNEL_NUM;
         chunkIn->index = 0;
         chunkIn->length = tmpLength;
-        int32_t nSinkInput = SinkRenderPrimaryGetData(si, chunkIn, SCENE_TYPE_SET[i]);
+        int32_t nSinkInput = SinkRenderPrimaryGetData(si, chunkIn, (char *)sceneType);
         if (nSinkInput == 0) { continue; }
         chunkIn->index = 0;
         chunkIn->length = tmpLength;
@@ -4003,6 +3927,15 @@ static int32_t PaHdiSinkNewInitUserDataAndSink(pa_module *m, pa_modargs *ma, con
 
     pa_sink_set_max_request(u->sink, u->buffer_size);
 
+    u->sceneToCountMap = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func,
+        pa_xfree, pa_xfree);
+    
+    char *sceneType = strdup("EFFECT_NONE");
+    uint32_t *num = NULL;
+    num = pa_xnew0(uint32_t, 1);
+    *num = 1;
+    pa_hashmap_put(u->sceneToCountMap, sceneType, num);
+
     return 0;
 }
 
@@ -4199,6 +4132,10 @@ static void UserdataFree(struct Userdata *u)
 
     pa_xfree(u->bufferAttr);
     u->bufferAttr = NULL;
+
+    if (u->sceneToCountMap) {
+        pa_hashmap_free(u->sceneToCountMap);
+    }
 
     pa_xfree(u);
 

@@ -13,6 +13,7 @@
 
 import("//build/ohos.gni")
 import("../../accessibility.gni")
+import("../../appgallery.gni")
 import("../../bluetooth_part.gni")
 import("../../config.gni")
 
@@ -131,6 +132,7 @@ ohos_shared_library("audio_policy_service") {
     "server/src/service/manager/audio_adapter_manager.cpp",
     "server/src/service/manager/audio_adapter_manager_handler.cpp",
     "server/src/service/manager/audio_setting_provider.cpp",
+    "server/src/service/manager/client_type_manager.cpp",
     "server/src/service/manager/pnp_server/audio_input_thread.cpp",
     "server/src/service/manager/pnp_server/audio_pnp_server.cpp",
     "server/src/service/manager/pnp_server/audio_socket_thread.cpp",
@@ -238,6 +240,11 @@ ohos_shared_library("audio_policy_service") {
       "accessibility:accessibility_common",
       "accessibility:accessibilityconfig",
     ]
+  }
+
+  if (appgallery_part_enable == true) {
+    defines += [ "FEATURE_APPGALLERY" ]
+    external_deps += [ "appgallery:appinfomanager_client" ]
   }
 
   if (bluetooth_part_enable == true) {

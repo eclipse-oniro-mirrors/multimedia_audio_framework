@@ -61,8 +61,7 @@ public:
         std::vector<Effect> &successEffects) override;
     void RequestThreadPriority(uint32_t tid, std::string bundleName) override;
     bool CreateEffectChainManager(std::vector<EffectChain> &effectChains,
-        std::unordered_map<std::string, std::string> &effectMap,
-        std::unordered_map<std::string, std::string> &enhanceMap) override;
+        const EffectChainManagerParam &effectParam, const EffectChainManagerParam &enhanceParam) override;
     void SetOutputDeviceSink(int32_t deviceType, std::string &sinkName) override;
     bool CreatePlaybackCapturerManager() override;
     int32_t SetSupportStreamUsage(std::vector<int32_t> usage) override;
@@ -92,6 +91,7 @@ public:
     int32_t SetSinkMuteForSwitchDevice(const std::string &devceClass, int32_t durationUs, bool mute) override;
     void SetRotationToEffect(const uint32_t rotate) override;
     void UpdateSessionConnectionState(const int32_t &sessionID, const int32_t &state) override;
+    void SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag) override;
 private:
     static inline BrokerDelegator<AudioManagerProxy> delegator_;
 };

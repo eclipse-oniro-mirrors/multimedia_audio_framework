@@ -698,7 +698,7 @@ int32_t AudioPolicyManager::UnsetMicStateChangeCallback(
 }
 
 int32_t AudioPolicyManager::SetAudioInterruptCallback(const uint32_t sessionID,
-    const std::shared_ptr<AudioInterruptCallback> &callback, const int32_t zoneID)
+    const std::shared_ptr<AudioInterruptCallback> &callback, uint32_t clientUid, const int32_t zoneID)
 {
     const sptr<IAudioPolicy> gsp = GetAudioPolicyManagerProxy();
     CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERROR, "audio policy manager proxy is NULL.");
@@ -711,7 +711,7 @@ int32_t AudioPolicyManager::SetAudioInterruptCallback(const uint32_t sessionID,
     sptr<IRemoteObject> object = listener->AsObject();
     CHECK_AND_RETURN_RET_LOG(object != nullptr, ERROR, "listenerStub->AsObject is nullptr..");
 
-    return gsp->SetAudioInterruptCallback(sessionID, object, zoneID);
+    return gsp->SetAudioInterruptCallback(sessionID, object, clientUid, zoneID);
 }
 
 int32_t AudioPolicyManager::UnsetAudioInterruptCallback(const uint32_t sessionID, const int32_t zoneID)

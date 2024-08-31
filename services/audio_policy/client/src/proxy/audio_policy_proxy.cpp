@@ -1860,6 +1860,5 @@ int32_t AudioPolicyProxy::SetDefaultOutputDevice(const DeviceType deviceType, co
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "SendRequest failed, error: %{public}d", error);
     return reply.ReadInt32();
 }
-
 } // namespace AudioStandard
 } // namespace OHOS

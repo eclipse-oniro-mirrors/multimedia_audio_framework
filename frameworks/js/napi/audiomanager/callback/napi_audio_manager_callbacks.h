@@ -51,7 +51,6 @@ private:
         DeviceChangeAction deviceChangeAction;
     };
 
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
     void OnJsCallbackDeviceChange(std::unique_ptr<AudioManagerJsCallback> &jsCb);
 
     std::mutex mutex_;

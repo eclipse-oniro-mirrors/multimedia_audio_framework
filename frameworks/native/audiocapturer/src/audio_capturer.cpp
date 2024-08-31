@@ -405,7 +405,8 @@ int32_t AudioCapturerPrivate::InitAudioInterruptCallback()
         CHECK_AND_RETURN_RET_LOG(audioInterruptCallback_ != nullptr, ERROR,
             "Failed to allocate memory for audioInterruptCallback_");
     }
-    return AudioPolicyManager::GetInstance().SetAudioInterruptCallback(sessionID_, audioInterruptCallback_);
+    return AudioPolicyManager::GetInstance().SetAudioInterruptCallback(sessionID_, audioInterruptCallback_,
+        appInfo_.appUid);
 }
 
 int32_t AudioCapturerPrivate::SetCapturerCallback(const std::shared_ptr<AudioCapturerCallback> &callback)
@@ -1011,6 +1012,7 @@ int32_t AudioCapturerPrivate::UnregisterAudioCapturerEventListener()
         int32_t ret =
             AudioPolicyManager::GetInstance().UnregisterAudioCapturerEventListener(getpid());
         CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "failed");
+        audioStateChangeCallback_->HandleCapturerDestructor();
         audioStateChangeCallback_ = nullptr;
     }
     return SUCCESS;

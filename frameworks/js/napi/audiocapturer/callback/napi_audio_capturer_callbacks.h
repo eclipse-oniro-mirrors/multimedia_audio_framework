@@ -49,8 +49,6 @@ private:
         CapturerState state;
     };
 
-    static void WorkCallbackStateChangeDone(uv_work_t *work, int status);
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
     void OnJsCallbackInterrupt(std::unique_ptr<AudioCapturerJsCallback> &jsCb);
     void OnJsCallbackStateChange(std::unique_ptr<AudioCapturerJsCallback> &jsCb);
 

@@ -67,7 +67,7 @@ private:
         int32_t audioEffectMode;
         int32_t channelBlendMode;
         DeviceRole deviceRole;
-        DeviceType deviceType;
+        int32_t deviceType;
         AudioRendererOptions rendererOptions;
         DeviceInfo deviceInfo;
         AudioRendererInfo rendererInfo;

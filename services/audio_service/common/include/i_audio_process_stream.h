@@ -44,6 +44,8 @@ public:
 
     virtual BufferDesc &GetConvertedBuffer() = 0;
 
+    virtual bool GetMuteFlag() = 0;
+
     virtual ~IAudioProcessStream() = default;
 };
 } // namespace AudioStandard

@@ -188,7 +188,7 @@ public:
     bool IsAudioSessionActivated() override;
 
     int32_t SetAudioInterruptCallback(const uint32_t sessionID,
-        const sptr<IRemoteObject> &object, const int32_t zoneId = 0) override;
+        const sptr<IRemoteObject> &object, uint32_t clientUid, const int32_t zoneId = 0) override;
 
     int32_t UnsetAudioInterruptCallback(const uint32_t sessionID, const int32_t zoneId = 0) override;
 

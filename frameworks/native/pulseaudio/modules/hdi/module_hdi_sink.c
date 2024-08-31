@@ -27,6 +27,7 @@
 #include "audio_effect_chain_adapter.h"
 #include "audio_hdi_log.h"
 #include "playback_capturer_adapter.h"
+#include "sink_userdata.h"
 
 pa_sink *PaHdiSinkNew(pa_module *m, pa_modargs *ma, const char *driver);
 void PaHdiSinkFree(pa_sink *s);
@@ -164,6 +165,7 @@ static pa_hook_result_t SinkInputStateChangedCb(pa_core *c, pa_sink_input *si, v
         if (!EffectChainManagerAddSessionInfo(sceneType, sessionID, pack)) {
             EffectChainManagerMultichannelUpdate(sceneType);
             EffectChainManagerVolumeUpdate(sessionID);
+            EffectChainManagerEffectUpdate();
         }
     }
 
@@ -172,6 +174,7 @@ static pa_hook_result_t SinkInputStateChangedCb(pa_core *c, pa_sink_input *si, v
         if (!EffectChainManagerDeleteSessionInfo(sceneType, sessionID)) {
             EffectChainManagerMultichannelUpdate(sceneType);
             EffectChainManagerVolumeUpdate(sessionID);
+            EffectChainManagerEffectUpdate();
         }
     }
     return PA_HOOK_OK;
@@ -191,13 +194,14 @@ int pa__init(pa_module *m)
     if (!(m->userdata = PaHdiSinkNew(m, ma, __FILE__))) {
         goto fail;
     }
+    pa_sink *sink = (pa_sink*)m->userdata;
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SINK_INPUT_PROPLIST_CHANGED], PA_HOOK_LATE,
-        (pa_hook_cb_t)SinkInputNewCb, NULL);
+        (pa_hook_cb_t)SinkInputNewCb, sink->userdata);
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SINK_INPUT_UNLINK], PA_HOOK_LATE,
-        (pa_hook_cb_t)SinkInputUnlinkCb, NULL);
+        (pa_hook_cb_t)SinkInputUnlinkCb, sink->userdata);
     // SourceOutputStateChangedCb will be replaced by UpdatePlaybackCaptureConfig in CapturerInServer
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SINK_INPUT_STATE_CHANGED], PA_HOOK_LATE,
-        (pa_hook_cb_t)SinkInputStateChangedCb, NULL);
+        (pa_hook_cb_t)SinkInputStateChangedCb, sink->userdata);
 
     pa_modargs_free(ma);
 

@@ -39,7 +39,6 @@ private:
         int64_t position = 0;
     };
 
-    static void WorkCallbackRendererPositionDone(uv_work_t *work, int status);
     void OnJsRendererPositionCallback(std::unique_ptr<RendererPositionJsCallback> &jsCb);
 
     std::mutex mutex_;

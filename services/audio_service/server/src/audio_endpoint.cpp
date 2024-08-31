@@ -204,13 +204,14 @@ private:
     void CheckStandBy();
     bool IsAnyProcessRunning();
     bool CheckAllBufferReady(int64_t checkTime, uint64_t curWritePos);
+    void WaitAllProcessReady(uint64_t curWritePos);
     bool ProcessToEndpointDataHandle(uint64_t curWritePos);
     void GetAllReadyProcessData(std::vector<AudioStreamData> &audioDataList);
 
     std::string GetStatusStr(EndpointStatus status);
 
     int32_t WriteToSpecialProcBuf(const std::shared_ptr<OHAudioBuffer> &procBuf, const BufferDesc &readBuf,
-        const BufferDesc &convertedBuffer);
+        const BufferDesc &convertedBuffer, bool muteFlag);
     void WriteToProcessBuffers(const BufferDesc &readBuf);
     int32_t ReadFromEndpoint(uint64_t curReadPos);
     bool KeepWorkloopRunning();
@@ -1313,6 +1314,7 @@ bool AudioEndpointInner::CheckAllBufferReady(int64_t checkTime, uint64_t curWrit
             if (current - lastWrittenTime > WAIT_CLIENT_STANDBY_TIME_NS) {
                 Trace trace("AudioEndpoint::MarkClientStandby");
                 AUDIO_INFO_LOG("change the status to stand-by, session %{public}u", tempBuffer->GetSessionId());
+                CHECK_AND_RETURN_RET_LOG(tempBuffer->GetStreamStatus() != nullptr, false, "GetStreamStatus failed");
                 tempBuffer->GetStreamStatus()->store(StreamStatus::STREAM_STAND_BY);
                 WriterRenderStreamStandbySysEvent(tempBuffer->GetSessionId(), 1);
                 needCheckStandby = true;
@@ -1335,15 +1337,20 @@ bool AudioEndpointInner::CheckAllBufferReady(int64_t checkTime, uint64_t curWrit
     }
 
     if (!isAllReady) {
-        Trace trace("AudioEndpoint::WaitAllProcessReady");
-        int64_t tempWakeupTime = readTimeModel_.GetTimeOfPos(curWritePos) + WRITE_TO_HDI_AHEAD_TIME;
-        if (tempWakeupTime - ClockTime::GetCurNano() < ONE_MILLISECOND_DURATION) {
-            ClockTime::RelativeSleep(ONE_MILLISECOND_DURATION);
-        } else {
-            ClockTime::AbsoluteSleep(tempWakeupTime); // sleep to hdi read time ahead 1ms.
-        }
+        WaitAllProcessReady(curWritePos);
     }
     return isAllReady;
+}
+
+void AudioEndpointInner::WaitAllProcessReady(uint64_t curWritePos)
+{
+    Trace trace("AudioEndpoint::WaitAllProcessReady");
+    int64_t tempWakeupTime = readTimeModel_.GetTimeOfPos(curWritePos) + WRITE_TO_HDI_AHEAD_TIME;
+    if (tempWakeupTime - ClockTime::GetCurNano() < ONE_MILLISECOND_DURATION) {
+        ClockTime::RelativeSleep(ONE_MILLISECOND_DURATION);
+    } else {
+        ClockTime::AbsoluteSleep(tempWakeupTime); // sleep to hdi read time ahead 1ms.
+    }
 }
 
 void AudioEndpointInner::MixToDupStream(const std::vector<AudioStreamData> &srcDataList)
@@ -1512,6 +1519,7 @@ void AudioEndpointInner::GetAllReadyProcessData(std::vector<AudioStreamData> &au
         AudioStreamType streamType = processList_[i]->GetAudioStreamType();
         AudioVolumeType volumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
         DeviceType deviceType = PolicyHandler::GetInstance().GetActiveOutPutDevice();
+        bool muteFlag = processList_[i]->GetMuteFlag();
         if (deviceInfo_.networkId == LOCAL_NETWORK_ID &&
             (deviceInfo_.deviceType != DEVICE_TYPE_BLUETOOTH_A2DP || !isSupportAbsVolume_) &&
             PolicyHandler::GetInstance().GetSharedVolume(volumeType, deviceType, vol)) {
@@ -1525,6 +1533,10 @@ void AudioEndpointInner::GetAllReadyProcessData(std::vector<AudioStreamData> &au
         SpanStatus targetStatus = SpanStatus::SPAN_WRITE_DONE;
         if (curReadSpan->spanStatus.compare_exchange_strong(targetStatus, SpanStatus::SPAN_READING)) {
             processBufferList_[i]->GetReadbuffer(curRead, streamData.bufferDesc); // check return?
+            if (muteFlag) {
+                memset_s(static_cast<void *>(streamData.bufferDesc.buffer), streamData.bufferDesc.bufLength,
+                    0, streamData.bufferDesc.bufLength);
+            }
             CheckPlaySignal(streamData.bufferDesc.buffer, streamData.bufferDesc.bufLength);
             audioDataList.push_back(streamData);
             curReadSpan->readStartTime = ClockTime::GetCurNano();
@@ -1856,7 +1868,7 @@ bool AudioEndpointInner::KeepWorkloopRunning()
 }
 
 int32_t AudioEndpointInner::WriteToSpecialProcBuf(const std::shared_ptr<OHAudioBuffer> &procBuf,
-    const BufferDesc &readBuf, const BufferDesc &convertedBuffer)
+    const BufferDesc &readBuf, const BufferDesc &convertedBuffer, bool muteFlag)
 {
     CHECK_AND_RETURN_RET_LOG(procBuf != nullptr, ERR_INVALID_HANDLE, "process buffer is null.");
     uint64_t curWritePos = procBuf->GetCurWriteFrame();
@@ -1880,11 +1892,15 @@ int32_t AudioEndpointInner::WriteToSpecialProcBuf(const std::shared_ptr<OHAudioB
     BufferDesc writeBuf;
     int32_t ret = procBuf->GetWriteBuffer(curWritePos, writeBuf);
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "get write buffer fail, ret %{public}d.", ret);
-    if (endpointType_ == TYPE_VOIP_MMAP) {
-        ret = HandleCapturerDataParams(writeBuf, readBuf, convertedBuffer);
+    if (muteFlag) {
+        memcpy_s(static_cast<void *>(writeBuf.buffer), writeBuf.bufLength, 0, readBuf.bufLength);
     } else {
-        ret = memcpy_s(static_cast<void *>(writeBuf.buffer), writeBuf.bufLength,
-            static_cast<void *>(readBuf.buffer), readBuf.bufLength);
+        if (endpointType_ == TYPE_VOIP_MMAP) {
+            ret = HandleCapturerDataParams(writeBuf, readBuf, convertedBuffer);
+        } else {
+            ret = memcpy_s(static_cast<void *>(writeBuf.buffer), writeBuf.bufLength,
+                static_cast<void *>(readBuf.buffer), readBuf.bufLength);
+        }
     }
 
     CHECK_AND_RETURN_RET_LOG(ret == EOK, ERR_WRITE_FAILED, "memcpy data to process buffer fail, "
@@ -1937,7 +1953,8 @@ void AudioEndpointInner::WriteToProcessBuffers(const BufferDesc &readBuf)
             continue;
         }
 
-        int32_t ret = WriteToSpecialProcBuf(processBufferList_[i], readBuf, processList_[i]->GetConvertedBuffer());
+        int32_t ret = WriteToSpecialProcBuf(processBufferList_[i], readBuf, processList_[i]->GetConvertedBuffer(),
+            processList_[i]->GetMuteFlag());
         CHECK_AND_CONTINUE_LOG(ret == SUCCESS,
             "endpoint write to process buffer %{public}zu fail, ret %{public}d.", i, ret);
         AUDIO_DEBUG_LOG("endpoint process buffer %{public}zu write success.", i);

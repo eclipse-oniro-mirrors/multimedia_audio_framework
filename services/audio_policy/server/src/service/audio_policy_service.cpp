@@ -33,6 +33,7 @@
 #include "audio_converter_parser.h"
 #include "audio_dialog_ability_connection.h"
 #include "media_monitor_manager.h"
+#include "client_type_manager.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -299,7 +300,8 @@ static uint32_t PcmFormatToBits(AudioSampleFormat format)
 
 AudioPolicyService::~AudioPolicyService()
 {
-    AUDIO_DEBUG_LOG("~AudioPolicyService()");
+    AUDIO_INFO_LOG("~AudioPolicyService()");
+    Deinit();
 }
 
 bool AudioPolicyService::Init(void)
@@ -484,6 +486,7 @@ void AudioPolicyService::Deinit(void)
     std::for_each(IOHandles_.begin(), IOHandles_.end(), [&](std::pair<std::string, AudioIOHandle> handle) {
         audioPolicyManager_.CloseAudioPort(handle.second);
     });
+    audioPolicyManager_.Deinit();
 
     IOHandles_.clear();
     ioHandleLock.unlock();
@@ -4659,8 +4662,10 @@ void AudioPolicyService::LoadEffectLibrary()
     audioEffectManager_.ConstructSceneTypeToEnhanceChainNameMap(sceneTypeToEnhanceChainNameMap);
 
     identity = IPCSkeleton::ResetCallingIdentity();
+    EffectChainManagerParam effectChainManagerParam;
+    EffectChainManagerParam enhanceChainManagerParam;
     bool ret = gsp->CreateEffectChainManager(supportedEffectConfig.effectChains,
-        sceneTypeToEffectChainNameMap, sceneTypeToEnhanceChainNameMap);
+        effectChainManagerParam, enhanceChainManagerParam);
     IPCSkeleton::SetCallingIdentity(identity);
 
     CHECK_AND_RETURN_LOG(ret, "EffectChainManager create failed");
@@ -7125,6 +7130,14 @@ int32_t AudioPolicyService::OffloadGetRenderPosition(uint32_t &delayValue, uint6
 #else
     return SUCCESS;
 #endif
+}
+
+int32_t AudioPolicyService::GetAndSaveClientType(uint32_t uid, const std::string &bundleName)
+{
+#ifdef FEATURE_APPGALLERY
+    ClientTypeManager::GetInstance()->GetAndSaveClientType(uid, bundleName);
+#endif
+    return SUCCESS;
 }
 
 void AudioPolicyService::GetA2dpOffloadCodecAndSendToDsp()

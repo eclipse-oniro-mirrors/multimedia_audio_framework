@@ -21,6 +21,7 @@
 #include "i_stream_listener.h"
 #include "oh_audio_buffer.h"
 #include "i_stream_manager.h"
+#include "audio_effect.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -99,6 +100,7 @@ public:
     void OnDataLinkConnectionUpdate(IOperation operation);
 
     bool Dump(std::string &dumpString);
+    void SetNonInterruptMute(const bool muteFlag);
 
 public:
     const AudioProcessConfig processConfig_;
@@ -121,6 +123,7 @@ private:
     IStatus status_ = I_STATUS_IDLE;
     bool offloadEnable_ = false;
     std::atomic<bool> standByEnable_ = false;
+    bool muteFlag_ = false;
 
     // for inner-cap
     std::mutex dupMutex_;
@@ -164,6 +167,7 @@ private:
     std::time_t startMuteTime_ = 0;
     int32_t silentState_ = 1; // 0:silent 1:unsilent
     std::atomic<bool> silentModeAndMixWithOthers_ = false;
+    int32_t effectModeWhenDual_ = EFFECT_DEFAULT;
 };
 } // namespace AudioStandard
 } // namespace OHOS
