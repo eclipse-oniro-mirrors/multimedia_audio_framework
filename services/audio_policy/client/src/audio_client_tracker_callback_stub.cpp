@@ -32,14 +32,14 @@ AudioClientTrackerCallbackStub::~AudioClientTrackerCallbackStub()
 void AudioClientTrackerCallbackStub::SelectCodeCase(uint32_t code,
     StreamSetStateEventInternal &streamSetStateEventInternal) {
     switch (code) {
-        case PAUSEDSTREAM: 
-            return PausedStreamImpl(sreamSetStateEventInternal);
-        case RESUMESTREAM: 
-            return ResumeStreamImpl(sreamSetStateEventInternal);
-        case MUTESTREAM: 
-            return MuteStreamImpl(sreamSetStateEventInternal);
-        case UNMUTESTREAM: 
-            return UnmuteStreamImpl(sreamSetStateEventInternal);
+        case PAUSEDSTREAM:
+            return PausedStreamImpl(streamSetStateEventInternal);
+        case RESUMESTREAM:
+            return ResumeStreamImpl(streamSetStateEventInternal);
+        case MUTESTREAM:
+            return MuteStreamImpl(streamSetStateEventInternal);
+        case UNMUTESTREAM:
+            return UnmuteStreamImpl(streamSetStateEventInternal);
         default:
             AUDIO_ERR_LOG("default case, need check AudioListenerStub");
             return;
