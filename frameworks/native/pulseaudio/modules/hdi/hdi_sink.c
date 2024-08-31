@@ -1155,7 +1155,7 @@ static unsigned SinkRenderPrimaryCluster(pa_sink *si, size_t *length, pa_mix_inf
     pa_sink_assert_ref(si);
     pa_sink_assert_io_context(si);
     pa_assert(infoIn);
-    
+
     int32_t appsUid[MAX_MIX_CHANNELS];
     size_t count = 0;
     while ((sinkIn = pa_hashmap_iterate(si->thread_info.inputs, &state, NULL)) && maxInfo > 0) {
