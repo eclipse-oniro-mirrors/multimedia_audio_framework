@@ -107,11 +107,8 @@ OH_AudioCommon_Result OHAudioSessionManager::SetAudioSessionCallback(OH_AudioSes
         AUDIOCOMMON_RESULT_ERROR_INVALID_PARAM, "failed, audioSessionManager_ is null");
     std::shared_ptr<OHAudioSessionCallback> ohAudioSessionCallback =
         std::make_shared<OHAudioSessionCallback>(callback);
-    if (ohAudioSessionCallback != nullptr) {
-        audioSessionManager_->SetAudioSessionCallback(ohAudioSessionCallback);
-        return AUDIOCOMMON_RESULT_SUCCESS;
-    }
-    return AUDIOCOMMON_RESULT_ERROR_INVALID_PARAM;
+    audioSessionManager_->SetAudioSessionCallback(ohAudioSessionCallback);
+    return AUDIOCOMMON_RESULT_SUCCESS;
 }
 
 OH_AudioCommon_Result OHAudioSessionManager::UnsetAudioSessionCallback(OH_AudioSession_DeactivatedCallback callback)

@@ -49,7 +49,7 @@ public:
     void RegisterAndActive(OH_AudioSession_DeactivatedCallback callback, OH_AudioSession_Strategy strategy);
     int32_t MyCallbackFunction(OH_AudioSession_DeactivatedEvent event);
     OH_AudioRenderer* StartPlay();
-    void StopPlay(OH_AudioRenderer* audioRenderer);
+    static void StopPlay(OH_AudioRenderer* audioRenderer);
     OH_AudioRenderer* PlayMusic(OH_AudioSession_DeactivatedCallback callback,
         OH_AudioSession_ConcurrencyMode mode);
     void LogicPathCheck(int operate, OH_AudioSession_DeactivatedCallback callback);
