@@ -314,7 +314,7 @@ int32_t AudioPolicyServer::RegisterVolumeKeyMuteEvents()
             } else {
                 streamInFocus = VolumeUtils::GetVolumeTypeFromStreamType(GetStreamInFocus());
             }
-            bool isMuted = GetStreamMute(streamInFocus);
+            bool isMuted = GetStreamMuteInternal(streamInFocus);
             SetStreamMuteInternal(streamInFocus, !isMuted, true);
         });
     if (muteKeySubId < 0) {
