@@ -301,6 +301,15 @@ enum ConnectState {
     DEACTIVE_CONNECTED
 };
 
+enum PreferredType {
+    AUDIO_MEDIA_RENDER = 0,
+    AUDIO_CALL_RENDER = 1,
+    AUDIO_CALL_CAPTURE = 2,
+    AUDIO_RING_RENDER = 3,
+    AUDIO_RECORD_CAPTURE = 4,
+    AUDIO_TONE_RENDER = 5,
+};
+
 struct DevicePrivacyInfo {
     std::string deviceName;
     DeviceType deviceType;
