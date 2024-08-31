@@ -71,6 +71,7 @@ public:
     // override for IAudioProcessStream, used in endpoint
     std::shared_ptr<OHAudioBuffer> GetStreamBuffer() override;
     AudioStreamInfo GetStreamInfo() override;
+    uint32_t GetAudioSessionId() override;
     AudioStreamType GetAudioStreamType() override;
 
     int Dump(int fd, const std::vector<std::u16string> &args) override;
@@ -99,6 +100,7 @@ public:
 private:
     AudioProcessInServer(const AudioProcessConfig &processConfig, ProcessReleaseCallback *releaseCallback);
     int32_t InitBufferStatus();
+    void WriterRenderStreamStandbySysEvent(uint32_t sessionId, int32_t standby);
 
 private:
     bool muteFlag_ = false;

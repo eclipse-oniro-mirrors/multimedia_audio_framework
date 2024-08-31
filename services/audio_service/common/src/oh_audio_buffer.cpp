@@ -617,6 +617,18 @@ int32_t OHAudioBuffer::GetBufferByFrame(uint64_t posInFrame, BufferDesc &bufferD
     return SUCCESS;
 }
 
+uint32_t OHAudioBuffer::GetSessionId()
+{
+    return sessionId_;
+}
+
+int32_t OHAudioBuffer::SetSessionId(uint32_t sessionId)
+{
+    sessionId_ = sessionId;
+
+    return SUCCESS;
+}
+
 int32_t OHAudioBuffer::GetWriteBuffer(uint64_t writePosInFrame, BufferDesc &bufferDesc)
 {
     uint64_t basePos = basicBufferInfo_->basePosInFrame.load();

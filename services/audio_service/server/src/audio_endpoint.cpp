@@ -204,6 +204,7 @@ private:
     void CheckStandBy();
     bool IsAnyProcessRunning();
     bool CheckAllBufferReady(int64_t checkTime, uint64_t curWritePos);
+    void WaitAllProcessReady(uint64_t curWritePos);
     bool ProcessToEndpointDataHandle(uint64_t curWritePos);
     void GetAllReadyProcessData(std::vector<AudioStreamData> &audioDataList);
 
@@ -235,6 +236,8 @@ private:
 
     void ProcessUpdateAppsUidForPlayback();
     void ProcessUpdateAppsUidForRecord();
+
+    void WriterRenderStreamStandbySysEvent(uint32_t sessionId, int32_t standby);
 private:
     static constexpr int64_t ONE_MILLISECOND_DURATION = 1000000; // 1ms
     static constexpr int64_t THREE_MILLISECOND_DURATION = 3000000; // 3ms
@@ -1169,6 +1172,7 @@ int32_t AudioEndpointInner::LinkProcessStream(IAudioProcessStream *processStream
 {
     CHECK_AND_RETURN_RET_LOG(processStream != nullptr, ERR_INVALID_PARAM, "IAudioProcessStream is null");
     std::shared_ptr<OHAudioBuffer> processBuffer = processStream->GetStreamBuffer();
+    processBuffer->SetSessionId(processStream->GetAudioSessionId());
     CHECK_AND_RETURN_RET_LOG(processBuffer != nullptr, ERR_INVALID_PARAM, "processBuffer is null");
     CHECK_AND_RETURN_RET_LOG(processBuffer->GetStreamStatus() != nullptr, ERR_INVALID_PARAM,
         "the stream status is null");
@@ -1309,9 +1313,10 @@ bool AudioEndpointInner::CheckAllBufferReady(int64_t checkTime, uint64_t curWrit
             int64_t lastWrittenTime = tempBuffer->GetLastWrittenTime();
             if (current - lastWrittenTime > WAIT_CLIENT_STANDBY_TIME_NS) {
                 Trace trace("AudioEndpoint::MarkClientStandby");
-                AUDIO_INFO_LOG("Find one process did not write data for more than 1s, change the status to stand-by");
+                AUDIO_INFO_LOG("change the status to stand-by, session %{public}u", tempBuffer->GetSessionId());
                 CHECK_AND_RETURN_RET_LOG(tempBuffer->GetStreamStatus() != nullptr, false, "GetStreamStatus failed");
                 tempBuffer->GetStreamStatus()->store(StreamStatus::STREAM_STAND_BY);
+                WriterRenderStreamStandbySysEvent(tempBuffer->GetSessionId(), 1);
                 needCheckStandby = true;
                 continue;
             }
@@ -1332,15 +1337,20 @@ bool AudioEndpointInner::CheckAllBufferReady(int64_t checkTime, uint64_t curWrit
     }
 
     if (!isAllReady) {
-        Trace trace("AudioEndpoint::WaitAllProcessReady");
-        int64_t tempWakeupTime = readTimeModel_.GetTimeOfPos(curWritePos) + WRITE_TO_HDI_AHEAD_TIME;
-        if (tempWakeupTime - ClockTime::GetCurNano() < ONE_MILLISECOND_DURATION) {
-            ClockTime::RelativeSleep(ONE_MILLISECOND_DURATION);
-        } else {
-            ClockTime::AbsoluteSleep(tempWakeupTime); // sleep to hdi read time ahead 1ms.
-        }
+        WaitAllProcessReady(curWritePos);
     }
     return isAllReady;
+}
+
+void AudioEndpointInner::WaitAllProcessReady(uint64_t curWritePos)
+{
+    Trace trace("AudioEndpoint::WaitAllProcessReady");
+    int64_t tempWakeupTime = readTimeModel_.GetTimeOfPos(curWritePos) + WRITE_TO_HDI_AHEAD_TIME;
+    if (tempWakeupTime - ClockTime::GetCurNano() < ONE_MILLISECOND_DURATION) {
+        ClockTime::RelativeSleep(ONE_MILLISECOND_DURATION);
+    } else {
+        ClockTime::AbsoluteSleep(tempWakeupTime); // sleep to hdi read time ahead 1ms.
+    }
 }
 
 void AudioEndpointInner::MixToDupStream(const std::vector<AudioStreamData> &srcDataList)
@@ -2173,6 +2183,16 @@ void AudioEndpointInner::ProcessUpdateAppsUidForRecord()
     }
     CHECK_AND_RETURN_LOG(fastSource_, "fastSource_ is nullptr");
     fastSource_->UpdateAppsUid(appsUid);
+}
+
+void AudioEndpointInner::WriterRenderStreamStandbySysEvent(uint32_t sessionId, int32_t standby)
+{
+    std::shared_ptr<Media::MediaMonitor::EventBean> bean = std::make_shared<Media::MediaMonitor::EventBean>(
+        Media::MediaMonitor::AUDIO, Media::MediaMonitor::STREAM_STANDBY,
+        Media::MediaMonitor::BEHAVIOR_EVENT);
+    bean->Add("STREAMID", static_cast<int32_t>(sessionId));
+    bean->Add("STANDBY", standby);
+    Media::MediaMonitor::MediaMonitorManager::GetInstance().WriteLogMsg(bean);
 }
 } // namespace AudioStandard
 } // namespace OHOS
