@@ -72,6 +72,8 @@ const char *g_audioServerCodeStrs[] = {
     "SET_ASR_AEC_MODE",
     "GET_ASR_AEC_MODE",
     "SET_ASR_NOISE_SUPPRESSION_MODE",
+    "SET_OFFLOAD_MODE",
+    "UNSET_OFFLOAD_MODE",
     "GET_ASR_NOISE_SUPPRESSION_MODE",
     "SET_ASR_WHISPER_DETECTION_MODE",
     "GET_ASR_WHISPER_DETECTION_MODE",
@@ -147,6 +149,24 @@ int AudioManagerStub::HandleGetAsrAecMode(MessageParcel &data, MessageParcel &re
     int32_t ret = GetAsrAecMode(asrAecMode);
     CHECK_AND_RETURN_RET_LOG(ret == 0, AUDIO_ERR, "Get AsrAec Mode audio parameters failed");
     reply.WriteInt32(int32_t(asrAecMode));
+    return AUDIO_OK;
+}
+
+int AudioManagerStub::HandleSetOffloadMode(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t sessionId = data.ReadUint32();
+    int32_t state = data.ReadInt32();
+    bool isAppBack = data.ReadBool();
+    int32_t result = SetOffloadMode(sessionId, state, isAppBack);
+    reply.WriteInt32(result);
+    return AUDIO_OK;
+}
+
+int AudioManagerStub::HandleUnsetOffloadMode(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t sessionId = data.ReadUint32();
+    int32_t result = UnsetOffloadMode(sessionId);
+    reply.WriteInt32(result);
     return AUDIO_OK;
 }
 
@@ -739,6 +759,10 @@ int AudioManagerStub::HandleThirdPartCode(uint32_t code, MessageParcel &data, Me
             return HandleGetAsrAecMode(data, reply);
         case static_cast<uint32_t>(AudioServerInterfaceCode::SET_ASR_NOISE_SUPPRESSION_MODE):
             return HandleSetAsrNoiseSuppressionMode(data, reply);
+        case static_cast<uint32_t>(AudioServerInterfaceCode::SET_OFFLOAD_MODE):
+            return HandleSetOffloadMode(data, reply);
+        case static_cast<uint32_t>(AudioServerInterfaceCode::UNSET_OFFLOAD_MODE):
+            return HandleUnsetOffloadMode(data, reply);
         default:
             return HandleFourthPartCode(code, data, reply, option);
     }
