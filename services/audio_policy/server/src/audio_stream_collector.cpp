@@ -813,7 +813,10 @@ int32_t AudioStreamCollector::ResumeStreamState()
                 changeInfo->sessionId);
             continue;
         }
-        callback->UnmuteStreamImpl(streamSetStateEventInternal);
+        StreamSetStateEventInternal setStateEvent = {};
+        setStateEvent.streamSetState = StreamSetState::STREAM_UNMUTE;
+        setStateEvent.streamUsage = changeInfo->rendererInfo.streamUsage;
+        callback->UnmuteStreamImpl(setStateEvent);
     }
 
     return SUCCESS;
