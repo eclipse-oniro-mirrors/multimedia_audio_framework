@@ -1126,6 +1126,19 @@ static void RecordEffectChainStatus(bool existFlag, const char *sinkSceneType, c
     }
 }
 
+static bool GetExistFlag(pa_sink_input *sinkIn, const char *sinkSceneType, const char *sinkSceneMode,
+    const char *spatializationEnabled)
+{
+    bool existFlag =
+            EffectChainManagerExist(sinkSceneType, sinkSceneMode, spatializationEnabled ? "1" : "0");
+    const char *deviceString = pa_proplist_gets(sinkIn->sink->proplist, PA_PROP_DEVICE_STRING);
+    if (pa_safe_streq(deviceString, "remote")) {
+        existFlag = false;
+    }
+
+    return existFlag;
+}
+
 static unsigned SinkRenderPrimaryCluster(pa_sink *si, size_t *length, pa_mix_info *infoIn,
     unsigned maxInfo, const char *sceneType)
 {
@@ -1149,8 +1162,8 @@ static unsigned SinkRenderPrimaryCluster(pa_sink *si, size_t *length, pa_mix_inf
         CheckAndPushUidToArr(sinkIn, appsUid, &count);
         const char *sinkSceneType = pa_proplist_gets(sinkIn->proplist, "scene.type");
         const char *sinkSceneMode = pa_proplist_gets(sinkIn->proplist, "scene.mode");
-        bool existFlag =
-            EffectChainManagerExist(sinkSceneType, sinkSceneMode, u->actualSpatializationEnabled ? "1" : "0");
+        bool existFlag = GetExistFlag(sinkIn, sinkSceneType, sinkSceneMode,
+            u->actualSpatializationEnabled ? "1" : "0");
         bool sceneTypeFlag = EffectChainManagerSceneCheck(sinkSceneType, sceneType);
         if ((IsInnerCapturer(sinkIn) && IsCaptureSilently()) || !InputIsPrimary(sinkIn)) {
             continue;
