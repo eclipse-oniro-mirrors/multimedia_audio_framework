@@ -1143,15 +1143,19 @@ static unsigned SinkRenderPrimaryCluster(pa_sink *si, size_t *length, pa_mix_inf
     unsigned maxInfo, const char *sceneType)
 {
     AUTO_CTRACE("hdi_sink::SinkRenderPrimaryCluster:%s len:%zu", sceneType, *length);
+    
     struct Userdata *u;
     pa_assert_se(u = si->userdata);
+
     pa_sink_input *sinkIn;
     unsigned n = 0;
     void *state = NULL;
     size_t mixlength = *length;
+
     pa_sink_assert_ref(si);
     pa_sink_assert_io_context(si);
     pa_assert(infoIn);
+    
     int32_t appsUid[MAX_MIX_CHANNELS];
     size_t count = 0;
     while ((sinkIn = pa_hashmap_iterate(si->thread_info.inputs, &state, NULL)) && maxInfo > 0) {
