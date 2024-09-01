@@ -831,7 +831,7 @@ int32_t AudioStreamCollector::UpdateStreamState(int32_t clientUid,
             streamSetStateEventInternal.streamUsage == changeInfo->rendererInfo.streamUsage) {
             AUDIO_INFO_LOG("UpdateStreamState Found matching uid=%{public}d and usage=%{public}d",
                 clientUid, streamSetStateEventInternal.streamUsage);
-            if (std::count(EXEMPT_MUTE_STREAM_USAGE.begin(), EXEMPT_MUTE_STREAM_USAGE.end(), 
+            if (std::count(EXEMPT_MUTE_STREAM_USAGE.begin(), EXEMPT_MUTE_STREAM_USAGE.end(),
                 streamSetStateEventInternal.streamUsage) != 0) {
                 continue;
             }

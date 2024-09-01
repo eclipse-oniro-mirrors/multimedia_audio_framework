@@ -30,7 +30,8 @@ AudioClientTrackerCallbackStub::~AudioClientTrackerCallbackStub()
 }
 
 void AudioClientTrackerCallbackStub::SelectCodeCase(uint32_t code,
-    StreamSetStateEventInternal &streamSetStateEventInternal) {
+    StreamSetStateEventInternal &streamSetStateEventInternal) 
+{
     switch (code) {
         case PAUSEDSTREAM:
             return PausedStreamImpl(streamSetStateEventInternal);
@@ -54,14 +55,14 @@ int AudioClientTrackerCallbackStub::OnRemoteRequest(
         "AudioClientTrackerCallbackStub: ReadInterfaceToken failed");
 
     switch (code) {
-        case PAUSEDSTREAM: 
-        case RESUMESTREAM: 
-        case MUTESTREAM: 
+        case PAUSEDSTREAM:
+        case RESUMESTREAM:
+        case MUTESTREAM:
         case UNMUTESTREAM: {
             StreamSetStateEventInternal sreamSetStateEventInternal = {};
             sreamSetStateEventInternal.streamSetState= static_cast<StreamSetState>(data.ReadInt32());
             sreamSetStateEventInternal.streamUsage = static_cast<StreamUsage>(data.ReadInt32());
-            SelectCodeCase(code, streamSetStateEventInternal);
+            SelectCodeCase(code, sreamSetStateEventInternal);
             return AUDIO_OK;
         }
         case SETLOWPOWERVOL: {

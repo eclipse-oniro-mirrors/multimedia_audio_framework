@@ -1762,7 +1762,7 @@ void AudioPolicyServer::RegisteredStreamListenerClientDied(pid_t pid)
 int32_t AudioPolicyServer::ResumeStreamState()
 {
     AUDIO_INFO_LOG("AVSession is not alive.");
-    return audioPolicyService_.ResumeStreamState(clientUid, setStateEvent);
+    return audioPolicyService_.ResumeStreamState();
 }
 
 int32_t AudioPolicyServer::UpdateStreamState(const int32_t clientUid,
@@ -1789,7 +1789,7 @@ int32_t AudioPolicyServer::UpdateStreamState(const int32_t clientUid,
             break;
         case StreamSetState::STREAM_UNMUTE:
             setState = StreamSetState::STREAM_UNMUTE;
-            break;    
+            break;
         default:
             AUDIO_INFO_LOG("UpdateStreamState::streamSetState value is error");
             break;

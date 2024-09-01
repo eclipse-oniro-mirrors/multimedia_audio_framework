@@ -449,7 +449,7 @@ float OHAudioBuffer::GetMuteFactor()
 bool OHAudioBuffer::SetMuteFactor(float muteFactor)
 {
     CHECK_AND_RETURN_RET_LOG(basicBufferInfo_ != nullptr, false, "buffer is not inited!");
-    if (muteFactor != MIN_FLOAT_VOLUME || muteFactor != MAX_FLOAT_VOLUME) {
+    if (muteFactor != MIN_FLOAT_VOLUME && muteFactor != MAX_FLOAT_VOLUME) {
         AUDIO_ERR_LOG("invlaid factor:%{public}f", muteFactor);
         return false;
     }
