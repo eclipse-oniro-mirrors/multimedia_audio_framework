@@ -516,12 +516,6 @@ int32_t RemoteAudioRendererSinkInner::Start(void)
     Trace trace("RemoteAudioRendererSinkInner::Start");
     AUDIO_INFO_LOG("RemoteAudioRendererSinkInner::Start");
     std::lock_guard<std::mutex> lock(createRenderMutex_);
-    for (const auto &audioPort : audioPortMap_) {
-        FILE *dumpFile = nullptr;
-        DumpFileUtil::OpenDumpFile(DUMP_SERVER_PARA, DUMP_REMOTE_RENDER_SINK_FILENAME
-            + std::to_string(audioPort.first) + ".pcm", &dumpFile);
-        dumpFileMap_[audioPort.first] = dumpFile;
-    }
     auto renderId = renderIdVector_.begin();
     if (!isRenderCreated_.load()) {
         for (const auto &audioPort : audioPortMap_) {
@@ -534,6 +528,13 @@ int32_t RemoteAudioRendererSinkInner::Start(void)
     if (started_.load()) {
         AUDIO_INFO_LOG("Remote render is already started.");
         return SUCCESS;
+    }
+
+    for (const auto &audioPort : audioPortMap_) {
+        FILE *dumpFile = nullptr;
+        DumpFileUtil::OpenDumpFile(DUMP_SERVER_PARA, DUMP_REMOTE_RENDER_SINK_FILENAME
+            + std::to_string(audioPort.first) + '_' + GetTime() + ".pcm", &dumpFile);
+        dumpFileMap_[audioPort.first] = dumpFile;
     }
 
     for (const auto &audioRender : audioRenderMap_) {
