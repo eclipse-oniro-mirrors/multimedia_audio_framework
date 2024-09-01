@@ -184,7 +184,9 @@ LibLoader::~LibLoader()
         libEntry_->audioEffectLibHandle->releaseEffect(handle_);
     }
     if (libHandle_ != nullptr) {
+#ifndef TEST_COVERAGE
         dlclose(libHandle_);
+#endif
         libHandle_ = nullptr;
     }
 }
@@ -207,7 +209,9 @@ bool LibLoader::LoadLibrary(const std::string &relativePath) noexcept
     const char *error = dlerror();
     if (error) {
         AUDIO_ERR_LOG("<log error> dlsym failed: error: %{public}s, %{public}p", error, audioEffectLibHandle);
+#ifndef TEST_COVERAGE
         dlclose(libHandle_);
+#endif
         return false;
     }
     AUDIO_INFO_LOG("<log info> dlsym lib %{public}s successful, error: %{public}s", relativePath.c_str(), error);

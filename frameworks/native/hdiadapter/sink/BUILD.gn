@@ -149,6 +149,10 @@ ohos_shared_library("bluetooth_renderer_sink") {
     defines += [ "FEATURE_POWER_MANAGER" ]
   }
 
+  if (use_libfuzzer || use_clang_coverage) {
+    defines += [ "TEST_COVERAGE" ]
+  }
+
   part_name = "audio_framework"
   subsystem_name = "multimedia"
 }

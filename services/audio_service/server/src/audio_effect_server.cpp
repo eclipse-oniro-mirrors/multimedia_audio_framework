@@ -72,7 +72,9 @@ static bool LoadLibrary(const std::string &relativePath, std::shared_ptr<AudioEf
     const char* error = dlerror();
     if (error) {
         AUDIO_ERR_LOG("<log error> dlsym failed: error: %{public}s, %{public}p", error, audioEffectLibHandle);
+#ifndef TEST_COVERAGE
         dlclose(handle);
+#endif
         return false;
     } else {
         AUDIO_INFO_LOG("<log info> dlsym lib %{public}s successful, error: %{public}s", relativePath.c_str(), error);

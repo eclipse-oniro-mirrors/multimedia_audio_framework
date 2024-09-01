@@ -299,7 +299,9 @@ void BluetoothRendererSinkInner::DeInit()
     audioManager_ = nullptr;
 
     if (handle_ != nullptr) {
+#ifndef TEST_COVERAGE
         dlclose(handle_);
+#endif
         handle_ = nullptr;
     }
 
