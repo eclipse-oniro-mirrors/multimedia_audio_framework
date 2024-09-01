@@ -203,6 +203,8 @@ void RendererInServer::OnStatusUpdate(IOperation operation)
                 standByEnable_ = false;
                 AUDIO_INFO_LOG("%{public}u recv stand-by started", streamIndex_);
                 audioServerBuffer_->GetStreamStatus()->store(STREAM_RUNNING);
+                FutexTool::FutexWake(audioServerBuffer_->GetFutex());
+                startedTime_ = ClockTime::GetCurNano();
                 WriterRenderStreamStandbySysEvent();
                 return;
             }
@@ -604,6 +606,8 @@ int32_t RendererInServer::Start()
     AUDIO_INFO_LOG("sessionId: %{public}u", streamIndex_);
     if (standByEnable_) {
         AUDIO_INFO_LOG("sessionId: %{public}u call to exit stand by!", streamIndex_);
+        standByCounter_ = 0;
+        startedTime_ = ClockTime::GetCurNano();
         audioServerBuffer_->GetStreamStatus()->store(STREAM_STARTING);
         return IStreamManager::GetPlaybackManager(managerType_).StartRender(streamIndex_);
     }
