@@ -209,7 +209,7 @@ bool LibLoader::LoadLibrary(const std::string &relativePath) noexcept
     if (audioEffectLibHandle) {
         AUDIO_ERR_LOG("<log error> dlsym failed: error: %{public}s, %{public}p", dlerror(), audioEffectLibHandle);
 #ifndef TEST_COVERAGE
-        dlclose(handle);
+        dlclose(libHandle_);
 #endif
         return false;
     }
