@@ -539,6 +539,7 @@ private:
     void UnRegisterPowerStateListener();
     void RegisterSyncHibernateListener();
     void UnRegisterSyncHibernateListener();
+    void AddRemoteDevstatusCallback();
     void OnDistributedRoutingRoleChange(const sptr<AudioDeviceDescriptor> descriptor, const CastType type);
 
     void InitPolicyDumpMap();

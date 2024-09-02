@@ -340,8 +340,6 @@ bool AudioPolicyService::Init(void)
     }
     CHECK_AND_RETURN_RET_LOG(status == SUCCESS, false, "[Policy Service] Register for device status events failed");
 
-    RegisterRemoteDevStatusCallback();
-
     if (policyVolumeMap_ == nullptr) {
         size_t mapSize = IPolicyProvider::GetVolumeVectorSize() * sizeof(Volume);
         AUDIO_INFO_LOG("InitSharedVolume create shared volume map with size %{public}zu", mapSize);

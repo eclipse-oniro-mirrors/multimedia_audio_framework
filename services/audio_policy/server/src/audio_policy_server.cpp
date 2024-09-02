@@ -101,6 +101,7 @@ void AudioPolicyServer::OnStart()
     }
     audioPolicyService_.Init();
 
+    AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
     AddSystemAbilityListener(AUDIO_DISTRIBUTED_SERVICE_ID);
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
 #ifdef FEATURE_MULTIMODALINPUT_INPUT
@@ -161,12 +162,13 @@ void AudioPolicyServer::OnAddSystemAbility(int32_t systemAbilityId, const std::s
         case DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID:
             HandleKvDataShareEvent();
             break;
+        case DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID:
+            AddRemoteDevstatusCallback();
+            break;
         case AUDIO_DISTRIBUTED_SERVICE_ID:
-            AUDIO_INFO_LOG("OnAddSystemAbility audio service start");
             AddAudioServiceOnStart();
             break;
         case BLUETOOTH_HOST_SYS_ABILITY_ID:
-            AUDIO_INFO_LOG("OnAddSystemAbility bluetooth service start");
             RegisterBluetoothListener();
             break;
         case ACCESSIBILITY_MANAGER_SERVICE_ID:
@@ -182,7 +184,6 @@ void AudioPolicyServer::OnAddSystemAbility(int32_t systemAbilityId, const std::s
             RegisterSyncHibernateListener();
             break;
         case SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN:
-            AUDIO_INFO_LOG("OnAddSystemAbility os_account service start");
             SubscribeOsAccountChangeEvents();
             break;
         case COMMON_EVENT_SERVICE_ID:
@@ -384,6 +385,7 @@ bool AudioPolicyServer::IsVolumeLevelValid(AudioStreamType streamType, int32_t v
 
 void AudioPolicyServer::SubscribeOsAccountChangeEvents()
 {
+    AUDIO_INFO_LOG("OnAddSystemAbility os_account service start");
     if (accountObserver_ == nullptr) {
         AccountSA::OsAccountSubscribeInfo osAccountSubscribeInfo;
         osAccountSubscribeInfo.SetOsAccountSubscribeType(AccountSA::OS_ACCOUNT_SUBSCRIBE_TYPE::SWITCHED);
@@ -398,6 +400,7 @@ void AudioPolicyServer::SubscribeOsAccountChangeEvents()
 
 void AudioPolicyServer::AddAudioServiceOnStart()
 {
+    AUDIO_INFO_LOG("OnAddSystemAbility audio service start");
     if (!isFirstAudioServiceStart_) {
         ConnectServiceAdapter();
         sessionProcessor_.Start();
@@ -407,6 +410,12 @@ void AudioPolicyServer::AddAudioServiceOnStart()
     } else {
         AUDIO_WARNING_LOG("OnAddSystemAbility audio service is not first start");
     }
+}
+
+void AudioPolicyServer::AddRemoteDevstatusCallback()
+{
+    AUDIO_INFO_LOG("add remote dev status callback start");
+    audioPolicyService_.RegisterRemoteDevStatusCallback();
 }
 
 void AudioPolicyServer::SubscribePowerStateChangeEvents()
@@ -1984,7 +1993,7 @@ void AudioPolicyServer::RegisterParamCallback()
 
 void AudioPolicyServer::RegisterBluetoothListener()
 {
-    AUDIO_INFO_LOG("RegisterBluetoothListener");
+    AUDIO_INFO_LOG("OnAddSystemAbility bluetooth service start");
     audioPolicyService_.RegisterBluetoothListener();
 }
 
