@@ -1251,6 +1251,13 @@ int32_t AudioDeviceManager::UpdateDefaultOutputDeviceWhenStopping(const uint32_t
     return SUCCESS;
 }
 
+int32_t AudioDeviceManager::RemoveSelectedDefaultOutputDevice(const uint32_t sessionID)
+{
+    std::lock_guard<std::mutex> lock(selectDefaultOutputDeviceMutex_);
+    selectedDefaultOutputDeviceInfo_.erase(sessionID);
+    return SUCCESS;
+}
+
 unique_ptr<AudioDeviceDescriptor> AudioDeviceManager::GetSelectedMediaRenderDevice()
 {
     std::lock_guard<std::mutex> lock(selectDefaultOutputDeviceMutex_);

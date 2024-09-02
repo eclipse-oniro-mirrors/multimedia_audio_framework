@@ -4964,6 +4964,9 @@ int32_t AudioPolicyService::UpdateTracker(AudioMode &mode, AudioStreamChangeInfo
     if (mode == AUDIO_MODE_PLAYBACK && (rendererState == RENDERER_STOPPED || rendererState == RENDERER_PAUSED ||
         rendererState == RENDERER_RELEASED)) {
         audioDeviceManager_.UpdateDefaultOutputDeviceWhenStopping(streamChangeInfo.audioRendererChangeInfo.sessionId);
+        if (rendererState == RENDERER_RELEASED) {
+            audioDeviceManager_.RemoveSelectedDefaultOutputDevice(streamChangeInfo.audioRendererChangeInfo.sessionId);
+        }
         FetchDevice(true);
     }
 
@@ -8569,6 +8572,7 @@ void AudioPolicyService::UpdateDefaultOutputDeviceWhenStopping(int32_t uid)
     std::vector<uint32_t> sessionIDSet = streamCollector_.GetAllRendererSessionIDForUID(uid);
     for (const auto &sessionID : sessionIDSet) {
         audioDeviceManager_.UpdateDefaultOutputDeviceWhenStopping(sessionID);
+        audioDeviceManager_.RemoveSelectedDefaultOutputDevice(sessionID);
     }
     FetchDevice(true);
 }
