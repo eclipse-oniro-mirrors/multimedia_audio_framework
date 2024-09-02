@@ -364,6 +364,8 @@ public:
 
     void SubscribeAccessibilityConfigObserver();
 
+    void RegisterRemoteDevStatusCallback();
+
     std::vector<sptr<AudioDeviceDescriptor>> GetPreferredOutputDeviceDescriptors(AudioRendererInfo &rendererInfo,
         std::string networkId = LOCAL_NETWORK_ID);
 
@@ -763,8 +765,6 @@ private:
     void RemoveDeviceInFastRouterMap(std::string networkId);
 
     void UpdateDisplayName(sptr<AudioDeviceDescriptor> deviceDescriptor);
-
-    void RegisterRemoteDevStatusCallback();
 
     void UpdateLocalGroupInfo(bool isConnected, const std::string& macAddress,
         const std::string& deviceName, const DeviceStreamInfo& streamInfo, AudioDeviceDescriptor& deviceDesc);
