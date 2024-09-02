@@ -372,7 +372,7 @@ void AudioSpatializationService::UpdateCurrentDevice(const std::string macAddres
 {
     AUDIO_INFO_LOG("UpdateCurrentDevice Entered");
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
-    if(!macAddress.empty()) {
+    if (!macAddress.empty()) {
         std::string deviceSpatialInfo = EnCapsulateDeviceInfo(macAddress);
         UpdateDeviceSpatialMapInfo(macAddress, deviceSpatialInfo);
         WriteSpatializationStateToDb(WRITE_DEVICESPATIAL_INFO, macAddress);
@@ -650,7 +650,7 @@ void AudioSpatializationService::WriteSpatializationStateToDb(WriteToDbOperation
         }
         case WRITE_DEVICESPATIAL_INFO: {
             uint32_t deviceID = addressToDeviceIDMap_[address];
-            ErrCode ret = settingProvider.PutStringValue( SPATIALIZATION_STATE_SETTINGKEY + "_device" +
+            ErrCode ret = settingProvider.PutStringValue(SPATIALIZATION_STATE_SETTINGKEY + "_device" +
                 std::to_string(deviceID), addressToDeviceSpatialInfoMap_[address]);
             CHECK_AND_RETURN_LOG(ret == SUCCESS, "Failed to write spatialization_state_device%{public}d to"
                     "setting db: %{public}d", deviceID, ret);
