@@ -88,6 +88,7 @@ public:
         const StreamUsage streamUsage, bool isRunning);
     int32_t UpdateDefaultOutputDeviceWhenStarting(const uint32_t sessionID);
     int32_t UpdateDefaultOutputDeviceWhenStopping(const uint32_t sessionID);
+    int32_t RemoveSelectedDefaultOutputDevice(const uint32_t sessionID);
     unique_ptr<AudioDeviceDescriptor> GetSelectedMediaRenderDevice();
     unique_ptr<AudioDeviceDescriptor> GetSelectedCallRenderDevice();
 
