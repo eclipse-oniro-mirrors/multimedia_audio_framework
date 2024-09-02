@@ -77,6 +77,8 @@ struct Userdata {
     bool isFirstStarted;
     pa_hashmap *sceneToCountMap;
     // todo resampler map
+    uint64_t lastRecodedLatency;
+    uint32_t continuesGetLatencyErrCount;
     struct {
         int32_t sessionID;
         bool firstWrite;
