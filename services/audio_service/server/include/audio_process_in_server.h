@@ -103,7 +103,7 @@ private:
     void WriterRenderStreamStandbySysEvent(uint32_t sessionId, int32_t standby);
 
 private:
-    bool muteFlag_ = false;
+    std::atomic<bool> muteFlag_ = false;
     bool isInnerCapped_ = false;
     ProcessReleaseCallback *releaseCallback_ = nullptr;
 

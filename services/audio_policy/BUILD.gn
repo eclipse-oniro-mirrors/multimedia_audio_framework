@@ -133,6 +133,7 @@ ohos_shared_library("audio_policy_service") {
     "server/src/service/manager/audio_adapter_manager_handler.cpp",
     "server/src/service/manager/audio_setting_provider.cpp",
     "server/src/service/manager/client_type_manager.cpp",
+    "server/src/service/manager/client_type_manager_handler.cpp",
     "server/src/service/manager/pnp_server/audio_input_thread.cpp",
     "server/src/service/manager/pnp_server/audio_pnp_server.cpp",
     "server/src/service/manager/pnp_server/audio_socket_thread.cpp",

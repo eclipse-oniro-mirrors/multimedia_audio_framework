@@ -81,6 +81,7 @@ public:
     int32_t UnsetAudioInterruptCallback(const int32_t zoneId, const uint32_t sessionId);
     int32_t ActivateAudioInterrupt(const int32_t zoneId, const AudioInterrupt &audioInterrupt);
     int32_t DeactivateAudioInterrupt(const int32_t zoneId, const AudioInterrupt &audioInterrupt);
+    void ResetNonInterruptControl(uint32_t sessionId);
 
     // zone debug interfaces
     int32_t CreateAudioInterruptZone(const int32_t zoneId, const std::set<int32_t> &pids);

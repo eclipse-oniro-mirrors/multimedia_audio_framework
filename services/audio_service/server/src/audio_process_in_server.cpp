@@ -23,6 +23,7 @@
 
 #include "audio_errors.h"
 #include "audio_service_log.h"
+#include "audio_service.h"
 #include "audio_schedule.h"
 #include "audio_utils.h"
 #include "media_monitor_manager.h"
@@ -44,7 +45,11 @@ sptr<AudioProcessInServer> AudioProcessInServer::Create(const AudioProcessConfig
 AudioProcessInServer::AudioProcessInServer(const AudioProcessConfig &processConfig,
     ProcessReleaseCallback *releaseCallback) : processConfig_(processConfig), releaseCallback_(releaseCallback)
 {
-    sessionId_ = PolicyHandler::GetInstance().GenerateSessionId(processConfig_.appInfo.appUid);
+    if (processConfig.originalSessionId < MIN_SESSIONID || processConfig.originalSessionId > MAX_SESSIONID) {
+        sessionId_ = PolicyHandler::GetInstance().GenerateSessionId(processConfig_.appInfo.appUid);
+    } else {
+        sessionId_ = processConfig.originalSessionId;
+    }
 }
 
 AudioProcessInServer::~AudioProcessInServer()
@@ -63,8 +68,9 @@ int32_t AudioProcessInServer::GetSessionId(uint32_t &sessionId)
 
 void AudioProcessInServer::SetNonInterruptMute(const bool muteFlag)
 {
-    AUDIO_INFO_LOG("muteFlag_: %{public}d", muteFlag_);
     muteFlag_ = muteFlag;
+    AUDIO_INFO_LOG("muteFlag_: %{public}d", muteFlag);
+    AudioService::GetInstance()->UpdateMuteControlSet(sessionId_, muteFlag);
 }
 
 bool AudioProcessInServer::GetMuteFlag()

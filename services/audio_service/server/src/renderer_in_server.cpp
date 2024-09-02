@@ -1255,6 +1255,7 @@ void RendererInServer::SetNonInterruptMute(const bool muteFlag)
 {
     AUDIO_INFO_LOG("mute flag %{public}d", muteFlag);
     muteFlag_ = muteFlag;
+    AudioService::GetInstance()->UpdateMuteControlSet(streamIndex_, muteFlag);
 }
 } // namespace AudioStandard
 } // namespace OHOS

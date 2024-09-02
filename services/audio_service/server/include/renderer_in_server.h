@@ -123,7 +123,7 @@ private:
     IStatus status_ = I_STATUS_IDLE;
     bool offloadEnable_ = false;
     std::atomic<bool> standByEnable_ = false;
-    bool muteFlag_ = false;
+    std::atomic<bool> muteFlag_ = false;
 
     // for inner-cap
     std::mutex dupMutex_;

@@ -565,6 +565,7 @@ int32_t AudioInterruptService::ActivateAudioInterrupt(const int32_t zoneId, cons
         AUDIO_PRERELEASE_LOGI("allow parallel play");
         return SUCCESS;
     }
+    ResetNonInterruptControl(incomingSessionId);
 
     policyServer_->CheckStreamMode(incomingSessionId);
     policyServer_->OffloadStreamCheck(incomingSessionId, OFFLOAD_NO_SESSION_ID);
@@ -586,6 +587,19 @@ int32_t AudioInterruptService::ActivateAudioInterrupt(const int32_t zoneId, cons
     lock.unlock();
     UpdateAudioSceneFromInterrupt(targetAudioScene, ACTIVATE_AUDIO_INTERRUPT);
     return SUCCESS;
+}
+
+void AudioInterruptService::ResetNonInterruptControl(uint32_t sessionId)
+{
+    if (GetClientTypeBySessionId(sessionId) != CLIENT_TYPE_GAME) {
+        return;
+    }
+    AUDIO_INFO_LOG("Reset non-interrupt control for %{public}u", sessionId);
+    const sptr<IStandardAudioService> gsp = GetAudioServerProxy();
+    std::string identity = IPCSkeleton::ResetCallingIdentity();
+    CHECK_AND_RETURN_LOG(gsp != nullptr, "error for audio server proxy null");
+    gsp->SetNonInterruptMute(sessionId, false);
+    IPCSkeleton::SetCallingIdentity(identity);
 }
 
 int32_t AudioInterruptService::DeactivateAudioInterrupt(const int32_t zoneId, const AudioInterrupt &audioInterrupt)
@@ -1280,6 +1294,7 @@ void AudioInterruptService::DeactivateAudioInterruptInternal(const int32_t zoneI
             zonesMap_[zoneId] = itZone->second;
             return;
         }
+        ResetNonInterruptControl(audioInterrupt.sessionId);
         int32_t deactivePid = audioInterrupt.pid;
         audioFocusInfoList.erase(iter);
         itZone->second->zoneId = zoneId;

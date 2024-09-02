@@ -91,7 +91,7 @@ private:
     std::unique_ptr<uint8_t []> dischargeBuffer_ = nullptr;
     FILE *dumpS2C_ = nullptr; // server to client dump file
     std::string dumpFileName_ = "";
-    bool muteFlag_ = false;
+    std::atomic<bool> muteFlag_ = false;
 };
 } // namespace AudioStandard
 } // namespace OHOS

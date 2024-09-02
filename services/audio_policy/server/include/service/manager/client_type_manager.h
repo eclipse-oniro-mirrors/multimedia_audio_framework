@@ -16,25 +16,31 @@
 #ifndef CLIENT_TYPE_MANAGER_H
 #define CLIENT_TYPE_MANAGER_H
 
-#include <unordered_map>
+#include <mutex>
 #include <string>
+#include <unordered_map>
+
+#include "client_type_manager.h"
+#include "client_type_manager_handler.h"
 
 namespace OHOS {
 namespace AudioStandard {
 using namespace std;
-enum ClientType {
-    CLIENT_TYPE_OTHERS = 0,
-    CLIENT_TYPE_GAME = 1,
-};
 
-class ClientTypeManager {
+class ClientTypeManager : public ClientTypeListener {
 public:
     static ClientTypeManager *GetInstance();
     void GetAndSaveClientType(uint32_t uid, const std::string &bundleName);
     ClientType GetClientTypeByUid(uint32_t uid);
 
+    void OnClientTypeQueryCompleted(uint32_t uid, ClientType clientType) override;
+
 private:
+    std::mutex clientTypeMapMutex_;
     std::unordered_map<uint32_t, ClientType> clientTypeMap_;
+
+    std::mutex handlerMutex_;
+    std::shared_ptr<ClientTypeManagerHandler> clientTypeManagerHandler_ = nullptr;
 };
 } // namespace AudioStandard
 } // namespace OHOS
