@@ -221,7 +221,7 @@ void AudioDeviceManager::MakePairedDefaultDeviceImpl(const shared_ptr<AudioDevic
 
 bool AudioDeviceManager::IsArmUsbDevice(const AudioDeviceDescriptor &desc)
 {
-    auto isPresent = [&desc] (auto &connDesc) {
+    auto isPresent = [&desc] (const auto &connDesc) {
         return connDesc->deviceId_ == desc.deviceId_;
     };
     auto itr = std::find_if(connectedDevices_.begin(), connectedDevices_.end(), isPresent);
