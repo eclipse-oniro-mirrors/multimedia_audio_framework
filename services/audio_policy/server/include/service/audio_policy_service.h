@@ -224,7 +224,11 @@ public:
 
     void OnUpdateRouteSupport(bool isSupported);
 
-    int32_t GetDeviceNameFromDataShareHelper(std::string &deviceName);
+    int32_t GetUserSetDeviceNameFromDataShareHelper(std::string &deviceName);
+
+    int32_t GetDefaultDeviceNameFromDataShareHelper(std::string &deviceName);
+
+    std::string GetDeviceNameFromDataShare();
 
     void SetDisplayName(const std::string &deviceName, bool isLocalDevice);
 

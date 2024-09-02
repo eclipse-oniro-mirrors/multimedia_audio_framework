@@ -53,6 +53,7 @@ private:
 class AudioSettingProvider : public NoCopyable {
 public:
     static AudioSettingProvider& GetInstance(int32_t systemAbilityId);
+    static int32_t GetCurrentUserId();
     ErrCode GetStringValue(const std::string &key, std::string &value, std::string tableType = "");
     ErrCode GetIntValue(const std::string &key, int32_t &value, std::string tableType = "");
     ErrCode GetLongValue(const std::string &key, int64_t &value, std::string tableType = "");
@@ -76,7 +77,6 @@ private:
     static std::shared_ptr<DataShare::DataShareHelper> CreateDataShareHelper(std::string tableType = "");
     static bool ReleaseDataShareHelper(std::shared_ptr<DataShare::DataShareHelper> &helper);
     static Uri AssembleUri(const std::string &key, std::string tableType = "");
-    static int32_t GetCurrentUserId();
 
     static AudioSettingProvider *instance_;
     static std::mutex mutex_;
