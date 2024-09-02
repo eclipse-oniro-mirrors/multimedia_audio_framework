@@ -1452,6 +1452,7 @@ void AudioRendererPrivate::InitSwitchInfo(IAudioStream::StreamClass targetClass,
         info.rendererInfo.pipeType = PIPE_TYPE_DIRECT_MUSIC;
         info.rendererFlags = AUDIO_FLAG_DIRECT;
     }
+    info.params.originalSessionId = sessionID_;
     return;
 }
 
@@ -1464,16 +1465,15 @@ bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
         std::lock_guard<std::shared_mutex> lock(switchStreamMutex_);
         isSwitching_ = true;
         RendererState previousState = GetStatus();
-        AUDIO_INFO_LOG("Previous stream state: %{public}d", previousState);
+        AUDIO_INFO_LOG("Previous stream state: %{public}d, original sessionId: %{public}u", previousState, sessionID_);
         if (previousState == RENDERER_RUNNING) {
             switchResult = audioStream_->StopAudioStream();
             CHECK_AND_RETURN_RET_LOG(switchResult, false, "StopAudioStream failed.");
         }
         IAudioStream::SwitchInfo info;
         InitSwitchInfo(targetClass, info);
-        if (targetClass == AUDIO_FLAG_MMAP) {
-            switchResult = audioStream_->ReleaseAudioStream();
-        }
+
+        switchResult = audioStream_->ReleaseAudioStream();
         std::shared_ptr<IAudioStream> newAudioStream = IAudioStream::GetPlaybackStream(targetClass, info.params,
             info.eStreamType, appInfo_.appPid);
         CHECK_AND_RETURN_RET_LOG(newAudioStream != nullptr, false, "SetParams GetPlayBackStream failed.");
@@ -1482,9 +1482,6 @@ bool AudioRendererPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
         // set new stream info
         SetSwitchInfo(info, newAudioStream);
 
-        if (targetClass != AUDIO_FLAG_MMAP) {
-            switchResult = audioStream_->ReleaseAudioStream();
-        }
         CHECK_AND_RETURN_RET_LOG(switchResult, false, "release old stream failed.");
 
         if (previousState == RENDERER_RUNNING) {

@@ -16,21 +16,11 @@
 #define LOG_TAG "ClientTypeManager"
 #endif
 
-#include "client_type_manager.h"
-#ifdef FEATURE_APPGALLERY
-#include "appgallery_service_client_appinfo_category.h"
-#include "appgallery_service_client_param.h"
-#endif
-
 #include "audio_policy_log.h"
+#include "client_type_manager.h"
 
 namespace OHOS {
 namespace AudioStandard {
-#ifdef FEATURE_APPGALLERY
-const int32_t GAME_CATEGORY_ID = 2;
-const std::string SERVICE_NAME = "audio_service";
-#endif
-
 ClientTypeManager *ClientTypeManager::GetInstance()
 {
     static ClientTypeManager clientTypeManager;
@@ -41,35 +31,28 @@ void ClientTypeManager::GetAndSaveClientType(uint32_t uid, const std::string &bu
 {
     AUDIO_INFO_LOG("uid: %{public}u, bundle name %{public}s", uid, bundleName.c_str());
 #ifdef FEATURE_APPGALLERY
+    std::unique_lock<std::mutex> handlerLock(handlerMutex_);
+    if (clientTypeManagerHandler_ == nullptr) {
+        AUDIO_INFO_LOG("Init client type manager");
+        clientTypeManagerHandler_ = std::make_shared<ClientTypeManagerHandler>();
+        if (clientTypeManagerHandler_ != nulltpr) {
+            clientTypeManagerHandler_->RegisterClientTypeListener(this);
+        }
+    }
+    handlerLock.unlock();
+
+    std::unique_lock<std::mutex> lock(clientTypeMapMutex_);
     auto it = clientTypeMap_.find(uid);
     if (it != clientTypeMap_.end()) {
         AUDIO_INFO_LOG("Uid already in map");
         return;
     }
-    if (bundleName == "") {
-        AUDIO_WARNING_LOG("Get bundle name for %{public}u failed", uid);
+    lock.unlock();
+    if (bundleName == "" || uid == 0) {
+        AUDIO_WARNING_LOG("Get bundle name %{public}s for %{public}u failed", bundleName.c_str(), uid);
         return;
     }
-
-    std::vector<AppGalleryServiceClient::AppCategoryInfo> resultArray;
-    std::vector<std::string> bundleNames;
-    bundleNames.push_back(bundleName);
-
-    int32_t ret = AppGalleryServiceClient::CategoryManager::GetCategoryFromSystem(bundleNames, resultArray,
-        SERVICE_NAME);
-    if (ret != 0) {
-        AUDIO_WARNING_LOG("Get category failed, ret %{public}d", ret);
-        return;
-    }
-    for (AppGalleryServiceClient::AppCategoryInfo &item : resultArray) {
-        if (item.primaryCategoryId == GAME_CATEGORY_ID) {
-            AUDIO_INFO_LOG("Is game type");
-            clientTypeMap_.insert_or_assign(uid, CLIENT_TYPE_GAME);
-        } else {
-            AUDIO_INFO_LOG("Is not game type");
-            clientTypeMap_.insert_or_assign(uid, CLIENT_TYPE_OTHERS);
-        }
-    }
+    clientTypeManagerHandler_->SendGetClientType(bundleName, uid);
 #else
     AUDIO_WARNING_LOG("Get client type is not supported");
 #endif
@@ -77,6 +60,7 @@ void ClientTypeManager::GetAndSaveClientType(uint32_t uid, const std::string &bu
 
 ClientType ClientTypeManager::GetClientTypeByUid(uint32_t uid)
 {
+    std::lock_guard<std::mutex> lock(clientTypeMapMutex_);
     AUDIO_INFO_LOG("uid %{public}u", uid);
     auto it = clientTypeMap_.find(uid);
     if (it == clientTypeMap_.end()) {
@@ -85,5 +69,13 @@ ClientType ClientTypeManager::GetClientTypeByUid(uint32_t uid)
     }
     return it->second;
 }
+
+void ClientTypeManager::OnClientTypeQueryCompleted(uint32_t uid, ClientType clientType)
+{
+    std::lock_guard<std::mutex> lock(clientTypeMapMutex_);
+    AUDIO_INFO_LOG("uid: %{public}u, client type: %{public}d", uid, clientType);
+    clientTypeMap_.insert_or_assign(uid, clientType);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

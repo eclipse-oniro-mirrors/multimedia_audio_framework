@@ -533,6 +533,7 @@ void CapturerInServer::SetNonInterruptMute(const bool muteFlag)
 {
     AUDIO_INFO_LOG("muteFlag: %{public}d", muteFlag);
     muteFlag_ = muteFlag;
+    AudioService::GetInstance()->UpdateMuteControlSet(streamIndex_, muteFlag);
 }
 } // namespace AudioStandard
 } // namespace OHOS

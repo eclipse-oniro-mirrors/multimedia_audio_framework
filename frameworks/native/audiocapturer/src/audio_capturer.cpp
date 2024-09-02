@@ -1116,7 +1116,7 @@ bool AudioCapturerPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
         Trace trace("SwitchToTargetStream");
         isSwitching_ = true;
         CapturerState previousState = GetStatus();
-        AUDIO_INFO_LOG("Previous stream state: %{public}d", previousState);
+        AUDIO_INFO_LOG("Previous stream state: %{public}d, original sessionId: %{public}u", previousState, sessionID_);
         if (previousState == CAPTURER_RUNNING) {
             // stop old stream
             switchResult = audioStream_->StopAudioStream();
@@ -1126,6 +1126,12 @@ bool AudioCapturerPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
         // switch new stream
         IAudioStream::SwitchInfo info;
         audioStream_->GetSwitchInfo(info);
+        info.params.originalSessionId = sessionID_;
+
+        // release old stream and restart audio stream
+        switchResult = audioStream_->ReleaseAudioStream();
+        CHECK_AND_RETURN_RET_LOG(switchResult, false, "release old stream failed.");
+
         if (targetClass == IAudioStream::VOIP_STREAM) {
             info.capturerInfo.originalFlag = AUDIO_FLAG_VOIP_FAST;
         }
@@ -1136,10 +1142,6 @@ bool AudioCapturerPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
 
         // set new stream info
         SetSwitchInfo(info, newAudioStream);
-
-        // release old stream and restart audio stream
-        switchResult = audioStream_->ReleaseAudioStream();
-        CHECK_AND_RETURN_RET_LOG(switchResult, false, "release old stream failed.");
 
         if (previousState == CAPTURER_RUNNING) {
             // restart audio stream
