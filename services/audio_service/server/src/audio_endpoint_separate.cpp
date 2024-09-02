@@ -286,7 +286,7 @@ int32_t AudioEndpointSeparate::PrepareDeviceBuffer(const DeviceInfo &deviceInfo)
     }
     dstAudioBuffer_ = OHAudioBuffer::CreateFromRemote(dstTotalSizeInframe_, dstSpanSizeInframe_, dstByteSizePerFrame_,
         AUDIO_SERVER_INDEPENDENT, dstBufferFd_, OHAudioBuffer::INVALID_BUFFER_FD);
-    CHECK_AND_RETURN_RET_LOG((dstAudioBuffer_ == nullptr || (dstAudioBuffer_->GetStreamStatus() == nullptr)),
+    CHECK_AND_RETURN_RET_LOG((dstAudioBuffer_ != nullptr && (dstAudioBuffer_->GetStreamStatus() != nullptr)),
         ERR_ILLEGAL_STATE, "%{public}s create buffer from remote fail.", __func__);
     dstAudioBuffer_->GetStreamStatus()->store(StreamStatus::STREAM_IDEL);
     // clear data buffer
