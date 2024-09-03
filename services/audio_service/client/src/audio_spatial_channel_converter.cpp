@@ -206,7 +206,7 @@ bool LibLoader::LoadLibrary(const std::string &relativePath) noexcept
 
     AudioEffectLibrary *audioEffectLibHandle = static_cast<AudioEffectLibrary *>(dlsym(handle,
         AUDIO_EFFECT_LIBRARY_INFO_SYM_AS_STR));
-    if (audioEffectLibHandle) {
+    if (!audioEffectLibHandle) {
         AUDIO_ERR_LOG("<log error> dlsym failed: error: %{public}s, %{public}p", dlerror(), audioEffectLibHandle);
 #ifndef TEST_COVERAGE
         dlclose(libHandle_);
