@@ -76,7 +76,7 @@ void ClientTypeManagerHandler::HandleGetClientType(const AppExecFwk::InnerEvent:
     uint32_t uid = eventContextObj->uid;
 
     if (bundleName == "" || uid == 0) {
-        AUDIO_ERR_LOG("bundle name: %{public}s, uid: %{public}u", bundleName, uid);
+        AUDIO_ERR_LOG("bundle name: %{public}s, uid: %{public}u", bundleName.c_str(), uid);
         return;
     }
 

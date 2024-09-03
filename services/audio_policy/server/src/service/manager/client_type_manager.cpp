@@ -58,11 +58,11 @@ void ClientTypeManager::GetAndSaveClientType(uint32_t uid, const std::string &bu
 #endif
 }
 
-void ClientTypeManager::SetQueryClientTypeCallback(const sptr<IStandardAudioPolicyManangerListener> &callback)
+void ClientTypeManager::SetQueryClientTypeCallback(const sptr<IStandardAudioPolicyManagerListener> &callback)
 {
     AUDIO_INFO_LOG("In");
 #ifdef FEATURE_APPGALLERY
-    std::lock_guard<std;:mutex> handlerLock(handlerMutex_);
+    std::lock_guard<std::mutex> handlerLock(handlerMutex_);
     if (clientTypeManagerHandler_ == nullptr) {
         AUDIO_INFO_LOG("Init client type manager");
         clientTypeManagerHandler_ = std::make_shared<ClientTypeManagerHandler>();

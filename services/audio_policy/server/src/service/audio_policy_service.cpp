@@ -4899,7 +4899,7 @@ int32_t AudioPolicyService::SetQueryClientTypeCallback(const sptr<IRemoteObject>
     if (callback != nullptr) {
         ClientTypeManager::GetInstance()->SetQueryClientTypeCallback(callback);
     } else {
-        AUDIO_ERR_LOG("Client type callback is null")
+        AUDIO_ERR_LOG("Client type callback is null");
     }
 #endif
     return SUCCESS;

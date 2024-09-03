@@ -125,7 +125,7 @@ bool AudioPolicyManagerListenerStub::OnQueryClientType(const std::string &bundle
     CHECK_AND_RETURN_RET_LOG(audioQueryClientTypeCallback != nullptr, false,
         "audioQueryClientTypeCallback_ is nullptr");
 
-    return audioQueryClientTypeCallback_->OnQueryClientType(bundleName, uid);
+    return audioQueryClientTypeCallback->OnQueryClientType(bundleName, uid);
 }
 
 void AudioPolicyManagerListenerStub::SetInterruptCallback(const std::weak_ptr<AudioInterruptCallback> &callback)
