@@ -1103,7 +1103,7 @@ static void CheckPrimaryFadeinIsDone(pa_sink *si, pa_sink_input *sinkIn)
 static void CheckAndPushUidToArr(pa_sink_input *sinkIn, int32_t appsUid[MAX_MIX_CHANNELS], size_t *count)
 {
     const char *cstringClientUid = pa_proplist_gets(sinkIn->proplist, "stream.client.uid");
-    if (cstringClientUid && (sinkIn->state == PA_SINK_INPUT_RUNNING)) {
+    if (cstringClientUid && (sinkIn->thread_info.state == PA_SINK_INPUT_RUNNING)) {
         appsUid[(*count)] = atoi(cstringClientUid);
         (*count)++;
     }
@@ -2221,7 +2221,7 @@ static int32_t RenderWriteOffloadFunc(struct Userdata *u, size_t length, pa_mix_
     size_t count = 0;
 
     const char *cstringClientUid = pa_proplist_gets(i->proplist, "stream.client.uid");
-    if (cstringClientUid && (i->state == PA_SINK_INPUT_RUNNING)) {
+    if (cstringClientUid && (i->thread_info.state == PA_SINK_INPUT_RUNNING)) {
         appsUid[count++] = atoi(cstringClientUid);
     }
 
@@ -2853,7 +2853,7 @@ static bool POSSIBLY_UNUSED ThreadFuncRendererTimerMultiChannelFlagJudge(struct 
     pa_assert(u);
     bool flag = (u->render_in_idle_state && PA_SINK_IS_OPENED(u->sink->thread_info.state)) ||
         (!u->render_in_idle_state && PA_SINK_IS_RUNNING(u->sink->thread_info.state)) ||
-        (u->sink->state == PA_SINK_IDLE && u->sink->monitor_source &&
+        (u->sink->thread_info.state == PA_SINK_IDLE && u->sink->monitor_source &&
         PA_SOURCE_IS_RUNNING(u->sink->monitor_source->thread_info.state));
     pa_sink_input *i;
     void *state = NULL;
@@ -2931,9 +2931,9 @@ static void ProcessNormalData(struct Userdata *u)
 
     bool flag = (((u->render_in_idle_state && PA_SINK_IS_OPENED(u->sink->thread_info.state)) ||
                 (!u->render_in_idle_state && PA_SINK_IS_RUNNING(u->sink->thread_info.state))) &&
-                !(u->sink->state == PA_SINK_IDLE && u->primary.previousState == PA_SINK_SUSPENDED) &&
-                !(u->sink->state == PA_SINK_IDLE && u->primary.previousState == PA_SINK_INIT)) ||
-                (u->sink->state == PA_SINK_IDLE && monitorLinked(u->sink, true));
+                !(u->sink->thread_info.state == PA_SINK_IDLE && u->primary.previousState == PA_SINK_SUSPENDED) &&
+                !(u->sink->thread_info.state == PA_SINK_IDLE && u->primary.previousState == PA_SINK_INIT)) ||
+                (u->sink->thread_info.state == PA_SINK_IDLE && monitorLinked(u->sink, true));
     if (flag) {
         now = pa_rtclock_now();
     }
@@ -3574,7 +3574,7 @@ static pa_hook_result_t SinkInputMoveStartCb(pa_core *core, pa_sink_input *i, st
     GetSinkInputName(i, str, SPRINTF_STR_LEN);
     AUDIO_INFO_LOG("SinkInputMoveStartCb sink[%{public}s] - %{public}s", i->sink->name, str);
     if (u->offload_enable && !strcmp(i->sink->name, OFFLOAD_SINK_NAME) &&
-        i->state == PA_SINK_INPUT_RUNNING) {
+        i->thread_info.state == PA_SINK_INPUT_RUNNING) {
         const bool maybeOffload = pa_memblockq_get_maxrewind(i->thread_info.render_memblockq) != 0;
         if (maybeOffload || InputIsOffload(i)) {
             OffloadRewindAndFlush(u, i, false);
@@ -3591,7 +3591,7 @@ static pa_hook_result_t SinkInputStateChangedCb(pa_core *core, pa_sink_input *i,
     GetSinkInputName(i, str, SPRINTF_STR_LEN);
     AUDIO_INFO_LOG("SinkInputStateChangedCb sink[%{public}s] - %{public}s", i->sink->name, str);
     if (u->offload_enable && !strcmp(i->sink->name, OFFLOAD_SINK_NAME)) {
-        if (i->state == PA_SINK_INPUT_CORKED) {
+        if (i->thread_info.state == PA_SINK_INPUT_CORKED) {
             pa_atomic_store(&u->offload.hdistate, 0);
         }
     }
