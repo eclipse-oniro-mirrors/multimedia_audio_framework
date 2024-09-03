@@ -245,7 +245,6 @@ ohos_shared_library("audio_policy_service") {
 
   if (appgallery_part_enable == true) {
     defines += [ "FEATURE_APPGALLERY" ]
-    external_deps += [ "appgallery:appinfomanager_client" ]
   }
 
   if (bluetooth_part_enable == true) {

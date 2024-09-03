@@ -600,6 +600,13 @@ int32_t AudioSystemManager::UnsetDeviceChangeCallback(DeviceFlag flag,
     return AudioPolicyManager::GetInstance().UnsetDeviceChangeCallback(clientId, flag, cb);
 }
 
+int32_t AudioSystemManager::SetQueryClientTypeCallback(const std::shared_ptr<AudioQueryClientTypeCallback> &callback)
+{
+    AUDIO_INFO_LOG("In");
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERR_INVALID_PARAM, "callback is nullptr");
+    return AudioPolicyManager::GetInstance().SetQueryClientTypeCallback(callback);
+}
+
 int32_t AudioSystemManager::SetRingerModeCallback(const int32_t clientId,
                                                   const std::shared_ptr<AudioRingerModeCallback> &callback)
 {

@@ -721,6 +721,23 @@ int32_t AudioPolicyManager::UnsetAudioInterruptCallback(const uint32_t sessionID
     return gsp->UnsetAudioInterruptCallback(sessionID, zoneID);
 }
 
+int32_t AudioPolicyManager::SetQueryClientTypeCallback(const std::shared_ptr<AudioQueryClientTypeCallback> &callback)
+{
+    AUDIO_INFO_LOG("In");
+    const sptr<IAudioPolicy> gsp = GetAudioPolicyManagerProxy();
+    CHECK_AND_RETURN_RET_LOG(gsp != nullptr, ERROR, "audio policy manager proxy is NULL.");
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERR_INVALID_PARAM, "callback is nullptr");
+
+    sptr<AudioPolicyManagerListenerStub> listener = new(std::nothrow) AudioPolicyManagerListenerStub();
+    CHECK_AND_RETURN_RET_LOG(listener != nullptr, ERROR, "object null");
+    listener->SetQueryClientTypeCallback(callback);
+
+    sptr<IRemoteObject> object = listener->AsObject();
+    CHECK_AND_RETURN_RET_LOG(object != nullptr, ERROR, "listenerStub->AsObject is nullptr.");
+
+    return gsp->SetQueryClientTypeCallback(object);
+}
+
 int32_t AudioPolicyManager::ActivateAudioInterrupt(const AudioInterrupt &audioInterrupt, const int32_t zoneID)
 {
     const sptr<IAudioPolicy> gsp = GetAudioPolicyManagerProxy();

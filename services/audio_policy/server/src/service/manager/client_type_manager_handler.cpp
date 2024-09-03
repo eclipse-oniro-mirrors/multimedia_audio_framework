@@ -18,19 +18,8 @@
 
 #include "client_type_manager_handler.h"
 
-#ifdef FEATURE_APPGALLERY
-#include "appgallery_service_client_appinfo_category.h"
-#include "appgallery_service_client_param.h"
-#endif
-
 namespace OHOS {
 namespace AudioStandard {
-namespace {
-#ifdef FEATURE_APPGALLERY
-const int32_t GAME_CATEGORY_ID = 2;
-const std::string SERVICE_NAME = "audio_service";
-#endif
-}
 ClientTypeManagerHandler::ClientTypeManagerHandler() : AppExecFwk::EventHandler(
     AppExecFwk::EventRunner::Create("OS_ClientTypeAsyncRunner"))
 {
@@ -66,9 +55,20 @@ bool ClientTypeManagerHandler::SendGetClientType(const std::string &bundleName, 
 #endif
 }
 
+void ClientTypeManagerHandler::SetQueryClientTypeCallback(const sptr<IStandardAudioPolicyManagerListener> &callback)
+{
+    AUDIO_INFO_LOG("In");
+    std::lock_guard<std::mutex> lock(callbackMutex_);
+    if (queryClientTypeCallback_ != nullptr) {
+        AUDIO_INFO_LOG("Already register");
+        return;
+    }
+    queryClientTypeCallback_ = callback;
+}
 
 void ClientTypeManagerHandler::HandleGetClientType(const AppExecFwk::InnerEvent::Pointer &event)
 {
+    AUDIO_INFO_LOG("In");
 #ifdef FEATURE_APPGALLERY
     std::shared_ptr<EventObj> eventContextObj = event->GetSharedObject<EventObj>();
     CHECK_AND_RETURN_LOG(eventContextObj != nullptr, "EventtObj get nullptr");
@@ -76,29 +76,23 @@ void ClientTypeManagerHandler::HandleGetClientType(const AppExecFwk::InnerEvent:
     uint32_t uid = eventContextObj->uid;
 
     if (bundleName == "" || uid == 0) {
-        AUDIO_ERR_LOG("bundle name: %{public}s, uid: %{public}u", bundleName, uid);
+        AUDIO_ERR_LOG("bundle name: %{public}s, uid: %{public}u", bundleName.c_str(), uid);
         return;
     }
 
-    std::vector<AppGalleryServiceClient::AppCategoryInfo> resultArray;
-    std::vector<std::string> bundleNames;
-    bundleNames.push_back(bundleName);
-
-    int32_t ret = AppGalleryServiceClient::CategoryManager::GetCategoryFromSystem(bundleNames, resultArray,
-        SERVICE_NAME);
-    if (ret != 0) {
-        AUDIO_WARNING_LOG("Get category failed, ret %{public}d", ret);
+    std::unique_lock<std::mutex> callbackLock(callbackMutex_);
+    if (queryClientTypeCallback_ == nullptr) {
+        AUDIO_WARNING_LOG("Query callback is not inited");
         return;
     }
-
-    for (AppGalleryServiceClient::AppCategoryInfo &item : resultArray) {
-        if (item.primaryCategoryId == GAME_CATEGORY_ID) {
-            AUDIO_INFO_LOG("%{public}u is game type", uid);
-            clientTypeListener_->OnClientTypeQueryCompleted(uid, CLIENT_TYPE_GAME);
-        } else {
-            AUDIO_INFO_LOG("%{public}u not is game type", uid);
-            clientTypeListener_->OnClientTypeQueryCompleted(uid, CLIENT_TYPE_OTHERS);
-        }
+    bool isGame = queryClientTypeCallback_->OnQueryClientType(bundleName, uid);
+    callbackLock.unlock();
+    if (isGame) {
+        AUDIO_INFO_LOG("%{public}u is game type", uid);
+        clientTypeListener_->OnClientTypeQueryCompleted(uid, CLIENT_TYPE_GAME);
+    } else {
+        AUDIO_INFO_LOG("%{public}u not is game type", uid);
+        clientTypeListener_->OnClientTypeQueryCompleted(uid, CLIENT_TYPE_OTHERS);
     }
 #endif
 }
