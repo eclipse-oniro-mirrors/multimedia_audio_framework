@@ -1770,6 +1770,12 @@ void AudioPolicyServer::RegisteredStreamListenerClientDied(pid_t pid)
     audioPolicyService_.ReduceAudioPolicyClientProxyMap(pid);
 }
 
+int32_t AudioPolicyServer::ResumeStreamState()
+{
+    AUDIO_INFO_LOG("AVSession is not alive.");
+    return audioPolicyService_.ResumeStreamState();
+}
+
 int32_t AudioPolicyServer::UpdateStreamState(const int32_t clientUid,
     StreamSetState streamSetState, StreamUsage streamUsage)
 {
@@ -1782,11 +1788,22 @@ int32_t AudioPolicyServer::UpdateStreamState(const int32_t clientUid,
     AUDIO_INFO_LOG("UpdateStreamState::uid:%{public}d streamSetState:%{public}d audioStreamUsage:%{public}d",
         clientUid, streamSetState, streamUsage);
     StreamSetState setState = StreamSetState::STREAM_PAUSE;
-    if (streamSetState == StreamSetState::STREAM_RESUME) {
-        setState  = StreamSetState::STREAM_RESUME;
-    } else if (streamSetState != StreamSetState::STREAM_PAUSE) {
-        AUDIO_ERR_LOG("UpdateStreamState streamSetState value is error");
-        return ERROR;
+    switch (streamSetState) {
+        case StreamSetState::STREAM_PAUSE:
+            setState = StreamSetState::STREAM_PAUSE;
+            break;
+        case StreamSetState::STREAM_RESUME:
+            setState = StreamSetState::STREAM_RESUME;
+            break;
+        case StreamSetState::STREAM_MUTE:
+            setState = StreamSetState::STREAM_MUTE;
+            break;
+        case StreamSetState::STREAM_UNMUTE:
+            setState = StreamSetState::STREAM_UNMUTE;
+            break;
+        default:
+            AUDIO_INFO_LOG("UpdateStreamState::streamSetState value is error");
+            break;
     }
     StreamSetStateEventInternal setStateEvent = {};
     setStateEvent.streamSetState = setState;

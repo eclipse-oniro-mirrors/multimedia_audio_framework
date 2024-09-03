@@ -80,6 +80,7 @@ struct BasicBufferInfo {
 
     std::atomic<float> streamVolume;
     std::atomic<float> duckFactor;
+    std::atomic<float> muteFactor;
 };
 
 enum SpanStatus : uint32_t {
@@ -144,6 +145,9 @@ public:
 
     float GetDuckFactor();
     bool SetDuckFactor(float duckFactor);
+
+    float GetMuteFactor();
+    bool SetMuteFactor(float muteFactor);
 
     int32_t GetAvailableDataFrames();
 

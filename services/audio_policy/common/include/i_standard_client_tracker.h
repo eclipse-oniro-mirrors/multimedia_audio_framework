@@ -27,6 +27,8 @@ class IStandardClientTracker : public IRemoteBroker {
 public:
     virtual ~IStandardClientTracker() = default;
 
+    virtual void MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) = 0;
+    virtual void UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) = 0;
     virtual void PausedStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) = 0;
     virtual void ResumeStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) = 0;
     virtual void SetLowPowerVolumeImpl(float volume) = 0;
@@ -42,6 +44,8 @@ public:
         GETLOWPOWERVOL,
         PAUSEDSTREAM,
         RESUMESTREAM,
+        MUTESTREAM,
+        UNMUTESTREAM,
         GETSINGLESTREAMVOL,
         SETOFFLOADMODE,
         UNSETOFFLOADMODE,

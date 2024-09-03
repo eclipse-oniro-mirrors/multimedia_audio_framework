@@ -91,6 +91,8 @@ public:
 
     virtual int32_t SetDuckVolume(float vol) = 0;
 
+    virtual int32_t SetMute(bool mute) = 0;
+
     virtual uint32_t GetUnderflowCount() = 0;
 
     virtual uint32_t GetOverflowCount() = 0;

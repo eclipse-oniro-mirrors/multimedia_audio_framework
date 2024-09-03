@@ -198,6 +198,15 @@ enum StreamUsage {
 };
 
 /**
+* exempt mute StreamUsage type.
+*/
+const std::vector<StreamUsage> EXEMPT_MUTE_STREAM_USAGE {
+    STREAM_USAGE_VOICE_COMMUNICATION,
+    STREAM_USAGE_VIDEO_COMMUNICATION,
+    STREAM_USAGE_NAVIGATION
+};
+
+/**
 * Enumerates the audio content type.
 */
 enum ContentType {
