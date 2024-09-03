@@ -30,7 +30,7 @@ AudioClientTrackerCallbackStub::~AudioClientTrackerCallbackStub()
 }
 
 void AudioClientTrackerCallbackStub::SelectCodeCase(uint32_t code,
-    StreamSetStateEventInternal &streamSetStateEventInternal) 
+    StreamSetStateEventInternal &streamSetStateEventInternal)
 {
     switch (code) {
         case PAUSEDSTREAM:
