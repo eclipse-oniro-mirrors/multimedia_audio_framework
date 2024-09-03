@@ -692,6 +692,10 @@ void OHAudioBuffer::SetLastWrittenTime(int64_t time)
 
 std::atomic<uint32_t> *OHAudioBuffer::GetFutex()
 {
+    if (basicBufferInfo_ == nullptr) {
+        AUDIO_WARNING_LOG("basicBufferInfo_ is nullptr");
+        return nullptr;
+    }
     return &basicBufferInfo_->futexObj;
 }
 
