@@ -540,7 +540,7 @@ void AudioEffectChainManager::Dump()
 int32_t AudioEffectChainManager::EffectDspVolumeUpdate(std::shared_ptr<AudioEffectVolume> audioEffectVolume)
 {
     // update dsp volume
-    AUDIO_DEBUG_LOG("send volume to dsp.");
+    AUDIO_INFO_LOG("send volume to dsp.");
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     float volumeMax = 0;
     for (auto it = sceneTypeToSessionIDMap_.begin(); it != sceneTypeToSessionIDMap_.end(); it++) {
@@ -571,7 +571,7 @@ int32_t AudioEffectChainManager::EffectDspVolumeUpdate(std::shared_ptr<AudioEffe
 int32_t AudioEffectChainManager::EffectApVolumeUpdate(std::shared_ptr<AudioEffectVolume> audioEffectVolume)
 {
     // send to ap
-    AUDIO_DEBUG_LOG("send volume to ap.");
+    AUDIO_INFO_LOG("send volume to ap.");
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     for (auto it = sceneTypeToSessionIDMap_.begin(); it != sceneTypeToSessionIDMap_.end(); it++) {
         float volumeMax = 0;
@@ -768,8 +768,6 @@ int32_t AudioEffectChainManager::UpdateSpatializationState(AudioSpatializationSt
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     EffectVolumeUpdate(audioEffectVolume);
-    AUDIO_INFO_LOG("systemVolume prepare change or no change");
-
     return SUCCESS;
 }
 
