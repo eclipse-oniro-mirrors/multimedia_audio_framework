@@ -542,7 +542,6 @@ HWTEST(AudioInterruptUnitTest, AudioInterruptService_016, TestSize.Level1)
     EXPECT_EQ(interruptServiceTest->policyServer_, nullptr);
     interruptServiceTest->Init(GetPolicyServerTest());
 
-    interruptServiceTest->policyServer_->isAvSessionSetVoipStart = true;
     interruptServiceTest->UpdateAudioSceneFromInterrupt(AUDIO_SCENE_INVALID,
             static_cast<AudioInterruptChangeType>(-2));
     for (int audioScene = AUDIO_SCENE_INVALID; audioScene <= AUDIO_SCENE_MAX; audioScene++) {
