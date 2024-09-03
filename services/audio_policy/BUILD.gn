@@ -62,6 +62,7 @@ config("audio_policy_public_config") {
     "../../frameworks/native/bluetoothclient",
     "../../interfaces/inner_api/native/audiocommon/include",
     "../../interfaces/inner_api/native/audiomanager/include",
+    "//third_partyopenssl/include/",
   ]
 
   cflags = [
@@ -180,6 +181,7 @@ ohos_shared_library("audio_policy_service") {
     "../audio_policy:audio_config.para.dac",
     "../audio_service:audio_client",
     "../audio_service:audio_common",
+    "//third_party/openssl:libcrypto_shared",
   ]
 
   external_deps = [
