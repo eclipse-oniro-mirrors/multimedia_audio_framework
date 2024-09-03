@@ -4026,7 +4026,6 @@ void AudioPolicyService::UpdateA2dpOffloadFlagForAllStream(
     if (stopPlayingStream.size() > 0) {
         OffloadStopPlaying(stopPlayingStream);
     }
-    UpdateAllActiveSessions(allSessionInfos);
     UpdateA2dpOffloadFlag(allSessionInfos, deviceType);
 #endif
     AUDIO_DEBUG_LOG("deviceType %{public}d", deviceType);
@@ -4060,7 +4059,6 @@ int32_t AudioPolicyService::UpdateA2dpOffloadFlagForAllStream(DeviceType deviceT
             OffloadStopPlaying(stopPlayingStream);
         }
     }
-    UpdateAllActiveSessions(allSessionInfos);
     UpdateA2dpOffloadFlag(allSessionInfos, deviceType);
     activeSessionsSize = static_cast<int32_t>(allSessionInfos.size());
 #endif
@@ -7295,35 +7293,6 @@ void AudioPolicyService::UpdateA2dpOffloadFlag(const std::vector<Bluetooth::A2dp
         OffloadStartPlaying(allSessions);
         UpdateEffectBtOffloadSupported(true);
     }
-}
-
-void AudioPolicyService::UpdateAllActiveSessions(std::vector<Bluetooth::A2dpStreamInfo> &allActiveSessions)
-{
-    std::lock_guard<std::mutex> lock(checkSpatializedMutex_);
-    vector<unique_ptr<AudioRendererChangeInfo>> audioRendererChangeInfos;
-    streamCollector_.GetCurrentRendererChangeInfos(audioRendererChangeInfos);
-    std::unordered_map<uint32_t, bool> newSessionHasBeenSpatialized;
-    for (auto &changeInfo : audioRendererChangeInfos) {
-        if (changeInfo->rendererState != RENDERER_RUNNING) {
-            newSessionHasBeenSpatialized[changeInfo->sessionId] = false;
-            continue;
-        }
-        auto it = sessionHasBeenSpatialized_.find(changeInfo->sessionId);
-        if (it == sessionHasBeenSpatialized_.end()) {
-            newSessionHasBeenSpatialized[changeInfo->sessionId] = false;
-        } else {
-            newSessionHasBeenSpatialized[changeInfo->sessionId] = sessionHasBeenSpatialized_[changeInfo->sessionId];
-        }
-        for (auto &activeSession : allActiveSessions) {
-            if (activeSession.sessionId == changeInfo->sessionId) {
-                activeSession.isSpatialAudio =
-                    activeSession.isSpatialAudio | newSessionHasBeenSpatialized[changeInfo->sessionId];
-                newSessionHasBeenSpatialized[changeInfo->sessionId] = activeSession.isSpatialAudio;
-                break;
-            }
-        }
-    }
-    sessionHasBeenSpatialized_ = newSessionHasBeenSpatialized;
 }
 #endif
 
