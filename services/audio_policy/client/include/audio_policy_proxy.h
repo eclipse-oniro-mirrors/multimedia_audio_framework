@@ -130,6 +130,8 @@ public:
 
     int32_t UnsetAudioManagerInterruptCallback(const int32_t clientId) override;
 
+    int32_t SetQueryClientTypeCallback(const sptr<IRemoteObject> &object) override;
+
     int32_t RequestAudioFocus(const int32_t clientId, const AudioInterrupt &audioInterrupt) override;
 
     int32_t AbandonAudioFocus(const int32_t clientId, const AudioInterrupt &audioInterrupt) override;

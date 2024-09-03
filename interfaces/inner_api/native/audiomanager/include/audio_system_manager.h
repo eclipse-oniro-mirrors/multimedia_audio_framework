@@ -245,6 +245,12 @@ public:
     virtual void OnDeviceChange(const DeviceChangeAction &deviceChangeAction) = 0;
 };
 
+class AudioQueryClientTypeCallback {
+public:
+    virtual ~AudioQueryClientTypeCallback() = default;
+    virtual bool OnQueryClientType(const std::string &bundleName, uint32_t uid) = 0;
+};
+
 class AudioManagerAvailableDeviceChangeCallback {
 public:
     virtual ~AudioManagerAvailableDeviceChangeCallback() = default;
@@ -1246,6 +1252,8 @@ public:
     static void AudioServerDied(pid_t pid);
 
     std::string GetSelfBundleName(int32_t uid);
+
+    int32_t SetQueryClientTypeCallback(const std::shared_ptr<AudioQueryClientTypeCallback> &callback);
 
     /**
      * @brief inject interruption event.

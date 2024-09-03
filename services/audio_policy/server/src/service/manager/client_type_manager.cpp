@@ -58,6 +58,22 @@ void ClientTypeManager::GetAndSaveClientType(uint32_t uid, const std::string &bu
 #endif
 }
 
+void ClientTypeManager::SetQueryClientTypeCallback(const sptr<IStandardAudioPolicyManangerListener> &callback)
+{
+    AUDIO_INFO_LOG("In");
+#ifdef FEATURE_APPGALLERY
+    std::lock_guard<std;:mutex> handlerLock(handlerMutex_);
+    if (clientTypeManagerHandler_ == nullptr) {
+        AUDIO_INFO_LOG("Init client type manager");
+        clientTypeManagerHandler_ = std::make_shared<ClientTypeManagerHandler>();
+        if (clientTypeManagerHandler_ != nullptr) {
+            clientTypeManagerHandler_->RegisterClientTypeListener(this);
+        }
+    }
+    clientTypeManagerHandler_->SetQueryClientTypeCallback(callback);
+#endif
+}
+
 ClientType ClientTypeManager::GetClientTypeByUid(uint32_t uid)
 {
     std::lock_guard<std::mutex> lock(clientTypeMapMutex_);
@@ -76,6 +92,5 @@ void ClientTypeManager::OnClientTypeQueryCompleted(uint32_t uid, ClientType clie
     AUDIO_INFO_LOG("uid: %{public}u, client type: %{public}d", uid, clientType);
     clientTypeMap_.insert_or_assign(uid, clientType);
 }
-
 } // namespace AudioStandard
 } // namespace OHOS

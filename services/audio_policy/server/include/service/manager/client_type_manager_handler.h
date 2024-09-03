@@ -22,6 +22,8 @@
 
 #include "audio_info.h"
 #include "audio_policy_log.h"
+#include "audio_system_manager.h"
+#include "i_standard_audio_policy_manager_listener.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -59,6 +61,8 @@ public:
     void RegisterClientTypeListener(ClientTypeListener *clientTypeListener);
     bool SendGetClientType(const std::string &bundleName, uint32_t uid);
 
+    void SetQueryClientTypeCallback(const sptr<IStandardAudioPolicyManagerListener> &callback);
+
 protected:
     void ProcessEvent(const AppExecFwk::InnerEvent::Pointer &event) override;
 
@@ -67,6 +71,9 @@ private:
     void HandleGetClientType(const AppExecFwk::InnerEvent::Pointer &event);
     ClientTypeListener *clientTypeListener_ = nullptr;
     std::mutex runnerMutex_;
+
+    std::mutex callbackMutex_;
+    sptr<IStandardAudioPolicyManagerListener> queryClientTypeCallback_ = nullptr;
 };
 } // namespace AudioStandard
 } // namespace OHOS

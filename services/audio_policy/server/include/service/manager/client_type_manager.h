@@ -35,6 +35,8 @@ public:
 
     void OnClientTypeQueryCompleted(uint32_t uid, ClientType clientType) override;
 
+    void SetQueryClientTypeCallback(const sptr<IStandardAudioPolicyManagerListener> &callback);
+
 private:
     std::mutex clientTypeMapMutex_;
     std::unordered_map<uint32_t, ClientType> clientTypeMap_;
