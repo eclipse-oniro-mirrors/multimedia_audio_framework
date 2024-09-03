@@ -1348,10 +1348,6 @@ void AudioInterruptService::UpdateAudioSceneFromInterrupt(const AudioScene audio
             AUDIO_ERR_LOG("unexpected changeType: %{public}d", changeType);
             return;
     }
-    if (policyServer_->isAvSessionSetVoipStart && audioScene == AUDIO_SCENE_DEFAULT) {
-        AUDIO_INFO_LOG("default scene is blocked for call state set by avsession");
-        return;
-    }
     std::thread setAudioSceneThread([this, audioScene] {
         this->policyServer_->SetAudioSceneInternal(audioScene);
     });
