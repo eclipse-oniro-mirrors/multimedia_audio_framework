@@ -76,7 +76,7 @@ ProRendererStreamImpl::~ProRendererStreamImpl()
 
 AudioSamplingRate ProRendererStreamImpl::GetDirectSampleRate(AudioSamplingRate sampleRate) const noexcept
 {
-    if (processConfig_.streamType == STREAM_VOICE_CALL) {
+    if (processConfig_.streamType == STREAM_VOICE_CALL || processConfig_.streamType == STREAM_VOICE_COMMUNICATION) {
         // VoIP stream type. Return the special sample rate of direct VoIP mode.
         if (sampleRate <= AudioSamplingRate::SAMPLE_RATE_16000) {
             return AudioSamplingRate::SAMPLE_RATE_16000;
