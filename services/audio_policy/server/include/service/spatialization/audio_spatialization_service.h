@@ -103,7 +103,7 @@ private:
     std::string GetCurrTimestamp();
     std::string EnCapsulateDeviceInfo(const std::string address);
     std::string ExtractTimestamp(const std::string deviceSpatialInfo);
-    std::string GetSha256EncryptHwHashAddress(const std::string& address);
+    std::string GetSha256EncryptAddress(const std::string& address);
     std::map<std::string, std::string> addressToDeviceSpatialInfoMap_;
     std::map<std::string, uint32_t> addressToDeviceIDMap_;
     std::shared_ptr<AudioPolicyServerHandler> audioPolicyServerHandler_;
