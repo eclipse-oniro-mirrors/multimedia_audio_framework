@@ -1172,7 +1172,6 @@ int32_t AudioEndpointInner::LinkProcessStream(IAudioProcessStream *processStream
 {
     CHECK_AND_RETURN_RET_LOG(processStream != nullptr, ERR_INVALID_PARAM, "IAudioProcessStream is null");
     std::shared_ptr<OHAudioBuffer> processBuffer = processStream->GetStreamBuffer();
-    processBuffer->SetSessionId(processStream->GetAudioSessionId());
     CHECK_AND_RETURN_RET_LOG(processBuffer != nullptr, ERR_INVALID_PARAM, "processBuffer is null");
     CHECK_AND_RETURN_RET_LOG(processBuffer->GetStreamStatus() != nullptr, ERR_INVALID_PARAM,
         "the stream status is null");
@@ -1180,7 +1179,7 @@ int32_t AudioEndpointInner::LinkProcessStream(IAudioProcessStream *processStream
     CHECK_AND_RETURN_RET_LOG(processList_.size() < MAX_LINKED_PROCESS, ERR_OPERATION_FAILED, "reach link limit.");
 
     AUDIO_INFO_LOG("LinkProcessStream start status is:%{public}s.", GetStatusStr(endpointStatus_).c_str());
-
+    processBuffer->SetSessionId(processStream->GetAudioSessionId());
     bool needEndpointRunning = processBuffer->GetStreamStatus()->load() == STREAM_RUNNING;
 
     if (endpointStatus_ == STARTING) {
