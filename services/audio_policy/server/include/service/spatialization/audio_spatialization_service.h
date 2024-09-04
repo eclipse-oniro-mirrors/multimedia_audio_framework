@@ -35,7 +35,6 @@
 
 namespace OHOS {
 namespace AudioStandard {
-#define MAX_DEVICE_NUM 10
 class AudioSpatializationService {
 public:
     static AudioSpatializationService& GetAudioSpatializationService()
@@ -88,6 +87,7 @@ private:
         WRITE_SPATIALIZATION_SCENE = 1,
         WRITE_DEVICESPATIAL_INFO = 2,
     };
+    static constexpr uint32_t MAX_DEVICE_NUM = 10;
     int32_t UpdateSpatializationStateReal(bool outputDeviceChange, std::string preDeviceAddress = "");
     int32_t UpdateSpatializationState();
     int32_t UpdateSpatializationSceneType();
@@ -101,7 +101,7 @@ private:
     void UpdateDeviceSpatialMapInfo(const std::string address, const std::string deviceSpatialInfo);
     std::string RemoveOldestDevice();
     std::string GetCurrTimestamp();
-    std::string EnCapsulateDeviceInfo(const std::string address);
+    std::string EncapsulateDeviceInfo(const std::string address);
     std::string ExtractTimestamp(const std::string deviceSpatialInfo);
     std::string GetSha256EncryptAddress(const std::string& address);
     std::map<std::string, std::string> addressToDeviceSpatialInfoMap_;
