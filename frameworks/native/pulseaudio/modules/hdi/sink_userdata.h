@@ -104,7 +104,7 @@ struct Userdata {
         pa_thread *thread;
         pa_thread *thread_hdi;
         pa_asyncmsgq *msgq;
-        bool isHDISinkStarted;
+        pa_atomic_t isHDISinkStarted;
         struct RendererSinkAdapter *sinkAdapter;
         pa_asyncmsgq *dq;
         pa_atomic_t dflag;
