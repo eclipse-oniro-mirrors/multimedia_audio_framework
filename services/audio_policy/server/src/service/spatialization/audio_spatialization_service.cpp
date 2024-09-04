@@ -16,6 +16,7 @@
 #define LOG_TAG "AudioSpatializationService"
 #endif
 
+#include <openssl/sha.h>
 #include "audio_spatialization_service.h"
 
 #include "iservice_registry.h"
@@ -161,7 +162,8 @@ int32_t AudioSpatializationService::SetSpatializationEnabled(const sptr<AudioDev
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     std::string address = selectedAudioDevice->macAddress_;
     std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
-    AUDIO_INFO_LOG("Device %{public}s Spatialization enabled is set to be: %{public}d", encryptedAddress.c_str(), enable);
+    AUDIO_INFO_LOG("Device %{public}s SpatializationEnabled is set to be: %{public}d", encryptedAddress.c_str(),
+        enable);
     preSettingSpatialAddress_ = encryptedAddress;
     if (addressToSpatialEnabledMap_[encryptedAddress].spatializationEnabled == enable) {
         return SPATIALIZATION_SERVICE_OK;
@@ -221,7 +223,7 @@ int32_t AudioSpatializationService::SetHeadTrackingEnabled(const sptr<AudioDevic
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     std::string address = selectedAudioDevice->macAddress_;
     std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
-    AUDIO_INFO_LOG("Device %{public}s Head tracking enabled is set to be: %{public}d", encryptedAddress.c_str(), enable);
+    AUDIO_INFO_LOG("Device %{public}s HeadTrackingEnabled is set to be: %{public}d", encryptedAddress.c_str(), enable);
     preSettingSpatialAddress_ = encryptedAddress;
     if (addressToSpatialEnabledMap_[encryptedAddress].headTrackingEnabled == enable) {
         return SPATIALIZATION_SERVICE_OK;
@@ -730,7 +732,7 @@ std::string AudioSpatializationService::GetCurrTimestamp()
 std::string AudioSpatializationService::GetSha256EncryptHwHashAddress(const std::string& address)
 {
     unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256(reinterpret_cast<const unsigned char *>(address.c_str()), address.sie(), hash);
+    SHA256(reinterpret_cast<const unsigned char *>(address.c_str()), address.size(), hash);
     std::stringstream ss;
     for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
     {
@@ -774,6 +776,7 @@ std::string AudioSpatializationService::RemoveOldestDevice()
         }
     }
     addressToDeviceSpatialInfoMap_.erase(oldestAddr);
+    AUDIO_INFO_LOG("Connection devices exceeded the limit, device %{public}s has been removed", oldestAddr.c_str());
     return oldestAddr;
 }
 
