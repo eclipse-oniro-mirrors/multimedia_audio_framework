@@ -130,7 +130,7 @@ bool AudioSpatializationService::IsSpatializationEnabled()
 bool AudioSpatializationService::IsSpatializationEnabled(const std::string address)
 {
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
-    std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
+    std::string encryptedAddress = GetSha256EncryptAddress(address);
     CHECK_AND_RETURN_RET_LOG(addressToSpatialEnabledMap_.count(encryptedAddress), false,
         "specified address for set spatialization enabled is not in memory");
     return addressToSpatialEnabledMap_[encryptedAddress].spatializationEnabled;
@@ -161,7 +161,7 @@ int32_t AudioSpatializationService::SetSpatializationEnabled(const sptr<AudioDev
 {
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     std::string address = selectedAudioDevice->macAddress_;
-    std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
+    std::string encryptedAddress = GetSha256EncryptAddress(address);
     AUDIO_INFO_LOG("Device %{public}s SpatializationEnabled is set to be: %{public}d", encryptedAddress.c_str(),
         enable);
     preSettingSpatialAddress_ = encryptedAddress;
@@ -191,7 +191,7 @@ bool AudioSpatializationService::IsHeadTrackingEnabled()
 bool AudioSpatializationService::IsHeadTrackingEnabled(const std::string address)
 {
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
-    std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
+    std::string encryptedAddress = GetSha256EncryptAddress(address);
     CHECK_AND_RETURN_RET_LOG(addressToSpatialEnabledMap_.count(encryptedAddress), false,
         "specified address for set head tracking enabled is not in memory");
     return addressToSpatialEnabledMap_[encryptedAddress].headTrackingEnabled;
@@ -222,7 +222,7 @@ int32_t AudioSpatializationService::SetHeadTrackingEnabled(const sptr<AudioDevic
 {
     std::lock_guard<std::mutex> lock(spatializationServiceMutex_);
     std::string address = selectedAudioDevice->macAddress_;
-    std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
+    std::string encryptedAddress = GetSha256EncryptAddress(address);
     AUDIO_INFO_LOG("Device %{public}s HeadTrackingEnabled is set to be: %{public}d", encryptedAddress.c_str(), enable);
     preSettingSpatialAddress_ = encryptedAddress;
     if (addressToSpatialEnabledMap_[encryptedAddress].headTrackingEnabled == enable) {
@@ -294,7 +294,7 @@ bool AudioSpatializationService::IsSpatializationSupported()
 bool AudioSpatializationService::IsSpatializationSupportedForDevice(const std::string address)
 {
     std::lock_guard<std::mutex> lock(spatializationSupportedMutex_);
-    std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
+    std::string encryptedAddress = GetSha256EncryptAddress(address);
     if (!addressToSpatialDeviceStateMap_.count(encryptedAddress)) {
         AUDIO_INFO_LOG("specified address for spatialization is not in memory");
         return false;
@@ -310,7 +310,7 @@ bool AudioSpatializationService::IsHeadTrackingSupported()
 bool AudioSpatializationService::IsHeadTrackingSupportedForDevice(const std::string address)
 {
     std::lock_guard<std::mutex> lock(spatializationSupportedMutex_);
-    std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
+    std::string encryptedAddress = GetSha256EncryptAddress(address);
     if (!addressToSpatialDeviceStateMap_.count(encryptedAddress)) {
         AUDIO_INFO_LOG("specified address for head tracking is not in memory");
         return false;
@@ -324,7 +324,7 @@ int32_t AudioSpatializationService::UpdateSpatialDeviceState(const AudioSpatialD
         "isSpatializationSupported = %{public}d, isHeadTrackingSupported = %{public}d",
         audioSpatialDeviceState.isSpatializationSupported, audioSpatialDeviceState.isHeadTrackingSupported);
     {
-        std::string encryptedAddress = GetSha256EncryptHwHashAddress(audioSpatialDeviceState.address);
+        std::string encryptedAddress = GetSha256EncryptAddress(audioSpatialDeviceState.address);
         std::lock_guard<std::mutex> lock(spatializationSupportedMutex_);
         if (addressToSpatialDeviceStateMap_.count(encryptedAddress) > 0 &&
             IsAudioSpatialDeviceStateEqual(addressToSpatialDeviceStateMap_[encryptedAddress],
@@ -390,7 +390,7 @@ void AudioSpatializationService::UpdateCurrentDevice(const std::string macAddres
     }
     std::string preDeviceAddress = currentDeviceAddress_;
     currentDeviceAddress_ = macAddress;
-    std::string currEncryptedAddress_ = GetSha256EncryptHwHashAddress(currentDeviceAddress_);
+    std::string currEncryptedAddress_ = GetSha256EncryptAddress(currentDeviceAddress_);
     if (addressToSpatialDeviceStateMap_.find(currEncryptedAddress_) != addressToSpatialDeviceStateMap_.end()) {
         auto nextSpatialDeviceType{ addressToSpatialDeviceStateMap_[currEncryptedAddress_].spatialDeviceType };
         AUDIO_INFO_LOG("currSpatialDeviceType_ = %{public}d,  nextSpatialDeviceType_ = %{public}d",
@@ -466,7 +466,7 @@ int32_t AudioSpatializationService::UpdateSpatializationStateReal(bool outputDev
 {
     bool spatializationEnabled = false;
     bool headTrackingEnabled = false;
-    std::string currEncryptedAddress_ = GetSha256EncryptHwHashAddress(currentDeviceAddress_);
+    std::string currEncryptedAddress_ = GetSha256EncryptAddress(currentDeviceAddress_);
     if (preSettingSpatialAddress_ == "NO_PREVIOUS_SET_DEVICE") {
         spatializationEnabled = spatializationStateFlag_.spatializationEnabled &&
             IsSpatializationSupported() && IsSpatializationSupportedForDevice(currentDeviceAddress_);
@@ -657,7 +657,7 @@ void AudioSpatializationService::WriteSpatializationStateToDb(WriteToDbOperation
             break;
         }
         case WRITE_DEVICESPATIAL_INFO: {
-            std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
+            std::string encryptedAddress = GetSha256EncryptAddress(address);
             uint32_t deviceID = addressToDeviceIDMap_[encryptedAddress];
             ErrCode ret = settingProvider.PutStringValue(SPATIALIZATION_STATE_SETTINGKEY + "_device" +
                 std::to_string(deviceID), addressToDeviceSpatialInfoMap_[encryptedAddress]);
@@ -729,7 +729,7 @@ std::string AudioSpatializationService::GetCurrTimestamp()
     return oss.str();
 }
 
-std::string AudioSpatializationService::GetSha256EncryptHwHashAddress(const std::string& address)
+std::string AudioSpatializationService::GetSha256EncryptAddress(const std::string& address)
 {
     const int32_t HexWidth = 2;
     unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -753,7 +753,7 @@ std::string AudioSpatializationService::ExtractTimestamp(const std::string devic
 std::string AudioSpatializationService::EnCapsulateDeviceInfo(const std::string address)
 {
     std::stringstream value;
-    std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
+    std::string encryptedAddress = GetSha256EncryptAddress(address);
     value << encryptedAddress;
     value << "|" << addressToSpatialEnabledMap_[encryptedAddress].spatializationEnabled;
     value << "|" << addressToSpatialEnabledMap_[encryptedAddress].headTrackingEnabled;
@@ -782,7 +782,7 @@ std::string AudioSpatializationService::RemoveOldestDevice()
 
 void AudioSpatializationService::UpdateDeviceSpatialMapInfo(std::string address, std::string deviceSpatialInfo)
 {
-    std::string encryptedAddress = GetSha256EncryptHwHashAddress(address);
+    std::string encryptedAddress = GetSha256EncryptAddress(address);
     if (!addressToDeviceSpatialInfoMap_.count(encryptedAddress)) {
         if (addressToDeviceSpatialInfoMap_.size() >= MAX_DEVICE_NUM) {
             std::string oldestAddr = RemoveOldestDevice();
