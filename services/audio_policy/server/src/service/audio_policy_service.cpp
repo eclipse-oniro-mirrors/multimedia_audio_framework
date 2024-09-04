@@ -3881,6 +3881,18 @@ void AudioPolicyService::OnDeviceStatusUpdated(DeviceType devType, bool isConnec
         UpdateConnectedDevicesWhenConnecting(updatedDesc, descForCb);
 
         reason = AudioStreamDeviceChangeReason::NEW_DEVICE_AVAILABLE;
+#ifdef BLUETOOTH_ENABLE
+    if (updatedDesc.connectState_ == CONNECTED &&
+        updatedDesc.devType_ == DEVICE_TYPE_BLUETOOTH_SCO) {
+        AudioRendererInfo rendererInfo = {};
+        rendererInfo.streamUsage = STREAM_USAGE_VOICE_COMMUNICATION;
+        std::vector<sptr<AudioDeviceDescriptor>> preferredDeviceList =
+            GetPreferredOutputDeviceDescriptors(rendererInfo);
+        if (preferredDeviceList[0]->deviceType_ == DEVICE_TYPE_BLUETOOTH_SCO) {
+            Bluetooth::AudioHfpManager::SetActiveHfpDevice(preferredDeviceList[0]->macAddress_);
+        }
+    }
+#endif
     } else {
         UpdateConnectedDevicesWhenDisconnecting(updatedDesc, descForCb);
         reason = AudioStreamDeviceChangeReason::OLD_DEVICE_UNAVALIABLE;
