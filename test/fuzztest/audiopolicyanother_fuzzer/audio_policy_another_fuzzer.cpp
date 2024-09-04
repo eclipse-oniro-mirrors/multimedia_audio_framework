@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -272,6 +272,8 @@ void AudioSessionFuzzTest(const uint8_t *rawData, size_t size)
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = *reinterpret_cast<const AudioConcurrencyMode *>(rawData);
     GetServerPtr()->ActivateAudioSession(sessionStrategy);
+    GetServerPtr()->IsAudioSessionActivated();
+    GetServerPtr()->DeactivateAudioSession();
 }
 
 void AudioConcurrencyFuzzTest(const uint8_t *rawData, size_t size)
@@ -319,7 +321,6 @@ void AudioVolumeKeyCallbackStub(const uint8_t *rawData, size_t size)
     MessageOption option;
     listener->OnRemoteRequest(static_cast<uint32_t>(UPDATE_CALLBACK_CLIENT), data, reply, option);
 }
-
 } // namespace AudioStandard
 } // namesapce OHOS
 
@@ -339,6 +340,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     OHOS::AudioStandard::AudioPolicyFuzzTest(data, size);
     OHOS::AudioStandard::AudioPolicyOtherFuzzTest(data, size);
     OHOS::AudioStandard::AudioVolumeKeyCallbackStub(data, size);
+    OHOS::AudioStandard::AudioSessionFuzzTest(data, size);
+
     return 0;
 }
 
