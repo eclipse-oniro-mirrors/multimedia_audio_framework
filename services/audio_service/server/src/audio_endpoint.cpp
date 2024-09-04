@@ -328,8 +328,6 @@ private:
     mutable int64_t volumeDataCount_ = 0;
     std::string logUtilsTag_ = "";
 
-    bool isSupportAbsVolume_ = false;
-
     // for get amplitude
     float maxAmplitude_ = 0;
     int64_t lastGetMaxAmplitudeTime_ = 0;
@@ -1090,7 +1088,7 @@ int32_t AudioEndpointInner::OnStart(IAudioProcessStream *processStream)
             CHECK_AND_RETURN_RET_LOG(StartDevice(), ERR_OPERATION_FAILED, "StartDevice failed");
         }
     }
-    isSupportAbsVolume_ = PolicyHandler::GetInstance().IsAbsVolumeSupported();
+
     endpointStatus_ = RUNNING;
     delayStopTime_ = INT64_MAX;
     return SUCCESS;
@@ -1520,7 +1518,8 @@ void AudioEndpointInner::GetAllReadyProcessData(std::vector<AudioStreamData> &au
         DeviceType deviceType = PolicyHandler::GetInstance().GetActiveOutPutDevice();
         bool muteFlag = processList_[i]->GetMuteFlag();
         if (deviceInfo_.networkId == LOCAL_NETWORK_ID &&
-            (deviceInfo_.deviceType != DEVICE_TYPE_BLUETOOTH_A2DP || !isSupportAbsVolume_) &&
+            (deviceInfo_.deviceType != DEVICE_TYPE_BLUETOOTH_A2DP ||
+            !PolicyHandler::GetInstance().IsAbsVolumeSupported()) &&
             PolicyHandler::GetInstance().GetSharedVolume(volumeType, deviceType, vol)) {
             streamData.volumeStart = vol.isMute ? 0 : static_cast<int32_t>(curReadSpan->volumeStart * vol.volumeFloat);
         } else {

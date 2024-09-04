@@ -999,6 +999,8 @@ private:
 
     void SetAbsVolumeSceneAsync(const std::string &macAddress, const bool support);
 
+    void SetSharedAbsVolumeScene(const bool support);
+
     void LoadHdiEffectModel();
 
     void UpdateEffectBtOffloadSupported(const bool &isSupported);
@@ -1084,6 +1086,7 @@ private:
 
     std::shared_ptr<AudioSharedMemory> policyVolumeMap_ = nullptr;
     volatile Volume *volumeVector_ = nullptr;
+    volatile bool *sharedAbsVolumeScene_ = nullptr;
 
     std::vector<DeviceType> outputPriorityList_ = {
         DEVICE_TYPE_BLUETOOTH_SCO,

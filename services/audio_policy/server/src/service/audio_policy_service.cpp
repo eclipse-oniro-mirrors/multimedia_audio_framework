@@ -344,12 +344,14 @@ bool AudioPolicyService::Init(void)
     CHECK_AND_RETURN_RET_LOG(status == SUCCESS, false, "[Policy Service] Register for device status events failed");
 
     if (policyVolumeMap_ == nullptr) {
-        size_t mapSize = IPolicyProvider::GetVolumeVectorSize() * sizeof(Volume);
+        size_t mapSize = IPolicyProvider::GetVolumeVectorSize() * sizeof(Volume) + sizeof(bool);
         AUDIO_INFO_LOG("InitSharedVolume create shared volume map with size %{public}zu", mapSize);
         policyVolumeMap_ = AudioSharedMemory::CreateFormLocal(mapSize, "PolicyVolumeMap");
         CHECK_AND_RETURN_RET_LOG(policyVolumeMap_ != nullptr && policyVolumeMap_->GetBase() != nullptr,
             false, "Get shared memory failed!");
         volumeVector_ = reinterpret_cast<Volume *>(policyVolumeMap_->GetBase());
+        sharedAbsVolumeScene_ = reinterpret_cast<bool *>(policyVolumeMap_->GetBase()) +
+            IPolicyProvider::GetVolumeVectorSize() * sizeof(Volume);
     }
 
     CreateRecoveryThread();
@@ -467,6 +469,7 @@ void AudioPolicyService::UpdateVolumeForLowLatency()
         vol.volumeFloat = GetSystemVolumeInDb(*iter, volumeLevel, currentActiveDevice_.deviceType_);
         SetSharedVolume(*iter, currentActiveDevice_.deviceType_, vol);
     }
+    SetSharedAbsVolumeScene(IsAbsVolumeScene());
 }
 
 bool AudioPolicyService::ConnectServiceAdapter()
@@ -501,6 +504,7 @@ void AudioPolicyService::Deinit(void)
         UnregisterBluetoothListener();
     }
     volumeVector_ = nullptr;
+    sharedAbsVolumeScene_ = nullptr;
     policyVolumeMap_ = nullptr;
     safeVolumeExit_ = true;
     if (calculateLoopSafeTime_ != nullptr && calculateLoopSafeTime_->joinable()) {
@@ -3781,6 +3785,7 @@ void AudioPolicyService::UpdateActiveA2dpDeviceWhenDisconnecting(const std::stri
         activeBTDevice_ = "";
         ClosePortAndEraseIOHandle(BLUETOOTH_SPEAKER);
         audioPolicyManager_.SetAbsVolumeScene(false);
+        SetSharedAbsVolumeScene(false);
 #ifdef BLUETOOTH_ENABLE
         Bluetooth::AudioA2dpManager::SetActiveA2dpDevice("");
 #endif
@@ -5550,6 +5555,12 @@ void AudioPolicyService::UpdateDescWhenNoBTPermission(vector<sptr<AudioDeviceDes
     }
 }
 
+void AudioPolicyService::SetSharedAbsVolumeScene(const bool support)
+{
+    CHECK_AND_RETURN_LOG(sharedAbsVolumeScene_ != nullptr, "sharedAbsVolumeScene is nullptr");
+    *sharedAbsVolumeScene_ = support;
+}
+
 void AudioPolicyService::SetAbsVolumeSceneAsync(const std::string &macAddress, const bool support)
 {
     usleep(SET_BT_ABS_SCENE_DELAY_MS);
@@ -6337,6 +6348,7 @@ int32_t AudioPolicyService::InitSharedVolume(std::shared_ptr<AudioSharedMemory> 
         volumeVector_[i].volumeFloat = volFloat;
         volumeVector_[i].volumeInt = 0;
     }
+    SetSharedAbsVolumeScene(false);
     buffer = policyVolumeMap_;
 
     return SUCCESS;
