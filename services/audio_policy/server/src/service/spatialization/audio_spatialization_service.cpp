@@ -731,12 +731,12 @@ std::string AudioSpatializationService::GetCurrTimestamp()
 
 std::string AudioSpatializationService::GetSha256EncryptHwHashAddress(const std::string& address)
 {
+    const int32_t HexWidth = 2;
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256(reinterpret_cast<const unsigned char *>(address.c_str()), address.size(), hash);
     std::stringstream ss;
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
-    {
-        ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        ss << std::hex << std::setw(HexWidth) << std::setfill('0') << (int)hash[i];
     }
     return ss.str();
 }
