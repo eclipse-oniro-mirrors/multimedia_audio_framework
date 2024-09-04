@@ -2366,7 +2366,6 @@ void AudioPolicyServer::UnRegisterSyncHibernateListener()
     if (!ret) {
         AUDIO_WARNING_LOG("unregister sync hibernate callback failed");
     } else {
-        delete syncHibernateListener_;
         syncHibernateListener_ = nullptr;
         AUDIO_INFO_LOG("unregister sync hibernate callback success");
     }
