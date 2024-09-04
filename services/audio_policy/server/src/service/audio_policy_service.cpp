@@ -3883,7 +3883,7 @@ void AudioPolicyService::OnDeviceStatusUpdated(DeviceType devType, bool isConnec
         reason = AudioStreamDeviceChangeReason::NEW_DEVICE_AVAILABLE;
 #ifdef BLUETOOTH_ENABLE
     if (updatedDesc.connectState_ == CONNECTED &&
-        updatedDesc.devType_ == DEVICE_TYPE_BLUETOOTH_SCO) {
+        updatedDesc.deviceType_ == DEVICE_TYPE_BLUETOOTH_SCO) {
         AudioRendererInfo rendererInfo = {};
         rendererInfo.streamUsage = STREAM_USAGE_VOICE_COMMUNICATION;
         std::vector<sptr<AudioDeviceDescriptor>> preferredDeviceList =
