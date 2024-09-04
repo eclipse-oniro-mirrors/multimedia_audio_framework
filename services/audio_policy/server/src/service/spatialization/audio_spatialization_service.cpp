@@ -741,7 +741,7 @@ std::string AudioSpatializationService::GetSha256EncryptHwHashAddress(const std:
     return ss.str();
 }
 
-std::string AudioSpatializationService::extractTimestamp(const std::string deviceSpatialInfo)
+std::string AudioSpatializationService::ExtractTimestamp(const std::string deviceSpatialInfo)
 {
     size_t pos = deviceSpatialInfo.rfind("|");
     if (pos != std::string::npos) {
@@ -769,7 +769,7 @@ std::string AudioSpatializationService::RemoveOldestDevice()
     std::string oldestAddr = "";
     std::string oldestTimestamp = "";
     for (const auto& entry : addressToDeviceSpatialInfoMap_) {
-        std::string currTimestamp = extractTimestamp(entry.second);
+        std::string currTimestamp = ExtractTimestamp(entry.second);
         if (oldestTimestamp.empty() || std::stoul(currTimestamp) < std::stoul(oldestTimestamp)) {
             oldestTimestamp = currTimestamp;
             oldestAddr = entry.first;

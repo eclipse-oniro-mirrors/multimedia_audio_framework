@@ -102,7 +102,7 @@ private:
     std::string RemoveOldestDevice();
     std::string GetCurrTimestamp();
     std::string EnCapsulateDeviceInfo(const std::string address);
-    std::string extractTimestamp(const std::string deviceSpatialInfo);
+    std::string ExtractTimestamp(const std::string deviceSpatialInfo);
     std::string GetSha256EncryptHwHashAddress(const std::string& address);
     std::map<std::string, std::string> addressToDeviceSpatialInfoMap_;
     std::map<std::string, uint32_t> addressToDeviceIDMap_;
