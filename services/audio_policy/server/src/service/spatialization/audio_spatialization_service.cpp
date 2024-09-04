@@ -735,8 +735,8 @@ std::string AudioSpatializationService::GetSha256EncryptHwHashAddress(const std:
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256(reinterpret_cast<const unsigned char *>(address.c_str()), address.size(), hash);
     std::stringstream ss;
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
-        ss << std::hex << std::setw(HexWidth) << std::setfill('0') << (int)hash[i];
+    for (int32_t i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        ss << std::hex << std::setw(HexWidth) << std::setfill('0') << (int32_t)hash[i];
     }
     return ss.str();
 }

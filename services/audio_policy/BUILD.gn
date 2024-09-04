@@ -62,7 +62,7 @@ config("audio_policy_public_config") {
     "../../frameworks/native/bluetoothclient",
     "../../interfaces/inner_api/native/audiocommon/include",
     "../../interfaces/inner_api/native/audiomanager/include",
-    "//third_partyopenssl/include/",
+    "//third_party/openssl/include/",
   ]
 
   cflags = [
