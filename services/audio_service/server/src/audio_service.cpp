@@ -834,7 +834,9 @@ int32_t AudioService::UnsetOffloadMode(uint32_t sessionId)
     }
     AUDIO_INFO_LOG("Set offload mode for renderer %{public}u", sessionId);
     std::shared_ptr<RendererInServer> renderer = allRendererMap_[sessionId].lock();
-    return renderer->UnsetOffloadMode();
+    int32_t ret = renderer->UnsetOffloadMode();
+    lock.unlock();
+    return ret;
 }
 } // namespace AudioStandard
 } // namespace OHOS
