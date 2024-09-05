@@ -392,6 +392,11 @@ int32_t CapturerInClientInner::OnOperationHandled(Operation operation, int64_t r
         return SUCCESS;
     }
 
+    if (operation == RESTORE_SESSION) {
+        RestoreAudioStream();
+        return SUCCESS;
+    }
+
     AUDIO_INFO_LOG("OnOperationHandled() recv operation:%{public}d result:%{public}" PRId64".", operation, result);
     std::unique_lock<std::mutex> lock(callServerMutex_);
     notifiedOperation_ = operation;

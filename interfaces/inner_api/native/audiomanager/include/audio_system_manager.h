@@ -624,6 +624,24 @@ public:
     std::vector<sptr<AudioDeviceDescriptor>> GetDevicesInner(DeviceFlag deviceFlag);
 
     /**
+     * @brief Get the audio output device according to the filter conditions.
+     *
+     * @param AudioRendererFilter filter conditions.
+     * @return Returns the device list is obtained.
+     * @since 12
+     */
+    std::vector<sptr<AudioDeviceDescriptor>> GetOutputDevice(sptr<AudioRendererFilter> audioRendererFilter);
+
+    /**
+     * @brief Get the audio input device according to the filter conditions.
+     *
+     * @param AudioCapturerFilter filter conditions.
+     * @return Returns the device list is obtained.
+     * @since 12
+     */
+    std::vector<sptr<AudioDeviceDescriptor>> GetInputDevice(sptr<AudioCapturerFilter> audioCapturerFilter);
+
+    /**
      * @brief Get audio parameter.
      *
      * @param key Key of audio parameters to be obtained.

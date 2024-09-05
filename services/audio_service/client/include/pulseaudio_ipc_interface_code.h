@@ -80,7 +80,8 @@ namespace AudioStandard {
         SET_ROTATION_TO_EFFECT,
         UPDATE_SESSION_CONNECTION_STATE,
         SET_SINGLE_STREAM_MUTE,
-        AUDIO_SERVER_CODE_MAX = SET_SINGLE_STREAM_MUTE,
+        RESTORE_SESSION,
+        AUDIO_SERVER_CODE_MAX = RESTORE_SESSION,
     };
 } // namespace AudioStandard
 } // namespace OHOS

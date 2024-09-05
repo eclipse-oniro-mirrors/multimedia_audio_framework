@@ -71,6 +71,7 @@ public:
     int32_t SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack);
     int32_t UnsetOffloadMode(uint32_t sessionId);
     std::shared_ptr<RendererInServer> GetRendererBySessionID(const uint32_t &session);
+    std::shared_ptr<CapturerInServer> GetCapturerBySessionID(const uint32_t &session);
     void SetNonInterruptMute(const uint32_t SessionId, const bool muteFlag);
     void UpdateMuteControlSet(uint32_t sessionId, bool muteFlag);
 

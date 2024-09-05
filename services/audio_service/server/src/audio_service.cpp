@@ -790,6 +790,15 @@ std::shared_ptr<RendererInServer> AudioService::GetRendererBySessionID(const uin
     }
 }
 
+std::shared_ptr<CapturerInServer> AudioService::GetCapturerBySessionID(const uint32_t &sessionID)
+{
+    if (allCapturerMap_.count(sessionID)) {
+        return allCapturerMap_[sessionID].lock();
+    } else {
+        return std::shared_ptr<CapturerInServer>();
+    }
+}
+
 void AudioService::SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag)
 {
     AUDIO_INFO_LOG("SessionId: %{public}u, muteFlag: %{public}d", sessionId, muteFlag);

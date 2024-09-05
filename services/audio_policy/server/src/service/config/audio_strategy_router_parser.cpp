@@ -18,6 +18,7 @@
 
 #include "audio_strategy_router_parser.h"
 #include "user_select_router.h"
+#include "app_select_router.h"
 #include "privacy_priority_router.h"
 #include "public_priority_router.h"
 #include "stream_filter_router.h"
@@ -137,7 +138,9 @@ void AudioStrategyRouterParser::AddRouters(std::vector<std::unique_ptr<RouterBas
 {
     vector<string> buf = split(routeName, ",");
     for (const auto &name : buf) {
-        if (name == "UserSelectRouter") {
+        if (name == "AppSelectRouter") {
+            routers.push_back(make_unique<AppSelectRouter>());
+        } else if (name == "UserSelectRouter") {
             routers.push_back(make_unique<UserSelectRouter>());
         } else if (name == "PrivacyPriorityRouter") {
             routers.push_back(make_unique<PrivacyPriorityRouter>());

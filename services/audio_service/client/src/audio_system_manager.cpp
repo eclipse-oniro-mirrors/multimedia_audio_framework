@@ -748,6 +748,17 @@ int32_t AudioSystemManager::GetPreferredInputDeviceDescriptors()
     return SUCCESS;
 }
 
+std::vector<sptr<AudioDeviceDescriptor>> AudioSystemManager::GetOutputDevice(
+    sptr<AudioRendererFilter> audioRendererFilter)
+{
+    return AudioPolicyManager::GetInstance().GetOutputDevice(audioRendererFilter);
+}
+
+std::vector<sptr<AudioDeviceDescriptor>> AudioSystemManager::GetInputDevice(
+    sptr<AudioCapturerFilter> audioCapturerFilter)
+{
+    return AudioPolicyManager::GetInstance().GetInputDevice(audioCapturerFilter);
+}
 
 int32_t AudioSystemManager::GetAudioFocusInfoList(std::list<std::pair<AudioInterrupt, AudioFocuState>> &focusInfoList)
 {

@@ -433,6 +433,11 @@ public:
     virtual int32_t SetSinkMuteForSwitchDevice(const std::string &devceClass, int32_t durationUs, bool mute) = 0;
 
     /**
+     * Restore Session
+     */
+    virtual void RestoreSession(const int32_t &sessionID, bool isOutput) = 0;
+
+    /**
      * Set Rotation To Effect.
      */
     virtual void SetRotationToEffect(const uint32_t rotate) = 0;
@@ -518,6 +523,7 @@ private:
     int HandleSetRotationToEffect(MessageParcel &data, MessageParcel &reply);
     int HandleUpdateSessionConnectionState(MessageParcel &data, MessageParcel &reply);
     int HandleSetNonInterruptMute(MessageParcel &data, MessageParcel &reply);
+    int HandleRestoreSession(MessageParcel &data, MessageParcel &reply);
     int HandleSecondPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     int HandleThirdPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     int HandleFourthPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
