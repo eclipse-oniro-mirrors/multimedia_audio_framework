@@ -31,6 +31,8 @@ ohos_unittest("audio_interrupt_service_unit_test") {
     "../../audio_policy/server/src/service/interrupt",
   ]
 
+  use_exceptions = true
+
   cflags = [
     "-Wall",
     "-Werror",
