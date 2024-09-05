@@ -204,9 +204,7 @@ void RendererInServer::OnStatusUpdate(IOperation operation)
                 AUDIO_INFO_LOG("%{public}u recv stand-by started", streamIndex_);
                 audioServerBuffer_->GetStreamStatus()->store(STREAM_RUNNING);
                 FutexTool::FutexWake(audioServerBuffer_->GetFutex());
-                startedTime_ = ClockTime::GetCurNano();
                 WriterRenderStreamStandbySysEvent();
-                return;
             }
             status_ = I_STATUS_STARTED;
             startedTime_ = ClockTime::GetCurNano();
@@ -290,9 +288,9 @@ void RendererInServer::OnStatusUpdateSub(IOperation operation)
 
 void RendererInServer::StandByCheck()
 {
-    Trace trace(traceTag_ + " StandByCheck:standByCounter_:" + std::to_string(standByCounter_));
+    Trace trace(traceTag_ + " StandByCheck:standByCounter_:" + std::to_string(standByCounter_.load()));
     AUDIO_INFO_LOG("sessionId:%{public}u standByCounter_:%{public}u standByEnable_:%{public}s ", streamIndex_,
-        standByCounter_, (standByEnable_ ? "true" : "false"));
+        standByCounter_.load(), (standByEnable_ ? "true" : "false"));
 
     // direct standBy need not in here
     if (managerType_ == DIRECT_PLAYBACK || managerType_ == VOIP_PLAYBACK) {
@@ -327,7 +325,7 @@ bool RendererInServer::ShouldEnableStandBy()
     }
     if (standByCounter_ >= maxStandByCounter && timeCost >= timeLimit) {
         AUDIO_INFO_LOG("sessionId:%{public}u reach the limit of stand by: %{public}u time:%{public}" PRId64"ns",
-            streamIndex_, standByCounter_, timeCost);
+            streamIndex_, standByCounter_.load(), timeCost);
         return true;
     }
     return false;
@@ -669,6 +667,7 @@ int32_t RendererInServer::Pause()
         standByEnable_ = false;
         audioServerBuffer_->GetStreamStatus()->store(STREAM_PAUSED);
     }
+    standByCounter_ = 0;
     int ret = IStreamManager::GetPlaybackManager(managerType_).PauseRender(streamIndex_);
     if (isInnerCapEnabled_) {
         std::lock_guard<std::mutex> lock(dupMutex_);

@@ -154,7 +154,7 @@ private:
     std::mutex updateIndexLock_;
     int64_t startedTime_ = 0;
     uint32_t underrunCount_ = 0;
-    uint32_t standByCounter_ = 0;
+    std::atomic<uint32_t> standByCounter_ = 0;
     int64_t lastWriteTime_ = 0;
     bool resetTime_ = false;
     uint64_t resetTimestamp_ = 0;
