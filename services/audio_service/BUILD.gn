@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../appgallery.gni")
 import("../../config.gni")
 import("../../ressche_part.gni")
 import("../../sensor.gni")
@@ -88,6 +89,11 @@ ohos_shared_library("audio_common") {
 
   cflags_cc = cflags
   cflags_cc += [ "-std=c++20" ]
+
+  defines = []
+  if (use_libfuzzer || use_clang_coverage) {
+    defines += [ "TEST_COVERAGE" ]
+  }
 
   subsystem_name = "multimedia"
   innerapi_tags = [ "platformsdk_indirect" ]
@@ -169,7 +175,6 @@ ohos_shared_library("audio_client") {
     "client/src/microphone_descriptor.cpp",
     "client/src/policy_provider_stub.cpp",
     "client/src/renderer_in_client.cpp",
-    "client/src/renderer_in_client_service_died_cb.cpp",
   ]
 
   public_configs = [ ":audio_client_public_config" ]
@@ -211,9 +216,8 @@ ohos_shared_library("audio_client") {
     defines += [ "FEATURE_POWER_MANAGER" ]
   }
 
-  if (ressche_enable == true) {
-    external_deps += [ "resource_schedule_service:ressched_client" ]
-    defines += [ "RESSCHE_ENABLE" ]
+  if (use_libfuzzer || use_clang_coverage) {
+    defines += [ "TEST_COVERAGE" ]
   }
 
   version_script = "../../audio_framework.versionscript"
@@ -411,6 +415,7 @@ ohos_shared_library("audio_service") {
     "hicollie:libhicollie",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
+    "init:libbegetutil",
     "ipc:ipc_single",
     "media_foundation:media_monitor_client",
     "media_foundation:media_monitor_common",
@@ -434,12 +439,20 @@ ohos_shared_library("audio_service") {
     defines += [ "AUDIO_BUILD_VARIANT_ROOT" ]
   }
 
+  if (appgallery_part_enable == true) {
+    defines += [ "FEATURE_APPGALLERY" ]
+  }
+
   if (sensor_enable == true) {
     external_deps += [ "sensor:sensor_interface_native" ]
   }
 
   if (ressche_enable == true) {
     external_deps += [ "resource_schedule_service:ressched_client" ]
+  }
+
+  if (use_libfuzzer || use_clang_coverage) {
+    defines += [ "TEST_COVERAGE" ]
   }
 
   subsystem_name = "multimedia"

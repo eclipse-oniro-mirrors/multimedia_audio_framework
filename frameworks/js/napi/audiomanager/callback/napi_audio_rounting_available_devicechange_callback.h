@@ -46,7 +46,6 @@ private:
     };
 
     void OnJsCallbackAvailbleDeviceChange(std::unique_ptr<AudioRountingJsCallback> &jsCb);
-    static void WorkAvailbleDeviceChangeDone(uv_work_t *work, int status);
 
     std::mutex mutex_;
     napi_env env_ = nullptr;

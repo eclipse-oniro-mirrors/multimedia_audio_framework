@@ -66,8 +66,10 @@ private:
     static napi_value GetPreferredOutputDeviceForRendererInfo(napi_env env, napi_callback_info info);
     static napi_value GetPreferOutputDeviceForRendererInfo(napi_env env, napi_callback_info info);
     static napi_value GetPreferredOutputDeviceForRendererInfoSync(napi_env env, napi_callback_info info);
+    static napi_value GetPreferredOutputDeviceByFilter(napi_env env, napi_callback_info info);
     static napi_value GetPreferredInputDeviceForCapturerInfo(napi_env env, napi_callback_info info);
     static napi_value GetPreferredInputDeviceForCapturerInfoSync(napi_env env, napi_callback_info info);
+    static napi_value GetPreferredInputDeviceByFilter(napi_env env, napi_callback_info info);
     static napi_value GetAvailableMicrophones(napi_env env, napi_callback_info info);
     static napi_value GetAvailableDevices(napi_env env, napi_callback_info info);
     static napi_value RegisterCallback(napi_env env, napi_value jsThis, size_t argc, napi_value *args,

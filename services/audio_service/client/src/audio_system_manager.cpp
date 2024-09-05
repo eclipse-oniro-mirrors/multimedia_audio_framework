@@ -155,7 +155,7 @@ AudioStreamType AudioSystemManager::GetStreamType(ContentType contentType, Strea
 
 inline const sptr<IStandardAudioService> GetAudioSystemManagerProxy()
 {
-    AudioXCollie xcollieGetSystemAbilityManager("GetAudioSystemManagerProxy", XCOLLIE_TIME_OUT_SECONDS);
+    AudioXCollie xcollieGetAudioSystemManagerProxy("GetAudioSystemManagerProxy", XCOLLIE_TIME_OUT_SECONDS);
     lock_guard<mutex> lock(g_asProxyMutex);
     if (g_asProxy == nullptr) {
         AudioXCollie xcollieGetSystemAbilityManager("GetSystemAbilityManager", XCOLLIE_TIME_OUT_SECONDS);
@@ -598,6 +598,13 @@ int32_t AudioSystemManager::UnsetDeviceChangeCallback(DeviceFlag flag,
     AUDIO_INFO_LOG("Entered %{public}s", __func__);
     int32_t clientId = GetCallingPid();
     return AudioPolicyManager::GetInstance().UnsetDeviceChangeCallback(clientId, flag, cb);
+}
+
+int32_t AudioSystemManager::SetQueryClientTypeCallback(const std::shared_ptr<AudioQueryClientTypeCallback> &callback)
+{
+    AUDIO_INFO_LOG("In");
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERR_INVALID_PARAM, "callback is nullptr");
+    return AudioPolicyManager::GetInstance().SetQueryClientTypeCallback(callback);
 }
 
 int32_t AudioSystemManager::SetRingerModeCallback(const int32_t clientId,
@@ -1511,5 +1518,11 @@ int32_t AudioSystemManager::InjectInterruption(const std::string networkId, Inte
 {
     return AudioPolicyManager::GetInstance().InjectInterruption(networkId, event);
 }
+
+int32_t AudioSystemManager::LoadSplitModule(const std::string &splitArgs, const std::string &networkId)
+{
+    return AudioPolicyManager::GetInstance().LoadSplitModule(splitArgs, networkId);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

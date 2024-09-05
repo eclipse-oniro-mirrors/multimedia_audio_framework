@@ -42,7 +42,6 @@ private:
         InterruptAction interruptAction;
     };
 
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
     void OnJsCallbackAudioManagerInterrupt(std::unique_ptr<AudioManagerInterruptJsCallback> &jsCb);
 
     std::mutex mutex_;

@@ -118,11 +118,11 @@ void TonePlayerImpl::OnStateChange(const RendererState state, const StateChangeC
 
 void TonePlayerImpl::OnWriteData(size_t length)
 {
+    std::lock_guard<std::mutex> lock(optMutex_);
     if (toneState_ == TONE_RELEASED) {
         AUDIO_WARNING_LOG("Tone %{public}d is already released", toneType_);
         return;
     }
-    std::lock_guard<std::mutex> lock(optMutex_);
     BufferDesc bufDesc = {};
     if (audioRenderer_ != nullptr) {
         audioRenderer_->GetBufferDesc(bufDesc);
@@ -427,6 +427,10 @@ bool TonePlayerImpl::InitAudioRenderer()
     }
     CHECK_AND_RETURN_RET_LOG(audioRenderer_ != nullptr, false,
         "Renderer create failed");
+
+    if (rendererOptions_.rendererInfo.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION) {
+        audioRenderer_->EnableVoiceModemCommunicationStartStream(true);
+    }
 
     size_t targetSize = 0;
     int32_t ret = audioRenderer_->GetBufferSize(targetSize);

@@ -27,6 +27,7 @@
 #include "audio_effect_chain_adapter.h"
 #include "audio_hdi_log.h"
 #include "playback_capturer_adapter.h"
+#include "sink_userdata.h"
 
 pa_sink *PaHdiSinkNew(pa_module *m, pa_modargs *ma, const char *driver);
 void PaHdiSinkFree(pa_sink *s);
@@ -109,7 +110,8 @@ static pa_hook_result_t SinkInputNewCb(pa_core *c, pa_sink_input *si)
         }
         EffectChainManagerCreateCb(sceneType, sessionID);
         SessionInfoPack pack = {channels, channelLayout, sceneMode, spatializationEnabled};
-        if (si->state == PA_SINK_INPUT_RUNNING && !EffectChainManagerAddSessionInfo(sceneType, sessionID, pack)) {
+        if (si->thread_info.state == PA_SINK_INPUT_RUNNING &&
+            !EffectChainManagerAddSessionInfo(sceneType, sessionID, pack)) {
             EffectChainManagerMultichannelUpdate(sceneType);
             EffectChainManagerEffectUpdate();
         }
@@ -137,7 +139,8 @@ static pa_hook_result_t SinkInputUnlinkCb(pa_core *c, pa_sink_input *si, void *u
     if (!pa_safe_streq(clientUid, bootUpMusic)) {
         const char *sessionID = pa_proplist_gets(si->proplist, "stream.sessionID");
         EffectChainManagerReleaseCb(sceneType, sessionID);
-        if (si->state == PA_SINK_INPUT_RUNNING && !EffectChainManagerDeleteSessionInfo(sceneType, sessionID)) {
+        if (si->thread_info.state == PA_SINK_INPUT_RUNNING &&
+            !EffectChainManagerDeleteSessionInfo(sceneType, sessionID)) {
             EffectChainManagerMultichannelUpdate(sceneType);
             EffectChainManagerEffectUpdate();
         }
@@ -159,19 +162,22 @@ static pa_hook_result_t SinkInputStateChangedCb(pa_core *c, pa_sink_input *si, v
     const char *clientUid = pa_proplist_gets(si->proplist, "stream.client.uid");
     const char *bootUpMusic = "1003";
 
-    if (si->state == PA_SINK_INPUT_RUNNING && si->sink && !pa_safe_streq(clientUid, bootUpMusic)) {
+    if (si->thread_info.state == PA_SINK_INPUT_RUNNING && si->sink &&
+        !pa_safe_streq(clientUid, bootUpMusic)) {
         SessionInfoPack pack = {channels, channelLayout, sceneMode, spatializationEnabled};
         if (!EffectChainManagerAddSessionInfo(sceneType, sessionID, pack)) {
             EffectChainManagerMultichannelUpdate(sceneType);
             EffectChainManagerVolumeUpdate(sessionID);
+            EffectChainManagerEffectUpdate();
         }
     }
 
-    if ((si->state == PA_SINK_INPUT_CORKED || si->state == PA_SINK_INPUT_UNLINKED) && si->sink &&
-        !pa_safe_streq(clientUid, bootUpMusic)) {
+    if ((si->thread_info.state == PA_SINK_INPUT_CORKED || si->thread_info.state == PA_SINK_INPUT_UNLINKED) &&
+        si->sink && !pa_safe_streq(clientUid, bootUpMusic)) {
         if (!EffectChainManagerDeleteSessionInfo(sceneType, sessionID)) {
             EffectChainManagerMultichannelUpdate(sceneType);
             EffectChainManagerVolumeUpdate(sessionID);
+            EffectChainManagerEffectUpdate();
         }
     }
     return PA_HOOK_OK;
@@ -191,13 +197,14 @@ int pa__init(pa_module *m)
     if (!(m->userdata = PaHdiSinkNew(m, ma, __FILE__))) {
         goto fail;
     }
+    pa_sink *sink = (pa_sink*)m->userdata;
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SINK_INPUT_PROPLIST_CHANGED], PA_HOOK_LATE,
-        (pa_hook_cb_t)SinkInputNewCb, NULL);
+        (pa_hook_cb_t)SinkInputNewCb, sink->userdata);
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SINK_INPUT_UNLINK], PA_HOOK_LATE,
-        (pa_hook_cb_t)SinkInputUnlinkCb, NULL);
+        (pa_hook_cb_t)SinkInputUnlinkCb, sink->userdata);
     // SourceOutputStateChangedCb will be replaced by UpdatePlaybackCaptureConfig in CapturerInServer
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SINK_INPUT_STATE_CHANGED], PA_HOOK_LATE,
-        (pa_hook_cb_t)SinkInputStateChangedCb, NULL);
+        (pa_hook_cb_t)SinkInputStateChangedCb, sink->userdata);
 
     pa_modargs_free(ma);
 

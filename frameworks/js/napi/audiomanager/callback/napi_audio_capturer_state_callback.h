@@ -39,7 +39,6 @@ private:
         std::vector<std::unique_ptr<AudioCapturerChangeInfo>> changeInfos;
     };
 
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
     void OnJsCallbackCapturerState(std::unique_ptr<AudioCapturerStateJsCallback> &jsCb);
 
     std::mutex mutex_;

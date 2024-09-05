@@ -40,9 +40,7 @@ public:
     ~OHAudioSessionCallback()
     {
         AUDIO_INFO_LOG("~OHAudioSessionCallback called.");
-        if (callback_ != nullptr) {
-            callback_ = nullptr;
-        }
+        callback_ = nullptr;
     }
 private:
     OH_AudioSession_DeactivatedCallback callback_;

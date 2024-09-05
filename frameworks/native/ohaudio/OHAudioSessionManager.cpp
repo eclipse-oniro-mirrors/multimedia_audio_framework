@@ -30,10 +30,11 @@ static OHOS::AudioStandard::OHAudioSessionManager *convertManager(OH_AudioSessio
     return (OHAudioSessionManager*) manager;
 }
 
+
 OH_AudioCommon_Result OH_AudioManager_GetAudioSessionManager(OH_AudioSessionManager **audioSessionManager)
 {
     OHAudioSessionManager* ohAudioSessionManager = OHAudioSessionManager::GetInstance();
-    *audioSessionManager = (OH_AudioSessionManager*)ohAudioSessionManager;
+    *audioSessionManager = reinterpret_cast<OH_AudioSessionManager*>(ohAudioSessionManager);
     return AUDIOCOMMON_RESULT_SUCCESS;
 }
 
@@ -82,8 +83,7 @@ bool OH_AudioSessionManager_IsAudioSessionActivated(
     OH_AudioSessionManager *audioSessionManager)
 {
     OHAudioSessionManager* ohAudioSessionManager = convertManager(audioSessionManager);
-    CHECK_AND_RETURN_RET_LOG(ohAudioSessionManager != nullptr,
-        AUDIOCOMMON_RESULT_ERROR_INVALID_PARAM, "ohAudioSessionManager is nullptr");
+    CHECK_AND_RETURN_RET_LOG(ohAudioSessionManager != nullptr, false, "ohAudioSessionManager is nullptr");
     return ohAudioSessionManager->IsAudioSessionActivated();
 }
 
@@ -107,11 +107,8 @@ OH_AudioCommon_Result OHAudioSessionManager::SetAudioSessionCallback(OH_AudioSes
         AUDIOCOMMON_RESULT_ERROR_INVALID_PARAM, "failed, audioSessionManager_ is null");
     std::shared_ptr<OHAudioSessionCallback> ohAudioSessionCallback =
         std::make_shared<OHAudioSessionCallback>(callback);
-    if (ohAudioSessionCallback) {
-        audioSessionManager_->SetAudioSessionCallback(ohAudioSessionCallback);
-        return AUDIOCOMMON_RESULT_SUCCESS;
-    }
-    return AUDIOCOMMON_RESULT_ERROR_NO_MEMORY;
+    audioSessionManager_->SetAudioSessionCallback(ohAudioSessionCallback);
+    return AUDIOCOMMON_RESULT_SUCCESS;
 }
 
 OH_AudioCommon_Result OHAudioSessionManager::UnsetAudioSessionCallback(OH_AudioSession_DeactivatedCallback callback)
@@ -132,7 +129,7 @@ OH_AudioCommon_Result OHAudioSessionManager::ActivateAudioSession(const AudioSes
     if (ret == 0) {
         return AUDIOCOMMON_RESULT_SUCCESS;
     } else {
-        return AUDIOCOMMON_RESULT_ERROR_SYSTEM;
+        return AUDIOCOMMON_RESULT_ERROR_ILLEGAL_STATE;
     }
 }
 
@@ -144,14 +141,13 @@ OH_AudioCommon_Result OHAudioSessionManager::DeactivateAudioSession()
     if (ret == 0) {
         return AUDIOCOMMON_RESULT_SUCCESS;
     } else {
-        return AUDIOCOMMON_RESULT_ERROR_SYSTEM;
+        return AUDIOCOMMON_RESULT_ERROR_ILLEGAL_STATE;
     }
 }
 
 bool OHAudioSessionManager::IsAudioSessionActivated()
 {
-    CHECK_AND_RETURN_RET_LOG(audioSessionManager_ != nullptr,
-        AUDIOCOMMON_RESULT_ERROR_INVALID_PARAM, "failed, audioSessionManager_ is null");
+    CHECK_AND_RETURN_RET_LOG(audioSessionManager_ != nullptr, false, "failed, audioSessionManager_ is null");
     return audioSessionManager_->IsAudioSessionActivated();
 }
 

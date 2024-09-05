@@ -120,6 +120,8 @@ public:
 
     void NotifyUserSelectionEventToBt(sptr<AudioDeviceDescriptor> audioDeviceDescriptor);
 
+    bool IsArmUsbDevice(const AudioDeviceDescriptor &desc);
+
     int32_t SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
         std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors);
     int32_t SelectFastOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
@@ -222,11 +224,17 @@ public:
 
     void OnUpdateRouteSupport(bool isSupported);
 
-    int32_t GetDeviceNameFromDataShareHelper(std::string &deviceName);
+    int32_t GetUserSetDeviceNameFromDataShareHelper(std::string &deviceName);
+
+    int32_t GetDefaultDeviceNameFromDataShareHelper(std::string &deviceName);
+
+    std::string GetDeviceNameFromDataShare();
 
     void SetDisplayName(const std::string &deviceName, bool isLocalDevice);
 
     bool IsDataShareReady();
+
+    int32_t ResumeStreamState();
 #ifdef FEATURE_DTMF_TONE
     std::vector<int32_t> GetSupportedTones();
 
@@ -304,6 +312,8 @@ public:
 
     int32_t UnsetAvailableDeviceChangeCallback(const int32_t clientId, AudioDeviceUsage usage);
 
+    int32_t SetQueryClientTypeCallback(const sptr<IRemoteObject> &object);
+
     int32_t RegisterTracker(AudioMode &mode, AudioStreamChangeInfo &streamChangeInfo,
         const sptr<IRemoteObject> &object, const int32_t apiVersion);
 
@@ -357,6 +367,8 @@ public:
     void UnregisterBluetoothListener();
 
     void SubscribeAccessibilityConfigObserver();
+
+    void RegisterRemoteDevStatusCallback();
 
     std::vector<sptr<AudioDeviceDescriptor>> GetPreferredOutputDeviceDescriptors(AudioRendererInfo &rendererInfo,
         std::string networkId = LOCAL_NETWORK_ID);
@@ -438,11 +450,11 @@ public:
     int32_t OffloadStopPlaying(const std::vector<int32_t> &sessionIds);
 
     int32_t OffloadGetRenderPosition(uint32_t &delayValue, uint64_t &sendDataSize, uint32_t &timeStamp);
+
+    int32_t GetAndSaveClientType(uint32_t uid, const std::string &bundleName);
 #ifdef BLUETOOTH_ENABLE
     void UpdateA2dpOffloadFlag(const std::vector<Bluetooth::A2dpStreamInfo> &allActiveSessions,
         DeviceType deviceType = DEVICE_TYPE_NONE);
-
-    void UpdateAllActiveSessions(std::vector<Bluetooth::A2dpStreamInfo> &allActiveSessions);
 
     void CheckAndActiveHfpDevice(AudioDeviceDescriptor &desc);
 #endif
@@ -531,6 +543,7 @@ public:
     int32_t ActivateAudioConcurrency(const AudioPipeType &pipeType);
 
     int32_t ResetRingerModeMute();
+
     bool IsRingerModeMute();
 
     void OnReceiveBluetoothEvent(const std::string macAddress, const std::string deviceName);
@@ -540,6 +553,11 @@ public:
     void FetchStreamForA2dpOffload(const bool &requireReset);
     void UpdateSessionConnectionState(const int32_t &sessionID, const int32_t &state);
     bool getFastControlParam();
+
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId);
+
+    int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
+        const StreamUsage streamUsage, bool isRunning);
 
 private:
     AudioPolicyService()
@@ -643,7 +661,7 @@ private:
     void MoveToNewInputDevice(unique_ptr<AudioCapturerChangeInfo> &capturerChangeInfo,
         unique_ptr<AudioDeviceDescriptor> &inputDevice);
 
-    void SetRenderDeviceForUsage(StreamUsage streamUsage, sptr<AudioDeviceDescriptor> desc);
+    int32_t SetRenderDeviceForUsage(StreamUsage streamUsage, sptr<AudioDeviceDescriptor> desc);
 
     void SetCaptureDeviceForUsage(AudioScene scene, SourceType srcType, sptr<AudioDeviceDescriptor> desc);
 
@@ -671,6 +689,9 @@ private:
 
     void FetchInputDevice(vector<unique_ptr<AudioCapturerChangeInfo>> &capturerChangeInfos,
         const AudioStreamDeviceChangeReasonExt reason = AudioStreamDeviceChangeReason::UNKNOWN);
+
+    int32_t HandleDeviceChangeForFetchInputDevice(unique_ptr<AudioDeviceDescriptor> &desc,
+        unique_ptr<AudioCapturerChangeInfo> &capturerChangeInfo);
 
     void BluetoothScoFetch(unique_ptr<AudioDeviceDescriptor> &desc,
         vector<unique_ptr<AudioCapturerChangeInfo>> &capturerChangeInfos, SourceType sourceType);
@@ -746,8 +767,6 @@ private:
     void RemoveDeviceInFastRouterMap(std::string networkId);
 
     void UpdateDisplayName(sptr<AudioDeviceDescriptor> deviceDescriptor);
-
-    void RegisterRemoteDevStatusCallback();
 
     void UpdateLocalGroupInfo(bool isConnected, const std::string& macAddress,
         const std::string& deviceName, const DeviceStreamInfo& streamInfo, AudioDeviceDescriptor& deviceDesc);
@@ -840,6 +859,8 @@ private:
 
     void MuteDefaultSinkPort();
 
+    void SetVoiceCallMuteForSwitchDevice();
+
     void MuteSinkPortForSwtichDevice(unique_ptr<AudioRendererChangeInfo>& rendererChangeInfo,
         vector<std::unique_ptr<AudioDeviceDescriptor>>& outputDevices, const AudioStreamDeviceChangeReasonExt reason);
 
@@ -881,6 +902,8 @@ private:
     void CheckBlueToothActiveMusicTime(int32_t safeVolume);
 
     void CheckWiredActiveMusicTime(int32_t safeVolume);
+
+    void RestoreSafeVolume(AudioStreamType streamType, int32_t safeVolume);
 
     int32_t CheckActiveMusicTime();
 
@@ -976,6 +999,8 @@ private:
 
     void SetAbsVolumeSceneAsync(const std::string &macAddress, const bool support);
 
+    void SetSharedAbsVolumeScene(const bool support);
+
     void LoadHdiEffectModel();
 
     void UpdateEffectBtOffloadSupported(const bool &isSupported);
@@ -986,6 +1011,17 @@ private:
     bool IsA2dpOffloadConnected();
 
     void SendA2dpConnectedWhileRunning(const RendererState &rendererState, const uint32_t &sessionId);
+
+    int32_t ConnectVirtualDevice(sptr<AudioDeviceDescriptor> &desc);
+    void UpdateDeviceList(AudioDeviceDescriptor &updatedDesc, bool isConnected,
+        std::vector<sptr<AudioDeviceDescriptor>> &descForCb,
+        AudioStreamDeviceChangeReasonExt &reason);
+    void UpdateDefaultOutputDeviceWhenStopping(int32_t uid);
+
+    void SetDefaultDeviceLoadFlag(bool isLoad);
+
+    int32_t SetPreferredDevice(const PreferredType preferredType, const sptr<AudioDeviceDescriptor> &desc);
+    int32_t ErasePreferredDeviceByType(const PreferredType preferredType);
 
     bool isUpdateRouteSupported_ = true;
     bool isCurrentRemoteRenderer = false;
@@ -1050,6 +1086,7 @@ private:
 
     std::shared_ptr<AudioSharedMemory> policyVolumeMap_ = nullptr;
     volatile Volume *volumeVector_ = nullptr;
+    volatile bool *sharedAbsVolumeScene_ = nullptr;
 
     std::vector<DeviceType> outputPriorityList_ = {
         DEVICE_TYPE_BLUETOOTH_SCO,
@@ -1081,7 +1118,8 @@ private:
 
     mutable std::shared_mutex deviceStatusUpdateSharedMutex_;
 
-    bool isArmUsbDevice_ = false;
+    bool hasArmUsbDevice_ = false;
+    bool hasHifiUsbDevice_ = false; // Only the first usb device is supported now, hifi or arm.
     bool hasDpDevice_ = false; // Only the first dp device is supported.
 
     AudioDeviceManager &audioDeviceManager_;
@@ -1126,7 +1164,6 @@ private:
     SourceType currentSourceType = SOURCE_TYPE_MIC;
     uint32_t currentRate = 0;
     bool updateA2dpOffloadLogFlag = false;
-    std::unordered_map<uint32_t, bool> sessionHasBeenSpatialized_;
     std::mutex checkSpatializedMutex_;
     SafeStatus safeStatusBt_ = SAFE_UNKNOWN;
     SafeStatus safeStatus_ = SAFE_UNKNOWN;
@@ -1164,6 +1201,8 @@ private:
     bool ringerModeMute_ = true;
     std::atomic<bool> isPolicyConfigParsered_ = false;
     std::shared_ptr<AudioA2dpOffloadManager> audioA2dpOffloadManager_ = nullptr;
+
+    bool isBTReconnecting_ = false;
 };
 
 class AudioA2dpOffloadManager final : public Bluetooth::AudioA2dpPlayingStateChangedListener,

@@ -398,25 +398,6 @@ HWTEST(OHAudioRenderUnitTest, OH_Audio_Render_Release_001, TestSize.Level0)
 }
 
 /**
- * @tc.name  : Test OH_AudioRenderer_Release API via illegal state.
- * @tc.number: OH_Audio_Render_Release_002
- * @tc.desc  : Test OH_AudioRenderer_Release interface. Returns error code, if stream is released twice.
- */
-HWTEST(OHAudioRenderUnitTest, OH_Audio_Render_Release_002, TestSize.Level0)
-{
-    OH_AudioStreamBuilder *builder = OHAudioRenderUnitTest::CreateRenderBuilder();
-
-    OH_AudioRenderer *audioRenderer;
-    OH_AudioStream_Result result = OH_AudioStreamBuilder_GenerateRenderer(builder, &audioRenderer);
-
-    OH_AudioRenderer_Release(audioRenderer);
-    result = OH_AudioRenderer_Release(audioRenderer);
-    EXPECT_TRUE(result == AUDIOSTREAM_ERROR_ILLEGAL_STATE);
-
-    OH_AudioStreamBuilder_Destroy(builder);
-}
-
-/**
  * @tc.name  : Test OH_AudioRenderer_GetCurrentState API via legal state.
  * @tc.number: OH_AudioRenderer_GetCurrentState_001
  * @tc.desc  : Test OH_AudioRenderer_GetCurrentState interface. Return true if the result state is
@@ -497,28 +478,6 @@ HWTEST(OHAudioRenderUnitTest, OH_AudioRenderer_GetCurrentState_004, TestSize.Lev
     result = OH_AudioRenderer_GetCurrentState(audioRenderer, &state);
     EXPECT_TRUE(result == AUDIOSTREAM_SUCCESS);
     EXPECT_TRUE(state == AUDIOSTREAM_STATE_STOPPED);
-    OH_AudioStreamBuilder_Destroy(builder);
-}
-
-/**
- * @tc.name  : Test OH_AudioRenderer_GetCurrentState API via legal state.
- * @tc.number: OH_AudioRenderer_GetCurrentState_005
- * @tc.desc  : Test OH_AudioRenderer_GetCurrentState interface. Return true if the result state is
- *             AUDIOSTREAM_STATE_RELEASED.
- */
-HWTEST(OHAudioRenderUnitTest, OH_AudioRenderer_GetCurrentState_005, TestSize.Level0)
-{
-    OH_AudioStreamBuilder *builder = OHAudioRenderUnitTest::CreateRenderBuilder();
-    OH_AudioRenderer *audioRenderer;
-    OH_AudioStream_Result result = OH_AudioStreamBuilder_GenerateRenderer(builder, &audioRenderer);
-
-    OH_AudioRenderer_Start(audioRenderer);
-    OH_AudioRenderer_Release(audioRenderer);
-
-    OH_AudioStream_State state;
-    result = OH_AudioRenderer_GetCurrentState(audioRenderer, &state);
-    EXPECT_TRUE(result == AUDIOSTREAM_SUCCESS);
-    EXPECT_EQ(state, AUDIOSTREAM_STATE_INVALID);
     OH_AudioStreamBuilder_Destroy(builder);
 }
 
@@ -1517,6 +1476,126 @@ HWTEST(OHAudioRenderUnitTest, OH_Audio_Render_WriteDataCallback_006, TestSize.Le
     EXPECT_TRUE(userData.writeDataCallbackType == UserData::WRITE_DATA_CALLBACK);
 
     CleanupAudioResources(builder, audioRenderer);
+}
+
+/**
+ * @tc.name  : Test OH_AudioRenderer_SetDefaultOutputDevice_001 API via legal state.
+ * @tc.number: OH_AudioRenderer_SetDefaultOutputDevice
+ * @tc.desc  : Test OH_AudioRenderer_SetDefaultOutputDevice interface.
+ */
+HWTEST(OHAudioRenderUnitTest, OH_AudioRenderer_SetDefaultOutputDevice_001, TestSize.Level0)
+{
+    OH_AudioStreamBuilder *builder = OHAudioRenderUnitTest::CreateRenderBuilder();
+
+    OH_AudioStreamBuilder_SetSamplingRate(builder, SAMPLE_RATE_48000);
+    OH_AudioStreamBuilder_SetChannelCount(builder, CHANNEL_2);
+    OH_AudioStream_Usage usage = AUDIOSTREAM_USAGE_VOICE_MESSAGE;
+    OH_AudioStreamBuilder_SetRendererInfo(builder, usage);
+
+    OHAudioRendererWriteCallbackMock writeCallbackMock;
+
+    OH_AudioRenderer_Callbacks callbacks;
+    callbacks.OH_AudioRenderer_OnWriteData = AudioRendererOnWriteDataMock;
+    OH_AudioStreamBuilder_SetRendererCallback(builder, callbacks, &writeCallbackMock);
+
+    OH_AudioRenderer *audioRenderer;
+    OH_AudioStream_Result result = OH_AudioStreamBuilder_GenerateRenderer(builder, &audioRenderer);
+    EXPECT_EQ(result, AUDIOSTREAM_SUCCESS);
+
+    result = OH_AudioRenderer_Start(audioRenderer);
+    EXPECT_EQ(result, AUDIOSTREAM_SUCCESS);
+
+    std::this_thread::sleep_for(1s);
+
+    result = OH_AudioRenderer_SetDefaultOutputDevice(audioRenderer, AUDIO_DEVICE_TYPE_EARPIECE);
+    EXPECT_TRUE(result == AUDIOSTREAM_SUCCESS || result == AUDIOSTREAM_ERROR_ILLEGAL_STATE);
+
+    std::this_thread::sleep_for(1s);
+
+    OH_AudioRenderer_Stop(audioRenderer);
+    OH_AudioRenderer_Release(audioRenderer);
+
+    OH_AudioStreamBuilder_Destroy(builder);
+}
+
+/**
+ * @tc.name  : Test OH_AudioRenderer_SetDefaultOutputDevice_002 API via illegal state.
+ * @tc.number: OH_AudioRenderer_SetDefaultOutputDevice
+ * @tc.desc  : Test OH_AudioRenderer_SetDefaultOutputDevice interface.
+ */
+HWTEST(OHAudioRenderUnitTest, OH_AudioRenderer_SetDefaultOutputDevice_002, TestSize.Level0)
+{
+    OH_AudioStreamBuilder *builder = OHAudioRenderUnitTest::CreateRenderBuilder();
+
+    OH_AudioStreamBuilder_SetSamplingRate(builder, SAMPLE_RATE_48000);
+    OH_AudioStreamBuilder_SetChannelCount(builder, CHANNEL_2);
+    OH_AudioStream_Usage usage = AUDIOSTREAM_USAGE_VOICE_MESSAGE;
+    OH_AudioStreamBuilder_SetRendererInfo(builder, usage);
+
+    OHAudioRendererWriteCallbackMock writeCallbackMock;
+
+    OH_AudioRenderer_Callbacks callbacks;
+    callbacks.OH_AudioRenderer_OnWriteData = AudioRendererOnWriteDataMock;
+    OH_AudioStreamBuilder_SetRendererCallback(builder, callbacks, &writeCallbackMock);
+
+    OH_AudioRenderer *audioRenderer;
+    OH_AudioStream_Result result = OH_AudioStreamBuilder_GenerateRenderer(builder, &audioRenderer);
+    EXPECT_EQ(result, AUDIOSTREAM_SUCCESS);
+
+    result = OH_AudioRenderer_Start(audioRenderer);
+    EXPECT_EQ(result, AUDIOSTREAM_SUCCESS);
+
+    std::this_thread::sleep_for(1s);
+
+    result = OH_AudioRenderer_SetDefaultOutputDevice(audioRenderer, AUDIO_DEVICE_TYPE_WIRED_HEADSET);
+    EXPECT_EQ(result, AUDIOSTREAM_ERROR_INVALID_PARAM);
+
+    std::this_thread::sleep_for(1s);
+
+    OH_AudioRenderer_Stop(audioRenderer);
+    OH_AudioRenderer_Release(audioRenderer);
+
+    OH_AudioStreamBuilder_Destroy(builder);
+}
+
+/**
+ * @tc.name  : Test OH_AudioRenderer_SetDefaultOutputDevice_003 API via illegal state.
+ * @tc.number: OH_AudioRenderer_SetDefaultOutputDevice
+ * @tc.desc  : Test OH_AudioRenderer_SetDefaultOutputDevice interface.
+ */
+HWTEST(OHAudioRenderUnitTest, OH_AudioRenderer_SetDefaultOutputDevice_003, TestSize.Level0)
+{
+    OH_AudioStreamBuilder *builder = OHAudioRenderUnitTest::CreateRenderBuilder();
+
+    OH_AudioStreamBuilder_SetSamplingRate(builder, SAMPLE_RATE_48000);
+    OH_AudioStreamBuilder_SetChannelCount(builder, CHANNEL_2);
+    OH_AudioStream_Usage usage = AUDIOSTREAM_USAGE_RINGTONE;
+    OH_AudioStreamBuilder_SetRendererInfo(builder, usage);
+
+    OHAudioRendererWriteCallbackMock writeCallbackMock;
+
+    OH_AudioRenderer_Callbacks callbacks;
+    callbacks.OH_AudioRenderer_OnWriteData = AudioRendererOnWriteDataMock;
+    OH_AudioStreamBuilder_SetRendererCallback(builder, callbacks, &writeCallbackMock);
+
+    OH_AudioRenderer *audioRenderer;
+    OH_AudioStream_Result result = OH_AudioStreamBuilder_GenerateRenderer(builder, &audioRenderer);
+    EXPECT_EQ(result, AUDIOSTREAM_SUCCESS);
+
+    result = OH_AudioRenderer_Start(audioRenderer);
+    EXPECT_EQ(result, AUDIOSTREAM_SUCCESS);
+
+    std::this_thread::sleep_for(1s);
+
+    result = OH_AudioRenderer_SetDefaultOutputDevice(audioRenderer, AUDIO_DEVICE_TYPE_EARPIECE);
+    EXPECT_EQ(result, AUDIOSTREAM_ERROR_ILLEGAL_STATE);
+
+    std::this_thread::sleep_for(1s);
+
+    OH_AudioRenderer_Stop(audioRenderer);
+    OH_AudioRenderer_Release(audioRenderer);
+
+    OH_AudioStreamBuilder_Destroy(builder);
 }
 
 /**

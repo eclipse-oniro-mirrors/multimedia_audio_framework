@@ -138,13 +138,15 @@ public:
     int32_t UnsetMicStateChangeCallback(const std::shared_ptr<AudioManagerMicStateChangeCallback> &callback);
 
     int32_t SetAudioInterruptCallback(const uint32_t sessionID,
-        const std::shared_ptr<AudioInterruptCallback> &callback, const int32_t zoneID = 0);
+        const std::shared_ptr<AudioInterruptCallback> &callback, uint32_t clientUid, const int32_t zoneID = 0);
 
     int32_t UnsetAudioInterruptCallback(const uint32_t sessionID, const int32_t zoneID = 0);
 
     int32_t ActivateAudioInterrupt(const AudioInterrupt &audioInterrupt, const int32_t zoneID = 0);
 
     int32_t DeactivateAudioInterrupt(const AudioInterrupt &audioInterrupt, const int32_t zoneID = 0);
+
+    int32_t SetQueryClientTypeCallback(const std::shared_ptr<AudioQueryClientTypeCallback> &callback);
 
     int32_t SetAudioManagerInterruptCallback(const int32_t clientId,
         const std::shared_ptr<AudioInterruptCallback> &callback);
@@ -411,9 +413,13 @@ public:
 
     int32_t ActivateAudioConcurrency(const AudioPipeType &pipeType);
 
-    int32_t ResetRingerModeMute();
-
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event);
+
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId);
+
+    int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
+        const StreamUsage streamUsage, bool isRunning);
+
 private:
     AudioPolicyManager() {}
     ~AudioPolicyManager() {}
@@ -430,7 +436,7 @@ private:
 
     static std::unordered_map<int32_t, std::weak_ptr<AudioRendererPolicyServiceDiedCallback>> rendererCBMap_;
     static sptr<AudioPolicyClientStubImpl> audioStaticPolicyClientStubCB_;
-    static std::vector<std::shared_ptr<AudioStreamPolicyServiceDiedCallback>> audioStreamCBMap_;
+    static std::vector<std::weak_ptr<AudioStreamPolicyServiceDiedCallback>> audioStreamCBMap_;
 
     bool isAudioRendererEventListenerRegistered = false;
     bool isAudioCapturerEventListenerRegistered = false;

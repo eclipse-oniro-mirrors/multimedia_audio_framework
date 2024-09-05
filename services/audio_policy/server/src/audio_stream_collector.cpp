@@ -191,6 +191,7 @@ bool AudioStreamCollector::ExistStreamForPipe(AudioPipeType pipeType)
 
 int32_t AudioStreamCollector::GetRendererDeviceInfo(const int32_t sessionId, DeviceInfo &outputDeviceInfo)
 {
+    std::lock_guard<std::mutex> lock(streamsInfoMutex_);
     const auto &it = std::find_if(audioRendererChangeInfos_.begin(), audioRendererChangeInfos_.end(),
         [&sessionId](const std::unique_ptr<AudioRendererChangeInfo> &changeInfo) {
             return changeInfo->sessionId == sessionId;
@@ -802,6 +803,25 @@ int32_t AudioStreamCollector::GetUid(int32_t sessionId)
     return defaultUid;
 }
 
+int32_t AudioStreamCollector::ResumeStreamState()
+{
+    std::lock_guard<std::mutex> lock(streamsInfoMutex_);
+    for (const auto &changeInfo : audioRendererChangeInfos_) {
+        std::shared_ptr<AudioClientTracker> callback = clientTracker_[changeInfo->sessionId];
+        if (callback == nullptr) {
+            AUDIO_ERR_LOG("AVSession is not alive,UpdateStreamState callback failed sId:%{public}d",
+                changeInfo->sessionId);
+            continue;
+        }
+        StreamSetStateEventInternal setStateEvent = {};
+        setStateEvent.streamSetState = StreamSetState::STREAM_UNMUTE;
+        setStateEvent.streamUsage = changeInfo->rendererInfo.streamUsage;
+        callback->UnmuteStreamImpl(setStateEvent);
+    }
+
+    return SUCCESS;
+}
+
 int32_t AudioStreamCollector::UpdateStreamState(int32_t clientUid,
     StreamSetStateEventInternal &streamSetStateEventInternal)
 {
@@ -811,6 +831,10 @@ int32_t AudioStreamCollector::UpdateStreamState(int32_t clientUid,
             streamSetStateEventInternal.streamUsage == changeInfo->rendererInfo.streamUsage) {
             AUDIO_INFO_LOG("UpdateStreamState Found matching uid=%{public}d and usage=%{public}d",
                 clientUid, streamSetStateEventInternal.streamUsage);
+            if (std::count(EXEMPT_MUTE_STREAM_USAGE.begin(), EXEMPT_MUTE_STREAM_USAGE.end(),
+                streamSetStateEventInternal.streamUsage) != 0) {
+                continue;
+            }
             std::shared_ptr<AudioClientTracker> callback = clientTracker_[changeInfo->sessionId];
             if (callback == nullptr) {
                 AUDIO_ERR_LOG("UpdateStreamState callback failed sId:%{public}d",
@@ -821,6 +845,10 @@ int32_t AudioStreamCollector::UpdateStreamState(int32_t clientUid,
                 callback->PausedStreamImpl(streamSetStateEventInternal);
             } else if (streamSetStateEventInternal.streamSetState == StreamSetState::STREAM_RESUME) {
                 callback->ResumeStreamImpl(streamSetStateEventInternal);
+            } else if (streamSetStateEventInternal.streamSetState == StreamSetState::STREAM_MUTE) {
+                callback->MuteStreamImpl(streamSetStateEventInternal);
+            } else if (streamSetStateEventInternal.streamSetState == StreamSetState::STREAM_UNMUTE) {
+                callback->UnmuteStreamImpl(streamSetStateEventInternal);
             }
         }
     }
@@ -1201,5 +1229,16 @@ StreamUsage AudioStreamCollector::GetLastestRunningCallStreamUsage()
     return STREAM_USAGE_UNKNOWN;
 }
 
+std::vector<uint32_t> AudioStreamCollector::GetAllRendererSessionIDForUID(int32_t uid)
+{
+    std::lock_guard<std::mutex> lock(streamsInfoMutex_);
+    std::vector<uint32_t> sessionIDSet;
+    for (const auto &changeInfo : audioRendererChangeInfos_) {
+        if (changeInfo->clientUID == uid) {
+            sessionIDSet.push_back(changeInfo->sessionId);
+        }
+    }
+    return sessionIDSet;
+}
 } // namespace AudioStandard
 } // namespace OHOS

@@ -27,6 +27,8 @@ public:
     virtual ~AudioCapturerProxyObj() = default;
     void SaveCapturerObj(const AudioCapturer *capturerObj);
 
+    void MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal);
+    void UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal);
     void PausedStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal);
     void ResumeStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal);
 

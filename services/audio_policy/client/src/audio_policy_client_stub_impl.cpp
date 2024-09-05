@@ -434,6 +434,10 @@ void AudioPolicyClientStubImpl::OnRendererStateChange(
         std::lock_guard<std::mutex> lockCbMap(rendererStateChangeMutex_);
         callbacks = rendererStateChangeCallbackList_;
     }
+    size_t cBSize = callbacks.size();
+    size_t infosSize = audioRendererChangeInfos.size();
+    AUDIO_DEBUG_LOG("cbSize: %{public}zu infoSize: %{public}zu", cBSize, infosSize);
+
     Trace trace("AudioPolicyClientStubImpl::OnRendererStateChange");
     for (auto &cb : callbacks) {
         Trace traceCallback("OnRendererStateChange");
@@ -585,11 +589,7 @@ void AudioPolicyClientStubImpl::OnSpatializationEnabledChangeForAnyDevice(const 
 {
     std::lock_guard<std::mutex> lockCbMap(spatializationEnabledChangeMutex_);
     for (const auto &callback : spatializationEnabledChangeCallbackList_) {
-        if (callback->useNewApiFlag) {
-            callback->OnSpatializationEnabledChangeForAnyDevice(deviceDescriptor, enabled);
-        } else {
-            callback->OnSpatializationEnabledChange(enabled);
-        }
+        callback->OnSpatializationEnabledChangeForAnyDevice(deviceDescriptor, enabled);
     }
 }
 
@@ -621,11 +621,7 @@ void AudioPolicyClientStubImpl::OnHeadTrackingEnabledChangeForAnyDevice(const sp
 {
     std::lock_guard<std::mutex> lockCbMap(headTrackingEnabledChangeMutex_);
     for (const auto &callback : headTrackingEnabledChangeCallbackList_) {
-        if (callback->useNewApiFlag) {
-            callback->OnHeadTrackingEnabledChangeForAnyDevice(deviceDescriptor, enabled);
-        } else {
-            callback->OnHeadTrackingEnabledChange(enabled);
-        }
+        callback->OnHeadTrackingEnabledChangeForAnyDevice(deviceDescriptor, enabled);
     }
 }
 } // namespace AudioStandard

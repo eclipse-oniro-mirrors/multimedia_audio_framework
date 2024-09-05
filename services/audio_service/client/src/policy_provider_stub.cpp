@@ -54,6 +54,8 @@ int PolicyProviderStub::OnRemoteRequest(uint32_t code, MessageParcel &data, Mess
             return HandleIsAbsVolumeSupported(data, reply);
         case OFFLOAD_GET_RENDER_POSITION:
             return HandleOffloadGetRenderPosition(data, reply);
+        case GET_AND_SAVE_CLIENT_TYPE:
+            return HandleGetAndSaveClientType(data, reply);
         default:
             AUDIO_WARNING_LOG("OnRemoteRequest unsupported request code:%{public}d.", code);
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -136,6 +138,15 @@ int32_t PolicyProviderStub::HandleOffloadGetRenderPosition(MessageParcel &data, 
     return AUDIO_OK;
 }
 
+int32_t PolicyProviderStub::HandleGetAndSaveClientType(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t uid = data.ReadUint32();
+    std::string bundleName = data.ReadString();
+    int32_t ret = GetAndSaveClientType(uid, bundleName);
+    reply.WriteInt32(ret);
+    return AUDIO_OK;
+}
+
 PolicyProviderWrapper::~PolicyProviderWrapper()
 {
     policyWorker_ = nullptr;
@@ -187,6 +198,12 @@ int32_t PolicyProviderWrapper::OffloadGetRenderPosition(uint32_t &delayValue, ui
 {
     CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
     return policyWorker_->OffloadGetRenderPosition(delayValue, sendDataSize, timeStamp);
+}
+
+int32_t PolicyProviderWrapper::GetAndSaveClientType(uint32_t uid, const std::string &bundleName)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->GetAndSaveClientType(uid, bundleName);
 }
 } // namespace AudioStandard
 } // namespace OHOS

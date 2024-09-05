@@ -35,10 +35,10 @@ class NapiAudioSpatializationEnabledChangeCallback : public AudioSpatializationE
 public:
     explicit NapiAudioSpatializationEnabledChangeCallback(napi_env env);
     virtual ~NapiAudioSpatializationEnabledChangeCallback();
-    void SaveSpatializationEnabledChangeCallbackReference(napi_value args, const std::string cbName);
-    void RemoveSpatializationEnabledChangeCallbackReference(napi_env env, napi_value args, const std::string cbName);
-    void RemoveAllSpatializationEnabledChangeCallbackReference(const std::string cbName);
-    int32_t GetSpatializationEnabledChangeCbListSize(const std::string cbName);
+    void SaveSpatializationEnabledChangeCallbackReference(napi_value args, const std::string &cbName);
+    void RemoveSpatializationEnabledChangeCallbackReference(napi_env env, napi_value args, const std::string &cbName);
+    void RemoveAllSpatializationEnabledChangeCallbackReference(const std::string &cbName);
+    int32_t GetSpatializationEnabledChangeCbListSize(const std::string &cbName);
     void OnSpatializationEnabledChange(const bool &enabled) override;
     void OnSpatializationEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) override;
@@ -51,7 +51,6 @@ private:
     };
 
     void OnJsCallbackSpatializationEnabled(std::unique_ptr<AudioSpatializationEnabledJsCallback> &jsCb);
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
 
     std::mutex mutex_;
     napi_env env_ = nullptr;
@@ -64,10 +63,10 @@ class NapiAudioHeadTrackingEnabledChangeCallback : public AudioHeadTrackingEnabl
 public:
     explicit NapiAudioHeadTrackingEnabledChangeCallback(napi_env env);
     virtual ~NapiAudioHeadTrackingEnabledChangeCallback();
-    void SaveHeadTrackingEnabledChangeCallbackReference(napi_value args, const std::string cbName);
-    void RemoveHeadTrackingEnabledChangeCallbackReference(napi_env env, napi_value args, const std::string cbName);
-    void RemoveAllHeadTrackingEnabledChangeCallbackReference(const std::string cbName);
-    int32_t GetHeadTrackingEnabledChangeCbListSize(const std::string cbName);
+    void SaveHeadTrackingEnabledChangeCallbackReference(napi_value args, const std::string &cbName);
+    void RemoveHeadTrackingEnabledChangeCallbackReference(napi_env env, napi_value args, const std::string &cbName);
+    void RemoveAllHeadTrackingEnabledChangeCallbackReference(const std::string &cbName);
+    int32_t GetHeadTrackingEnabledChangeCbListSize(const std::string &cbName);
     void OnHeadTrackingEnabledChange(const bool &enabled) override;
     void OnHeadTrackingEnabledChangeForAnyDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor,
         const bool &enabled) override;
@@ -80,7 +79,6 @@ private:
     };
 
     void OnJsCallbackHeadTrackingEnabled(std::unique_ptr<AudioHeadTrackingEnabledJsCallback> &jsCb);
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
 
     std::mutex mutex_;
     napi_env env_ = nullptr;

@@ -19,7 +19,7 @@ using namespace std;
 
 namespace OHOS {
 namespace AudioStandard {
-void AudioRendererProxyObj::SaveRendererObj(const AudioRenderer *rendererObj)
+void AudioRendererProxyObj::SaveRendererObj(AudioRenderer *rendererObj)
 {
     renderer = rendererObj;
 }
@@ -30,8 +30,23 @@ void AudioRendererProxyObj::UnsetRendererObj()
     renderer = nullptr;
 }
 
+void AudioRendererProxyObj::MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    if (renderer != nullptr) {
+        renderer->Mute(CMD_FROM_SYSTEM);
+    }
+}
+
+void AudioRendererProxyObj::UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal)
+{
+    if (renderer != nullptr) {
+        renderer->Unmute(CMD_FROM_SYSTEM);
+    }
+}
+
 void AudioRendererProxyObj::PausedStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (renderer != nullptr) {
         renderer->Pause(CMD_FROM_SYSTEM);
     }

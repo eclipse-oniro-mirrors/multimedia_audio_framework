@@ -36,6 +36,7 @@
 #include "audio_running_lock_manager.h"
 #endif
 #include "v4_0/iaudio_manager.h"
+#include "hdf_remote_service.h"
 #include "audio_errors.h"
 #include "audio_hdi_log.h"
 #include "audio_utils.h"
@@ -141,6 +142,17 @@ static HdiAdapterFormat ParseAudioFormat(const std::string &format)
     } else {
         return HdiAdapterFormat::SAMPLE_S16;
     }
+}
+
+static void AudioHostOnRemoteDied(struct HdfDeathRecipient *recipient, struct HdfRemoteService *service)
+{
+    if (recipient == nullptr || service == nullptr) {
+        AUDIO_ERR_LOG("Receive die message but params are null");
+        return;
+    }
+
+    AUDIO_ERR_LOG("Auto exit for audio host die");
+    _Exit(0);
 }
 
 class AudioRendererSinkInner : public AudioRendererSink {
@@ -265,12 +277,19 @@ private:
     AudioPortPin GetAudioPortPin() const noexcept;
     int32_t SetAudioRoute(DeviceType outputDevice, AudioRoute route);
 
+    // use static because only register once for primary hal
+    static struct HdfRemoteService *hdfRemoteService_;
+    static struct HdfDeathRecipient *hdfDeathRecipient_;
+
     FILE *dumpFile_ = nullptr;
     std::string dumpFileName_ = "";
     DeviceType currentActiveDevice_ = DEVICE_TYPE_NONE;
     AudioScene currentAudioScene_ = AUDIO_SCENE_INVALID;
     int32_t currentDevicesSize_ = 0;
 };
+
+struct HdfRemoteService *AudioRendererSinkInner::hdfRemoteService_ = nullptr;
+struct HdfDeathRecipient *AudioRendererSinkInner::hdfDeathRecipient_ = nullptr;
 
 AudioRendererSinkInner::AudioRendererSinkInner(const std::string &halName)
     : sinkInited_(false), adapterInited_(false), renderInited_(false), started_(false), paused_(false),
@@ -565,8 +584,6 @@ void AudioRendererSinkInner::DeInit()
     audioAdapter_ = nullptr;
     audioManager_ = nullptr;
     adapterInited_ = false;
-
-    DumpFileUtil::CloseDumpFile(&dumpFile_);
 }
 
 void InitAttrs(struct AudioSampleAttributes &attrs)
@@ -590,6 +607,18 @@ int32_t AudioRendererSinkInner::InitAudioManager()
 
     audioManager_ = IAudioManagerGet(false);
     CHECK_AND_RETURN_RET(audioManager_ != nullptr, ERR_INVALID_HANDLE);
+
+    // Only primary sink register death recipient once
+    if (halName_ == PRIMARY_HAL_NAME && hdfRemoteService_ == nullptr) {
+        AUDIO_INFO_LOG("Add death recipient for primary hdf");
+
+        hdfRemoteService_ = audioManager_->AsObject(audioManager_);
+        // Don't need to free, existing with process
+        hdfDeathRecipient_ = (struct HdfDeathRecipient *)calloc(1, sizeof(*hdfDeathRecipient_));
+        hdfDeathRecipient_->OnRemoteDied = AudioHostOnRemoteDied;
+
+        HdfRemoteServiceAddDeathRecipient(hdfRemoteService_, hdfDeathRecipient_);
+    }
 
     return 0;
 }
@@ -878,7 +907,7 @@ int32_t AudioRendererSinkInner::SetVoiceVolume(float volume)
     Trace trace("AudioRendererSinkInner::SetVoiceVolume");
     CHECK_AND_RETURN_RET_LOG(audioAdapter_ != nullptr, ERR_INVALID_HANDLE,
         "SetVoiceVolume failed, audioAdapter_ is null");
-    AUDIO_DEBUG_LOG("SetVoiceVolume %{public}f", volume);
+    AUDIO_INFO_LOG("Set modem call volume %{public}f", volume);
     return audioAdapter_->SetVoiceVolume(audioAdapter_, volume);
 }
 
@@ -1068,7 +1097,12 @@ int32_t AudioRendererSinkInner::SetOutputRoutes(std::vector<std::pair<DeviceType
     route.sinks = sinks;
     route.sinksLen = static_cast<uint32_t>(sinksSize);
 
-    return SetAudioRoute(outputDevice, route);
+    int32_t ret = SetAudioRoute(outputDevice, route);
+    if (sinks != nullptr) {
+        delete [] sinks;
+        sinks = nullptr;
+    }
+    return ret;
 }
 
 int32_t AudioRendererSinkInner::SetAudioScene(AudioScene audioScene, std::vector<DeviceType> &activeDevices)
@@ -1177,6 +1211,9 @@ int32_t AudioRendererSinkInner::Stop(void)
         return ERR_OPERATION_FAILED;
     }
     started_ = false;
+
+    DumpFileUtil::CloseDumpFile(&dumpFile_);
+
     return SUCCESS;
 }
 
@@ -1334,8 +1371,8 @@ int32_t AudioRendererSinkInner::UpdateDPAttrs(const std::string &dpInfoStr)
     std::string addressStr = dpInfoStr.substr(address_begin + std::strlen("address="),
         address_end - address_begin - std::strlen("address="));
 
-    attr_.sampleRate = stoi(sampleRateStr);
-    attr_.channel = static_cast<uint32_t>(stoi(channeltStr));
+    if (!sampleRateStr.empty()) attr_.sampleRate = stoi(sampleRateStr);
+    if (!channeltStr.empty()) attr_.channel = static_cast<uint32_t>(stoi(channeltStr));
     attr_.address = addressStr;
     uint32_t formatByte = 0;
     if (attr_.channel <= 0 || attr_.sampleRate <= 0) {
@@ -1371,6 +1408,10 @@ int32_t AudioRendererSinkInner::InitAdapter()
 
     AudioAdapterDescriptor descs[MAX_AUDIO_ADAPTER_NUM];
     uint32_t size = MAX_AUDIO_ADAPTER_NUM;
+    if (audioManager_ == nullptr) {
+        AUDIO_ERR_LOG("The audioManager is null");
+        return ERROR;
+    }
     int32_t ret = audioManager_->GetAllAdapters(audioManager_, (struct AudioAdapterDescriptor *)&descs, &size);
     CHECK_AND_RETURN_RET_LOG(size <= MAX_AUDIO_ADAPTER_NUM && size != 0 && ret == 0,
         ERR_NOT_STARTED, "Get adapters failed");
@@ -1525,7 +1566,7 @@ int32_t AudioRendererSinkInner::GetCurDeviceParam(char *keyValueList, size_t len
             break;
         case DEVICE_TYPE_BLUETOOTH_SCO:
             ret = snprintf_s(keyValueList, len, len - 1,
-                "zero_volume=true;routing=10");
+                "zero_volume=true;routing=16");
             break;
         case DEVICE_TYPE_BLUETOOTH_A2DP:
             ret = snprintf_s(keyValueList, len, len - 1,

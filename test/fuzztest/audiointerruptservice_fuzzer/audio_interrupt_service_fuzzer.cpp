@@ -263,8 +263,9 @@ void SetAudioInterruptCallbackFuzzTest(const uint8_t *rawData, size_t size)
 
     int32_t zoneId = *reinterpret_cast<const int32_t *>(rawData);
     uint32_t sessionId = *reinterpret_cast<const uint32_t *>(rawData);
+    uint32_t uid = *reinterpret_cast<const uint32_t *>(rawData);
 
-    interruptService->SetAudioInterruptCallback(zoneId, sessionId, object);
+    interruptService->SetAudioInterruptCallback(zoneId, sessionId, object, uid);
 }
 
 void UnsetAudioInterruptCallbackFuzzTest(const uint8_t *rawData, size_t size)

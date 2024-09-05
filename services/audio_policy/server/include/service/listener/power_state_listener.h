@@ -79,7 +79,7 @@ public:
     explicit SyncHibernateListener(const sptr<AudioPolicyServer> audioPolicyServer);
     virtual ~SyncHibernateListener() {}
     void OnSyncHibernate() override;
-    void OnSyncWakeup() override;
+    void OnSyncWakeup(bool hibernateResult = false) override;
  
 private:
     void ControlAudioFocus(bool isHibernate);

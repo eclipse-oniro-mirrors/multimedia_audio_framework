@@ -109,11 +109,6 @@ void AudioEffectChain::Dump()
     }
 }
 
-std::string AudioEffectChain::GetEffectMode()
-{
-    return effectMode_;
-}
-
 void AudioEffectChain::SetEffectMode(const std::string &mode)
 {
     effectMode_ = mode;
@@ -319,11 +314,21 @@ int32_t AudioEffectChain::UpdateMultichannelIoBufferConfig(const uint32_t &chann
     }
     ioBufferConfig_.outputCfg.channels = DEFAULT_NUM_CHANNEL;
     ioBufferConfig_.outputCfg.channelLayout = DEFAULT_NUM_CHANNELLAYOUT;
+    if (preHandle == nullptr) {
+        AUDIO_ERR_LOG("The preHandle is nullptr!");
+        return ERROR;
+    }
     int32_t ret = (*preHandle)->command(preHandle, EFFECT_CMD_SET_CONFIG, &cmdInfo, &replyInfo);
     CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "last effect update EFFECT_CMD_SET_CONFIG fail");
     // recover bufferconfig
     ioBufferConfig_.inputCfg.channels = channels;
     ioBufferConfig_.inputCfg.channelLayout = channelLayout;
+    dumpNameIn_ = "dump_effect_in_" + sceneType_ + "_"
+        + std::to_string(ioBufferConfig_.inputCfg.samplingRate) + "_"
+        + std::to_string(ioBufferConfig_.inputCfg.channels) + "_4.pcm";
+    dumpNameOut_ = "dump_effect_out_" + sceneType_ + "_"
+        + std::to_string(ioBufferConfig_.outputCfg.samplingRate) + "_"
+        + std::to_string(ioBufferConfig_.outputCfg.channels) + "_4.pcm";
     return SUCCESS;
 }
 
@@ -333,6 +338,12 @@ void AudioEffectChain::ResetIoBufferConfig()
     ioBufferConfig_.inputCfg.channelLayout = DEFAULT_NUM_CHANNELLAYOUT;
     ioBufferConfig_.outputCfg.channels = DEFAULT_NUM_CHANNEL;
     ioBufferConfig_.outputCfg.channelLayout = DEFAULT_NUM_CHANNELLAYOUT;
+    dumpNameIn_ = "dump_effect_in_" + sceneType_ + "_"
+        + std::to_string(ioBufferConfig_.inputCfg.samplingRate) + "_"
+        + std::to_string(ioBufferConfig_.inputCfg.channels) + "_4.pcm";
+    dumpNameOut_ = "dump_effect_out_" + sceneType_ + "_"
+        + std::to_string(ioBufferConfig_.outputCfg.samplingRate) + "_"
+        + std::to_string(ioBufferConfig_.outputCfg.channels) + "_4.pcm";
 }
 
 AudioEffectConfig AudioEffectChain::GetIoBufferConfig()
@@ -342,7 +353,7 @@ AudioEffectConfig AudioEffectChain::GetIoBufferConfig()
 
 void AudioEffectChain::StoreOldEffectChainInfo(std::string &sceneMode, AudioEffectConfig &ioBufferConfig)
 {
-    sceneMode = GetEffectMode();
+    sceneMode = effectMode_;
     ioBufferConfig = GetIoBufferConfig();
     return;
 }

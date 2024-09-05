@@ -22,6 +22,8 @@ namespace OHOS {
 namespace Bluetooth {
 
 constexpr int32_t WEAR_ENABLED = 1;
+const int32_t BT_VIRTUAL_DEVICE_ADD = 0;
+const int32_t BT_VIRTUAL_DEVICE_REMOVE = 1;
 
 enum BluetoothDeviceAction : int32_t {
     WEAR_ACTION = 0,
@@ -32,13 +34,17 @@ enum BluetoothDeviceAction : int32_t {
     DISABLE_WEAR_DETECTION_ACTION,
     USER_SELECTION_ACTION,
     STOP_VIRTUAL_CALL,
-    CONNECT_ACTION,
+    CONNECT_ACTION = 100,
     DISCONNECT_ACTION,
+    VIRTUAL_DEVICE_ADD_ACTION,
+    VIRTUAL_DEVICE_REMOVE_ACTION,
 };
 
 enum DeviceStatus : int32_t {
     ADD = 0,
     REMOVE = 1,
+    VIRTUAL_ADD = 2,
+    VIRTUAL_REMOVE = 3,
 };
 
 enum EventType : int32_t {

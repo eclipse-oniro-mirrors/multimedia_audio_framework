@@ -274,6 +274,7 @@ int32_t OHAudioBuffer::Init(int dataFd, int infoFd)
 
     basicBufferInfo_->streamVolume.store(MAX_FLOAT_VOLUME);
     basicBufferInfo_->duckFactor.store(MAX_FLOAT_VOLUME);
+    basicBufferInfo_->muteFactor.store(MAX_FLOAT_VOLUME);
 
     if (bufferHolder_ == AUDIO_SERVER_SHARED || bufferHolder_ == AUDIO_SERVER_ONLY) {
         basicBufferInfo_->handlePos.store(0);
@@ -431,6 +432,31 @@ bool OHAudioBuffer::SetStreamVolume(float streamVolume)
     return true;
 }
 
+float OHAudioBuffer::GetMuteFactor()
+{
+    CHECK_AND_RETURN_RET_LOG(basicBufferInfo_ != nullptr, MAX_FLOAT_VOLUME, "buffer is not inited!");
+    float factor = basicBufferInfo_->muteFactor.load();
+    if (factor < MIN_FLOAT_VOLUME) {
+        AUDIO_WARNING_LOG("vol < 0.0, invalid muteFactor! using 0.0 instead.");
+        return MIN_FLOAT_VOLUME;
+    } else if (factor > MAX_FLOAT_VOLUME) {
+        AUDIO_WARNING_LOG("vol > 0.0, invalid muteFactor! using 1.0 instead.");
+        return MAX_FLOAT_VOLUME;
+    }
+    return factor;
+}
+
+bool OHAudioBuffer::SetMuteFactor(float muteFactor)
+{
+    CHECK_AND_RETURN_RET_LOG(basicBufferInfo_ != nullptr, false, "buffer is not inited!");
+    if (muteFactor != MIN_FLOAT_VOLUME && muteFactor != MAX_FLOAT_VOLUME) {
+        AUDIO_ERR_LOG("invlaid factor:%{public}f", muteFactor);
+        return false;
+    }
+    basicBufferInfo_->muteFactor.store(muteFactor);
+    return true;
+}
+
 float OHAudioBuffer::GetDuckFactor()
 {
     CHECK_AND_RETURN_RET_LOG(basicBufferInfo_ != nullptr, MAX_FLOAT_VOLUME, "buffer is not inited!");
@@ -517,6 +543,7 @@ int32_t OHAudioBuffer::ResetCurReadWritePos(uint64_t readFrame, uint64_t writeFr
 
 uint64_t OHAudioBuffer::GetCurWriteFrame()
 {
+    CHECK_AND_RETURN_RET_LOG(basicBufferInfo_ != nullptr, 0, "basicBufferInfo_ is null");
     return basicBufferInfo_->curWriteFrame.load();
 }
 
@@ -616,6 +643,18 @@ int32_t OHAudioBuffer::GetBufferByFrame(uint64_t posInFrame, BufferDesc &bufferD
     return SUCCESS;
 }
 
+uint32_t OHAudioBuffer::GetSessionId()
+{
+    return sessionId_;
+}
+
+int32_t OHAudioBuffer::SetSessionId(uint32_t sessionId)
+{
+    sessionId_ = sessionId;
+
+    return SUCCESS;
+}
+
 int32_t OHAudioBuffer::GetWriteBuffer(uint64_t writePosInFrame, BufferDesc &bufferDesc)
 {
     uint64_t basePos = basicBufferInfo_->basePosInFrame.load();
@@ -679,6 +718,10 @@ void OHAudioBuffer::SetLastWrittenTime(int64_t time)
 
 std::atomic<uint32_t> *OHAudioBuffer::GetFutex()
 {
+    if (basicBufferInfo_ == nullptr) {
+        AUDIO_WARNING_LOG("basicBufferInfo_ is nullptr");
+        return nullptr;
+    }
     return &basicBufferInfo_->futexObj;
 }
 

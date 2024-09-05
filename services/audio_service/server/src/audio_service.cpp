@@ -60,6 +60,8 @@ int32_t AudioService::OnProcessRelease(IAudioProcessStream *process)
     bool needRelease = false;
     while (paired != linkedPairedList_.end()) {
         if ((*paired).first == process) {
+            AUDIO_INFO_LOG("SessionId %{public}u", (*paired).first->GetSessionId());
+            RemoveIdFromMuteControlSet((*paired).first->GetSessionId());
             ret = UnlinkProcessToEndpoint((*paired).first, (*paired).second);
             if ((*paired).second->GetStatus() == AudioEndpoint::EndpointStatus::UNLINKED) {
                 needRelease = true;
@@ -113,10 +115,73 @@ sptr<IpcStreamInServer> AudioService::GetIpcStream(const AudioProcessConfig &con
         if (renderer != nullptr && renderer->GetSessionId(sessionId) == SUCCESS) {
             InsertRenderer(sessionId, renderer); // for all renderers
             CheckInnerCapForRenderer(sessionId, renderer);
+            CheckRenderSessionMuteState(sessionId, renderer);
+        }
+    }
+    if (ipcStreamInServer != nullptr && config.audioMode == AUDIO_MODE_RECORD) {
+        uint32_t sessionId = 0;
+        std::shared_ptr<CapturerInServer> capturer = ipcStreamInServer->GetCapturer();
+        if (capturer != nullptr && capturer->GetSessionId(sessionId) == SUCCESS) {
+            InsertCapturer(sessionId, capturer); // for all capturers
+            CheckCaptureSessionMuteState(sessionId, capturer);
         }
     }
 
     return ipcStreamInServer;
+}
+
+void AudioService::UpdateMuteControlSet(uint32_t sessionId, bool muteFlag)
+{
+    if (sessionId < MIN_SESSIONID || sessionId > MAX_SESSIONID) {
+        AUDIO_WARNING_LOG("Invalid sessionid %{public}u", sessionId);
+        return;
+    }
+    std::lock_guard<std::mutex> lock(mutedSessionsMutex_);
+    if (muteFlag) {
+        mutedSessions_.insert(sessionId);
+        return;
+    }
+    if (mutedSessions_.find(sessionId) != mutedSessions_.end()) {
+        mutedSessions_.erase(sessionId);
+    } else {
+        AUDIO_WARNING_LOG("Session id %{public}u not in the set", sessionId);
+    }
+}
+
+void AudioService::RemoveIdFromMuteControlSet(uint32_t sessionId)
+{
+    std::lock_guard<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
+    if (mutedSessions_.find(sessionId) != mutedSessions_.end()) {
+        mutedSessions_.erase(sessionId);
+    } else {
+        AUDIO_WARNING_LOG("Session id %{public}u not in the set", sessionId);
+    }
+}
+
+void AudioService::CheckRenderSessionMuteState(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer)
+{
+    std::lock_guard<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
+    if (mutedSessions_.find(sessionId) != mutedSessions_.end()) {
+        AUDIO_INFO_LOG("Session %{public}u is in control", sessionId);
+        renderer->SetNonInterruptMute(true);
+    }
+}
+
+void AudioService::CheckCaptureSessionMuteState(uint32_t sessionId, std::shared_ptr<CapturerInServer> capturer)
+{
+    std::lock_guard<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
+    if (mutedSessions_.find(sessionId) != mutedSessions_.end()) {
+        AUDIO_INFO_LOG("Session %{public}u is in control", sessionId);
+        capturer->SetNonInterruptMute(true);
+    }
+}
+void AudioService::CheckFastSessionMuteState(uint32_t sessionId, sptr<AudioProcessInServer> process)
+{
+    std::lock_guard<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
+    if (mutedSessions_.find(sessionId) != mutedSessions_.end()) {
+        AUDIO_INFO_LOG("Session %{public}u is in control", sessionId);
+        process->SetNonInterruptMute(true);
+    }
 }
 
 void AudioService::InsertRenderer(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer)
@@ -135,6 +200,26 @@ void AudioService::RemoveRenderer(uint32_t sessionId)
         return;
     }
     allRendererMap_.erase(sessionId);
+    RemoveIdFromMuteControlSet(sessionId);
+}
+
+void AudioService::InsertCapturer(uint32_t sessionId, std::shared_ptr<CapturerInServer> capturer)
+{
+    std::unique_lock<std::mutex> lock(capturerMapMutex_);
+    AUDIO_INFO_LOG("Insert capturer:%{public}u into map", sessionId);
+    allCapturerMap_[sessionId] = capturer;
+}
+
+void AudioService::RemoveCapturer(uint32_t sessionId)
+{
+    std::unique_lock<std::mutex> lock(capturerMapMutex_);
+    AUDIO_INFO_LOG("Capturer: %{public}u will be removed.", sessionId);
+    if (!allCapturerMap_.count(sessionId)) {
+        AUDIO_WARNING_LOG("Capturer in not in map!");
+        return;
+    }
+    allCapturerMap_.erase(sessionId);
+    RemoveIdFromMuteControlSet(sessionId);
 }
 
 void AudioService::CheckInnerCapForRenderer(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer)
@@ -438,6 +523,7 @@ sptr<AudioProcessInServer> AudioService::GetAudioProcess(const AudioProcessConfi
 
     sptr<AudioProcessInServer> process = AudioProcessInServer::Create(config, this);
     CHECK_AND_RETURN_RET_LOG(process != nullptr, nullptr, "AudioProcessInServer create failed.");
+    CheckFastSessionMuteState(process->GetSessionId(), process);
 
     std::shared_ptr<OHAudioBuffer> buffer = audioEndpoint->GetEndpointType()
          == AudioEndpoint::TYPE_INDEPENDENT ? audioEndpoint->GetBuffer() : nullptr;
@@ -460,6 +546,7 @@ void AudioService::ResetAudioEndpoint()
     auto paired = linkedPairedList_.begin();
     while (paired != linkedPairedList_.end()) {
         if ((*paired).second->GetEndpointType() == AudioEndpoint::TYPE_MMAP) {
+            AUDIO_INFO_LOG("Session id %{public}u", (*paired).first->GetSessionId());
             linkedPairedList_.erase(paired);
             config = (*paired).first->processConfig_;
             int32_t ret = UnlinkProcessToEndpoint((*paired).first, (*paired).second);
@@ -660,6 +747,11 @@ void AudioService::Dump(std::string &dumpString)
         AppendFormat(dumpString, "  - Endpoint device id: %s\n", item.first.c_str());
         item.second->Dump(dumpString);
     }
+    // dump voip and direct
+    for (const auto &item : allRendererMap_) {
+        std::shared_ptr<RendererInServer> renderer = item.second.lock();
+        renderer->Dump(dumpString);
+    }
     PolicyHandler::GetInstance().Dump(dumpString);
 }
 
@@ -696,6 +788,55 @@ std::shared_ptr<RendererInServer> AudioService::GetRendererBySessionID(const uin
     } else {
         return std::shared_ptr<RendererInServer>();
     }
+}
+
+void AudioService::SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag)
+{
+    AUDIO_INFO_LOG("SessionId: %{public}u, muteFlag: %{public}d", sessionId, muteFlag);
+    if (allRendererMap_.count(sessionId)) {
+        allRendererMap_[sessionId].lock()->SetNonInterruptMute(muteFlag);
+        AUDIO_INFO_LOG("allRendererMap_ has sessionId");
+        return;
+    }
+    if (allCapturerMap_.count(sessionId)) {
+        allCapturerMap_[sessionId].lock()->SetNonInterruptMute(muteFlag);
+        AUDIO_INFO_LOG("allCapturerMap_ has sessionId");
+        return;
+    }
+    for (auto paired : linkedPairedList_) {
+        if (paired.first->GetSessionId() == sessionId) {
+            AUDIO_INFO_LOG("linkedPairedList_ has sessionId");
+            paired.first->SetNonInterruptMute(muteFlag);
+            return;
+        }
+    }
+    AUDIO_INFO_LOG("Cannot find sessionId");
+}
+
+int32_t AudioService::SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack)
+{
+    std::unique_lock<std::mutex> lock(rendererMapMutex_);
+    if (!allRendererMap_.count(sessionId)) {
+        AUDIO_WARNING_LOG("Renderer %{public}u is not in map", sessionId);
+        return ERR_INVALID_INDEX;
+    }
+    AUDIO_INFO_LOG("Set offload mode for renderer %{public}u", sessionId);
+    std::shared_ptr<RendererInServer> renderer = allRendererMap_[sessionId].lock();
+    return renderer->SetOffloadMode(state, isAppBack);
+}
+
+int32_t AudioService::UnsetOffloadMode(uint32_t sessionId)
+{
+    std::unique_lock<std::mutex> lock(rendererMapMutex_);
+    if (!allRendererMap_.count(sessionId)) {
+        AUDIO_WARNING_LOG("Renderer %{public}u is not in map", sessionId);
+        return ERR_INVALID_INDEX;
+    }
+    AUDIO_INFO_LOG("Set offload mode for renderer %{public}u", sessionId);
+    std::shared_ptr<RendererInServer> renderer = allRendererMap_[sessionId].lock();
+    int32_t ret = renderer->UnsetOffloadMode();
+    lock.unlock();
+    return ret;
 }
 } // namespace AudioStandard
 } // namespace OHOS

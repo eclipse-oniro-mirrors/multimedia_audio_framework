@@ -161,7 +161,7 @@ void SyncHibernateListener::OnSyncHibernate()
     ControlAudioFocus(true);
 }
  
-void SyncHibernateListener::OnSyncWakeup()
+void SyncHibernateListener::OnSyncWakeup(bool hibernateResult)
 {
     AUDIO_INFO_LOG("OnSyncWakeup in hibernate");
     ControlAudioFocus(false);

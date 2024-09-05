@@ -126,6 +126,8 @@ public:
 
     float GetSystemVolumeInDb(AudioVolumeType volumeType, int32_t volumeLevel, DeviceType deviceType) override;
 
+    bool IsArmUsbDevice(const AudioDeviceDescriptor &desc) override;
+
     int32_t SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
         std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors) override;
 
@@ -186,7 +188,7 @@ public:
     bool IsAudioSessionActivated() override;
 
     int32_t SetAudioInterruptCallback(const uint32_t sessionID,
-        const sptr<IRemoteObject> &object, const int32_t zoneId = 0) override;
+        const sptr<IRemoteObject> &object, uint32_t clientUid, const int32_t zoneId = 0) override;
 
     int32_t UnsetAudioInterruptCallback(const uint32_t sessionID, const int32_t zoneId = 0) override;
 
@@ -197,6 +199,8 @@ public:
     int32_t SetAudioManagerInterruptCallback(const int32_t clientId, const sptr<IRemoteObject> &object) override;
 
     int32_t UnsetAudioManagerInterruptCallback(const int32_t clientId) override;
+
+    int32_t SetQueryClientTypeCallback(const sptr<IRemoteObject> &object) override;
 
     int32_t RequestAudioFocus(const int32_t clientId, const AudioInterrupt &audioInterrupt) override;
 
@@ -250,6 +254,8 @@ public:
     void RegisteredStreamListenerClientDied(int pid);
 
     bool IsAudioRendererLowLatencySupported(const AudioStreamInfo &audioStreamInfo) override;
+
+    int32_t ResumeStreamState();
 
     int32_t UpdateStreamState(const int32_t clientUid, StreamSetState streamSetState,
         StreamUsage streamUsage) override;
@@ -393,9 +399,12 @@ public:
 
     int32_t ActivateAudioConcurrency(const AudioPipeType &pipeType) override;
 
-    int32_t ResetRingerModeMute() override;
-
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event) override;
+
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId) override;
+
+    int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
+        const StreamUsage streamUsage, bool isRunning) override;
 
     class RemoteParameterCallback : public AudioParameterCallback {
     public:
@@ -534,6 +543,7 @@ private:
     void UnRegisterPowerStateListener();
     void RegisterSyncHibernateListener();
     void UnRegisterSyncHibernateListener();
+    void AddRemoteDevstatusCallback();
     void OnDistributedRoutingRoleChange(const sptr<AudioDeviceDescriptor> descriptor, const CastType type);
 
     void InitPolicyDumpMap();
@@ -568,7 +578,6 @@ private:
 
     AudioSpatializationService& audioSpatializationService_;
     std::shared_ptr<AudioPolicyServerHandler> audioPolicyServerHandler_;
-    bool isAvSessionSetVoipStart = false;
     bool volumeApplyToAll_ = false;
 
     bool isHighResolutionExist_ = false;
@@ -578,6 +587,7 @@ private:
     std::map<std::u16string, DumpFunc> dumpFuncMap;
     pid_t lastMicMuteSettingPid_ = 0;
     std::string GetBundleName();
+    std::shared_ptr<AudioOsAccountInfo> accountObserver_ = nullptr;
 };
 
 class AudioOsAccountInfo : public AccountSA::OsAccountSubscriber {

@@ -38,6 +38,8 @@ constexpr int32_t AUDIO_EFFECT_COUNT_POST_SECOND_NODE_UPPER_LIMIT = 1;
 constexpr int32_t AUDIO_EFFECT_CHAIN_CONFIG_UPPER_LIMIT = 64; // max conf for sceneType + effectMode + deviceType
 constexpr int32_t AUDIO_EFFECT_CHAIN_COUNT_UPPER_LIMIT = 32; // max num of effectChain
 constexpr int32_t AUDIO_EFFECT_COUNT_PER_CHAIN_UPPER_LIMIT = 16; // max num of effect per effectChain
+constexpr int32_t AUDIO_EFFECT_PRIOR_SCENE_UPPER_LIMIT = 7; // max num of effect prior scene
+constexpr int32_t AUDIO_EFFECT_COUNT_PROPERTY_UPPER_LIMIT = 20; // max num of property
 
 constexpr int32_t HDI_EFFECT_NUM = 2;
 constexpr int32_t HDI_SET_PATAM = 6;
@@ -52,6 +54,7 @@ constexpr int32_t HDI_UPDATE_SPATIAL_DEVICE_TYPE = 6;
 
 constexpr int32_t HDI_VOLUME = 7;
 constexpr int32_t HDI_ROTATION = 8;
+constexpr int32_t HDI_EXTRA_SCENE_TYPE = 9;
 
 enum AudioSpatialDeviceType {
     EARPHONE_TYPE_NONE = 0,
@@ -124,6 +127,14 @@ struct OriginalEffectConfig {
 struct StreamEffectMode {
     std::string mode;
     std::vector<Device> devicePort;
+};
+
+struct EffectChainManagerParam {
+    uint32_t maxExtraNum = 0;
+    std::string defaultSceneName;
+    std::vector<std::string> priorSceneList;
+    std::unordered_map<std::string, std::string> sceneTypeToChainNameMap;
+    std::unordered_map<std::string, std::string> effectDefaultProperty;
 };
 
 struct Stream {
@@ -219,6 +230,8 @@ const std::unordered_map<DeviceType, std::string> SUPPORTED_DEVICE_TYPE {
     {DEVICE_TYPE_MIC, "DEVICE_TYPE_MIC"},
     {DEVICE_TYPE_WAKEUP, "DEVICE_TYPE_WAKEUP"},
     {DEVICE_TYPE_USB_HEADSET, "DEVICE_TYPE_USB_HEADSET"},
+    {DEVICE_TYPE_USB_ARM_HEADSET, "DEVICE_TYPE_USB_ARM_HEADSET"},
+    {DEVICE_TYPE_DP, "DEVICE_TYPE_DP"},
     {DEVICE_TYPE_FILE_SINK, "DEVICE_TYPE_FILE_SINK"},
     {DEVICE_TYPE_FILE_SOURCE, "DEVICE_TYPE_FILE_SOURCE"},
     {DEVICE_TYPE_EXTERN_CABLE, "DEVICE_TYPE_EXTERN_CABLE"},

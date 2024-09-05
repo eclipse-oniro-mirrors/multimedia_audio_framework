@@ -66,6 +66,11 @@ public:
     // Get tone render device selected by the user
     unique_ptr<AudioDeviceDescriptor> GetPreferredToneRenderDevice();
 
+    void UpdatePreferredMediaRenderDeviceConnectState(ConnectState state);
+    void UpdatePreferredCallRenderDeviceConnectState(ConnectState state);
+    void UpdatePreferredCallCaptureDeviceConnectState(ConnectState state);
+    void UpdatePreferredRecordCaptureDeviceConnectState(ConnectState state);
+
 private:
     AudioStateManager() {};
     ~AudioStateManager() {};

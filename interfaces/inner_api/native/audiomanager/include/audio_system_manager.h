@@ -73,6 +73,7 @@ public:
         int32_t channelIndexMasks = 0);
 
     bool isSameDevice(const DeviceInfo &deviceInfo);
+    bool isSameDeviceDesc(const std::unique_ptr<AudioDeviceDescriptor> &deviceDescriptor);
 };
 
 struct AudioSpatialEnabledStateForDevice {
@@ -242,6 +243,12 @@ public:
      * @since 8
      */
     virtual void OnDeviceChange(const DeviceChangeAction &deviceChangeAction) = 0;
+};
+
+class AudioQueryClientTypeCallback {
+public:
+    virtual ~AudioQueryClientTypeCallback() = default;
+    virtual bool OnQueryClientType(const std::string &bundleName, uint32_t uid) = 0;
 };
 
 class AudioManagerAvailableDeviceChangeCallback {
@@ -1246,6 +1253,8 @@ public:
 
     std::string GetSelfBundleName(int32_t uid);
 
+    int32_t SetQueryClientTypeCallback(const std::shared_ptr<AudioQueryClientTypeCallback> &callback);
+
     /**
      * @brief inject interruption event.
      *
@@ -1257,6 +1266,17 @@ public:
      * @since 12
      */
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event);
+
+    /**
+    * @brief Load the split module for audio stream separation.
+    *
+    * @param splitArgs Specifies the types of audio to be split into different streams.
+    * @param networkId The network identifier of the output device.
+    * @return Returns {@link SUCCESS} if the module is loaded successfully; otherwise, returns an error code defined
+    * in {@link audio_errors.h}.
+    * @since 12
+    */
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId);
 
 private:
     class WakeUpCallbackImpl : public WakeUpSourceCallback {

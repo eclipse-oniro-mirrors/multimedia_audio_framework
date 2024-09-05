@@ -266,6 +266,25 @@ HWTEST(AudioPolicyUnitTest, Audio_Policy_Manager_RegisterAudioCapturerEventListe
 }
 
 /**
+ * @tc.name  : Test RegisterAudioCapturerEventListener
+ * @tc.number: Audio_Policy_Manager_RegisterAudioCapturerEventListener_002
+ * @tc.desc  : Test RegisterAudioCapturerEventListener exception branch.
+ */
+HWTEST(AudioPolicyUnitTest, Audio_Policy_Manager_RegisterAudioCapturerEventListener_002, TestSize.Level1)
+{
+    int32_t clientId = getpid();
+    std::shared_ptr<AudioCapturerStateChangeCallback> callback =
+        std::make_shared<AudioCapturerStateChangeCallbackTest>();
+
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    int32_t ret = AudioPolicyManager::GetInstance().RegisterAudioCapturerEventListener(clientId, callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnregisterAudioCapturerEventListener(clientId);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
  * @tc.name  : Test Audio_Policy_Manager_IsAudioRendererLowLatencySupported_001 via legal state
  * @tc.number: Audio_Policy_Manager_IsAudioRendererLowLatencySupported_001
  * @tc.desc  : Test IsAudioRendererLowLatencySupported interface. Returns success.
@@ -437,6 +456,25 @@ HWTEST(AudioPolicyUnitTest, Audio_Policy_Manager_SetRingerModeCallback_001, Test
 }
 
 /**
+ * @tc.name  : Test SetRingerModeCallback
+ * @tc.number: Audio_Policy_Manager_SetRingerModeCallback_002
+ * @tc.desc  : Test SetRingerModeCallback interface abnormal branch.
+ */
+HWTEST(AudioPolicyUnitTest, Audio_Policy_Manager_SetRingerModeCallback_002, TestSize.Level3)
+{
+    int32_t clientId = getpid();
+    int32_t ret = -1;
+    std::shared_ptr<AudioRingerModeCallback> callback = make_shared<AudioRingerModeCallbackTest>();
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+
+    ret = AudioPolicyManager::GetInstance().SetRingerModeCallback(clientId, callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnsetRingerModeCallback(clientId, callback);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
  * @tc.name  : Test Audio_Policy_Manager_SetDeviceChangeCallback_002 via illegal state
  * @tc.number: Audio_Policy_Manager_SetDeviceChangeCallback_002
  * @tc.desc  : Test SetDeviceChangeCallback interface. Returns invalid.
@@ -486,6 +524,49 @@ HWTEST(AudioPolicyUnitTest, Audio_Policy_Manager_RegisterAudioRendererEventListe
     std::shared_ptr<AudioRendererStateChangeCallback> callback = nullptr;
     int32_t ret = AudioPolicyManager::GetInstance().RegisterAudioRendererEventListener(callback);
     EXPECT_EQ(ERR_INVALID_PARAM, ret);
+}
+
+/**
+ * @tc.name  : Test RegisterAudioRendererEventListener
+ * @tc.number: Audio_Policy_Manager_RegisterAudioRendererEventListener_003
+ * @tc.desc  : Test registerAudioRendererEventListener exception branch.
+ */
+HWTEST(AudioPolicyUnitTest, Audio_Policy_Manager_RegisterAudioRendererEventListener_003, TestSize.Level1)
+{
+    std::shared_ptr<AudioRendererStateChangeCallback> callback =
+        std::make_shared<AudioRendererStateChangeCallbackTest>();
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    int32_t ret = AudioPolicyManager::GetInstance().RegisterAudioRendererEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnregisterAudioRendererEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+ * @tc.name  : Test UnregisterAudioRendererEventListener
+ * @tc.number: Audio_Policy_Manager_UnregisterAudioRendererEventListener_001
+ * @tc.desc  : Test UnregisterAudioRendererEventListener interface.
+ */
+HWTEST(AudioPolicyUnitTest, Audio_Policy_Manager_UnregisterAudioRendererEventListener_001, TestSize.Level1)
+{
+    std::shared_ptr<AudioRendererStateChangeCallback> callback1 =
+        std::make_shared<AudioRendererStateChangeCallbackTest>();
+    std::shared_ptr<AudioRendererStateChangeCallback> callback2 =
+        std::make_shared<AudioRendererStateChangeCallbackTest>();
+
+    int32_t ret = AudioPolicyManager::GetInstance().RegisterAudioRendererEventListener(callback1);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().RegisterAudioRendererEventListener(callback2);
+    EXPECT_EQ(SUCCESS, ret);
+
+    std::vector<std::shared_ptr<AudioRendererStateChangeCallback>> callbacks;
+    callbacks.push_back(callback1);
+    callbacks.push_back(callback2);
+
+    ret = AudioPolicyManager::GetInstance().UnregisterAudioRendererEventListener(callbacks);
+    EXPECT_EQ(SUCCESS, ret);
 }
 
 /**

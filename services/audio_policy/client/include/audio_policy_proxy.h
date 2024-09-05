@@ -118,7 +118,7 @@ public:
     bool IsAudioSessionActivated() override;
 
     int32_t SetAudioInterruptCallback(const uint32_t sessionID,
-        const sptr<IRemoteObject> &object, const int32_t zoneID = 0) override;
+        const sptr<IRemoteObject> &object, uint32_t clientUid, const int32_t zoneID = 0) override;
 
     int32_t UnsetAudioInterruptCallback(const uint32_t sessionID, const int32_t zoneID = 0) override;
 
@@ -129,6 +129,8 @@ public:
     int32_t SetAudioManagerInterruptCallback(const int32_t clientId, const sptr<IRemoteObject> &object) override;
 
     int32_t UnsetAudioManagerInterruptCallback(const int32_t clientId) override;
+
+    int32_t SetQueryClientTypeCallback(const sptr<IRemoteObject> &object) override;
 
     int32_t RequestAudioFocus(const int32_t clientId, const AudioInterrupt &audioInterrupt) override;
 
@@ -310,9 +312,12 @@ public:
 
     int32_t ActivateAudioConcurrency(const AudioPipeType &pipeType) override;
 
-    int32_t ResetRingerModeMute() override;
-
     int32_t InjectInterruption(const std::string networkId, InterruptEvent &event) override;
+
+    int32_t LoadSplitModule(const std::string &splitArgs, const std::string &networkId) override;
+
+    int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
+        const StreamUsage streamUsage, bool isRunning) override;
 
 private:
     static inline BrokerDelegator<AudioPolicyProxy> mDdelegator;

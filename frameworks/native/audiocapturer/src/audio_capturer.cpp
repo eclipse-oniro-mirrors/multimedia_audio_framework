@@ -246,6 +246,10 @@ int32_t AudioCapturerPrivate::SetParams(const AudioCapturerParams params)
 {
     Trace trace("AudioCapturer::SetParams");
     AUDIO_INFO_LOG("StreamClientState for Capturer::SetParams.");
+
+    std::shared_lock<std::shared_mutex> lockShared(switchStreamMutex_);
+    std::lock_guard<std::mutex> lock(setParamsMutex_);
+
     AudioStreamParams audioStreamParams = ConvertToAudioStreamParams(params);
 
     IAudioStream::StreamClass streamClass = IAudioStream::PA_STREAM;
@@ -347,6 +351,7 @@ int32_t AudioCapturerPrivate::InitAudioStream(const AudioStreamParams &audioStre
 
 void AudioCapturerPrivate::CheckSignalData(uint8_t *buffer, size_t bufferSize) const
 {
+    std::lock_guard lock(signalDetectAgentMutex_);
     if (!latencyMeasEnabled_) {
         return;
     }
@@ -364,6 +369,7 @@ void AudioCapturerPrivate::CheckSignalData(uint8_t *buffer, size_t bufferSize) c
 
 void AudioCapturerPrivate::InitLatencyMeasurement(const AudioStreamParams &audioStreamParams)
 {
+    std::lock_guard lock(signalDetectAgentMutex_);
     latencyMeasEnabled_ = AudioLatencyMeasurement::CheckIfEnabled();
     AUDIO_INFO_LOG("LatencyMeas enabled in capturer:%{public}d", latencyMeasEnabled_);
     if (!latencyMeasEnabled_) {
@@ -399,11 +405,13 @@ int32_t AudioCapturerPrivate::InitAudioInterruptCallback()
         CHECK_AND_RETURN_RET_LOG(audioInterruptCallback_ != nullptr, ERROR,
             "Failed to allocate memory for audioInterruptCallback_");
     }
-    return AudioPolicyManager::GetInstance().SetAudioInterruptCallback(sessionID_, audioInterruptCallback_);
+    return AudioPolicyManager::GetInstance().SetAudioInterruptCallback(sessionID_, audioInterruptCallback_,
+        appInfo_.appUid);
 }
 
 int32_t AudioCapturerPrivate::SetCapturerCallback(const std::shared_ptr<AudioCapturerCallback> &callback)
 {
+    std::lock_guard<std::mutex> lock(setCapturerCbMutex_);
     // If the client is using the deprecated SetParams API. SetCapturerCallback must be invoked, after SetParams.
     // In general, callbacks can only be set after the capturer state is  PREPARED.
     CapturerState state = GetStatus();
@@ -509,6 +517,11 @@ bool AudioCapturerPrivate::Start() const
     Trace trace("AudioCapturer::Start");
     AUDIO_INFO_LOG("StreamClientState for Capturer::Start. id %{public}u, sourceType: %{public}d",
         sessionID_, audioInterrupt_.audioFocusType.sourceType);
+
+    CapturerState state = GetStatus();
+    CHECK_AND_RETURN_RET_LOG((state == CAPTURER_PREPARED) || (state == CAPTURER_STOPPED) || (state == CAPTURER_PAUSED),
+        false, "Start failed. Illegal state %{public}u.", state);
+
     CHECK_AND_RETURN_RET_LOG(!isSwitching_, false, "Operation failed, in switching");
 
     CHECK_AND_RETURN_RET(audioInterrupt_.audioFocusType.sourceType != SOURCE_TYPE_INVALID &&
@@ -1004,6 +1017,7 @@ int32_t AudioCapturerPrivate::UnregisterAudioCapturerEventListener()
         int32_t ret =
             AudioPolicyManager::GetInstance().UnregisterAudioCapturerEventListener(getpid());
         CHECK_AND_RETURN_RET_LOG(ret == 0, ERROR, "failed");
+        audioStateChangeCallback_->HandleCapturerDestructor();
         audioStateChangeCallback_ = nullptr;
     }
     return SUCCESS;
@@ -1039,7 +1053,7 @@ int32_t AudioCapturerPrivate::RegisterCapturerPolicyServiceDiedCallback()
             AUDIO_ERR_LOG("Memory allocation failed!!");
             return ERROR;
         }
-        audioStream_->RegisterRendererOrCapturerPolicyServiceDiedCB(audioPolicyServiceDiedCallback_);
+        AudioPolicyManager::GetInstance().RegisterAudioStreamPolicyServerDiedCb(audioPolicyServiceDiedCallback_);
         audioPolicyServiceDiedCallback_->SetAudioCapturerObj(this);
         audioPolicyServiceDiedCallback_->SetAudioInterrupt(audioInterrupt_);
     }
@@ -1050,12 +1064,15 @@ int32_t AudioCapturerPrivate::RemoveCapturerPolicyServiceDiedCallback()
 {
     AUDIO_DEBUG_LOG("AudioCapturerPrivate::RemoveCapturerPolicyServiceDiedCallback");
     if (audioPolicyServiceDiedCallback_) {
-        int32_t ret = audioStream_->RemoveRendererOrCapturerPolicyServiceDiedCB();
+        int32_t ret = AudioPolicyManager::GetInstance().UnregisterAudioStreamPolicyServerDiedCb(
+            audioPolicyServiceDiedCallback_);
         if (ret != 0) {
             AUDIO_ERR_LOG("RemoveCapturerPolicyServiceDiedCallback failed");
+            audioPolicyServiceDiedCallback_ = nullptr;
             return ERROR;
         }
     }
+    audioPolicyServiceDiedCallback_ = nullptr;
     return SUCCESS;
 }
 
@@ -1104,16 +1121,22 @@ bool AudioCapturerPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
         Trace trace("SwitchToTargetStream");
         isSwitching_ = true;
         CapturerState previousState = GetStatus();
-        AUDIO_INFO_LOG("Previous stream state: %{public}d", previousState);
+        AUDIO_INFO_LOG("Previous stream state: %{public}d, original sessionId: %{public}u", previousState, sessionID_);
         if (previousState == CAPTURER_RUNNING) {
             // stop old stream
             switchResult = audioStream_->StopAudioStream();
             CHECK_AND_RETURN_RET_LOG(switchResult, false, "StopAudioStream failed.");
         }
-        std::lock_guard<std::mutex> lock(switchStreamMutex_);
+        std::lock_guard lock(switchStreamMutex_);
         // switch new stream
         IAudioStream::SwitchInfo info;
         audioStream_->GetSwitchInfo(info);
+        info.params.originalSessionId = sessionID_;
+
+        // release old stream and restart audio stream
+        switchResult = audioStream_->ReleaseAudioStream();
+        CHECK_AND_RETURN_RET_LOG(switchResult, false, "release old stream failed.");
+
         if (targetClass == IAudioStream::VOIP_STREAM) {
             info.capturerInfo.originalFlag = AUDIO_FLAG_VOIP_FAST;
         }
@@ -1124,10 +1147,6 @@ bool AudioCapturerPrivate::SwitchToTargetStream(IAudioStream::StreamClass target
 
         // set new stream info
         SetSwitchInfo(info, newAudioStream);
-
-        // release old stream and restart audio stream
-        switchResult = audioStream_->ReleaseAudioStream();
-        CHECK_AND_RETURN_RET_LOG(switchResult, false, "release old stream failed.");
 
         if (previousState == CAPTURER_RUNNING) {
             // restart audio stream

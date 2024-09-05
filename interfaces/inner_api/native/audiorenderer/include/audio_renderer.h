@@ -317,7 +317,7 @@ public:
      * @return Returns <b>true</b> if the rendering is successfully started; returns <b>false</b> otherwise.
      * @since 10
      */
-    virtual bool Start(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const = 0;
+    virtual bool Start(StateChangeCmdType cmdType = CMD_FROM_CLIENT) = 0;
 
     /**
      * @brief Writes audio data.
@@ -443,7 +443,7 @@ public:
      * @return Returns <b>true</b> if the object is successfully released; returns <b>false</b> otherwise.
      * @since 8
      */
-    virtual bool Release() const = 0;
+    virtual bool Release() = 0;
 
     /**
      * @brief Obtains a reasonable minimum buffer size for rendering, however, the renderer can
@@ -927,6 +927,31 @@ public:
     virtual void SetSilentModeAndMixWithOthers(bool on) = 0;
 
     virtual bool GetSilentModeAndMixWithOthers() = 0;
+
+    virtual void EnableVoiceModemCommunicationStartStream(bool enable) = 0;
+
+    /**
+     * @brief Temporarily changes the current audio route.
+     * @param deviceType to set. The available deviceTypes are EARPIECE/SPEAKER/DEFAULT.
+     * @since 12
+     */
+    virtual int32_t SetDefaultOutputDevice(DeviceType deviceType) { return 0; };
+
+    /**
+     * @brief Mute audio rendering.
+     *
+     * @return Returns <b>true</b> if the rendering is successfully Paused; returns <b>false</b> otherwise.
+     * @since 10
+     */
+    virtual bool Mute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const {return false;};
+
+    /**
+     * @brief Unmute audio rendering.
+     *
+     * @return Returns <b>true</b> if the rendering is successfully Paused; returns <b>false</b> otherwise.
+     * @since 10
+     */
+    virtual bool Unmute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const {return false;};
 
 private:
     static int32_t CreateCheckParam(const AudioRendererOptions &rendererOptions,

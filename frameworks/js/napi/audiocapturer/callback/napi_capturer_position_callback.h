@@ -37,7 +37,6 @@ private:
         int64_t position = 0;
     };
 
-    static void WorkPositionCallbackDone(uv_work_t *work, int status);
     void OnJsCapturerPositionCallback(std::unique_ptr<CapturerPositionJsCallback> &jsCb);
 
     std::mutex mutex_;

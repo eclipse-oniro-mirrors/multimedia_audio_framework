@@ -32,6 +32,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "hisysevent.h"
+#include "parameters.h"
 
 #include "audio_capturer_source.h"
 #include "fast_audio_capturer_source.h"
@@ -69,6 +70,9 @@ std::map<std::string, std::string> AudioServer::audioParameters;
 std::unordered_map<std::string, std::unordered_map<std::string, std::set<std::string>>> AudioServer::audioParameterKeys;
 const string DEFAULT_COOKIE_PATH = "/data/data/.pulse_dir/state/cookie";
 const std::string CHECK_FAST_BLOCK_PREFIX = "Is_Fast_Blocked_For_AppName#";
+constexpr const char *TEL_SATELLITE_SUPPORT = "const.telephony.satellite.supported";
+const std::string SATEMODEM_PARAMETER = "usedmodem=satemodem";
+constexpr int32_t UID_FOUNDATION_SA = 5523;
 const unsigned int TIME_OUT_SECONDS = 10;
 const unsigned int SCHEDULE_REPORT_TIME_OUT_SECONDS = 2;
 static const std::vector<StreamUsage> STREAMS_NEED_VERIFY_SYSTEM_PERMISSION = {
@@ -350,14 +354,12 @@ void AudioServer::OnStop()
 void AudioServer::RecognizeAudioEffectType(const std::string &mainkey, const std::string &subkey,
     const std::string &extraSceneType)
 {
-    AUDIO_DEBUG_LOG("mainkey is %{public}s, subkey is %{public}s, extraSceneType is %{public}s",
-        mainkey.c_str(), subkey.c_str(), extraSceneType.c_str());
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
     if (audioEffectChainManager == nullptr) {
         AUDIO_ERR_LOG("audioEffectChainManager is nullptr");
         return;
     }
-    audioEffectChainManager->UpdateExtraSceneType(extraSceneType);
+    audioEffectChainManager->UpdateExtraSceneType(mainkey, subkey, extraSceneType);
 }
 
 int32_t AudioServer::SetExtraParameters(const std::string& key,
@@ -975,18 +977,17 @@ bool AudioServer::LoadAudioEffectLibraries(const std::vector<Library> libraries,
 }
 
 bool AudioServer::CreateEffectChainManager(std::vector<EffectChain> &effectChains,
-    std::unordered_map<std::string, std::string> &effectMap,
-    std::unordered_map<std::string, std::string> &enhanceMap)
+    const EffectChainManagerParam &effectParam, const EffectChainManagerParam &enhanceParam)
 {
     if (!PermissionUtil::VerifyIsAudio()) {
         AUDIO_ERR_LOG("not audio calling!");
         return false;
     }
     AudioEffectChainManager *audioEffectChainManager = AudioEffectChainManager::GetInstance();
-    audioEffectChainManager->InitAudioEffectChainManager(effectChains, effectMap,
+    audioEffectChainManager->InitAudioEffectChainManager(effectChains, effectParam,
         audioEffectServer_->GetEffectEntries());
     AudioEnhanceChainManager *audioEnhanceChainManager = AudioEnhanceChainManager::GetInstance();
-    audioEnhanceChainManager->InitAudioEnhanceChainManager(effectChains, enhanceMap,
+    audioEnhanceChainManager->InitAudioEnhanceChainManager(effectChains, enhanceParam,
         audioEffectServer_->GetEffectEntries());
     return true;
 }
@@ -1499,6 +1500,19 @@ sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &co
         ":%{public}s", ProcessConfig::DumpProcessConfig(resetConfig).c_str());
     CHECK_AND_RETURN_RET_LOG(PermissionChecker(resetConfig), nullptr, "Create audio process failed, no permission");
 
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    if (config.rendererInfo.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION && callingUid == UID_FOUNDATION_SA
+        && config.rendererInfo.isSatellite) {
+        bool isSupportSate = OHOS::system::GetBoolParameter(TEL_SATELLITE_SUPPORT, false);
+        CHECK_AND_RETURN_RET_LOG(isSupportSate, nullptr, "Do not support satellite");
+        IAudioRendererSink* audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
+        audioRendererSinkInstance->SetAudioParameter(AudioParamKey::NONE, "", SATEMODEM_PARAMETER);
+    }
+#ifdef FEATURE_APPGALLERY
+    PolicyHandler::GetInstance().GetAndSaveClientType(resetConfig.appInfo.appUid,
+        GetBundleNameFromUid(resetConfig.appInfo.appUid));
+#endif
+
     if (IsNormalIpcStream(resetConfig) || (isFastControlled_ && IsFastBlocked(resetConfig.appInfo.appUid))) {
         AUDIO_INFO_LOG("Create normal ipc stream, isFastControlled: %{public}d", isFastControlled_);
         int32_t ret = 0;
@@ -1999,6 +2013,10 @@ int32_t AudioServer::ResetRouteForDisconnect(DeviceType type)
     CHECK_AND_RETURN_RET_LOG(PermissionUtil::VerifyIsAudio(), ERR_NOT_SUPPORTED, "refused for %{public}d", callingUid);
 
     IAudioRendererSink *audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
+    if (audioRendererSinkInstance == nullptr) {
+        AUDIO_ERR_LOG("audioRendererSinkInstance is null!");
+        return ERROR;
+    }
     audioRendererSinkInstance->ResetOutputRouteForDisconnect(type);
 
     // todo reset capturer
@@ -2162,6 +2180,30 @@ void AudioServer::UpdateSessionConnectionState(const int32_t &sessionId, const i
         return;
     }
     renderer->OnDataLinkConnectionUpdate(static_cast<IOperation>(state));
+}
+
+void AudioServer::SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag)
+{
+    AUDIO_INFO_LOG("sessionId_: %{public}u, muteFlag: %{public}d", sessionId, muteFlag);
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_LOG(PermissionUtil::VerifyIsAudio(), "Refused for %{public}d", callingUid);
+    AudioService::GetInstance()->SetNonInterruptMute(sessionId, muteFlag);
+}
+
+int32_t AudioServer::SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_RET_LOG(PermissionUtil::VerifyIsAudio(), ERR_NOT_SUPPORTED, "refused for %{public}d",
+        callingUid);
+    return AudioService::GetInstance()->SetOffloadMode(sessionId, state, isAppBack);
+}
+
+int32_t AudioServer::UnsetOffloadMode(uint32_t sessionId)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_RET_LOG(PermissionUtil::VerifyIsAudio(), ERR_NOT_SUPPORTED, "refused for %{public}d",
+        callingUid);
+    return AudioService::GetInstance()->UnsetOffloadMode(sessionId);
 }
 } // namespace AudioStandard
 } // namespace OHOS

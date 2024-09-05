@@ -286,11 +286,8 @@ int32_t AudioEndpointSeparate::PrepareDeviceBuffer(const DeviceInfo &deviceInfo)
     }
     dstAudioBuffer_ = OHAudioBuffer::CreateFromRemote(dstTotalSizeInframe_, dstSpanSizeInframe_, dstByteSizePerFrame_,
         AUDIO_SERVER_INDEPENDENT, dstBufferFd_, OHAudioBuffer::INVALID_BUFFER_FD);
-    if (dstAudioBuffer_ == nullptr || (dstAudioBuffer_->GetStreamStatus() == nullptr)) {
-        AUDIO_ERR_LOG("%{public}s create buffer from remote fail.", __func__);
-        return ERR_ILLEGAL_STATE;
-    }
-
+    CHECK_AND_RETURN_RET_LOG((dstAudioBuffer_ != nullptr && (dstAudioBuffer_->GetStreamStatus() != nullptr)),
+        ERR_ILLEGAL_STATE, "%{public}s create buffer from remote fail.", __func__);
     dstAudioBuffer_->GetStreamStatus()->store(StreamStatus::STREAM_IDEL);
     // clear data buffer
     ret = memset_s(dstAudioBuffer_->GetDataBase(), dstAudioBuffer_->GetDataSize(), 0, dstAudioBuffer_->GetDataSize());
@@ -349,6 +346,10 @@ bool AudioEndpointSeparate::IsAnyProcessRunning()
     std::lock_guard<std::mutex> lock(listLock_);
     bool isRunning = false;
     for (size_t i = 0; i < processBufferList_.size(); i++) {
+        if (processBufferList_[i]->GetStreamStatus() == nullptr) {
+            AUDIO_ERR_LOG("%{public}s process buffer %{public}zu has a null stream status.", __func__, i);
+            continue;
+        }
         if (processBufferList_[i]->GetStreamStatus() &&
             processBufferList_[i]->GetStreamStatus()->load() == STREAM_RUNNING) {
             isRunning = true;
@@ -503,7 +504,8 @@ int32_t AudioEndpointSeparate::LinkProcessStream(IAudioProcessStream *processStr
     CHECK_AND_RETURN_RET_LOG(processStream != nullptr, ERR_INVALID_PARAM, "IAudioProcessStream is null");
     std::shared_ptr<OHAudioBuffer> processBuffer = processStream->GetStreamBuffer();
     CHECK_AND_RETURN_RET_LOG(processBuffer != nullptr, ERR_INVALID_PARAM, "processBuffer is null");
-
+    CHECK_AND_RETURN_RET_LOG(processBuffer->GetStreamStatus() != nullptr, ERR_INVALID_PARAM,
+        "stream status is null");
     CHECK_AND_RETURN_RET_LOG(processList_.size() < MAX_LINKED_PROCESS, ERR_OPERATION_FAILED, "reach link limit.");
 
     AUDIO_INFO_LOG("LinkProcessStream endpoint status:%{public}s.", GetStatusStr(endpointStatus_).c_str());
@@ -708,6 +710,10 @@ void AudioEndpointSeparate::WriteToProcessBuffers(const BufferDesc &readBuf)
     for (size_t i = 0; i < processBufferList_.size(); i++) {
         if (processBufferList_[i] == nullptr) {
             AUDIO_ERR_LOG("%{public}s process buffer %{public}zu is null.", __func__, i);
+            continue;
+        }
+        if (processBufferList_[i]->GetStreamStatus() == nullptr) {
+            AUDIO_ERR_LOG("%{public}s process buffer %{public}zu has a null stream status.", __func__, i);
             continue;
         }
         if (processBufferList_[i]->GetStreamStatus() &&

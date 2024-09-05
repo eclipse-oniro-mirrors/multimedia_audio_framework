@@ -110,26 +110,17 @@ void NapiCapturerReadDataCallback::OnReadData(size_t length)
 
 void NapiCapturerReadDataCallback::OnJsCapturerReadDataCallback(std::unique_ptr<CapturerReadDataJsCallback> &jsCb)
 {
-    uv_loop_s *loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_AND_RETURN_LOG(loop != nullptr, "loop is nullptr");
-
-    uv_work_t *work = new(std::nothrow) uv_work_t;
-    CHECK_AND_RETURN_LOG(work != nullptr, "readData Js Callback: No memory");
-
     if (jsCb.get() == nullptr) {
-        AUDIO_ERR_LOG("readData Js Callback is null");
-        delete work;
+        AUDIO_ERR_LOG("OnJsCapturerReadDataCallback: jsCb.get() is null");
         return;
     }
 
-    work->data = reinterpret_cast<void *>(jsCb.get());
-
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t *work) {},
-        WorkCallbackCapturerReadData, uv_qos_default);
-    if (ret != 0) {
-        AUDIO_ERR_LOG("Failed to execute uv work queue");
-        delete work;
+    CapturerReadDataJsCallback *event = jsCb.get();
+    auto task = [event]() {
+        WorkCallbackCapturerReadData(event);
+    };
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        AUDIO_ERR_LOG("OnJsCapturerReadDataCallback: Failed to SendEvent");
     } else {
         jsCb.release();
     }
@@ -146,28 +137,23 @@ void NapiCapturerReadDataCallback::OnJsCapturerReadDataCallback(std::unique_ptr<
     readCallbackLock.unlock();
 }
 
-void NapiCapturerReadDataCallback::WorkCallbackCapturerReadData(uv_work_t *work, int status)
+void NapiCapturerReadDataCallback::WorkCallbackCapturerReadData(CapturerReadDataJsCallback *event)
 {
     // Js Thread
     std::shared_ptr<CapturerReadDataJsCallback> context(
-        static_cast<CapturerReadDataJsCallback*>(work->data),
-        [work](CapturerReadDataJsCallback* ptr) {
+        static_cast<CapturerReadDataJsCallback*>(event),
+        [](CapturerReadDataJsCallback* ptr) {
             delete ptr;
-            delete work;
     });
-    WorkCallbackCapturerReadDataInner(work, status);
+    WorkCallbackCapturerReadDataInner(event);
 
-    CHECK_AND_RETURN_LOG(work != nullptr, "capturer read data work is nullptr");
-    CapturerReadDataJsCallback *event = reinterpret_cast<CapturerReadDataJsCallback *>(work->data);
     CHECK_AND_RETURN_LOG(event != nullptr, "capturer read data event is nullptr");
     CHECK_AND_RETURN_LOG(event->capturerNapiObj != nullptr, "NapiAudioCapturer object is nullptr");
     event->capturerNapiObj->readCallbackCv_.notify_all();
 }
 
-void NapiCapturerReadDataCallback::WorkCallbackCapturerReadDataInner(uv_work_t *work, int status)
+void NapiCapturerReadDataCallback::WorkCallbackCapturerReadDataInner(CapturerReadDataJsCallback *event)
 {
-    CHECK_AND_RETURN_LOG(work != nullptr, "capture read data work is nullptr");
-    CapturerReadDataJsCallback *event = reinterpret_cast<CapturerReadDataJsCallback *>(work->data);
     CHECK_AND_RETURN_LOG(event != nullptr, "capture read data event is nullptr");
     CHECK_AND_RETURN_LOG(event->readDataCallbackPtr != nullptr, "CapturerReadDataCallback is already released");
     CHECK_AND_RETURN_LOG(event->readDataCallbackPtr->isCallbackInited_, "the callback has been dereferenced");
@@ -180,8 +166,6 @@ void NapiCapturerReadDataCallback::WorkCallbackCapturerReadDataInner(uv_work_t *
     napi_open_handle_scope(env, &scope);
     CHECK_AND_RETURN_LOG(scope != nullptr, "%{public}s scope is nullptr", request.c_str());
     do {
-        CHECK_AND_BREAK_LOG(status != UV_ECANCELED, "%{public}s canceled", request.c_str());
-
         napi_value jsCallback = nullptr;
         napi_status nstatus = napi_get_reference_value(env, callback, &jsCallback);
         CHECK_AND_BREAK_LOG(nstatus == napi_ok && jsCallback != nullptr, "%{public}s get reference value failed",

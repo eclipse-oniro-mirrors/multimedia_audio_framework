@@ -32,8 +32,6 @@ public:
     void SetUp(void);
     // TearDown: Called after each test cases
     void TearDown(void);
-    std::shared_ptr<AudioInterruptService> GetTnterruptServiceTest();
-    std::shared_ptr<AudioPolicyServerHandler> GetServerHandlerTest();
 };
 } // namespace AudioStandard
 } // namespace OHOS

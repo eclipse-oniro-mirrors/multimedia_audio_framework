@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <cinttypes>
 
+#include "audio_adapter_manager_handler.h"
 #include "audio_service_adapter.h"
 #include "distributed_kv_data_manager.h"
 #include "iaudio_policy_interface.h"
@@ -37,6 +38,7 @@ class AudioOsAccountInfo;
 
 class AudioAdapterManager : public IAudioPolicyInterface {
 public:
+    static constexpr std::string_view SPLIT_STREAM_SINK = "libmodule-split-stream-sink.z.so";
     static constexpr std::string_view HDI_SINK = "libmodule-hdi-sink.z.so";
     static constexpr std::string_view HDI_SOURCE = "libmodule-hdi-source.z.so";
     static constexpr std::string_view PIPE_SINK = "libmodule-pipe-sink.z.so";
@@ -279,6 +281,8 @@ private:
     bool isBtBoot_ = true;
     bool isBtFirstSetVolume_ = true;
     int32_t curActiveCount_ = 0;
+
+    std::shared_ptr<AudioAdapterManagerHandler> handler_ = nullptr;
 
     std::shared_ptr<SingleKvStore> audioPolicyKvStore_;
     AudioStreamRemovedCallback *sessionCallback_ = nullptr;

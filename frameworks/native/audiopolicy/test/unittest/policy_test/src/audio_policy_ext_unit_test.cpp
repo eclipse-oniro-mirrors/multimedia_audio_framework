@@ -28,6 +28,8 @@
 #include "audio_client_tracker_callback_stub.h"
 #include "audio_policy_client_stub_impl.h"
 #include "audio_adapter_manager.h"
+#include "audio_policy_manager.h"
+#include "audio_capturer.h"
 
 using namespace std;
 using namespace testing::ext;
@@ -36,6 +38,8 @@ namespace OHOS {
 namespace AudioStandard {
 namespace {
     constexpr uint32_t MAX_RENDERER_INSTANCES = 128;
+    constexpr int32_t SPEAKER_SAMPLING_RATE = 48000;
+    constexpr int32_t SAMPLING_RATE_ERROR_CODE = -1;
 }
 
 class AudioPolicyExtUnitTest : public testing::Test {
@@ -44,6 +48,7 @@ public:
     static void TearDownTestCase(void);
     void SetUp();
     void TearDown();
+    static void InitializeCapturerOptions(AudioCapturerOptions &capturerOptions);
 };
 
 void AudioPolicyExtUnitTest::SetUpTestCase(void)
@@ -64,6 +69,17 @@ void AudioPolicyExtUnitTest::SetUp(void)
 void AudioPolicyExtUnitTest::TearDown(void)
 {
     // input testcase teardown step，teardown invoked after each testcases
+}
+
+void AudioPolicyExtUnitTest::InitializeCapturerOptions(AudioCapturerOptions &capturerOptions)
+{
+    capturerOptions.streamInfo.samplingRate = AudioSamplingRate::SAMPLE_RATE_96000;
+    capturerOptions.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
+    capturerOptions.streamInfo.format = AudioSampleFormat::SAMPLE_U8;
+    capturerOptions.streamInfo.channels = AudioChannel::MONO;
+    capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_MIC;
+    capturerOptions.capturerInfo.capturerFlags = 0;
+    return;
 }
 
 /**
@@ -301,6 +317,517 @@ HWTEST(AudioPolicyExtUnitTest, GetMinStreamVolume_001, TestSize.Level1)
     float minStreamVolume = AudioPolicyManager::GetInstance().GetMinStreamVolume();
     float maxStreamVolume = AudioPolicyManager::GetInstance().GetMaxStreamVolume();
     EXPECT_LT(minStreamVolume, maxStreamVolume);
+}
+
+/**
+ * @tc.name  : Test RecoverAudioPolicyCallbackClient
+ * @tc.number: RecoverAudioPolicyCallbackClient_001
+ * @tc.desc  : Test RecoverAudioPolicyCallbackClient interface.
+ */
+HWTEST(AudioPolicyExtUnitTest, RecoverAudioPolicyCallbackClient_001, TestSize.Level1)
+{
+    int32_t ret;
+    int32_t volumeLevel = 4;
+    ret = AudioPolicyManager::GetInstance().SetSystemVolumeLevel(AudioVolumeType::STREAM_MUSIC, volumeLevel);
+    EXPECT_EQ(SUCCESS, ret);
+    ret = AudioPolicyManager::GetInstance().GetSystemVolumeLevel(AudioVolumeType::STREAM_MUSIC);
+    EXPECT_EQ(volumeLevel, ret);
+
+    AudioPolicyManager::GetInstance().RecoverAudioPolicyCallbackClient();
+
+    ret = AudioPolicyManager::GetInstance().GetSystemVolumeLevel(AudioVolumeType::STREAM_MUSIC);
+    EXPECT_EQ(volumeLevel, ret);
+}
+
+/**
+ * @tc.name  : Test RecoverAudioPolicyCallbackClient
+ * @tc.number: RecoverAudioPolicyCallbackClient_002
+ * @tc.desc  : Test RecoverAudioPolicyCallbackClient interface abnormal branch.
+ */
+HWTEST(AudioPolicyExtUnitTest, RecoverAudioPolicyCallbackClient_002, TestSize.Level3)
+{
+    int32_t ret;
+    int32_t volumeLevel = 4;
+    ret = AudioPolicyManager::GetInstance().SetSystemVolumeLevel(AudioVolumeType::STREAM_MUSIC, volumeLevel);
+    EXPECT_EQ(SUCCESS, ret);
+    ret = AudioPolicyManager::GetInstance().GetSystemVolumeLevel(AudioVolumeType::STREAM_MUSIC);
+    EXPECT_EQ(volumeLevel, ret);
+
+    AudioPolicyManager::GetInstance().audioStaticPolicyClientStubCB_ = nullptr;
+    AudioPolicyManager::GetInstance().RecoverAudioPolicyCallbackClient();
+
+    ret = AudioPolicyManager::GetInstance().GetSystemVolumeLevel(AudioVolumeType::STREAM_MUSIC);
+    EXPECT_EQ(volumeLevel, ret);
+}
+
+/**
+ * @tc.name  : Test AudioPolicyServerDied
+ * @tc.number: AudioPolicyServerDied_001
+ * @tc.desc  : Test AudioPolicyServerDied interface.
+ */
+HWTEST(AudioPolicyExtUnitTest, AudioPolicyServerDied_001, TestSize.Level1)
+{
+    int32_t pid = getpid();
+    AudioPolicyManager::GetInstance().AudioPolicyServerDied(pid);
+
+    std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors =
+        AudioPolicyManager::GetInstance().GetDevices(DeviceFlag::INPUT_DEVICES_FLAG);
+    EXPECT_TRUE(audioDeviceDescriptors.size() > 0);
+}
+
+/**
+ * @tc.name  : Test SetRingerModeLegacy
+ * @tc.number: SetRingerModeLegacy_001
+ * @tc.desc  : Test SetRingerModeLegacy interface.
+ */
+HWTEST(AudioPolicyExtUnitTest, SetRingerModeLegacy_001, TestSize.Level1)
+{
+    int32_t ret = AudioPolicyManager::GetInstance().SetRingerModeLegacy(AudioRingerMode::RINGER_MODE_SILENT);
+    EXPECT_EQ(SUCCESS, ret);
+    AudioRingerMode ringerMode = AudioPolicyManager::GetInstance().GetRingerMode();
+    EXPECT_TRUE(ringerMode == AudioRingerMode::RINGER_MODE_SILENT);
+
+    ret = AudioPolicyManager::GetInstance().SetRingerModeLegacy(AudioRingerMode::RINGER_MODE_NORMAL);
+    EXPECT_EQ(SUCCESS, ret);
+    ringerMode = AudioPolicyManager::GetInstance().GetRingerMode();
+    EXPECT_TRUE(ringerMode == AudioRingerMode::RINGER_MODE_NORMAL);
+}
+
+/**
+ * @tc.name  : Test GetSessionInfoInFocus
+ * @tc.number: GetSessionInfoInFocus_001
+ * @tc.desc  : Test GetSessionInfoInFocus interface.
+ */
+HWTEST(AudioPolicyExtUnitTest, GetSessionInfoInFocus_001, TestSize.Level1)
+{
+    AudioInterrupt audioInterrupt;
+    int32_t zoneID = 0;
+    int32_t ret = AudioPolicyManager::GetInstance().GetSessionInfoInFocus(audioInterrupt, zoneID);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+ * @tc.name  : Test IsMicrophoneMuteLegacy
+ * @tc.number: IsMicrophoneMuteLegacy_001
+ * @tc.desc  : Test IsMicrophoneMuteLegacy interface abnormal branch.
+ */
+HWTEST(AudioPolicyExtUnitTest, IsMicrophoneMuteLegacy_001, TestSize.Level3)
+{
+    int32_t ret = AudioPolicyManager::GetInstance().SetMicrophoneMute(true);
+    EXPECT_EQ(ret, SUCCESS);
+    bool muteStatus = AudioPolicyManager::GetInstance().IsMicrophoneMuteLegacy();
+    EXPECT_EQ(muteStatus, true);
+
+    ret = AudioPolicyManager::GetInstance().SetMicrophoneMute(false);
+    EXPECT_EQ(ret, SUCCESS);
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    muteStatus = AudioPolicyManager::GetInstance().IsMicrophoneMuteLegacy();
+    EXPECT_EQ(muteStatus, false);
+}
+
+/**
+ * @tc.name  : Test IsMicrophoneMute
+ * @tc.number: IsMicrophoneMute_001
+ * @tc.desc  : Test IsMicrophoneMute interface abnormal branch.
+ */
+HWTEST(AudioPolicyExtUnitTest, IsMicrophoneMute_001, TestSize.Level3)
+{
+    int32_t result = AudioPolicyManager::GetInstance().SetMicrophoneMute(true);
+    EXPECT_EQ(result, SUCCESS);
+    bool muteStatus = AudioPolicyManager::GetInstance().IsMicrophoneMute();
+    EXPECT_EQ(muteStatus, true);
+
+    result = AudioPolicyManager::GetInstance().SetMicrophoneMute(false);
+    EXPECT_EQ(result, SUCCESS);
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    muteStatus = AudioPolicyManager::GetInstance().IsMicrophoneMute();
+    EXPECT_EQ(muteStatus, false);
+}
+
+/**
+ * @tc.name  : Test GetDevicesInner
+ * @tc.number: GetDevicesInner_001
+ * @tc.desc  : Test GetDevicesInner interface callback.
+ */
+HWTEST(AudioPolicyExtUnitTest, GetDevicesInner_001, TestSize.Level1)
+{
+    DeviceFlag deviceFlag = ALL_DEVICES_FLAG;
+    std::vector<sptr<AudioDeviceDescriptor>> devices;
+
+    devices = AudioPolicyManager::GetInstance().GetDevices(deviceFlag);
+    EXPECT_TRUE(devices.size() > 0);
+
+    devices = AudioPolicyManager::GetInstance().GetDevicesInner(deviceFlag);
+    EXPECT_TRUE(devices.size() <= 0);
+}
+
+/**
+ * @tc.name  : Test RegisterFocusInfoChangeCallback
+ * @tc.number: RegisterFocusInfoChangeCallback_001
+ * @tc.desc  : Test RegisterFocusInfoChangeCallback interface legal situation.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, RegisterFocusInfoChangeCallback_001, TestSize.Level1)
+{
+    int32_t clientId = getpid();
+    std::shared_ptr<AudioFocusInfoChangeCallback> callback = nullptr;
+    int32_t ret = AudioPolicyManager::GetInstance().RegisterFocusInfoChangeCallback(clientId, callback);
+    EXPECT_EQ(ERR_INVALID_PARAM, ret);
+
+    callback = make_shared<AudioFocusInfoChangeCallbackTest>();
+
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    ret = AudioPolicyManager::GetInstance().RegisterFocusInfoChangeCallback(clientId, callback);
+    EXPECT_EQ(ret, SUCCESS);
+
+    ret = AudioPolicyManager::GetInstance().RegisterFocusInfoChangeCallback(clientId, callback);
+    EXPECT_EQ(ret, SUCCESS);
+
+    ret = AudioPolicyManager::GetInstance().UnregisterFocusInfoChangeCallback(clientId);
+    EXPECT_EQ(ret, SUCCESS);
+}
+
+/**
+ * @tc.name  : Test SetPreferredOutputDeviceChangeCallback
+ * @tc.number: SetPreferredOutputDeviceChangeCallback_001
+ * @tc.desc  : Test SetPreferredOutputDeviceChangeCallback interface abnormal branch.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, SetPreferredOutputDeviceChangeCallback_001, TestSize.Level3)
+{
+    int32_t ret = -1;
+    int32_t clientId = getpid();
+    ret = AudioPolicyManager::GetInstance().SetPreferredOutputDeviceChangeCallback(clientId, nullptr);
+    EXPECT_EQ(ERR_INVALID_PARAM, ret);
+
+    std::shared_ptr<AudioPreferredOutputDeviceChangeCallback> callback =
+        std::make_shared<AudioPreferredOutputDeviceChangeCallbackTest>();
+
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    ret = AudioPolicyManager::GetInstance().SetPreferredOutputDeviceChangeCallback(clientId, callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().SetPreferredOutputDeviceChangeCallback(clientId, callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnsetPreferredOutputDeviceChangeCallback(clientId);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+ * @tc.name  : Test SetPreferredInputDeviceChangeCallback
+ * @tc.number: SetPreferredInputDeviceChangeCallback_001
+ * @tc.desc  : Test SetPreferredInputDeviceChangeCallback interface abnormal branch.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, SetPreferredInputDeviceChangeCallback_001, TestSize.Level3)
+{
+    int32_t ret = AudioPolicyManager::GetInstance().SetPreferredInputDeviceChangeCallback(nullptr);
+    EXPECT_EQ(ERR_INVALID_PARAM, ret);
+
+    std::shared_ptr<AudioPreferredInputDeviceChangeCallbackTest> callback =
+        std::make_shared<AudioPreferredInputDeviceChangeCallbackTest>();
+
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    ret = AudioPolicyManager::GetInstance().SetPreferredInputDeviceChangeCallback(callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().SetPreferredInputDeviceChangeCallback(callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnsetPreferredInputDeviceChangeCallback();
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+ * @tc.name  : Test SetMicStateChangeCallback
+ * @tc.number: SetMicStateChangeCallback_001
+ * @tc.desc  : Test SetMicStateChangeCallback interface abnormal branch.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, SetMicStateChangeCallback_001, TestSize.Level3)
+{
+    int32_t clientId = getpid();
+    int32_t ret = AudioPolicyManager::GetInstance().SetMicStateChangeCallback(clientId, nullptr);
+    EXPECT_EQ(ERR_INVALID_PARAM, ret);
+
+    std::shared_ptr<AudioManagerMicStateChangeCallbackTest> callback =
+        std::make_shared<AudioManagerMicStateChangeCallbackTest>();
+
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    ret = AudioPolicyManager::GetInstance().SetMicStateChangeCallback(clientId, callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().SetMicStateChangeCallback(clientId, callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnsetMicStateChangeCallback(callback);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+ * @tc.name  : Test GetAudioCapturerMicrophoneDescriptors
+ * @tc.number: GetAudioCapturerMicrophoneDescriptors_001
+ * @tc.desc  : Test GetAudioCapturerMicrophoneDescriptors interface legal situation.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, GetAudioCapturerMicrophoneDescriptors_001, TestSize.Level1)
+{
+    AudioCapturerOptions capturerOptions;
+    AudioPolicyExtUnitTest::InitializeCapturerOptions(capturerOptions);
+
+    unique_ptr<AudioCapturer> audioCapturer = AudioCapturer::Create(capturerOptions);
+    ASSERT_NE(nullptr, audioCapturer);
+
+    bool isStarted = audioCapturer->Start();
+    EXPECT_EQ(true, isStarted);
+
+    auto inputDeviceDescriptors = AudioSystemManager::GetInstance()->GetDevices(DeviceFlag::INPUT_DEVICES_FLAG);
+    ASSERT_NE(inputDeviceDescriptors.size(), 0);
+
+    std::vector<sptr<MicrophoneDescriptor>> microphoneDescriptors = audioCapturer->GetCurrentMicrophones();
+    EXPECT_GT(microphoneDescriptors.size(), 0);
+    audioCapturer->Release();
+}
+
+/**
+ * @tc.name  : Test RegisterSpatializationEnabledEventListener
+ * @tc.number: RegisterSpatializationEnabledEventListener_001
+ * @tc.desc  : Test RegisterSpatializationEnabledEventListener interface abnormal branch.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, RegisterSpatializationEnabledEventListener_001, TestSize.Level3)
+{
+    std::shared_ptr<AudioSpatializationEnabledChangeCallback> callback = nullptr;
+    int32_t ret = AudioPolicyManager::GetInstance().RegisterSpatializationEnabledEventListener(callback);
+    EXPECT_EQ(ERR_INVALID_PARAM, ret);
+
+    callback = std::make_shared<AudioSpatializationEnabledChangeCallbackTest>();
+
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    ret = AudioPolicyManager::GetInstance().RegisterSpatializationEnabledEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().RegisterSpatializationEnabledEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnregisterSpatializationEnabledEventListener();
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+ * @tc.name  : Test UnregisterSpatializationEnabledEventListener
+ * @tc.number: UnregisterSpatializationEnabledEventListener_001
+ * @tc.desc  : Test UnregisterSpatializationEnabledEventListener interface abnormal branch.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, UnregisterSpatializationEnabledEventListener_001, TestSize.Level3)
+{
+    int32_t ret = -1;
+    std::shared_ptr<AudioSpatializationEnabledChangeCallback> callback =
+        std::make_shared<AudioSpatializationEnabledChangeCallbackTest>();
+
+    ret = AudioPolicyManager::GetInstance().RegisterSpatializationEnabledEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnregisterSpatializationEnabledEventListener();
+    EXPECT_EQ(SUCCESS, ret);
+
+    AudioPolicyManager::GetInstance().audioPolicyClientStubCB_ = nullptr;
+    ret = AudioPolicyManager::GetInstance().UnregisterSpatializationEnabledEventListener();
+    EXPECT_EQ(SUCCESS, ret);
+
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    ret = AudioPolicyManager::GetInstance().RegisterSpatializationEnabledEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+ * @tc.name  : Test RegisterHeadTrackingEnabledEventListener
+ * @tc.number: RegisterHeadTrackingEnabledEventListener_001
+ * @tc.desc  : Test RegisterHeadTrackingEnabledEventListener interface abnormal branch.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, RegisterHeadTrackingEnabledEventListener_001, TestSize.Level3)
+{
+    std::shared_ptr<AudioHeadTrackingEnabledChangeCallback> callback = nullptr;
+    int32_t ret = AudioPolicyManager::GetInstance().RegisterHeadTrackingEnabledEventListener(callback);
+    EXPECT_EQ(ERR_INVALID_PARAM, ret);
+
+    callback = std::make_shared<AudioHeadTrackingEnabledChangeCallbackTest>();
+
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    ret = AudioPolicyManager::GetInstance().RegisterHeadTrackingEnabledEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().RegisterHeadTrackingEnabledEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnregisterHeadTrackingEnabledEventListener();
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+ * @tc.name  : Test UnregisterHeadTrackingEnabledEventListener
+ * @tc.number: UnregisterHeadTrackingEnabledEventListener_001
+ * @tc.desc  : Test UnregisterHeadTrackingEnabledEventListener interface abnormal branch.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, UnregisterHeadTrackingEnabledEventListener_001, TestSize.Level3)
+{
+    int32_t ret = -1;
+    std::shared_ptr<AudioHeadTrackingEnabledChangeCallback> callback =
+        std::make_shared<AudioHeadTrackingEnabledChangeCallbackTest>();
+
+    ret = AudioPolicyManager::GetInstance().RegisterHeadTrackingEnabledEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+
+    ret = AudioPolicyManager::GetInstance().UnregisterHeadTrackingEnabledEventListener();
+    EXPECT_EQ(SUCCESS, ret);
+
+    AudioPolicyManager::GetInstance().audioPolicyClientStubCB_ = nullptr;
+    ret = AudioPolicyManager::GetInstance().UnregisterHeadTrackingEnabledEventListener();
+    EXPECT_EQ(SUCCESS, ret);
+
+    AudioPolicyManager::GetInstance().isAudioPolicyClientRegisted_ = false;
+    ret = AudioPolicyManager::GetInstance().RegisterHeadTrackingEnabledEventListener(callback);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+ * @tc.name  : Test GetHardwareOutputSamplingRate
+ * @tc.number: GetHardwareOutputSamplingRate_001
+ * @tc.desc  : Test GetHardwareOutputSamplingRate interface.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, GetHardwareOutputSamplingRate_001, TestSize.Level1)
+{
+    int32_t ret = -1;
+    sptr<AudioDeviceDescriptor> desc = new (std::nothrow) AudioDeviceDescriptor();
+    ret = AudioPolicyManager::GetInstance().GetHardwareOutputSamplingRate(desc);
+    EXPECT_NE(SUCCESS, ret);
+
+    auto outputDeviceDescriptors = AudioPolicyManager::GetInstance().GetDevices(DeviceFlag::OUTPUT_DEVICES_FLAG);
+
+    int32_t samplingRate;
+    if (outputDeviceDescriptors.size() > 0) {
+        for (auto outputDescriptor : outputDeviceDescriptors) {
+            if (outputDescriptor->deviceType_ == DeviceType::DEVICE_TYPE_SPEAKER) {
+                desc->deviceType_ = DeviceType::DEVICE_TYPE_SPEAKER;
+                desc->deviceRole_ = DeviceRole::OUTPUT_DEVICE;
+                samplingRate = AudioPolicyManager::GetInstance().GetHardwareOutputSamplingRate(desc);
+                EXPECT_EQ(SPEAKER_SAMPLING_RATE, samplingRate);
+            }
+        }
+    }
+
+    auto inputDeviceDescriptors = AudioPolicyManager::GetInstance().GetDevices(DeviceFlag::INPUT_DEVICES_FLAG);
+    if (inputDeviceDescriptors.size() > 0) {
+        for (auto inputDescriptor : inputDeviceDescriptors) {
+            desc->deviceType_ = inputDescriptor->deviceType_;
+            desc->deviceRole_ = inputDescriptor->deviceRole_;
+            samplingRate = AudioPolicyManager::GetInstance().GetHardwareOutputSamplingRate(desc);
+            EXPECT_EQ(SAMPLING_RATE_ERROR_CODE, samplingRate);
+        }
+    }
+}
+
+/**
+ * @tc.name  : Test IsAbsVolumeScene
+ * @tc.number: IsAbsVolumeScene_001
+ * @tc.desc  : Test IsAbsVolumeScene interface.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, IsAbsVolumeScene_001, TestSize.Level1)
+{
+    bool ret = AudioPolicyManager::GetInstance().IsAbsVolumeScene();
+    EXPECT_EQ(false, ret);
+}
+
+/**
+ * @tc.name  : Test IsSpatializationSupported
+ * @tc.number: IsSpatializationSupported_001
+ * @tc.desc  : Test IsSpatializationSupported interface.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, IsSpatializationSupported_001, TestSize.Level1)
+{
+    bool ret = AudioPolicyManager::GetInstance().IsSpatializationSupported();
+    EXPECT_EQ(false, ret);
+}
+
+/**
+ * @tc.name  : Test IsSpatializationSupportedForDevice
+ * @tc.number: IsSpatializationSupportedForDevice_001
+ * @tc.desc  : Test IsSpatializationSupportedForDevice interface.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, IsSpatializationSupportedForDevice_001, TestSize.Level1)
+{
+    std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors =
+        AudioPolicyManager::GetInstance().GetDevices(DeviceFlag::OUTPUT_DEVICES_FLAG);
+
+    if (audioDeviceDescriptors.size() > 0) {
+        for (auto outputDevice : audioDeviceDescriptors) {
+            if (outputDevice->deviceType_ != DeviceType::DEVICE_TYPE_SPEAKER) {
+                continue;
+            }
+            if ((outputDevice->macAddress_).c_str() != nullptr) {
+                bool ret =
+                    AudioPolicyManager::GetInstance().IsSpatializationSupportedForDevice(outputDevice->macAddress_);
+                EXPECT_EQ(false, ret);
+            }
+        }
+    }
+}
+
+/**
+ * @tc.name  : Test IsHeadTrackingSupported
+ * @tc.number: IsHeadTrackingSupported_001
+ * @tc.desc  : Test IsHeadTrackingSupported interface.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, IsHeadTrackingSupported_001, TestSize.Level1)
+{
+    bool ret = AudioPolicyManager::GetInstance().IsHeadTrackingSupported();
+    EXPECT_EQ(false, ret);
+}
+
+/**
+ * @tc.name  : Test IsHeadTrackingSupportedForDevice
+ * @tc.number: IsHeadTrackingSupportedForDevice_001
+ * @tc.desc  : Test IsHeadTrackingSupportedForDevice interface.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, IsHeadTrackingSupportedForDevice_001, TestSize.Level1)
+{
+    std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors =
+        AudioPolicyManager::GetInstance().GetDevices(DeviceFlag::OUTPUT_DEVICES_FLAG);
+    ASSERT_NE(audioDeviceDescriptors.size(), 0);
+
+    for (auto outputDevice : audioDeviceDescriptors) {
+        if (outputDevice->deviceType_ != DeviceType::DEVICE_TYPE_SPEAKER) {
+            continue;
+        }
+        if ((outputDevice->macAddress_).c_str() != nullptr) {
+            bool isSupported =
+                AudioPolicyManager::GetInstance().IsHeadTrackingSupportedForDevice(outputDevice->macAddress_);
+            EXPECT_EQ(false, isSupported);
+        }
+    }
+}
+
+/**
+ * @tc.name  : Test UpdateSpatialDeviceState
+ * @tc.number: UpdateSpatialDeviceState_001
+ * @tc.desc  : Test UpdateSpatialDeviceState interface.
+ * @tc.type  : FUNC
+ */
+HWTEST(AudioPolicyExtUnitTest, UpdateSpatialDeviceState_001, TestSize.Level1)
+{
+    AudioSpatialDeviceState audioSpatialDeviceState;
+    int32_t ret = AudioPolicyManager::GetInstance().UpdateSpatialDeviceState(audioSpatialDeviceState);
+    EXPECT_EQ(false, ret);
 }
 
 } // namespace AudioStandard

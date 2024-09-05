@@ -177,7 +177,7 @@ HWTEST(AudioToneplayerUnitTest, Toneplayer_004, TestSize.Level1)
     rendererInfo.contentType = ContentType::CONTENT_TYPE_MUSIC;
     rendererInfo.streamUsage = StreamUsage::STREAM_USAGE_DTMF;
     rendererInfo.rendererFlags = 0;
-    std::shared_ptr<TonePlayer> toneplayer = TonePlayer::Create(rendererInfo);
+    std::shared_ptr<TonePlayerImpl> toneplayer = std::make_shared<TonePlayerImpl>("", rendererInfo);
     ASSERT_NE(nullptr, toneplayer);
 
     bool ret = toneplayer->LoadTone(TONE_TYPE_DIAL_6);
@@ -187,6 +187,160 @@ HWTEST(AudioToneplayerUnitTest, Toneplayer_004, TestSize.Level1)
     EXPECT_EQ(true, startRet);
 
     usleep(SLEEP_TIME); // 30ms sleep time
+
+    bool releaseRet = toneplayer->Release();
+    EXPECT_EQ(true, releaseRet);
+}
+
+/**
+ * @tc.name  : Test toneplayer loading API
+ * @tc.type  : FUNC
+ * @tc.number: Toneplayer_005
+ * @tc.desc  : Test create->LoadTone->StartTone->Release interface.
+ */
+HWTEST(AudioToneplayerUnitTest, Toneplayer_005, TestSize.Level1)
+{
+    AudioRendererInfo rendererInfo = {};
+    rendererInfo.contentType = ContentType::CONTENT_TYPE_MUSIC;
+    rendererInfo.streamUsage = StreamUsage::STREAM_USAGE_DTMF;
+    rendererInfo.rendererFlags = 0;
+    std::shared_ptr<TonePlayerImpl> toneplayer = std::make_shared<TonePlayerImpl>("", rendererInfo);
+    ASSERT_NE(nullptr, toneplayer);
+
+    bool ret = toneplayer->LoadTone(TONE_TYPE_DIAL_6);
+    EXPECT_EQ(true, ret);
+
+    bool startRet = toneplayer->StartTone();
+    EXPECT_EQ(true, startRet);
+
+    bool stopRet = toneplayer->StopTone();
+    EXPECT_EQ(true, stopRet);
+
+    bool checkRet = toneplayer->CheckToneStopped();
+    EXPECT_EQ(true, checkRet);
+
+    bool releaseRet = toneplayer->Release();
+    EXPECT_EQ(true, releaseRet);
+}
+
+/**
+ * @tc.name  : Test toneplayer loading API
+ * @tc.type  : FUNC
+ * @tc.number: Toneplayer_006
+ * @tc.desc  : Test create->StartTone->StopTone->LoadTone->LoadTone->Release interface.
+ */
+HWTEST(AudioToneplayerUnitTest, Toneplayer_006, TestSize.Level1)
+{
+    AudioRendererInfo rendererInfo = {};
+    rendererInfo.contentType = ContentType::CONTENT_TYPE_MUSIC;
+    rendererInfo.streamUsage = StreamUsage::STREAM_USAGE_DTMF;
+    rendererInfo.rendererFlags = 0;
+    std::shared_ptr<TonePlayer> toneplayer = TonePlayer::Create(rendererInfo);
+    ASSERT_NE(nullptr, toneplayer);
+
+    bool ret = toneplayer->StartTone();
+    EXPECT_EQ(false, ret);
+
+    ret = toneplayer->StopTone();
+    EXPECT_EQ(false, ret);
+
+    ret = toneplayer->LoadTone(NUM_TONES);
+    ret = toneplayer->LoadTone(NUM_TONES);
+    EXPECT_EQ(false, ret);
+
+    bool releaseRet = toneplayer->Release();
+    EXPECT_EQ(true, releaseRet);
+}
+
+/**
+ * @tc.name  : Test toneplayer loading API
+ * @tc.type  : FUNC
+ * @tc.number: Toneplayer_StartTone_001
+ * @tc.desc  : Test StartTone interface.
+ */
+HWTEST(AudioToneplayerUnitTest, Toneplayer_StartTone_001, TestSize.Level1)
+{
+    AudioRendererInfo rendererInfo = {};
+    rendererInfo.contentType = ContentType::CONTENT_TYPE_MUSIC;
+    rendererInfo.streamUsage = StreamUsage::STREAM_USAGE_DTMF;
+    rendererInfo.rendererFlags = 0;
+    std::shared_ptr<TonePlayerImpl> toneplayer = std::make_shared<TonePlayerImpl>("", rendererInfo);
+    ASSERT_NE(nullptr, toneplayer);
+
+    toneplayer->isRendererInited_ = true;
+    bool ret = toneplayer->StartTone();
+    ret = toneplayer->StopTone();
+
+    bool releaseRet = toneplayer->Release();
+    EXPECT_EQ(true, releaseRet);
+}
+
+/**
+ * @tc.name  : Test toneplayer loading API
+ * @tc.type  : FUNC
+ * @tc.number: Toneplayer_StartTone_002
+ * @tc.desc  : Test StartTone interface.
+ */
+HWTEST(AudioToneplayerUnitTest, Toneplayer_StartTone_002, TestSize.Level1)
+{
+    AudioRendererInfo rendererInfo = {};
+    rendererInfo.contentType = ContentType::CONTENT_TYPE_MUSIC;
+    rendererInfo.streamUsage = StreamUsage::STREAM_USAGE_DTMF;
+    rendererInfo.rendererFlags = 0;
+    std::shared_ptr<TonePlayerImpl> toneplayer = std::make_shared<TonePlayerImpl>("", rendererInfo);
+    ASSERT_NE(nullptr, toneplayer);
+
+    toneplayer->isRendererInited_ = true;
+    toneplayer->audioRenderer_ = nullptr;
+    toneplayer->StartTone();
+    toneplayer->StopTone();
+
+    bool releaseRet = toneplayer->Release();
+    EXPECT_EQ(true, releaseRet);
+}
+
+/**
+ * @tc.name  : Test toneplayer loading API
+ * @tc.type  : FUNC
+ * @tc.number: Toneplayer_StartTone_003
+ * @tc.desc  : Test StartTone interface.
+ */
+HWTEST(AudioToneplayerUnitTest, Toneplayer_StartTone_003, TestSize.Level1)
+{
+    AudioRendererInfo rendererInfo = {};
+    rendererInfo.contentType = ContentType::CONTENT_TYPE_MUSIC;
+    rendererInfo.streamUsage = StreamUsage::STREAM_USAGE_DTMF;
+    rendererInfo.rendererFlags = 0;
+    std::shared_ptr<TonePlayerImpl> toneplayer = std::make_shared<TonePlayerImpl>("", rendererInfo);
+    ASSERT_NE(nullptr, toneplayer);
+
+    toneplayer->isRendererInited_ = false;
+    toneplayer->StartTone();
+    toneplayer->StopTone();
+
+    bool releaseRet = toneplayer->Release();
+    EXPECT_EQ(true, releaseRet);
+}
+
+/**
+ * @tc.name  : Test toneplayer loading API
+ * @tc.type  : FUNC
+ * @tc.number: Toneplayer_StartTone_004
+ * @tc.desc  : Test StartTone interface.
+ */
+HWTEST(AudioToneplayerUnitTest, Toneplayer_StartTone_004, TestSize.Level1)
+{
+    AudioRendererInfo rendererInfo = {};
+    rendererInfo.contentType = ContentType::CONTENT_TYPE_MUSIC;
+    rendererInfo.streamUsage = StreamUsage::STREAM_USAGE_DTMF;
+    rendererInfo.rendererFlags = 0;
+    std::shared_ptr<TonePlayerImpl> toneplayer = std::make_shared<TonePlayerImpl>("", rendererInfo);
+    ASSERT_NE(nullptr, toneplayer);
+
+    toneplayer->isRendererInited_ = false;
+    toneplayer->audioRenderer_ = nullptr;
+    toneplayer->StartTone();
+    toneplayer->StopTone();
 
     bool releaseRet = toneplayer->Release();
     EXPECT_EQ(true, releaseRet);

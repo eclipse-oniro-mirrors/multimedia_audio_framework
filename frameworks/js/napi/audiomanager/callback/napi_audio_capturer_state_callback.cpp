@@ -72,55 +72,45 @@ void NapiAudioCapturerStateCallback::OnCapturerStateChange(
     return OnJsCallbackCapturerState(cb);
 }
 
-void NapiAudioCapturerStateCallback::WorkCallbackInterruptDone(uv_work_t *work, int status)
-{
-    std::shared_ptr<AudioCapturerStateJsCallback> context(
-        static_cast<AudioCapturerStateJsCallback*>(work->data),
-        [work](AudioCapturerStateJsCallback* ptr) {
-            delete ptr;
-            delete work;
-    });
-    CHECK_AND_RETURN_LOG(work != nullptr, "work is nullptr");
-    AudioCapturerStateJsCallback *event = reinterpret_cast<AudioCapturerStateJsCallback *>(work->data);
-    CHECK_AND_RETURN_LOG(event != nullptr, "event is nullptr");
-    CHECK_AND_RETURN_LOG(event->callback != nullptr, "event is nullptr");
-    napi_env env = event->callback->env_;
-    napi_ref callback = event->callback->cb_;
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env, &scope);
-    CHECK_AND_RETURN_LOG(scope != nullptr, "scope is nullptr");
-    do {
-        napi_value jsCallback = nullptr;
-        napi_status nstatus = napi_get_reference_value(env, callback, &jsCallback);
-        CHECK_AND_BREAK_LOG(nstatus == napi_ok && jsCallback != nullptr, "callback get reference value fail");
-        napi_value args[ARGS_ONE] = { nullptr };
-        NapiParamUtils::SetCapturerChangeInfos(env, event->changeInfos, args[PARAM0]);
-        CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr,
-            "fail to convert to jsobj");
-
-        const size_t argCount = ARGS_ONE;
-        napi_value result = nullptr;
-        nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
-        CHECK_AND_BREAK_LOG(nstatus == napi_ok, "fail to call Interrupt callback");
-    } while (0);
-    napi_close_handle_scope(env, scope);
-}
-
 void NapiAudioCapturerStateCallback::OnJsCallbackCapturerState(std::unique_ptr<AudioCapturerStateJsCallback> &jsCb)
 {
-    uv_loop_s *loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_AND_RETURN_LOG(loop != nullptr, "loop is nullptr");
+    if (jsCb.get() == nullptr) {
+        AUDIO_ERR_LOG("OnJsCallbackRendererState: jsCb.get() is null");
+        return;
+    }
 
-    uv_work_t *work = new(std::nothrow) uv_work_t;
-    CHECK_AND_RETURN_LOG(work != nullptr, "OnJsCallbackCapturerState: No memory");
+    AudioCapturerStateJsCallback *event = jsCb.get();
+    auto task = [event]() {
+        std::shared_ptr<AudioCapturerStateJsCallback> context(
+            static_cast<AudioCapturerStateJsCallback*>(event),
+            [](AudioCapturerStateJsCallback* ptr) {
+                delete ptr;
+        });
+        CHECK_AND_RETURN_LOG(event != nullptr, "event is nullptr");
+        CHECK_AND_RETURN_LOG(event->callback != nullptr, "event is nullptr");
+        napi_env env = event->callback->env_;
+        napi_ref callback = event->callback->cb_;
+        napi_handle_scope scope = nullptr;
+        napi_open_handle_scope(env, &scope);
+        CHECK_AND_RETURN_LOG(scope != nullptr, "scope is nullptr");
+        do {
+            napi_value jsCallback = nullptr;
+            napi_status nstatus = napi_get_reference_value(env, callback, &jsCallback);
+            CHECK_AND_BREAK_LOG(nstatus == napi_ok && jsCallback != nullptr, "callback get reference value fail");
+            napi_value args[ARGS_ONE] = { nullptr };
+            NapiParamUtils::SetCapturerChangeInfos(env, event->changeInfos, args[PARAM0]);
+            CHECK_AND_BREAK_LOG(nstatus == napi_ok && args[PARAM0] != nullptr,
+                "fail to convert to jsobj");
 
-    work->data = reinterpret_cast<void *>(jsCb.get());
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t *work) {}, WorkCallbackInterruptDone,
-        uv_qos_default);
-    if (ret != 0) {
-        AUDIO_ERR_LOG("Failed to execute libuv work queue");
-        delete work;
+            const size_t argCount = ARGS_ONE;
+            napi_value result = nullptr;
+            nstatus = napi_call_function(env, nullptr, jsCallback, argCount, args, &result);
+            CHECK_AND_BREAK_LOG(nstatus == napi_ok, "fail to call Interrupt callback");
+        } while (0);
+        napi_close_handle_scope(env, scope);
+    };
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        AUDIO_ERR_LOG("OnJsCallbackCapturerState: Failed to SendEvent");
     } else {
         jsCb.release();
     }
