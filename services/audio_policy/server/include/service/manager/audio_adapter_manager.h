@@ -26,6 +26,7 @@
 #include "iaudio_policy_interface.h"
 #include "types.h"
 #include "audio_policy_log.h"
+#include "audio_policy_server_handler.h"
 #include "audio_volume_config.h"
 #include "volume_data_maintainer.h"
 #include "audio_utils.h"
@@ -207,6 +208,7 @@ private:
     AudioAdapterManager()
         : ringerMode_(RINGER_MODE_NORMAL),
           audioPolicyKvStore_(nullptr),
+          audioPolicyServerHandler_(DelayedSingleton<AudioPolicyServerHandler>::GetInstance()),
           volumeDataMaintainer_(VolumeDataMaintainer::GetVolumeDataMaintainer())
     {
         InitVolumeMapIndex();
@@ -285,6 +287,7 @@ private:
     std::shared_ptr<AudioAdapterManagerHandler> handler_ = nullptr;
 
     std::shared_ptr<SingleKvStore> audioPolicyKvStore_;
+    std::shared_ptr<AudioPolicyServerHandler> audioPolicyServerHandler_;
     AudioStreamRemovedCallback *sessionCallback_ = nullptr;
     VolumeDataMaintainer &volumeDataMaintainer_;
     bool isVolumeUnadjustable_ = false;

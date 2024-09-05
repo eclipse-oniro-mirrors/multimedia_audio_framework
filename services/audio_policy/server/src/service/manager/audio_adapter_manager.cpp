@@ -189,6 +189,9 @@ void AudioAdapterManager::HandleKvData(bool isFirstBoot)
 
     if (!isNeedCopyVolumeData_ && !isNeedCopyMuteData_ && !isNeedCopyRingerModeData_ && !isNeedCopySystemUrlData_) {
         isAllCopyDone_ = true;
+        if (audioPolicyServerHandler_ != nullptr) {
+            audioPolicyServerHandler_->SendRingerModeUpdatedCallback(ringerMode_);
+        }
     }
 
     if (isAllCopyDone_ && audioPolicyKvStore_ != nullptr) {
