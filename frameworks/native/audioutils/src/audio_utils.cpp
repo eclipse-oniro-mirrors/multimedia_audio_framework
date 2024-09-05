@@ -1227,7 +1227,8 @@ std::unordered_map<AudioStreamType, AudioVolumeType>& VolumeUtils::GetVolumeMap(
 
 AudioVolumeType VolumeUtils::GetVolumeTypeFromStreamType(AudioStreamType streamType)
 {
-    if (!PermissionUtil::VerifyIsAudio()) {
+    int32_t uid = getuid();
+    if (UID_AUDIO != uid) {
         AUDIO_ERR_LOG("not audio calling!");
         return STREAM_DEFAULT;
     }
