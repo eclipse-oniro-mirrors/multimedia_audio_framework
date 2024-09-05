@@ -67,8 +67,7 @@ enum A2dpOffloadConnectionState : int32_t {
     CONNECTION_STATUS_DISCONNECTED = 0,
     CONNECTION_STATUS_CONNECTING = 1,
     CONNECTION_STATUS_CONNECTED = 2,
-    CONNECTION_STATUS_DISCONNECTING = 3,
-    CONNECTION_STATUS_TIMEOUT = 4,
+    CONNECTION_STATUS_TIMEOUT = 3,
 };
 
 class AudioA2dpOffloadManager;
@@ -1213,7 +1212,6 @@ public:
     A2dpOffloadConnectionState GetA2dOffloadConnectionState() {return currentOffloadConnectionState_;};
 
     void ConnectA2dpOffload(const std::string &deviceAddress, const vector<int32_t> &sessionIds);
-    void DisconnectA2dpOffload();
     void OnA2dpPlayingStateChanged(const std::string &deviceAddress, int32_t playingState) override;
 
     void WaitForConnectionCompleted();
