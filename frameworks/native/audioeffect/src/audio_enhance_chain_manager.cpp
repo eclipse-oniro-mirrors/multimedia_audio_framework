@@ -329,5 +329,14 @@ bool AudioEnhanceChainManager::IsEmptyEnhanceChain()
     return sceneTypeToEnhanceChainMap_.size() == 0;
 }
 
+int32_t AudioEnhanceChainManager::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
+int32_t AudioEnhanceChainManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

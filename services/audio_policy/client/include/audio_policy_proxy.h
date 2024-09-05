@@ -319,6 +319,18 @@ public:
     int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
         const StreamUsage streamUsage, bool isRunning) override;
 
+    int32_t GetSupportedAudioEffectProperty(AudioEffectPropertyArray &propertyArray) override;
+
+    int32_t GetSupportedAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray) override;
+
+    int32_t SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray) override;
+
+    int32_t GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray) override;
+
+    int32_t SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray) override;
+
+    int32_t GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray) override;
+
 private:
     static inline BrokerDelegator<AudioPolicyProxy> mDdelegator;
     void WriteStreamChangeInfo(MessageParcel &data, const AudioMode &mode,

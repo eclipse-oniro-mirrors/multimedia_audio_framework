@@ -161,6 +161,12 @@ private:
     void SetRingerStreamMuteInternal(MessageParcel &data, MessageParcel &reply);
     void SetMicrophoneMutePersistentInternal(MessageParcel &data, MessageParcel &reply);
     void GetMicrophoneMutePersistentInternal(MessageParcel &data, MessageParcel &reply);
+    void GetSupportedAudioEnhancePropertyInternal(MessageParcel &data, MessageParcel &reply);
+    void GetSupportedAudioEffectPropertyInternal(MessageParcel &data, MessageParcel &reply);
+    void SetAudioEffectPropertyInternal(MessageParcel &data, MessageParcel &reply);
+    void GetAudioEffectPropertyInternal(MessageParcel &data, MessageParcel &reply);
+    void SetAudioEnhancePropertyInternal(MessageParcel &data, MessageParcel &reply);
+    void GetAudioEnhancePropertyInternal(MessageParcel &data, MessageParcel &reply);
     void InjectInterruptionInternal(MessageParcel &data, MessageParcel &reply);
     void ActivateAudioSessionInternal(MessageParcel &data, MessageParcel &reply);
     void DeactivateAudioSessionInternal(MessageParcel &data, MessageParcel &reply);

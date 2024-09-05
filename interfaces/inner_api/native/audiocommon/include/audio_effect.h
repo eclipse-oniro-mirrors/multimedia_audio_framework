@@ -238,6 +238,52 @@ const std::unordered_map<DeviceType, std::string> SUPPORTED_DEVICE_TYPE {
     {DEVICE_TYPE_DEFAULT, "DEVICE_TYPE_DEFAULT"},
 };
 
+struct AudioEnhanceProperty {
+    std::string enhanceClass;
+    std::string enhanceProp;
+    friend bool operator==(const AudioEnhanceProperty &lhs, const AudioEnhanceProperty &rhs)
+    {
+        return lhs.enhanceClass == rhs.enhanceClass && lhs.enhanceProp == rhs.enhanceProp;
+    }
+    bool Marshalling(Parcel &parcel) const
+    {
+        return parcel.WriteString(enhanceClass)&&
+            parcel.WriteString(enhanceProp);
+    }
+    void Unmarshalling(Parcel &parcel)
+    {
+        enhanceClass = parcel.ReadString();
+        enhanceProp = parcel.ReadString();
+    }
+};
+
+struct AudioEnhancePropertyArray {
+    std::vector<AudioEnhanceProperty> property;
+};
+
+struct AudioEffectProperty {
+    std::string effectClass;
+    std::string effectProp;
+    friend bool operator==(const AudioEffectProperty &lhs, const AudioEffectProperty &rhs)
+    {
+        return lhs.effectClass == rhs.effectClass && lhs.effectProp == rhs.effectProp;
+    }
+    bool Marshalling(Parcel &parcel) const
+    {
+        return parcel.WriteString(effectClass)&&
+            parcel.WriteString(effectProp);
+    }
+    void Unmarshalling(Parcel &parcel)
+    {
+        effectClass = parcel.ReadString();
+        effectProp = parcel.ReadString();
+    }
+};
+
+struct AudioEffectPropertyArray {
+    std::vector<AudioEffectProperty> property;
+};
+
 enum AudioEffectCommandCode {
     EFFECT_CMD_INIT = 0,
     EFFECT_CMD_SET_CONFIG = 1,

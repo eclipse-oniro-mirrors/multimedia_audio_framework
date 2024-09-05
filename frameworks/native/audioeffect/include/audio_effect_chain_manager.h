@@ -137,6 +137,8 @@ public:
     void UpdateSpatializationEnabled(AudioSpatializationState spatializationState);
     void UpdateExtraSceneType(const std::string &mainkey, const std::string &subkey, const std::string &extraSceneType);
     void InitHdiState();
+    int32_t SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray);
+    int32_t GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray);
     void UpdateEffectBtOffloadSupported(const bool &isSupported);
     void UpdateSceneTypeList(const std::string &sceneType, SceneTypeOperation operation);
     uint32_t GetSceneTypeToChainCount(const std::string &sceneType);
