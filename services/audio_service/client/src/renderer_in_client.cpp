@@ -146,6 +146,11 @@ int32_t RendererInClientInner::OnOperationHandled(Operation operation, int64_t r
         return SUCCESS;
     }
 
+    if (operation == RESTORE_SESSION) {
+        RestoreAudioStream();
+        return SUCCESS;
+    }
+
     std::unique_lock<std::mutex> lock(callServerMutex_);
     notifiedOperation_ = operation;
     notifiedResult_ = result;

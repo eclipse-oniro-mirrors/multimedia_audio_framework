@@ -150,6 +150,8 @@ public:
 
     void UpdateEffectBtOffloadSupported(const bool &isSupported) override;
 
+    void RestoreSession(const int32_t &sessionID, bool isOutput) override;
+
     void SetRotationToEffect(const uint32_t rotate) override;
 
     void UpdateSessionConnectionState(const int32_t &sessionID, const int32_t &state) override;

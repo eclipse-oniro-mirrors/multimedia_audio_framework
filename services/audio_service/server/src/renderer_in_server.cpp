@@ -1260,5 +1260,12 @@ void RendererInServer::SetNonInterruptMute(const bool muteFlag)
     muteFlag_ = muteFlag;
     AudioService::GetInstance()->UpdateMuteControlSet(streamIndex_, muteFlag);
 }
+
+void RendererInServer::RestoreSession()
+{
+    std::shared_ptr<IStreamListener> stateListener = streamListener_.lock();
+    CHECK_AND_RETURN_LOG(stateListener != nullptr, "IStreamListener is nullptr");
+    stateListener->OnOperationHandled(RESTORE_SESSION, 0);
+}
 } // namespace AudioStandard
 } // namespace OHOS

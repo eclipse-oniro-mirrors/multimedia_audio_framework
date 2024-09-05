@@ -318,6 +318,16 @@ struct DevicePrivacyInfo {
     DeviceUsage deviceUsage;
 };
 
+struct AffinityDeviceInfo {
+    std::string groupName;
+    DeviceType deviceType;
+    DeviceFlag deviceFlag;
+    std::string networkID;
+    uint64_t chooseTimeStamp;
+    bool isPrimary;
+    bool SupportedConcurrency;
+};
+
 template<typename T> bool MarshallingSetInt32(const std::set<T> &value, Parcel &parcel)
 {
     size_t size = value.size();

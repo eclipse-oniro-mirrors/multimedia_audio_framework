@@ -949,6 +949,32 @@ std::vector<sptr<AudioDeviceDescriptor>> AudioPolicyServer::GetDevicesInner(Devi
     return deviceDescs;
 }
 
+std::vector<sptr<AudioDeviceDescriptor>> AudioPolicyServer::GetOutputDevice(
+    sptr<AudioRendererFilter> audioRendererFilter)
+{
+    auto callerUid = IPCSkeleton::GetCallingUid();
+    if (callerUid != UID_AUDIO) {
+        AUDIO_ERR_LOG("only for audioUid");
+        return {};
+    }
+    std::vector<sptr<AudioDeviceDescriptor>> deviceDescs = audioPolicyService_.GetOutputDevice(audioRendererFilter);
+
+    return deviceDescs;
+}
+
+std::vector<sptr<AudioDeviceDescriptor>> AudioPolicyServer::GetInputDevice(
+    sptr<AudioCapturerFilter> audioCapturerFilter)
+{
+    auto callerUid = IPCSkeleton::GetCallingUid();
+    if (callerUid != UID_AUDIO) {
+        AUDIO_ERR_LOG("only for audioUid");
+        return {};
+    }
+    std::vector<sptr<AudioDeviceDescriptor>> deviceDescs = audioPolicyService_.GetInputDevice(audioCapturerFilter);
+
+    return deviceDescs;
+}
+
 int32_t AudioPolicyServer::NotifyCapturerAdded(AudioCapturerInfo capturerInfo, AudioStreamInfo streamInfo,
     uint32_t sessionId)
 {

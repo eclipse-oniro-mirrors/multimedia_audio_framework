@@ -1176,5 +1176,21 @@ int32_t AudioManagerProxy::UnsetOffloadMode(uint32_t sessionId)
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "UnsetOffloadMode failed, error: %{public}d", error);
     return reply.ReadInt32();
 }
+
+void AudioManagerProxy::RestoreSession(const int32_t &sessionID, bool isOutput)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_LOG(ret, "WriteInterfaceToken failed");
+    data.WriteInt32(sessionID);
+    data.WriteInt32(isOutput);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioServerInterfaceCode::RESTORE_SESSION), data, reply, option);
+    CHECK_AND_RETURN_LOG(error == ERR_NONE, "failed, error:%{public}d", error);
+}
 } // namespace AudioStandard
 } // namespace OHOS

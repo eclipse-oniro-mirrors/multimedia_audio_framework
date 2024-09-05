@@ -164,6 +164,8 @@ const char *g_audioPolicyCodeStrs[] = {
     "IS_AUDIO_SESSION_ACTIVATED",
     "LOAD_SPLIT_MODULE",
     "SET_DEFAULT_OUTPUT_DEVICE",
+    "GET_OUTPUT_DEVICE",
+    "GET_INPUT_DEVICE",
 };
 
 constexpr size_t codeNums = sizeof(g_audioPolicyCodeStrs) / sizeof(const char *);
@@ -1309,6 +1311,12 @@ void AudioPolicyManagerStub::OnMiddleNinRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     switch (code) {
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::GET_OUTPUT_DEVICE):
+            GetOutputDeviceInternal(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyInterfaceCode::GET_INPUT_DEVICE):
+            GetInputDeviceInternal(data, reply);
+            break;
         case static_cast<uint32_t>(AudioPolicyInterfaceCode::IS_SPATIALIZATION_ENABLED_FOR_DEVICE):
             IsSpatializationEnabledForDeviceInternal(data, reply);
             break;
@@ -1995,6 +2003,30 @@ void AudioPolicyManagerStub::LoadSplitModuleInternal(MessageParcel &data, Messag
     std::string netWorkId = data.ReadString();
     int32_t result = LoadSplitModule(splitArgs, netWorkId);
     reply.WriteInt32(result);
+}
+
+void AudioPolicyManagerStub::GetOutputDeviceInternal(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<AudioRendererFilter> audioRendererFilter = AudioRendererFilter::Unmarshalling(data);
+    CHECK_AND_RETURN_LOG(audioRendererFilter != nullptr, "AudioRendererFilter unmarshall fail.");
+    std::vector<sptr<AudioDeviceDescriptor>> devices = GetOutputDevice(audioRendererFilter);
+    int32_t size = static_cast<int32_t>(devices.size());
+    reply.WriteInt32(size);
+    for (int i = 0; i < size; i++) {
+        devices[i]->Marshalling(reply);
+    }
+}
+
+void AudioPolicyManagerStub::GetInputDeviceInternal(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<AudioCapturerFilter> audioCapturerFilter = AudioCapturerFilter::Unmarshalling(data);
+    CHECK_AND_RETURN_LOG(audioCapturerFilter != nullptr, "AudioCapturerFilter unmarshall fail.");
+    std::vector<sptr<AudioDeviceDescriptor>> devices = GetInputDevice(audioCapturerFilter);
+    int32_t size = static_cast<int32_t>(devices.size());
+    reply.WriteInt32(size);
+    for (int i = 0; i < size; i++) {
+        devices[i]->Marshalling(reply);
+    }
 }
 
 } // namespace audio_policy

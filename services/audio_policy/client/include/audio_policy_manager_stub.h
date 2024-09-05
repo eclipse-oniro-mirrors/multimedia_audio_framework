@@ -40,6 +40,8 @@ private:
     void IsDeviceActiveInternal(MessageParcel &data, MessageParcel &reply);
     void GetActiveOutputDeviceInternal(MessageParcel &data, MessageParcel &reply);
     void GetActiveInputDeviceInternal(MessageParcel &data, MessageParcel &reply);
+    void GetOutputDeviceInternal(MessageParcel &data, MessageParcel &reply);
+    void GetInputDeviceInternal(MessageParcel &data, MessageParcel &reply);
     void SetRingerModeLegacyInternal(MessageParcel &data, MessageParcel &reply);
     void SetRingerModeInternal(MessageParcel &data, MessageParcel &reply);
     void GetRingerModeInternal(MessageParcel &data, MessageParcel &reply);
