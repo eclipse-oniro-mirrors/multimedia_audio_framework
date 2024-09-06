@@ -1346,6 +1346,16 @@ bool AudioEffectChainManager::CheckIfSpkDsp()
     return true;
 }
 
+int32_t AudioEffectChainManager::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
+
+int32_t AudioEffectChainManager::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    return AUDIO_OK;
+}
+
 void AudioEffectChainManager::UpdateEffectBtOffloadSupported(const bool &isSupported)
 {
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
