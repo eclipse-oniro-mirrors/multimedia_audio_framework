@@ -150,9 +150,17 @@ public:
 
     void UpdateEffectBtOffloadSupported(const bool &isSupported) override;
 
+    void RestoreSession(const int32_t &sessionID, bool isOutput) override;
+
     void SetRotationToEffect(const uint32_t rotate) override;
 
     void UpdateSessionConnectionState(const int32_t &sessionID, const int32_t &state) override;
+
+    void SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag) override;
+
+    int32_t SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack) override;
+
+    int32_t UnsetOffloadMode(uint32_t sessionId) override;
 protected:
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 

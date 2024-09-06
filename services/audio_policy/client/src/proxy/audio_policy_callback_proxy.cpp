@@ -26,7 +26,7 @@ namespace AudioStandard {
 using namespace std;
 
 int32_t AudioPolicyProxy::SetAudioInterruptCallback(const uint32_t sessionID, const sptr<IRemoteObject> &object,
-    const int32_t zoneID)
+    uint32_t clientUid, const int32_t zoneID)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -39,6 +39,7 @@ int32_t AudioPolicyProxy::SetAudioInterruptCallback(const uint32_t sessionID, co
     data.WriteUint32(sessionID);
     (void)data.WriteRemoteObject(object);
     data.WriteInt32(zoneID);
+    data.WriteUint32(clientUid);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_CALLBACK), data, reply, option);
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error,
@@ -101,6 +102,25 @@ int32_t AudioPolicyProxy::UnsetAudioManagerInterruptCallback(const int32_t clien
         static_cast<uint32_t>(AudioPolicyInterfaceCode::UNSET_INTERRUPT_CALLBACK), data, reply, option);
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error,
         "unset callback failed, error: %{public}d", error);
+
+    return reply.ReadInt32();
+}
+
+int32_t AudioPolicyProxy::SetQueryClientTypeCallback(const sptr<IRemoteObject> &object)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    CHECK_AND_RETURN_RET_LOG(object != nullptr, ERR_NULL_OBJECT,
+        "SetQueryClientTypeCallback object is null");
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, -1, "WriteInterfaceToken failed");
+    (void)data.WriteRemoteObject(object);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::SET_QUERY_CLIENT_TYPE_CALLBACK), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error,
+        "set callback failed, error: %{public}d", error);
 
     return reply.ReadInt32();
 }

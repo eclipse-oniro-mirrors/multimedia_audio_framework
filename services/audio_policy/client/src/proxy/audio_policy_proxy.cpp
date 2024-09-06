@@ -344,6 +344,58 @@ std::vector<sptr<AudioDeviceDescriptor>> AudioPolicyProxy::GetPreferredInputDevi
     return deviceInfo;
 }
 
+std::vector<sptr<AudioDeviceDescriptor>> AudioPolicyProxy::GetOutputDevice(
+    sptr<AudioRendererFilter> audioRendererFilter)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    std::vector<sptr<AudioDeviceDescriptor>> deviceInfo;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, deviceInfo, "WriteInterfaceToken failed");
+
+    bool tmp = audioRendererFilter->Marshalling(data);
+    CHECK_AND_RETURN_RET_LOG(tmp, deviceInfo, "AudioRendererFilter Marshalling() failed");
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::GET_OUTPUT_DEVICE), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, deviceInfo, "Get preferred input devices failed, error: %d", error);
+
+    int32_t size = reply.ReadInt32();
+    for (int32_t i = 0; i < size; i++) {
+        deviceInfo.push_back(AudioDeviceDescriptor::Unmarshalling(reply));
+    }
+
+    return deviceInfo;
+}
+
+std::vector<sptr<AudioDeviceDescriptor>> AudioPolicyProxy::GetInputDevice(
+    sptr<AudioCapturerFilter> audioCapturerFilter)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    std::vector<sptr<AudioDeviceDescriptor>> deviceInfo;
+
+    bool ret = data.WriteInterfaceToken(GetDescriptor());
+    CHECK_AND_RETURN_RET_LOG(ret, deviceInfo, "WriteInterfaceToken failed");
+
+    bool res = audioCapturerFilter->Marshalling(data);
+    CHECK_AND_RETURN_RET_LOG(res, deviceInfo, "AudioCapturerFilter Marshalling() failed");
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(AudioPolicyInterfaceCode::GET_INPUT_DEVICE), data, reply, option);
+    CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, deviceInfo, "Get preferred input devices failed, error: %d", error);
+
+    int32_t size = reply.ReadInt32();
+    for (int32_t i = 0; i < size; i++) {
+        deviceInfo.push_back(AudioDeviceDescriptor::Unmarshalling(reply));
+    }
+
+    return deviceInfo;
+}
+
 int32_t AudioPolicyProxy::SetDeviceActive(InternalDeviceType deviceType, bool active)
 {
     MessageParcel data;
@@ -1860,6 +1912,5 @@ int32_t AudioPolicyProxy::SetDefaultOutputDevice(const DeviceType deviceType, co
     CHECK_AND_RETURN_RET_LOG(error == ERR_NONE, error, "SendRequest failed, error: %{public}d", error);
     return reply.ReadInt32();
 }
-
 } // namespace AudioStandard
 } // namespace OHOS

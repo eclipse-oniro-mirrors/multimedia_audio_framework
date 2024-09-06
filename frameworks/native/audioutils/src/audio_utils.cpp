@@ -1040,6 +1040,7 @@ const std::string AudioInfoDumpUtils::GetStreamNameExt(AudioStreamType streamTyp
     switch (streamType) {
         case STREAM_ENFORCED_AUDIBLE:
             name = "ENFORCED_AUDIBLE";
+            break;
         case STREAM_MOVIE:
             name = "MOVIE";
             break;
@@ -1060,10 +1061,13 @@ const std::string AudioInfoDumpUtils::GetStreamNameExt(AudioStreamType streamTyp
             break;
         case STREAM_INTERNAL_FORCE_STOP:
             name = "INTERNAL_FORCE_STOP";
+            break;
         case STREAM_SOURCE_VOICE_CALL:
             name = "SOURCE_VOICE_CALL";
+            break;
         case STREAM_VOICE_COMMUNICATION:
             name = "VOICE_COMMUNICATION";
+            break;
         case STREAM_VOICE_RING:
             name = "VOICE_RING";
             break;

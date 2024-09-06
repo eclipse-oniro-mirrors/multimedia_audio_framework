@@ -131,7 +131,7 @@ napi_value NapiAudioSpatializationManager::CreateSpatializationManagerWrapper(na
     }
     status = napi_new_instance(env, constructor, 0, nullptr, &result);
     if (status != napi_ok) {
-        AUDIO_ERR_LOG("napi_new_instance failed, sttaus:%{public}d", status);
+        AUDIO_ERR_LOG("napi_new_instance failed, status:%{public}d", status);
         goto fail;
     }
     return result;

@@ -56,6 +56,7 @@ const uint32_t PCM_16_BIT = 16;
 const uint32_t PCM_24_BIT = 24;
 const uint32_t PCM_32_BIT = 32;
 const uint32_t FAST_OUTPUT_STREAM_ID = 21; // 13 + 1 * 8
+const uint32_t FAST_VOIP_OUTPUT_STREAM_ID = 93; // 13 + 10 * 8
 const int64_t SECOND_TO_NANOSECOND = 1000000000;
 const int INVALID_FD = -1;
 }
@@ -119,6 +120,7 @@ private:
     int32_t CheckPositionTime();
     void PreparePosition();
 
+    void InitAttrs(struct AudioSampleAttributes &attrs);
     AudioFormat ConvertToHdiFormat(HdiAdapterFormat format);
     int32_t CreateRender(const struct AudioPort &renderPort);
     int32_t InitAudioManager();
@@ -226,12 +228,12 @@ void FastAudioRendererSinkInner::DeInit()
     ReleaseMmapBuffer();
 }
 
-void InitAttrs(struct AudioSampleAttributes &attrs)
+void FastAudioRendererSinkInner::InitAttrs(struct AudioSampleAttributes &attrs)
 {
     /* Initialization of audio parameters for playback */
     attrs.channelCount = AUDIO_CHANNELCOUNT;
     attrs.interleaved = true;
-    attrs.streamId = FAST_OUTPUT_STREAM_ID;
+    attrs.streamId = attr_.audioStreamFlag == AUDIO_FLAG_VOIP_FAST ? FAST_VOIP_OUTPUT_STREAM_ID : FAST_OUTPUT_STREAM_ID;
     attrs.period = DEEP_BUFFER_RENDER_PERIOD_SIZE;
     attrs.isBigEndian = false;
     attrs.isSignedData = true;

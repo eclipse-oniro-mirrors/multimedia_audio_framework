@@ -40,7 +40,6 @@ private:
         std::vector<std::unique_ptr<AudioRendererChangeInfo>> changeInfos;
     };
 
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
     void OnJsCallbackRendererState(std::unique_ptr<AudioRendererStateJsCallback> &jsCb);
 
     std::mutex mutex_;

@@ -301,12 +301,31 @@ enum ConnectState {
     DEACTIVE_CONNECTED
 };
 
+enum PreferredType {
+    AUDIO_MEDIA_RENDER = 0,
+    AUDIO_CALL_RENDER = 1,
+    AUDIO_CALL_CAPTURE = 2,
+    AUDIO_RING_RENDER = 3,
+    AUDIO_RECORD_CAPTURE = 4,
+    AUDIO_TONE_RENDER = 5,
+};
+
 struct DevicePrivacyInfo {
     std::string deviceName;
     DeviceType deviceType;
     DeviceRole deviceRole;
     DeviceCategory deviceCategory;
     DeviceUsage deviceUsage;
+};
+
+struct AffinityDeviceInfo {
+    std::string groupName;
+    DeviceType deviceType;
+    DeviceFlag deviceFlag;
+    std::string networkID;
+    uint64_t chooseTimeStamp;
+    bool isPrimary;
+    bool SupportedConcurrency;
 };
 
 template<typename T> bool MarshallingSetInt32(const std::set<T> &value, Parcel &parcel)

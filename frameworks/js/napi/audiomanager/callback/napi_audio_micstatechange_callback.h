@@ -41,7 +41,6 @@ private:
         MicStateChangeEvent micStateChangeEvent;
     };
 
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
     void OnJsCallbackMicStateChange(std::unique_ptr<AudioManagerMicStateChangeJsCallback> &jsCb);
 
     std::mutex mutex_;

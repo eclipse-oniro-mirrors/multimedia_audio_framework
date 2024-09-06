@@ -126,26 +126,25 @@ void NapiRendererWriteDataCallback::OnWriteData(size_t length)
 
 void NapiRendererWriteDataCallback::OnJsRendererWriteDataCallback(std::unique_ptr<RendererWriteDataJsCallback> &jsCb)
 {
-    uv_loop_s *loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_AND_RETURN_LOG(loop != nullptr, "loop is nullptr");
-
-    uv_work_t *work = new(std::nothrow) uv_work_t;
-    CHECK_AND_RETURN_LOG(work != nullptr, "writeData Js Callback: No memory");
-
     if (jsCb.get() == nullptr) {
-        AUDIO_ERR_LOG("writeData Js Callback is null");
-        delete work;
+        AUDIO_ERR_LOG("OnJsRendererDaOnJsRendererWriteDataCallbacktaRequestCallback: jsCb.get() is null");
         return;
     }
+    RendererWriteDataJsCallback *event = jsCb.get();
+    auto task = [event]() {
+        std::shared_ptr<RendererWriteDataJsCallback> context(
+            static_cast<RendererWriteDataJsCallback*>(event),
+            [](RendererWriteDataJsCallback* ptr) {
+                delete ptr;
+        });
+        WorkCallbackRendererWriteDataInner(event);
 
-    work->data = reinterpret_cast<void *>(jsCb.get());
-
-    int ret = uv_queue_work_with_qos(loop, work, [](uv_work_t *work) {},
-        WorkCallbackRendererWriteData, uv_qos_default);
-    if (ret != 0) {
-        AUDIO_ERR_LOG("Failed to execute uv work queue");
-        delete work;
+        CHECK_AND_RETURN_LOG(event != nullptr, "renderer write data event is nullptr");
+        CHECK_AND_RETURN_LOG(event->rendererNapiObj != nullptr, "NapiAudioRenderer object is nullptr");
+        event->rendererNapiObj->writeCallbackCv_.notify_all();
+    };
+    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        AUDIO_ERR_LOG("OnJsRendererWriteDataCallback: Failed to SendEvent");
     } else {
         jsCb.release();
     }
@@ -177,28 +176,8 @@ void NapiRendererWriteDataCallback::CheckWriteDataCallbackResult(napi_env env, B
     }
 }
 
-void NapiRendererWriteDataCallback::WorkCallbackRendererWriteData(uv_work_t *work, int status)
+void NapiRendererWriteDataCallback::WorkCallbackRendererWriteDataInner(RendererWriteDataJsCallback *event)
 {
-    // Js Thread
-    std::shared_ptr<RendererWriteDataJsCallback> context(
-        static_cast<RendererWriteDataJsCallback*>(work->data),
-        [work](RendererWriteDataJsCallback* ptr) {
-            delete ptr;
-            delete work;
-    });
-    WorkCallbackRendererWriteDataInner(work, status);
-
-    CHECK_AND_RETURN_LOG(work != nullptr, "renderer write data work is nullptr");
-    RendererWriteDataJsCallback *event = reinterpret_cast<RendererWriteDataJsCallback *>(work->data);
-    CHECK_AND_RETURN_LOG(event != nullptr, "renderer write data event is nullptr");
-    CHECK_AND_RETURN_LOG(event->rendererNapiObj != nullptr, "NapiAudioRenderer object is nullptr");
-    event->rendererNapiObj->writeCallbackCv_.notify_all();
-}
-
-void NapiRendererWriteDataCallback::WorkCallbackRendererWriteDataInner(uv_work_t *work, int status)
-{
-    CHECK_AND_RETURN_LOG(work != nullptr, "renderer write data work is nullptr");
-    RendererWriteDataJsCallback *event = reinterpret_cast<RendererWriteDataJsCallback *>(work->data);
     CHECK_AND_RETURN_LOG(event != nullptr, "renderer write data event is nullptr");
     std::string request = event->callbackName;
     CHECK_AND_RETURN_LOG(event->callback != nullptr, "event is nullptr");
@@ -209,8 +188,6 @@ void NapiRendererWriteDataCallback::WorkCallbackRendererWriteDataInner(uv_work_t
     napi_open_handle_scope(env, &scope);
     CHECK_AND_RETURN_LOG(scope != nullptr, "%{public}s scope is nullptr", request.c_str());
     do {
-        CHECK_AND_BREAK_LOG(status != UV_ECANCELED, "%{public}s canceled", request.c_str());
-
         napi_value jsCallback = nullptr;
         napi_status nstatus = napi_get_reference_value(env, callback, &jsCallback);
         CHECK_AND_BREAK_LOG(nstatus == napi_ok && jsCallback != nullptr, "%{public}s get reference value failed",

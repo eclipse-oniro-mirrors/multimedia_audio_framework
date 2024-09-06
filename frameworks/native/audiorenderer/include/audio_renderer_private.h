@@ -51,6 +51,8 @@ public:
     bool Drain() const override;
     bool PauseTransitent(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
     bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
+    bool Mute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
+    bool Unmute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
     bool Stop() const override;
     bool Flush() const override;
     bool Release() override;
@@ -196,11 +198,12 @@ private:
     bool latencyMeasEnabled_ = false;
     std::shared_ptr<AudioLatencyMeasurement> latencyMeasurement_ = nullptr;
     bool isSwitching_ = false;
-    mutable std::shared_mutex switchStreamMutex_;
+    mutable std::shared_mutex rendererMutex_;
     mutable AudioRenderMode audioRenderMode_ = RENDER_MODE_NORMAL;
     bool isFastVoipSupported_ = false;
     bool isDirectVoipSupported_ = false;
     bool isEnableVoiceModemCommunicationStartStream_ = false;
+    DeviceType selectedDefaultOutputDevice_ = DEVICE_TYPE_NONE;
 
     float speed_ = 1.0;
 

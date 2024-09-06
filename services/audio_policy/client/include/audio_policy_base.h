@@ -62,6 +62,12 @@ public:
 
     virtual std::vector<sptr<AudioDeviceDescriptor>> GetDevicesInner(DeviceFlag deviceFlag) = 0;
 
+    virtual std::vector<sptr<AudioDeviceDescriptor>> GetOutputDevice(
+        sptr<AudioRendererFilter> audioRendererFilter) = 0;
+
+    virtual std::vector<sptr<AudioDeviceDescriptor>> GetInputDevice(
+        sptr<AudioCapturerFilter> audioCapturerFilter) = 0;
+
     virtual int32_t SetDeviceActive(InternalDeviceType deviceType, bool active) = 0;
 
     virtual int32_t NotifyCapturerAdded(AudioCapturerInfo capturerInfo, AudioStreamInfo streamInfo,
@@ -108,7 +114,7 @@ public:
     virtual bool IsAudioSessionActivated() = 0;
 
     virtual int32_t SetAudioInterruptCallback(const uint32_t sessionID, const sptr<IRemoteObject> &object,
-        const int32_t zoneID = 0 /* default value: 0 -- local device */) = 0;
+        uint32_t clientUid, const int32_t zoneID = 0 /* default value: 0 -- local device */) = 0;
 
     virtual int32_t UnsetAudioInterruptCallback(const uint32_t sessionID,
         const int32_t zoneID = 0 /* default value: 0 -- local device */) = 0;
@@ -122,6 +128,8 @@ public:
     virtual int32_t SetAudioManagerInterruptCallback(const int32_t clientId, const sptr<IRemoteObject> &object) = 0;
 
     virtual int32_t UnsetAudioManagerInterruptCallback(const int32_t clientId) = 0;
+
+    virtual int32_t SetQueryClientTypeCallback(const sptr<IRemoteObject> &object) = 0;
 
     virtual int32_t RequestAudioFocus(const int32_t clientId, const AudioInterrupt &audioInterrupt) = 0;
 

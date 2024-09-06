@@ -100,6 +100,8 @@ public:
     void OnDataLinkConnectionUpdate(IOperation operation);
 
     bool Dump(std::string &dumpString);
+    void SetNonInterruptMute(const bool muteFlag);
+    void RestoreSession();
 
 public:
     const AudioProcessConfig processConfig_;
@@ -122,6 +124,7 @@ private:
     IStatus status_ = I_STATUS_IDLE;
     bool offloadEnable_ = false;
     std::atomic<bool> standByEnable_ = false;
+    std::atomic<bool> muteFlag_ = false;
 
     // for inner-cap
     std::mutex dupMutex_;
@@ -144,7 +147,7 @@ private:
     bool isBufferConfiged_  = false;
     std::atomic<bool> isInited_ = false;
     std::shared_ptr<OHAudioBuffer> audioServerBuffer_ = nullptr;
-    size_t needForceWrite_ = 0;
+    std::atomic<size_t> needForceWrite_ = 0;
     bool afterDrain = false;
     float lowPowerVolume_ = 1.0f;
     bool isNeedFade_ = false;
@@ -152,7 +155,7 @@ private:
     std::mutex updateIndexLock_;
     int64_t startedTime_ = 0;
     uint32_t underrunCount_ = 0;
-    uint32_t standByCounter_ = 0;
+    std::atomic<uint32_t> standByCounter_ = 0;
     int64_t lastWriteTime_ = 0;
     bool resetTime_ = false;
     uint64_t resetTimestamp_ = 0;

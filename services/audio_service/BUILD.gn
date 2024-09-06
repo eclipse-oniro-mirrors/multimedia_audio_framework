@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../appgallery.gni")
 import("../../config.gni")
 import("../../ressche_part.gni")
 import("../../sensor.gni")
@@ -88,6 +89,11 @@ ohos_shared_library("audio_common") {
 
   cflags_cc = cflags
   cflags_cc += [ "-std=c++20" ]
+
+  defines = []
+  if (use_libfuzzer || use_clang_coverage) {
+    defines += [ "TEST_COVERAGE" ]
+  }
 
   subsystem_name = "multimedia"
   innerapi_tags = [ "platformsdk_indirect" ]
@@ -208,6 +214,10 @@ ohos_shared_library("audio_client") {
   if (audio_framework_feature_power_manager) {
     external_deps += [ "power_manager:powermgr_client" ]
     defines += [ "FEATURE_POWER_MANAGER" ]
+  }
+
+  if (use_libfuzzer || use_clang_coverage) {
+    defines += [ "TEST_COVERAGE" ]
   }
 
   version_script = "../../audio_framework.versionscript"
@@ -429,12 +439,20 @@ ohos_shared_library("audio_service") {
     defines += [ "AUDIO_BUILD_VARIANT_ROOT" ]
   }
 
+  if (appgallery_part_enable == true) {
+    defines += [ "FEATURE_APPGALLERY" ]
+  }
+
   if (sensor_enable == true) {
     external_deps += [ "sensor:sensor_interface_native" ]
   }
 
   if (ressche_enable == true) {
     external_deps += [ "resource_schedule_service:ressched_client" ]
+  }
+
+  if (use_libfuzzer || use_clang_coverage) {
+    defines += [ "TEST_COVERAGE" ]
   }
 
   subsystem_name = "multimedia"

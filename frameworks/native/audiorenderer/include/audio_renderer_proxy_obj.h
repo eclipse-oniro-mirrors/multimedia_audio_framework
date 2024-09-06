@@ -28,6 +28,8 @@ public:
     void SaveRendererObj(AudioRenderer *rendererObj);
     void UnsetRendererObj();
 
+    void MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal);
+    void UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal);
     void PausedStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal);
     void ResumeStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal);
     void SetLowPowerVolumeImpl(float volume);

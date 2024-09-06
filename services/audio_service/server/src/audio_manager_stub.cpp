@@ -72,6 +72,8 @@ const char *g_audioServerCodeStrs[] = {
     "SET_ASR_AEC_MODE",
     "GET_ASR_AEC_MODE",
     "SET_ASR_NOISE_SUPPRESSION_MODE",
+    "SET_OFFLOAD_MODE",
+    "UNSET_OFFLOAD_MODE",
     "GET_ASR_NOISE_SUPPRESSION_MODE",
     "SET_ASR_WHISPER_DETECTION_MODE",
     "GET_ASR_WHISPER_DETECTION_MODE",
@@ -86,6 +88,8 @@ const char *g_audioServerCodeStrs[] = {
     "SET_SINK_MUTE_FOR_SWITCH_DEVICE",
     "SET_ROTATION_TO_EFFECT",
     "UPDATE_SESSION_CONNECTION_STATE",
+    "SET_SINGLE_STREAM_MUTE",
+    "RESTORE_SESSION",
 };
 constexpr size_t codeNums = sizeof(g_audioServerCodeStrs) / sizeof(const char *);
 static_assert(codeNums == (static_cast<size_t> (AudioServerInterfaceCode::AUDIO_SERVER_CODE_MAX) + 1),
@@ -146,6 +150,24 @@ int AudioManagerStub::HandleGetAsrAecMode(MessageParcel &data, MessageParcel &re
     int32_t ret = GetAsrAecMode(asrAecMode);
     CHECK_AND_RETURN_RET_LOG(ret == 0, AUDIO_ERR, "Get AsrAec Mode audio parameters failed");
     reply.WriteInt32(int32_t(asrAecMode));
+    return AUDIO_OK;
+}
+
+int AudioManagerStub::HandleSetOffloadMode(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t sessionId = data.ReadUint32();
+    int32_t state = data.ReadInt32();
+    bool isAppBack = data.ReadBool();
+    int32_t result = SetOffloadMode(sessionId, state, isAppBack);
+    reply.WriteInt32(result);
+    return AUDIO_OK;
+}
+
+int AudioManagerStub::HandleUnsetOffloadMode(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t sessionId = data.ReadUint32();
+    int32_t result = UnsetOffloadMode(sessionId);
+    reply.WriteInt32(result);
     return AUDIO_OK;
 }
 
@@ -674,6 +696,14 @@ int AudioManagerStub::HandleSetRotationToEffect(MessageParcel &data, MessageParc
     return AUDIO_OK;
 }
 
+int AudioManagerStub::HandleRestoreSession(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t sessionID = data.ReadInt32();
+    int32_t isOutput = data.ReadBool();
+    RestoreSession(sessionID, isOutput);
+    return AUDIO_OK;
+}
+
 int AudioManagerStub::HandleFourthPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply,
     MessageOption &option)
 {
@@ -706,6 +736,10 @@ int AudioManagerStub::HandleFourthPartCode(uint32_t code, MessageParcel &data, M
             return HandleSetRotationToEffect(data, reply);
         case static_cast<uint32_t>(AudioServerInterfaceCode::UPDATE_SESSION_CONNECTION_STATE):
             return HandleUpdateSessionConnectionState(data, reply);
+        case static_cast<uint32_t>(AudioServerInterfaceCode::SET_SINGLE_STREAM_MUTE):
+            return HandleSetNonInterruptMute(data, reply);
+        case static_cast<uint32_t>(AudioServerInterfaceCode::RESTORE_SESSION):
+            return HandleRestoreSession(data, reply);
         default:
             AUDIO_ERR_LOG("default case, need check AudioManagerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -736,6 +770,10 @@ int AudioManagerStub::HandleThirdPartCode(uint32_t code, MessageParcel &data, Me
             return HandleGetAsrAecMode(data, reply);
         case static_cast<uint32_t>(AudioServerInterfaceCode::SET_ASR_NOISE_SUPPRESSION_MODE):
             return HandleSetAsrNoiseSuppressionMode(data, reply);
+        case static_cast<uint32_t>(AudioServerInterfaceCode::SET_OFFLOAD_MODE):
+            return HandleSetOffloadMode(data, reply);
+        case static_cast<uint32_t>(AudioServerInterfaceCode::UNSET_OFFLOAD_MODE):
+            return HandleUnsetOffloadMode(data, reply);
         default:
             return HandleFourthPartCode(code, data, reply, option);
     }
@@ -854,6 +892,14 @@ int AudioManagerStub::HandleUpdateSessionConnectionState(MessageParcel &data, Me
     int32_t sessionID = data.ReadInt32();
     int32_t state = data.ReadInt32();
     UpdateSessionConnectionState(sessionID, state);
+    return AUDIO_OK;
+}
+
+int AudioManagerStub::HandleSetNonInterruptMute(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t sessionId = data.ReadUint32();
+    bool muteFlag = data.ReadBool();
+    SetNonInterruptMute(sessionId, muteFlag);
     return AUDIO_OK;
 }
 } // namespace AudioStandard

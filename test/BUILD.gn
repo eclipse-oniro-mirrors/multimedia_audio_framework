@@ -86,6 +86,7 @@ group("audio_fuzz_test") {
     "fuzztest/audiomanager_fuzzer:fuzztest",
     "fuzztest/audiopolicy_fuzzer:fuzztest",
     "fuzztest/audiopolicyanother_fuzzer:fuzztest",
+    "fuzztest/audiopolicyservice_fuzzer:fuzztest",
     "fuzztest/audioserver_fuzzer:fuzztest",
     "fuzztest/audioserverbalance_fuzzer:fuzztest",
   ]

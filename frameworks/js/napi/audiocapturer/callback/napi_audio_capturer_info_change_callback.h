@@ -39,7 +39,6 @@ private:
         AudioCapturerChangeInfo capturerChangeInfo_;
     };
 
-    static void WorkCallbackCompleted(uv_work_t* work, int status);
     void OnJsCallbackCapturerChangeInfo(napi_ref method, const AudioCapturerChangeInfo &capturerChangeInfo);
 
     std::mutex mutex_;

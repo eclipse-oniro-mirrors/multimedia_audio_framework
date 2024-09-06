@@ -65,6 +65,9 @@ constexpr int32_t EMPTY_UID = 0;
 constexpr int32_t AUDIO_NORMAL_MANAGER_TYPE = 0;
 constexpr int32_t AUDIO_DIRECT_MANAGER_TYPE = 2;
 
+constexpr uint32_t MIN_SESSIONID = 100000;
+constexpr uint32_t MAX_SESSIONID = UINT32_MAX - MIN_SESSIONID;
+
 const float MIN_FLOAT_VOLUME = 0.0f;
 const float MAX_FLOAT_VOLUME = 1.0f;
 
@@ -738,6 +741,8 @@ struct AudioProcessConfig {
 
     bool isWakeupCapturer = false;
 
+    int32_t originalSessionId = -1;
+
     AudioPrivacyType privacyType = PRIVACY_TYPE_PUBLIC;
 
     InnerCapMode innerCapMode {InnerCapMode::INVALID_CAP_MODE};
@@ -751,7 +756,9 @@ struct Volume {
 
 enum StreamSetState {
     STREAM_PAUSE,
-    STREAM_RESUME
+    STREAM_RESUME,
+    STREAM_MUTE,
+    STREAM_UNMUTE
 };
 
 struct StreamSetStateEventInternal {
@@ -1128,6 +1135,12 @@ enum RouterType {
      * @since 12
      */
     ROUTER_TYPE_USER_SELECT,
+
+    /**
+     * App select router.
+     * @since 12
+     */
+    ROUTER_TYPE_APP_SELECT,
 };
 
 enum RenderMode {

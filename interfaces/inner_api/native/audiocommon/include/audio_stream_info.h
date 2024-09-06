@@ -198,6 +198,15 @@ enum StreamUsage {
 };
 
 /**
+* exempt mute StreamUsage type.
+*/
+const std::vector<StreamUsage> EXEMPT_MUTE_STREAM_USAGE {
+    STREAM_USAGE_VOICE_COMMUNICATION,
+    STREAM_USAGE_VIDEO_COMMUNICATION,
+    STREAM_USAGE_NAVIGATION
+};
+
+/**
 * Enumerates the audio content type.
 */
 enum ContentType {
@@ -238,6 +247,7 @@ struct AudioStreamParams {
     uint8_t format = 0;
     uint8_t channels = 0;
     uint64_t channelLayout = 0ULL;
+    uint32_t originalSessionId = 0;
 };
 
 // sampling rate

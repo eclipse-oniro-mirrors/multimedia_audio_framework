@@ -44,7 +44,6 @@ private:
         std::vector<sptr<AudioDeviceDescriptor>> desc;
     };
 
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
     void OnJsCallbackActiveOutputDeviceChange(std::unique_ptr<AudioActiveOutputDeviceChangeJsCallback> &jsCb);
 
     std::mutex mutex_;
@@ -69,7 +68,6 @@ private:
         std::vector<sptr<AudioDeviceDescriptor>> desc;
     };
 
-    static void WorkCallbackInterruptDone(uv_work_t *work, int status);
     void OnJsCallbackActiveInputDeviceChange(std::unique_ptr<AudioActiveInputDeviceChangeJsCallback> &jsCb);
 
     std::mutex preferredInputListMutex_;

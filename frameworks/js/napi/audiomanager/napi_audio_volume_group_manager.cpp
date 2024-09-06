@@ -163,7 +163,7 @@ napi_value NapiAudioVolumeGroupManager::CreateAudioVolumeGroupManagerWrapper(nap
     }
     status = napi_new_instance(env, constructor, PARAM1, args, &result);
     if (status != napi_ok) {
-        AUDIO_ERR_LOG("napi_new_instance failed, sttaus:%{public}d", status);
+        AUDIO_ERR_LOG("napi_new_instance failed, status:%{public}d", status);
         goto fail;
     }
     return result;

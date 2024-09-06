@@ -214,17 +214,17 @@ public:
 HWTEST(AudioInterruptUnitTest, AudioInterruptService_006, TestSize.Level1)
 {
     auto interruptServiceTest = GetTnterruptServiceTest();
-    auto retStatus = interruptServiceTest->SetAudioInterruptCallback(0, 0, nullptr);
+    auto retStatus = interruptServiceTest->SetAudioInterruptCallback(0, 0, nullptr, 0);
     EXPECT_EQ(retStatus, ERR_INVALID_PARAM);
 
     retStatus = interruptServiceTest->UnsetAudioInterruptCallback(0, 0);
     EXPECT_EQ(retStatus, ERR_INVALID_PARAM);
 
     interruptServiceTest->zonesMap_[0] = std::make_shared<AudioInterruptZone>();
-    retStatus = interruptServiceTest->SetAudioInterruptCallback(0, 0, sptr<RemoteObjectTestStub>::MakeSptr());
+    retStatus = interruptServiceTest->SetAudioInterruptCallback(0, 0, sptr<RemoteObjectTestStub>::MakeSptr(), 0);
     EXPECT_EQ(retStatus, SUCCESS);
 
-    retStatus = interruptServiceTest->SetAudioInterruptCallback(0, 0, sptr<RemoteObjectTestStub>::MakeSptr());
+    retStatus = interruptServiceTest->SetAudioInterruptCallback(0, 0, sptr<RemoteObjectTestStub>::MakeSptr(), 0);
     EXPECT_EQ(retStatus, ERR_INVALID_PARAM);
 
     retStatus = interruptServiceTest->UnsetAudioInterruptCallback(0, 0);
@@ -542,7 +542,6 @@ HWTEST(AudioInterruptUnitTest, AudioInterruptService_016, TestSize.Level1)
     EXPECT_EQ(interruptServiceTest->policyServer_, nullptr);
     interruptServiceTest->Init(GetPolicyServerTest());
 
-    interruptServiceTest->policyServer_->isAvSessionSetVoipStart = true;
     interruptServiceTest->UpdateAudioSceneFromInterrupt(AUDIO_SCENE_INVALID,
             static_cast<AudioInterruptChangeType>(-2));
     for (int audioScene = AUDIO_SCENE_INVALID; audioScene <= AUDIO_SCENE_MAX; audioScene++) {

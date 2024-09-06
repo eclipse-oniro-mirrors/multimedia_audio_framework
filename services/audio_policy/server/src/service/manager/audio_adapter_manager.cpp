@@ -24,7 +24,6 @@
 
 #include "audio_volume_parser.h"
 #include "audio_utils.h"
-#include "audio_adapter_manager_handler.h"
 
 using namespace std;
 
@@ -139,6 +138,8 @@ bool AudioAdapterManager::Init()
     isVolumeUnadjustable_ = system::GetBoolParameter("const.multimedia.audio.fixedvolume", false);
     AUDIO_INFO_LOG("Get fixdvolume parameter success %{public}d", isVolumeUnadjustable_);
 
+    handler_ = std::make_shared<AudioAdapterManagerHandler>();
+
     return true;
 }
 
@@ -168,9 +169,9 @@ void AudioAdapterManager::InitKVStoreInternal()
     bool isFirstBoot = false;
     volumeDataMaintainer_.RegisterCloned();
     InitAudioPolicyKvStore(isFirstBoot);
-    auto handler = DelayedSingleton<AudioAdapterManagerHandler>::GetInstance();
-    if (handler != nullptr) {
-        handler->SendKvDataUpdate(isFirstBoot);
+
+    if (handler_ != nullptr) {
+        handler_->SendKvDataUpdate(isFirstBoot);
     }
 }
 
@@ -236,6 +237,12 @@ int32_t AudioAdapterManager::ReInitKVStore()
 void AudioAdapterManager::Deinit(void)
 {
     CHECK_AND_RETURN_LOG(audioServiceAdapter_, "Deinit audio adapter null");
+
+    if (handler_ != nullptr) {
+        AUDIO_INFO_LOG("release handler");
+        handler_->ReleaseEventRunner();
+        handler_ = nullptr;
+    }
 
     return audioServiceAdapter_->Disconnect();
 }
@@ -311,13 +318,13 @@ int32_t AudioAdapterManager::SetSystemVolumeLevel(AudioStreamType streamType, in
     }
 
     volumeDataMaintainer_.SetStreamVolume(streamType, volumeLevel);
-    auto handler = DelayedSingleton<AudioAdapterManagerHandler>::GetInstance();
-    if (handler != nullptr) {
+
+    if (handler_ != nullptr) {
         if (Util::IsDualToneStreamType(streamType)) {
             AUDIO_INFO_LOG("DualToneStreamType. Save volume for speaker.");
-            handler->SendSaveVolume(DEVICE_TYPE_SPEAKER, streamType, volumeLevel);
+            handler_->SendSaveVolume(DEVICE_TYPE_SPEAKER, streamType, volumeLevel);
         } else {
-            handler->SendSaveVolume(currentActiveDevice_, streamType, volumeLevel);
+            handler_->SendSaveVolume(currentActiveDevice_, streamType, volumeLevel);
         }
     }
 
@@ -446,9 +453,9 @@ int32_t AudioAdapterManager::SetStreamMuteInternal(AudioStreamType streamType, b
 
     // set stream mute status to mem.
     volumeDataMaintainer_.SetStreamMuteStatus(streamType, mute);
-    auto handler = DelayedSingleton<AudioAdapterManagerHandler>::GetInstance();
-    if (handler != nullptr) {
-        handler->SendStreamMuteStatusUpdate(streamType, mute, streamUsage);
+
+    if (handler_ != nullptr) {
+        handler_->SendStreamMuteStatusUpdate(streamType, mute, streamUsage);
     }
 
     // Achieve the purpose of adjusting the mute status by adjusting the stream volume.
@@ -662,9 +669,8 @@ int32_t AudioAdapterManager::SetRingerModeInternal(AudioRingerMode ringerMode)
     AUDIO_INFO_LOG("SetRingerMode: %{public}d", ringerMode);
     ringerMode_ = ringerMode;
 
-    auto handler = DelayedSingleton<AudioAdapterManagerHandler>::GetInstance();
-    if (handler != nullptr) {
-        handler->SendRingerModeUpdate(ringerMode);
+    if (handler_ != nullptr) {
+        handler_->SendRingerModeUpdate(ringerMode);
     }
     return SUCCESS;
 }

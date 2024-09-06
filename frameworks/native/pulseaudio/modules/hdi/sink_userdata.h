@@ -77,6 +77,8 @@ struct Userdata {
     bool isFirstStarted;
     pa_hashmap *sceneToCountMap;
     // todo resampler map
+    uint64_t lastRecodedLatency;
+    uint32_t continuesGetLatencyErrCount;
     struct {
         int32_t sessionID;
         bool firstWrite;
@@ -102,7 +104,7 @@ struct Userdata {
         pa_thread *thread;
         pa_thread *thread_hdi;
         pa_asyncmsgq *msgq;
-        bool isHDISinkStarted;
+        pa_atomic_t isHDISinkStarted;
         struct RendererSinkAdapter *sinkAdapter;
         pa_asyncmsgq *dq;
         pa_atomic_t dflag;

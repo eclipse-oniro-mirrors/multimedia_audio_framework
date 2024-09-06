@@ -935,7 +935,23 @@ public:
      * @param deviceType to set. The available deviceTypes are EARPIECE/SPEAKER/DEFAULT.
      * @since 12
      */
-    virtual int32_t SetDefaultOutputDevice(DeviceType deviceType) = 0;
+    virtual int32_t SetDefaultOutputDevice(DeviceType deviceType) { return 0; };
+
+    /**
+     * @brief Mute audio rendering.
+     *
+     * @return Returns <b>true</b> if the rendering is successfully Paused; returns <b>false</b> otherwise.
+     * @since 10
+     */
+    virtual bool Mute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const {return false;};
+
+    /**
+     * @brief Unmute audio rendering.
+     *
+     * @return Returns <b>true</b> if the rendering is successfully Paused; returns <b>false</b> otherwise.
+     * @since 10
+     */
+    virtual bool Unmute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const {return false;};
 
 private:
     static int32_t CreateCheckParam(const AudioRendererOptions &rendererOptions,

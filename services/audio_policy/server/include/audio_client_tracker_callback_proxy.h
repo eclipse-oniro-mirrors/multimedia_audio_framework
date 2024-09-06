@@ -28,6 +28,8 @@ public:
     virtual ~ClientTrackerCallbackListener();
     DISALLOW_COPY_AND_MOVE(ClientTrackerCallbackListener);
 
+    virtual void MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
+    virtual void UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
     virtual void PausedStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
     virtual void ResumeStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
 
@@ -45,6 +47,9 @@ class AudioClientTrackerCallbackProxy : public IRemoteProxy<IStandardClientTrack
 public:
     explicit AudioClientTrackerCallbackProxy(const sptr<IRemoteObject> &impl);
     virtual ~AudioClientTrackerCallbackProxy() = default;
+
+    virtual void MuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
+    virtual void UnmuteStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
     virtual void PausedStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
     virtual void ResumeStreamImpl(const StreamSetStateEventInternal &streamSetStateEventInternal) override;
 

@@ -539,8 +539,7 @@ void AudioEffectChainManager::Dump()
 
 int32_t AudioEffectChainManager::EffectDspVolumeUpdate(std::shared_ptr<AudioEffectVolume> audioEffectVolume)
 {
-    // update dsp volume
-    AUDIO_DEBUG_LOG("send volume to dsp.");
+    AUDIO_INFO_LOG("send volume to dsp.");
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     float volumeMax = 0;
     for (auto it = sceneTypeToSessionIDMap_.begin(); it != sceneTypeToSessionIDMap_.end(); it++) {
@@ -552,7 +551,6 @@ int32_t AudioEffectChainManager::EffectDspVolumeUpdate(std::shared_ptr<AudioEffe
                 (streamVolumeTemp * systemVolumeTemp) : volumeMax;
         }
     }
-    // send volume to dsp
     if (audioEffectVolume->GetDspVolume() != volumeMax) {
         audioEffectVolume->SetDspVolume(volumeMax);
         effectHdiInput_[0] = HDI_VOLUME;
@@ -570,8 +568,7 @@ int32_t AudioEffectChainManager::EffectDspVolumeUpdate(std::shared_ptr<AudioEffe
 
 int32_t AudioEffectChainManager::EffectApVolumeUpdate(std::shared_ptr<AudioEffectVolume> audioEffectVolume)
 {
-    // send to ap
-    AUDIO_DEBUG_LOG("send volume to ap.");
+    AUDIO_INFO_LOG("send volume to ap.");
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     for (auto it = sceneTypeToSessionIDMap_.begin(); it != sceneTypeToSessionIDMap_.end(); it++) {
         float volumeMax = 0;
@@ -766,8 +763,6 @@ int32_t AudioEffectChainManager::UpdateSpatializationState(AudioSpatializationSt
     std::shared_ptr<AudioEffectVolume> audioEffectVolume = AudioEffectVolume::GetInstance();
     CHECK_AND_RETURN_RET_LOG(audioEffectVolume != nullptr, ERROR, "null audioEffectVolume");
     EffectVolumeUpdate(audioEffectVolume);
-    AUDIO_INFO_LOG("systemVolume prepare change or no change");
-
     return SUCCESS;
 }
 
@@ -785,7 +780,7 @@ int32_t AudioEffectChainManager::UpdateSpatialDeviceType(AudioSpatialDeviceType 
     }
 
     std::lock_guard<std::recursive_mutex> lock(dynamicMutex_);
-    for (auto& sceneType2EffectChain : sceneTypeToEffectChainMap_) {
+    for (const auto& sceneType2EffectChain : sceneTypeToEffectChainMap_) {
         auto audioEffectChain = sceneType2EffectChain.second;
         if (audioEffectChain != nullptr) {
             audioEffectChain->SetSpatialDeviceType(spatialDeviceType_);
@@ -895,10 +890,7 @@ int32_t AudioEffectChainManager::SetHdiParam(const std::string &sceneType, const
     effectHdiInput_[1] = enabled == true ? 0 : 1;
     AUDIO_PRERELEASE_LOGI("set hdi bypass: %{public}d", effectHdiInput_[1]);
     int32_t ret = audioEffectHdiParam_->UpdateHdiState(effectHdiInput_, DEVICE_TYPE_BLUETOOTH_A2DP);
-    if (ret != SUCCESS) {
-        AUDIO_WARNING_LOG("set hdi bypass failed");
-        return ret;
-    }
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERROR, "set hdi bypass failed, ret is %{public}d", ret);
 
     effectHdiInput_[0] = HDI_ROOM_MODE;
     if (!spatializationEnabled_ || (GetDeviceTypeName() != "DEVICE_TYPE_BLUETOOTH_A2DP")) {
@@ -912,10 +904,7 @@ int32_t AudioEffectChainManager::SetHdiParam(const std::string &sceneType, const
     AUDIO_PRERELEASE_LOGI("set hdi room mode sceneType: %{public}d, effectMode: %{public}d", effectHdiInput_[1],
         effectHdiInput_[HDI_ROOM_MODE_INDEX_TWO]);
     ret = audioEffectHdiParam_->UpdateHdiState(effectHdiInput_);
-    if (ret != SUCCESS) {
-        AUDIO_WARNING_LOG("set hdi room mode failed");
-        return ret;
-    }
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERROR, "set hdi room mode failed, ret is %{public}d", ret);
     return SUCCESS;
 }
 
@@ -1239,7 +1228,6 @@ std::shared_ptr<AudioEffectChain> AudioEffectChainManager::CreateAudioEffectChai
     bool isPriorScene)
 {
     std::shared_ptr<AudioEffectChain> audioEffectChain = nullptr;
-    std::string sceneTypeAndDeviceKey = sceneType + "_&_" + GetDeviceTypeName();
     std::string defaultSceneTypeAndDeviceKey = DEFAULT_SCENE_TYPE + "_&_" + GetDeviceTypeName();
 
     if (isPriorScene) {

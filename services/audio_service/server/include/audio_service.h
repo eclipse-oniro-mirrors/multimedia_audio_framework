@@ -65,15 +65,22 @@ public:
     void ResetAudioEndpoint();
 
     void RemoveRenderer(uint32_t sessionId);
+    void RemoveCapturer(uint32_t sessionId);
     int32_t EnableDualToneList(uint32_t sessionId);
     int32_t DisableDualToneList(uint32_t sessionId);
+    int32_t SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack);
+    int32_t UnsetOffloadMode(uint32_t sessionId);
     std::shared_ptr<RendererInServer> GetRendererBySessionID(const uint32_t &session);
+    std::shared_ptr<CapturerInServer> GetCapturerBySessionID(const uint32_t &session);
+    void SetNonInterruptMute(const uint32_t SessionId, const bool muteFlag);
+    void UpdateMuteControlSet(uint32_t sessionId, bool muteFlag);
 
 private:
     AudioService();
     void DelayCallReleaseEndpoint(std::string endpointName, int32_t delayInMs);
 
     void InsertRenderer(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer);
+    void InsertCapturer(uint32_t sessionId, std::shared_ptr<CapturerInServer> capturer);
     // for inner-capturer
     void CheckInnerCapForRenderer(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer);
     void CheckInnerCapForProcess(sptr<AudioProcessInServer> process, std::shared_ptr<AudioEndpoint> endpoint);
@@ -84,6 +91,10 @@ private:
     int32_t OnInitInnerCapList(); // for first InnerCap filter take effect.
     int32_t OnUpdateInnerCapList(); // for some InnerCap filter has already take effect.
     bool IsEndpointTypeVoip(const AudioProcessConfig &config, DeviceInfo &deviceInfo);
+    void RemoveIdFromMuteControlSet(uint32_t sessionId);
+    void CheckRenderSessionMuteState(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer);
+    void CheckCaptureSessionMuteState(uint32_t sessionId, std::shared_ptr<CapturerInServer> capturer);
+    void CheckFastSessionMuteState(uint32_t sessionId, sptr<AudioProcessInServer> process);
 
 private:
     std::mutex processListMutex_;
@@ -101,10 +112,15 @@ private:
     AudioPlaybackCaptureConfig workingConfig_;
 
     std::mutex rendererMapMutex_;
+    std::mutex capturerMapMutex_;
     std::vector<std::weak_ptr<RendererInServer>> filteredRendererMap_ = {};
     std::map<uint32_t, std::weak_ptr<RendererInServer>> allRendererMap_ = {};
+    std::map<uint32_t, std::weak_ptr<CapturerInServer>> allCapturerMap_ = {};
 
     std::vector<std::weak_ptr<RendererInServer>> filteredDualToneRendererMap_ = {};
+
+    std::mutex mutedSessionsMutex_;
+    std::set<uint32_t> mutedSessions_ = {};
 };
 } // namespace AudioStandard
 } // namespace OHOS

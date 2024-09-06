@@ -308,7 +308,6 @@ int32_t RemoteAudioRendererSinkInner::Init(const IAudioSinkAttr &attr)
 
     struct AudioAdapterDescriptor *desc = audioManager->GetTargetAdapterDesc(deviceNetworkId_, false);
     CHECK_AND_RETURN_RET_LOG(desc != nullptr, ERR_NOT_STARTED, "Get target adapters descriptor fail.");
-    AUDIO_INFO_LOG("splitStreamVector size is %{public}u", splitStreamVector.size());
     auto splitStreamTypeIter = splitStreamVector.begin();
     for (uint32_t port = 0; port < desc->ports.size(); port++) {
         if (desc->ports[port].portId == AudioPortPin::PIN_OUT_SPEAKER) {
@@ -516,12 +515,6 @@ int32_t RemoteAudioRendererSinkInner::Start(void)
     Trace trace("RemoteAudioRendererSinkInner::Start");
     AUDIO_INFO_LOG("RemoteAudioRendererSinkInner::Start");
     std::lock_guard<std::mutex> lock(createRenderMutex_);
-    for (const auto &audioPort : audioPortMap_) {
-        FILE *dumpFile = nullptr;
-        DumpFileUtil::OpenDumpFile(DUMP_SERVER_PARA, DUMP_REMOTE_RENDER_SINK_FILENAME
-            + std::to_string(audioPort.first) + ".pcm", &dumpFile);
-        dumpFileMap_[audioPort.first] = dumpFile;
-    }
     auto renderId = renderIdVector_.begin();
     if (!isRenderCreated_.load()) {
         for (const auto &audioPort : audioPortMap_) {
@@ -534,6 +527,13 @@ int32_t RemoteAudioRendererSinkInner::Start(void)
     if (started_.load()) {
         AUDIO_INFO_LOG("Remote render is already started.");
         return SUCCESS;
+    }
+
+    for (const auto &audioPort : audioPortMap_) {
+        FILE *dumpFile = nullptr;
+        DumpFileUtil::OpenDumpFile(DUMP_SERVER_PARA, DUMP_REMOTE_RENDER_SINK_FILENAME
+            + std::to_string(audioPort.first) + '_' + GetTime() + ".pcm", &dumpFile);
+        dumpFileMap_[audioPort.first] = dumpFile;
     }
 
     for (const auto &audioRender : audioRenderMap_) {

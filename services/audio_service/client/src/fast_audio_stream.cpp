@@ -243,6 +243,14 @@ float FastAudioStream::GetVolume()
     }
 }
 
+int32_t FastAudioStream::SetMute(bool mute)
+{
+    CHECK_AND_RETURN_RET_LOG(processClient_ != nullptr, ERR_OPERATION_FAILED, "SetMute failed: null process");
+    int32_t ret = processClient_->SetMute(mute);
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "SetMute error.");
+    return ret;
+}
+
 int32_t FastAudioStream::SetDuckVolume(float volume)
 {
     CHECK_AND_RETURN_RET_LOG(processClient_ != nullptr, ERR_OPERATION_FAILED, "SetDuckVolume failed: null process");

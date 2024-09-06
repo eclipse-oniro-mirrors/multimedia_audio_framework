@@ -146,6 +146,11 @@ int32_t RendererInClientInner::OnOperationHandled(Operation operation, int64_t r
         return SUCCESS;
     }
 
+    if (operation == RESTORE_SESSION) {
+        RestoreAudioStream();
+        return SUCCESS;
+    }
+
     std::unique_lock<std::mutex> lock(callServerMutex_);
     notifiedOperation_ = operation;
     notifiedResult_ = result;
@@ -451,6 +456,7 @@ const AudioProcessConfig RendererInClientInner::ConstructConfig()
     config.streamInfo.format = static_cast<AudioSampleFormat>(curStreamParams_.format);
     config.streamInfo.samplingRate = static_cast<AudioSamplingRate>(curStreamParams_.samplingRate);
     config.streamInfo.channelLayout = static_cast<AudioChannelLayout>(curStreamParams_.channelLayout);
+    config.originalSessionId = curStreamParams_.originalSessionId;
 
     config.audioMode = AUDIO_MODE_PLAYBACK;
 
@@ -772,6 +778,16 @@ float RendererInClientInner::GetVolume()
 {
     Trace trace("RendererInClientInner::GetVolume:" + std::to_string(clientVolume_));
     return clientVolume_;
+}
+
+int32_t RendererInClientInner::SetMute(bool mute)
+{
+    Trace trace("RendererInClientInner::SetMute:" + std::to_string(mute));
+    AUDIO_INFO_LOG("sessionId:%{public}d SetDuck:%{public}d", sessionId_, mute);
+    muteVolume_ = mute ? 0.0f : 1.0f;
+    CHECK_AND_RETURN_RET_LOG(clientBuffer_ != nullptr, ERR_OPERATION_FAILED, "buffer is not inited");
+    clientBuffer_->SetMuteFactor(muteVolume_);
+    return SUCCESS;
 }
 
 int32_t RendererInClientInner::SetDuckVolume(float volume)

@@ -1508,6 +1508,10 @@ sptr<IRemoteObject> AudioServer::CreateAudioProcess(const AudioProcessConfig &co
         IAudioRendererSink* audioRendererSinkInstance = IAudioRendererSink::GetInstance("primary", "");
         audioRendererSinkInstance->SetAudioParameter(AudioParamKey::NONE, "", SATEMODEM_PARAMETER);
     }
+#ifdef FEATURE_APPGALLERY
+    PolicyHandler::GetInstance().GetAndSaveClientType(resetConfig.appInfo.appUid,
+        GetBundleNameFromUid(resetConfig.appInfo.appUid));
+#endif
 
     if (IsNormalIpcStream(resetConfig) || (isFastControlled_ && IsFastBlocked(resetConfig.appInfo.appUid))) {
         AUDIO_INFO_LOG("Create normal ipc stream, isFastControlled: %{public}d", isFastControlled_);
@@ -2176,6 +2180,55 @@ void AudioServer::UpdateSessionConnectionState(const int32_t &sessionId, const i
         return;
     }
     renderer->OnDataLinkConnectionUpdate(static_cast<IOperation>(state));
+}
+
+void AudioServer::SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag)
+{
+    AUDIO_INFO_LOG("sessionId_: %{public}u, muteFlag: %{public}d", sessionId, muteFlag);
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_LOG(PermissionUtil::VerifyIsAudio(), "Refused for %{public}d", callingUid);
+    AudioService::GetInstance()->SetNonInterruptMute(sessionId, muteFlag);
+}
+
+int32_t AudioServer::SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_RET_LOG(PermissionUtil::VerifyIsAudio(), ERR_NOT_SUPPORTED, "refused for %{public}d",
+        callingUid);
+    return AudioService::GetInstance()->SetOffloadMode(sessionId, state, isAppBack);
+}
+
+int32_t AudioServer::UnsetOffloadMode(uint32_t sessionId)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_RET_LOG(PermissionUtil::VerifyIsAudio(), ERR_NOT_SUPPORTED, "refused for %{public}d",
+        callingUid);
+    return AudioService::GetInstance()->UnsetOffloadMode(sessionId);
+}
+
+void AudioServer::RestoreSession(const int32_t &sessionID, bool isOutput)
+{
+    AUDIO_INFO_LOG("restore output: %{public}d, sessionID: %{public}d", isOutput, sessionID);
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    CHECK_AND_RETURN_LOG(PermissionUtil::VerifyIsAudio(),
+        "Update session connection state refused for %{public}d", callingUid);
+    if (isOutput) {
+        std::shared_ptr<RendererInServer> renderer =
+            AudioService::GetInstance()->GetRendererBySessionID(static_cast<uint32_t>(sessionID));
+        if (renderer == nullptr) {
+            AUDIO_ERR_LOG("No render in server has sessionID");
+            return;
+        }
+        renderer->RestoreSession();
+    } else {
+        std::shared_ptr<CapturerInServer> capturer =
+            AudioService::GetInstance()->GetCapturerBySessionID(static_cast<uint32_t>(sessionID));
+        if (capturer == nullptr) {
+            AUDIO_ERR_LOG("No capturer in server has sessionID");
+            return;
+        }
+        capturer->RestoreSession();
+    }
 }
 } // namespace AudioStandard
 } // namespace OHOS

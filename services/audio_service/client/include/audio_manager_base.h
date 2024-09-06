@@ -433,6 +433,11 @@ public:
     virtual int32_t SetSinkMuteForSwitchDevice(const std::string &devceClass, int32_t durationUs, bool mute) = 0;
 
     /**
+     * Restore Session
+     */
+    virtual void RestoreSession(const int32_t &sessionID, bool isOutput) = 0;
+
+    /**
      * Set Rotation To Effect.
      */
     virtual void SetRotationToEffect(const uint32_t rotate) = 0;
@@ -441,6 +446,15 @@ public:
      * Update Session Connection State
      */
     virtual void UpdateSessionConnectionState(const int32_t &sessionID, const int32_t &state) = 0;
+
+    /**
+     * Set Non Interrupt Mute
+     */
+    virtual void SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag) = 0;
+
+    virtual int32_t SetOffloadMode(uint32_t sessionId, int32_t state, bool isAppBack) = 0;
+
+    virtual int32_t UnsetOffloadMode(uint32_t sessionId) = 0;
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"IStandardAudioService");
 };
@@ -492,6 +506,8 @@ private:
     int HandleSetAsrAecMode(MessageParcel &data, MessageParcel &reply);
     int HandleGetAsrAecMode(MessageParcel &data, MessageParcel &reply);
     int HandleSetAsrNoiseSuppressionMode(MessageParcel &data, MessageParcel &reply);
+    int HandleSetOffloadMode(MessageParcel &data, MessageParcel &reply);
+    int HandleUnsetOffloadMode(MessageParcel &data, MessageParcel &reply);
     int HandleGetAsrNoiseSuppressionMode(MessageParcel &data, MessageParcel &reply);
     int HandleSetAsrWhisperDetectionMode(MessageParcel &data, MessageParcel &reply);
     int HandleGetAsrWhisperDetectionMode(MessageParcel &data, MessageParcel &reply);
@@ -506,6 +522,8 @@ private:
     int HandleSetSinkMuteForSwitchDevice(MessageParcel &data, MessageParcel &reply);
     int HandleSetRotationToEffect(MessageParcel &data, MessageParcel &reply);
     int HandleUpdateSessionConnectionState(MessageParcel &data, MessageParcel &reply);
+    int HandleSetNonInterruptMute(MessageParcel &data, MessageParcel &reply);
+    int HandleRestoreSession(MessageParcel &data, MessageParcel &reply);
     int HandleSecondPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     int HandleThirdPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     int HandleFourthPartCode(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);

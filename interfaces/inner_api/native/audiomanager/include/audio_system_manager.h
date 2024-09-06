@@ -245,6 +245,12 @@ public:
     virtual void OnDeviceChange(const DeviceChangeAction &deviceChangeAction) = 0;
 };
 
+class AudioQueryClientTypeCallback {
+public:
+    virtual ~AudioQueryClientTypeCallback() = default;
+    virtual bool OnQueryClientType(const std::string &bundleName, uint32_t uid) = 0;
+};
+
 class AudioManagerAvailableDeviceChangeCallback {
 public:
     virtual ~AudioManagerAvailableDeviceChangeCallback() = default;
@@ -616,6 +622,24 @@ public:
      * @since 12
      */
     std::vector<sptr<AudioDeviceDescriptor>> GetDevicesInner(DeviceFlag deviceFlag);
+
+    /**
+     * @brief Get the audio output device according to the filter conditions.
+     *
+     * @param AudioRendererFilter filter conditions.
+     * @return Returns the device list is obtained.
+     * @since 12
+     */
+    std::vector<sptr<AudioDeviceDescriptor>> GetOutputDevice(sptr<AudioRendererFilter> audioRendererFilter);
+
+    /**
+     * @brief Get the audio input device according to the filter conditions.
+     *
+     * @param AudioCapturerFilter filter conditions.
+     * @return Returns the device list is obtained.
+     * @since 12
+     */
+    std::vector<sptr<AudioDeviceDescriptor>> GetInputDevice(sptr<AudioCapturerFilter> audioCapturerFilter);
 
     /**
      * @brief Get audio parameter.
@@ -1246,6 +1270,8 @@ public:
     static void AudioServerDied(pid_t pid);
 
     std::string GetSelfBundleName(int32_t uid);
+
+    int32_t SetQueryClientTypeCallback(const std::shared_ptr<AudioQueryClientTypeCallback> &callback);
 
     /**
      * @brief inject interruption event.

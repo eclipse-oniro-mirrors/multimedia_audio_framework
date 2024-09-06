@@ -40,6 +40,8 @@ private:
     void IsDeviceActiveInternal(MessageParcel &data, MessageParcel &reply);
     void GetActiveOutputDeviceInternal(MessageParcel &data, MessageParcel &reply);
     void GetActiveInputDeviceInternal(MessageParcel &data, MessageParcel &reply);
+    void GetOutputDeviceInternal(MessageParcel &data, MessageParcel &reply);
+    void GetInputDeviceInternal(MessageParcel &data, MessageParcel &reply);
     void SetRingerModeLegacyInternal(MessageParcel &data, MessageParcel &reply);
     void SetRingerModeInternal(MessageParcel &data, MessageParcel &reply);
     void GetRingerModeInternal(MessageParcel &data, MessageParcel &reply);
@@ -167,6 +169,7 @@ private:
     void IsAudioSessionActivatedInternal(MessageParcel &data, MessageParcel &reply);
     void LoadSplitModuleInternal(MessageParcel &data, MessageParcel &reply);
     void SetDefaultOutputDeviceInternal(MessageParcel &data, MessageParcel &reply);
+    void SetQueryClientTypeCallbackInternal(MessageParcel &data, MessageParcel &reply);
 
     void OnMiddleNinRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
     void OnMiddleEigRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option);
