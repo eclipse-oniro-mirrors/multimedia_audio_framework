@@ -280,7 +280,9 @@ void BluetoothRendererSinkInner::RegisterParameterCallback(IAudioSinkCallback* c
 void BluetoothRendererSinkInner::DeInit()
 {
     Trace trace("BluetoothRendererSinkInner::DeInit");
-    AUDIO_INFO_LOG("DeInit.");
+
+    AUDIO_INFO_LOG("DeInit. isFast: %{public}d", isBluetoothLowLatency_);
+
     if (--initCount_ > 0) {
         AUDIO_WARNING_LOG("Sink is still being used, count: %{public}d", initCount_);
         return;
@@ -410,8 +412,8 @@ int32_t BluetoothRendererSinkInner::CreateRender(struct AudioPort &renderPort)
     deviceDesc.pins = PIN_OUT_SPEAKER;
     deviceDesc.desc = nullptr;
 
-    AUDIO_INFO_LOG("Create render rate:%{public}u channel:%{public}u format:%{public}u",
-        param.sampleRate, param.channelCount, param.format);
+    AUDIO_INFO_LOG("Create render rate:%{public}u channel:%{public}u format:%{public}u isFast: %{public}d",
+        param.sampleRate, param.channelCount, param.format, isBluetoothLowLatency_);
     int32_t ret = audioAdapter_->CreateRender(audioAdapter_, &deviceDesc, &param, &audioRender_);
     if (ret != 0 || audioRender_ == nullptr) {
         AUDIO_ERR_LOG("AudioDeviceCreateRender failed");
@@ -448,7 +450,7 @@ AudioFormat BluetoothRendererSinkInner::ConvertToHdiFormat(HdiAdapterFormat form
 
 int32_t BluetoothRendererSinkInner::Init(const IAudioSinkAttr &attr)
 {
-    AUDIO_INFO_LOG("Init: %{public}d", attr.format);
+    AUDIO_INFO_LOG("Init: format: %{public}d isFast: %{public}d", attr.format, isBluetoothLowLatency_);
     if (rendererInited_) {
         AUDIO_WARNING_LOG("Already inited");
         initCount_++;
@@ -635,7 +637,7 @@ float BluetoothRendererSinkInner::GetMaxAmplitude()
 int32_t BluetoothRendererSinkInner::Start(void)
 {
     Trace trace("BluetoothRendererSinkInner::Start");
-    AUDIO_INFO_LOG("Start.");
+    AUDIO_INFO_LOG("In isFast: %{public}d", isBluetoothLowLatency_);
 #ifdef FEATURE_POWER_MANAGER
     std::shared_ptr<PowerMgr::RunningLock> keepRunningLock;
     if (runningLockManager_ == nullptr) {
@@ -781,7 +783,7 @@ int32_t BluetoothRendererSinkInner::GetTransactionId(uint64_t *transactionId)
 
 int32_t BluetoothRendererSinkInner::Stop(void)
 {
-    AUDIO_INFO_LOG("in");
+    AUDIO_INFO_LOG("in isFast: %{public}d", isBluetoothLowLatency_);
 
     Trace trace("BluetoothRendererSinkInner::Stop");
 

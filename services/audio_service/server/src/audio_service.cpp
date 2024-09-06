@@ -531,9 +531,12 @@ sptr<AudioProcessInServer> AudioService::GetAudioProcess(const AudioProcessConfi
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, nullptr, "ConfigProcessBuffer failed");
 
     ret = LinkProcessToEndpoint(process, audioEndpoint);
+
+    // Add here before check, because process release need this to trigger endpoint release
+    linkedPairedList_.push_back(std::make_pair(process, audioEndpoint));
+
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, nullptr, "LinkProcessToEndpoint failed");
 
-    linkedPairedList_.push_back(std::make_pair(process, audioEndpoint));
     CheckInnerCapForProcess(process, audioEndpoint);
     return process;
 }
@@ -563,8 +566,11 @@ void AudioService::ResetAudioEndpoint()
             CHECK_AND_RETURN_LOG(audioEndpoint != nullptr, "Get new endpoint failed");
 
             ret = LinkProcessToEndpoint((*paired).first, audioEndpoint);
-            CHECK_AND_RETURN_LOG(ret == SUCCESS, "LinkProcessToEndpoint failed");
+
+            // Add here before check, because process release need this to trigger endpoint release
             linkedPairedList_.push_back(std::make_pair((*paired).first, audioEndpoint));
+
+            CHECK_AND_RETURN_LOG(ret == SUCCESS, "LinkProcessToEndpoint failed");
             CheckInnerCapForProcess((*paired).first, audioEndpoint);
         }
         paired++;
