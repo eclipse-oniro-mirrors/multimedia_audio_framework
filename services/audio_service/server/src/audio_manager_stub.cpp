@@ -971,7 +971,7 @@ int AudioManagerStub::HandleUpdateSessionConnectionState(MessageParcel &data, Me
 
 int AudioManagerStub::HandleSetNonInterruptMute(MessageParcel &data, MessageParcel &reply)
 {
-    int32_t sessionId = data.ReadUint32();
+    uint32_t sessionId = data.ReadUint32();
     bool muteFlag = data.ReadBool();
     SetNonInterruptMute(sessionId, muteFlag);
     return AUDIO_OK;
