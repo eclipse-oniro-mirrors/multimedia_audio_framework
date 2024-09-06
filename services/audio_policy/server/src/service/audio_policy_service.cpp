@@ -534,6 +534,25 @@ int32_t AudioPolicyService::SetAudioStreamRemovedCallback(AudioStreamRemovedCall
     return audioPolicyManager_.SetAudioStreamRemovedCallback(callback);
 }
 
+int32_t AudioPolicyService::SetAudioDeviceAnahsCallback(const sptr<IRemoteObject> &object)
+{
+    CHECK_AND_RETURN_RET_LOG(object != nullptr, ERR_INVALID_PARAM, "SetAudioDeviceRefinerCallback object is nullptr");
+    auto callerUid = IPCSkeleton::GetCallingUid();
+    if (callerUid != UID_AUDIO) {
+        return ERROR;
+    }
+    return deviceStatusListener_->SetAudioDeviceAnahsCallback(object);
+}
+
+int32_t AudioPolicyService::UnsetAudioDeviceAnahsCallback()
+{
+    auto callerUid = IPCSkeleton::GetCallingUid();
+    if (callerUid != UID_AUDIO) {
+        return ERROR;
+    }
+    return deviceStatusListener_->UnsetAudioDeviceAnahsCallback();
+}
+
 int32_t AudioPolicyService::GetMaxVolumeLevel(AudioVolumeType volumeType) const
 {
     if (volumeType == STREAM_ALL) {

@@ -570,6 +570,10 @@ public:
 
     int32_t SetDefaultOutputDevice(const DeviceType deviceType, const uint32_t sessionID,
         const StreamUsage streamUsage, bool isRunning);
+    
+    int32_t SetAudioDeviceAnahsCallback(const sptr<IRemoteObject> &object);
+
+    int32_t UnsetAudioDeviceAnahsCallback();
 
 private:
     AudioPolicyService()

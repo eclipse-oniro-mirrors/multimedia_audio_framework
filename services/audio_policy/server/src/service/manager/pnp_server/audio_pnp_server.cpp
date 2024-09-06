@@ -39,13 +39,14 @@ static std::string GetAudioEventInfo(const AudioEvent audioEvent)
 {
     int32_t ret;
     char event[AUDIO_PNP_INFO_LEN_MAX] = {0};
-    if (audioEvent.eventType == AUDIO_EVENT_UNKNOWN || audioEvent.deviceType == AUDIO_DEVICE_UNKNOWN) {
+    if ((audioEvent.eventType == AUDIO_EVENT_UNKNOWN && audioEvent.anahsName == "") ||
+        (audioEvent.deviceType == AUDIO_DEVICE_UNKNOWN && audioEvent.anahsName == "")) {
         AUDIO_ERR_LOG("audio event is not updated");
         return event;
     }
     ret = snprintf_s(event, AUDIO_PNP_INFO_LEN_MAX, AUDIO_PNP_INFO_LEN_MAX - 1,
-        "EVENT_TYPE=%u;DEVICE_TYPE=%u;EVENT_NAME=%s;DEVICE_ADDRESS=%s",
-        audioEvent.eventType, audioEvent.deviceType, audioEvent.name.c_str(), audioEvent.address.c_str());
+        "EVENT_TYPE=%u;DEVICE_TYPE=%u;EVENT_NAME=%s;DEVICE_ADDRESS=%s;ANAHS_NAME=%s", audioEvent.eventType,
+        audioEvent.deviceType, audioEvent.name.c_str(), audioEvent.address.c_str(), audioEvent.anahsName.c_str());
     if (ret < 0) {
         AUDIO_ERR_LOG("snprintf_s failed");
         return event;

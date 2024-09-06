@@ -53,6 +53,8 @@ private:
     static inline bool IsBadName(const char *name);
     static int32_t ScanUsbBusSubDir(const char *subDir);
     static int32_t AudioDpDetectDevice(struct AudioPnpUevent *audioPnpUevent);
+    static int32_t AudioAnahsDetectDevice(struct AudioPnpUevent *audioPnpUevent);
+    static int32_t SetAudioAnahsEventValue(AudioEvent *audioEvent, struct AudioPnpUevent *audioPnpUevent);
 };
 
 } // namespace AudioStandard
