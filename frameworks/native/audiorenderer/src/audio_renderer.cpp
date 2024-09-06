@@ -236,8 +236,6 @@ std::unique_ptr<AudioRenderer> AudioRenderer::Create(const std::string cachePath
             ERR_OPERATION_FAILED);
     }
 
-    state_ = RENDERER_PREPARED;
-
     return audioRenderer;
 }
 
@@ -322,6 +320,8 @@ AudioRendererPrivate::AudioRendererPrivate(AudioStreamType audioStreamType, cons
     audioInterrupt_.pid = appInfo_.appPid;
     audioInterrupt_.mode = SHARE_MODE;
     audioInterrupt_.parallelPlayFlag = false;
+
+    state_ = RENDERER_PREPARED;
 }
 
 int32_t AudioRendererPrivate::InitAudioInterruptCallback()
