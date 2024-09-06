@@ -560,8 +560,14 @@ int32_t PulseAudioServiceAdapterImpl::SetSourceOutputMute(int32_t uid, bool setM
     int32_t streamSet = 0;
     for (uint32_t i = 0; i < sourOutputs.size(); i ++) {
         if (sourOutputs[i].uid == uid) {
-            pa_operation_unref(pa_context_set_source_output_mute(mContext, sourOutputs[i].paStreamId, (setMute ? 1 : 0),
-                nullptr, nullptr));
+            PaLockGuard palock(mMainLoop);
+            pa_operation *operation = pa_context_set_source_output_mute(mContext, sourOutputs[i].paStreamId,
+                (setMute ? 1 : 0), nullptr, nullptr));
+            if (operation == nullptr) {
+                AUDIO_ERR_LOG("pa_context_get_sink_input_info_list nullptr");
+                return ERROR;
+            }
+            pa_operation_unref(operation);
             AUDIO_DEBUG_LOG("set source output Mute : %{public}s for stream :uid %{public}d",
                 (setMute ? "true" : "false"), sourOutputs[i].uid);
             streamSet++;
@@ -731,10 +737,12 @@ void PulseAudioServiceAdapterImpl::PaContextStateCb(pa_context *c, void *userdat
         }
 
         case PA_CONTEXT_FAILED:
+            AUDIO_ERR_LOG("pa_context_get_state PA_CONTEXT_FAILED");
             pa_threaded_mainloop_signal(thiz->mMainLoop, 0);
             return;
 
         case PA_CONTEXT_TERMINATED:
+            AUDIO_ERR_LOG("pa_context_get_state PA_CONTEXT_TERMINATED");
         default:
             return;
     }
