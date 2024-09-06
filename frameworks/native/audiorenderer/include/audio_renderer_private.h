@@ -130,6 +130,8 @@ public:
 
     void EnableVoiceModemCommunicationStartStream(bool enable) override;
 
+    bool IsNoStreamRenderer() const override;
+
     int32_t SetDefaultOutputDevice(DeviceType deviceType) override;
 
     static inline AudioStreamParams ConvertToAudioStreamParams(const AudioRendererParams params)
@@ -204,6 +206,7 @@ private:
     bool isDirectVoipSupported_ = false;
     bool isEnableVoiceModemCommunicationStartStream_ = false;
     DeviceType selectedDefaultOutputDevice_ = DEVICE_TYPE_NONE;
+    RendererState state_ = RENDERER_INVALID;
 
     float speed_ = 1.0;
 
