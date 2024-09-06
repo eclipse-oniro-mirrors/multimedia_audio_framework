@@ -35,6 +35,32 @@ AudioPolicyClientStub::AudioPolicyClientStub()
 AudioPolicyClientStub::~AudioPolicyClientStub()
 {}
 
+void AudioPolicyClientStub::OnFirMaxRemoteRequest(uint32_t updateCode, MessageParcel &data, MessageParcel &reply)
+{
+    switch (updateCode) {
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_DEVICE_CHANGE):
+            HandleHeadTrackingDeviceChange(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE):
+            HandleSpatializationEnabledChange(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE):
+            HandleSpatializationEnabledChangeForAnyDevice(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE):
+            HandleHeadTrackingEnabledChange(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE):
+            HandleHeadTrackingEnabledChangeForAnyDevice(data, reply);
+            break;
+        case static_cast<uint32_t>(AudioPolicyClientCode::ON_AUDIO_SESSION_DEACTIVE):
+            HandleAudioSessionCallback(data, reply);
+            break;
+        default:
+            break;
+    }
+}
+
 void AudioPolicyClientStub::OnMaxRemoteRequest(uint32_t updateCode, MessageParcel &data, MessageParcel &reply)
 {
     switch (updateCode) {
@@ -65,24 +91,8 @@ void AudioPolicyClientStub::OnMaxRemoteRequest(uint32_t updateCode, MessageParce
         case static_cast<uint32_t>(AudioPolicyClientCode::ON_RECREATE_CAPTURER_STREAM_EVENT):
             HandleRecreateCapturerStreamEvent(data, reply);
             break;
-        case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_DEVICE_CHANGE):
-            HandleHeadTrackingDeviceChange(data, reply);
-            break;
-        case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE):
-            HandleSpatializationEnabledChange(data, reply);
-            break;
-        case static_cast<uint32_t>(AudioPolicyClientCode::ON_SPATIALIZATION_ENABLED_CHANGE_FOR_ANY_DEVICE):
-            HandleSpatializationEnabledChangeForAnyDevice(data, reply);
-            break;
-        case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE):
-            HandleHeadTrackingEnabledChange(data, reply);
-            break;
-        case static_cast<uint32_t>(AudioPolicyClientCode::ON_HEAD_TRACKING_ENABLED_CHANGE_FOR_ANY_DEVICE):
-            HandleHeadTrackingEnabledChangeForAnyDevice(data, reply);
-        case static_cast<uint32_t>(AudioPolicyClientCode::ON_AUDIO_SESSION_DEACTIVE):
-            HandleAudioSessionCallback(data, reply);
-            break;
         default:
+            OnFirMaxRemoteRequest(updateCode, data, reply);
             break;
     }
 }

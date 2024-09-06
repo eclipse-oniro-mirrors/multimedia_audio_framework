@@ -240,7 +240,7 @@ int32_t ProcessConfig::WriteConfigToParcel(const AudioProcessConfig &config, Mes
     parcel.WriteBool(config.isWakeupCapturer);
 
     // Original session id for re-create stream
-    parcel.WriteInt32(config.originalSessionId);
+    parcel.WriteUint32(config.originalSessionId);
 
     return SUCCESS;
 }
@@ -294,7 +294,7 @@ int32_t ProcessConfig::ReadConfigFromParcel(AudioProcessConfig &config, MessageP
     config.isWakeupCapturer = parcel.ReadBool();
 
     // Original session id for re-create stream
-    config.originalSessionId = parcel.ReadInt32();
+    config.originalSessionId = parcel.ReadUint32();
     return SUCCESS;
 }
 

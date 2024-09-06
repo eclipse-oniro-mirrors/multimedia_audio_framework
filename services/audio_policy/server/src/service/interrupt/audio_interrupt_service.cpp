@@ -509,7 +509,7 @@ int32_t AudioInterruptService::SetAudioInterruptCallback(const int32_t zoneId, c
 
         std::shared_ptr<AudioInterruptClient> client =
             std::make_shared<AudioInterruptClient>(callback, object, deathRecipient);
-        auto callingUid = IPCSkeleton::GetCallingUid();
+        uint32_t callingUid = IPCSkeleton::GetCallingUid();
         if (callingUid == MEDIA_SA_UID) {
             callingUid = uid;
         }
