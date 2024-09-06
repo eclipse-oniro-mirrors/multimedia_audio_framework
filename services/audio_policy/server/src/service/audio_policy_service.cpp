@@ -3615,6 +3615,22 @@ bool AudioPolicyService::IsConfigurationUpdated(DeviceType deviceType, const Aud
     return false;
 }
 
+void AudioPolicyService::CheckAndNotifyUserSelectedDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor)
+{
+    unique_ptr<AudioDeviceDescriptor> userSelectedMediaDevice = audioStateManager_.GetPreferredMediaRenderDevice();
+    unique_ptr<AudioDeviceDescriptor> userSelectedCallDevice = audioStateManager_.GetPreferredCallRenderDevice();
+    if (userSelectedMediaDevice != nullptr
+        && userSelectedMediaDevice->connectState_ == VIRTUAL_CONNECTED
+        && deviceDescriptor->isSameDeviceDesc(userSelectedMediaDevice)) {
+        NotifyUserSelectionEventToBt(deviceDescriptor);
+    }
+    if (userSelectedCallDevice != nullptr
+        && userSelectedCallDevice->connectState_ == VIRTUAL_CONNECTED
+        && deviceDescriptor->isSameDeviceDesc(userSelectedCallDevice)) {
+        NotifyUserSelectionEventToBt(deviceDescriptor);
+    }
+}
+
 void AudioPolicyService::UpdateConnectedDevicesWhenConnectingForOutputDevice(
     const AudioDeviceDescriptor &updatedDesc, std::vector<sptr<AudioDeviceDescriptor>> &descForCb)
 {
@@ -3634,6 +3650,7 @@ void AudioPolicyService::UpdateConnectedDevicesWhenConnectingForOutputDevice(
         audioDescriptor->deviceId_ = startDeviceId++;
     } else {
         audioDeviceManager_.UpdateDeviceDescDeviceId(audioDescriptor);
+        CheckAndNotifyUserSelectedDevice(audioDescriptor);
     }
     descForCb.push_back(audioDescriptor);
     UpdateDisplayName(audioDescriptor);
@@ -7546,7 +7563,6 @@ void AudioPolicyService::UpdateAllUserSelectDevice(vector<unique_ptr<AudioDevice
             SetPreferredDevice(AUDIO_MEDIA_RENDER, new(std::nothrow) AudioDeviceDescriptor(selectDesc));
         } else {
             audioStateManager_.UpdatePreferredMediaRenderDeviceConnectState(desc.connectState_);
-            NotifyUserSelectionEventToBt(new AudioDeviceDescriptor(*userSelectDeviceMap[MEDIA_RENDER_ID]));
         }
     }
     if (userSelectDeviceMap[CALL_RENDER_ID]->deviceType_ == desc.deviceType_ &&
@@ -7555,7 +7571,6 @@ void AudioPolicyService::UpdateAllUserSelectDevice(vector<unique_ptr<AudioDevice
             SetPreferredDevice(AUDIO_CALL_RENDER, new(std::nothrow) AudioDeviceDescriptor(selectDesc));
         } else {
             audioStateManager_.UpdatePreferredCallRenderDeviceConnectState(desc.connectState_);
-            NotifyUserSelectionEventToBt(new AudioDeviceDescriptor(*userSelectDeviceMap[CALL_RENDER_ID]));
         }
     }
     if (userSelectDeviceMap[CALL_CAPTURE_ID]->deviceType_ == desc.deviceType_ &&

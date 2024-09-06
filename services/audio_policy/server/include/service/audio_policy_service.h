@@ -1042,6 +1042,8 @@ private:
     int32_t SelectOutputDeviceForFastInner(sptr<AudioRendererFilter> audioRendererFilter,
         std::vector<sptr<AudioDeviceDescriptor>> selectedDesc);
 
+    void CheckAndNotifyUserSelectedDevice(const sptr<AudioDeviceDescriptor> &deviceDescriptor);
+
     bool isUpdateRouteSupported_ = true;
     bool isCurrentRemoteRenderer = false;
     bool remoteCapturerSwitch_ = false;
