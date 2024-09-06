@@ -160,8 +160,9 @@ void AudioService::RemoveIdFromMuteControlSet(uint32_t sessionId)
 
 void AudioService::CheckRenderSessionMuteState(uint32_t sessionId, std::shared_ptr<RendererInServer> renderer)
 {
-    std::lock_guard<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
+    std::unique_lock<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
     if (mutedSessions_.find(sessionId) != mutedSessions_.end()) {
+        mutedSessionsLock.unlock();
         AUDIO_INFO_LOG("Session %{public}u is in control", sessionId);
         renderer->SetNonInterruptMute(true);
     }
@@ -169,16 +170,18 @@ void AudioService::CheckRenderSessionMuteState(uint32_t sessionId, std::shared_p
 
 void AudioService::CheckCaptureSessionMuteState(uint32_t sessionId, std::shared_ptr<CapturerInServer> capturer)
 {
-    std::lock_guard<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
+    std::unique_lock<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
     if (mutedSessions_.find(sessionId) != mutedSessions_.end()) {
+        mutedSessionsLock.unlock();
         AUDIO_INFO_LOG("Session %{public}u is in control", sessionId);
         capturer->SetNonInterruptMute(true);
     }
 }
 void AudioService::CheckFastSessionMuteState(uint32_t sessionId, sptr<AudioProcessInServer> process)
 {
-    std::lock_guard<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
+    std::unique_lock<std::mutex> mutedSessionsLock(mutedSessionsMutex_);
     if (mutedSessions_.find(sessionId) != mutedSessions_.end()) {
+        mutedSessionsLock.unlock();
         AUDIO_INFO_LOG("Session %{public}u is in control", sessionId);
         process->SetNonInterruptMute(true);
     }
@@ -802,23 +805,43 @@ std::shared_ptr<CapturerInServer> AudioService::GetCapturerBySessionID(const uin
 void AudioService::SetNonInterruptMute(const uint32_t sessionId, const bool muteFlag)
 {
     AUDIO_INFO_LOG("SessionId: %{public}u, muteFlag: %{public}d", sessionId, muteFlag);
+    std::unique_lock<std::mutex> rendererLock(rendererMapMutex_);
     if (allRendererMap_.count(sessionId)) {
-        allRendererMap_[sessionId].lock()->SetNonInterruptMute(muteFlag);
+        std::shared_ptr<RendererInServer> renderer = allRendererMap_[sessionId].lock();
+        if (renderer == nullptr) {
+            AUDIO_ERR_LOG("rendererinserver is null");
+            return;
+        }
+        renderer->SetNonInterruptMute(muteFlag);
         AUDIO_INFO_LOG("allRendererMap_ has sessionId");
         return;
     }
+    rendererLock.unlock();
+    std::unique_lock<std::mutex> capturerLock(capturerMapMutex_);
     if (allCapturerMap_.count(sessionId)) {
-        allCapturerMap_[sessionId].lock()->SetNonInterruptMute(muteFlag);
+        std::shared_ptr<CapturerInServer> capturer = allCapturerMap_[sessionId].lock();
+        if (capturer == nullptr) {
+            AUDIO_ERR_LOG("capturerinserver is null");
+            return;
+        }
+        capturer->SetNonInterruptMute(muteFlag);
         AUDIO_INFO_LOG("allCapturerMap_ has sessionId");
         return;
     }
+    capturerLock.unlock();
+    std::unique_lock<std::mutex> processListLock(processListMutex_);
     for (auto paired : linkedPairedList_) {
+        if (paired.first == nullptr) {
+            AUDIO_ERR_LOG("processInServer is nullptr");
+            return;
+        }
         if (paired.first->GetSessionId() == sessionId) {
             AUDIO_INFO_LOG("linkedPairedList_ has sessionId");
             paired.first->SetNonInterruptMute(muteFlag);
             return;
         }
     }
+    processListLock.unlock();
     AUDIO_INFO_LOG("Cannot find sessionId");
 }
 
