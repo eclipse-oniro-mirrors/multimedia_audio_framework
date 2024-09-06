@@ -758,7 +758,7 @@ bool AudioRendererPrivate::Flush() const
     return audioStream_->FlushAudioStream();
 }
 
-bool AudioRendererPrivate::PauseTransitent(StateChangeCmdType cmdType) const
+bool AudioRendererPrivate::PauseTransitent(StateChangeCmdType cmdType)
 {
     Trace trace("AudioRenderer::PauseTransitent");
     std::lock_guard<std::shared_mutex> lock(rendererMutex_);
@@ -808,7 +808,7 @@ bool AudioRendererPrivate::Unmute(StateChangeCmdType cmdType) const
     return true;
 }
 
-bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType) const
+bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType)
 {
     Trace trace("AudioRenderer::Pause");
     std::lock_guard<std::shared_mutex> lock(rendererMutex_);
@@ -844,7 +844,7 @@ bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType) const
     return result;
 }
 
-bool AudioRendererPrivate::Stop() const
+bool AudioRendererPrivate::Stop()
 {
     AUDIO_INFO_LOG("StreamClientState for Renderer::Stop. id: %{public}u", sessionID_);
     std::lock_guard<std::shared_mutex> lock(rendererMutex_);

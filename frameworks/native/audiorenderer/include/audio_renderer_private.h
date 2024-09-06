@@ -49,11 +49,11 @@ public:
     bool GetAudioTime(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
     bool GetAudioPosition(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
     bool Drain() const override;
-    bool PauseTransitent(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
-    bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
+    bool PauseTransitent(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
+    bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
     bool Mute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
     bool Unmute(StateChangeCmdType cmdType = CMD_FROM_CLIENT) const override;
-    bool Stop() const override;
+    bool Stop() override;
     bool Flush() const override;
     bool Release() override;
     int32_t GetBufferSize(size_t &bufferSize) const override;
