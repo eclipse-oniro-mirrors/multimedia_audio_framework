@@ -741,7 +741,7 @@ struct AudioProcessConfig {
 
     bool isWakeupCapturer = false;
 
-    uint32_t originalSessionId = -1;
+    uint32_t originalSessionId = 0;
 
     AudioPrivacyType privacyType = PRIVACY_TYPE_PUBLIC;
 
