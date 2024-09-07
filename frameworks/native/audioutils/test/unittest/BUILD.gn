@@ -13,6 +13,7 @@
 
 import("//build/test.gni")
 
+import("../../../../../config.gni")
 module_output_path = "multimedia_audio_framework/audio_utils"
 
 ohos_unittest("audio_utils_unit_test") {
@@ -25,7 +26,16 @@ ohos_unittest("audio_utils_unit_test") {
   cflags = [
     "-Wall",
     "-Werror",
+    "-fno-access-control",
   ]
+
+  if (sonic_enable == true) {
+    cflags += [ "-DSONIC_ENABLE" ]
+  }
+
+  if (sonic_enable == true) {
+    external_deps = [ "pulseaudio:sonic" ]
+  }
 
   sources = [ "audio_utils_unit_test.cpp" ]
 
