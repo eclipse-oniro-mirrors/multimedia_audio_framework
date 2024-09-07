@@ -1164,6 +1164,10 @@ private:
     std::atomic<bool> isPrimaryMicModuleInfoLoaded_ = false;
     std::atomic<bool> isAdapterInfoMap_ = false;
 
+    std::mutex moveDeviceMutex_;
+    std::condition_variable moveDeviceCV_;
+    std::atomic<bool> moveDeviceFinished_ = false;
+
     std::unordered_map<uint32_t, SessionInfo> sessionWithNormalSourceType_;
 
     DistributedRoutingInfo distributedRoutingInfo_ = {

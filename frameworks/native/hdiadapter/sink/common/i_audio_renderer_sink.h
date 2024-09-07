@@ -110,7 +110,6 @@ public:
 
     virtual int32_t SetSinkMuteForSwitchDevice(bool mute)
     {
-        // Only operate on offload for now
         return 0;
     }
 };
