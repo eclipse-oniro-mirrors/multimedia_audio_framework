@@ -26,7 +26,7 @@
 namespace OHOS {
 namespace AudioStandard {
 const int32_t DEFAULT_ZONE_ID = 0;
-constexpr int32_t MEDIA_SA_UID = 1013;
+constexpr uint32_t MEDIA_SA_UID = 1013;
 static sptr<IStandardAudioService> g_adProxy = nullptr;
 
 static const map<InterruptHint, AudioFocuState> HINT_STATE_MAP = {
