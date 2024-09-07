@@ -5960,7 +5960,7 @@ int32_t AudioPolicyService::ShowDialog()
         auto status = dialogSelectCondition_.wait_for(lock, std::chrono::seconds(WAIT_DIALOG_CLOSE_TIME_S),
             [this] () { return isDialogSelectDestroy_.load() || !isSafeVolumeDialogShowing_.load(); });
         if (!status) {
-            AUDIO_ERR_LOG("user cancel or not select");
+            AUDIO_ERR_LOG("user cancel or not select.");
         }
         isDialogSelectDestroy_.store(false);
     }
