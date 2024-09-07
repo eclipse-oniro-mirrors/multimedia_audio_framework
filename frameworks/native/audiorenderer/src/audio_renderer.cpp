@@ -320,6 +320,8 @@ AudioRendererPrivate::AudioRendererPrivate(AudioStreamType audioStreamType, cons
     audioInterrupt_.pid = appInfo_.appPid;
     audioInterrupt_.mode = SHARE_MODE;
     audioInterrupt_.parallelPlayFlag = false;
+
+    state_ = RENDERER_PREPARED;
 }
 
 int32_t AudioRendererPrivate::InitAudioInterruptCallback()
@@ -681,9 +683,12 @@ bool AudioRendererPrivate::Start(StateChangeCmdType cmdType)
             CHECK_AND_RETURN_RET_LOG(ret == 0, false, "ActivateAudioInterrupt Failed");
         }
     }
-    // When the cellular call stream is starting, only need to activate audio interrupt.
-    CHECK_AND_RETURN_RET(audioInterrupt_.streamUsage != STREAM_USAGE_VOICE_MODEM_COMMUNICATION ||
-        isEnableVoiceModemCommunicationStartStream_, true);
+
+    if (IsNoStreamRenderer()) {
+        // no stream renderer only need to activate audio interrupt
+        state_ = RENDERER_RUNNING;
+        return true;
+    }
 
     bool result = audioStream_->StartAudioStream(cmdType);
     if (!result) {
@@ -696,6 +701,8 @@ bool AudioRendererPrivate::Start(StateChangeCmdType cmdType)
             }
         }
     }
+
+    state_ = RENDERER_RUNNING;
 
     return result;
 }
@@ -723,6 +730,9 @@ int32_t AudioRendererPrivate::Write(uint8_t *pcmBuffer, size_t pcmSize, uint8_t 
 
 RendererState AudioRendererPrivate::GetStatus() const
 {
+    if (IsNoStreamRenderer()) {
+        return state_;
+    }
     return static_cast<RendererState>(audioStream_->GetState());
 }
 
@@ -748,7 +758,7 @@ bool AudioRendererPrivate::Flush() const
     return audioStream_->FlushAudioStream();
 }
 
-bool AudioRendererPrivate::PauseTransitent(StateChangeCmdType cmdType) const
+bool AudioRendererPrivate::PauseTransitent(StateChangeCmdType cmdType)
 {
     Trace trace("AudioRenderer::PauseTransitent");
     std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
@@ -758,7 +768,9 @@ bool AudioRendererPrivate::PauseTransitent(StateChangeCmdType cmdType) const
         return false;
     }
 
-    if (audioInterrupt_.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION) {
+    if (IsNoStreamRenderer()) {
+        // no stream renderer don't need to change audio stream state
+        state_ = RENDERER_PAUSED;
         return true;
     }
 
@@ -769,6 +781,10 @@ bool AudioRendererPrivate::PauseTransitent(StateChangeCmdType cmdType) const
         return false;
     }
     bool result = audioStream_->PauseAudioStream(cmdType);
+    if (result) {
+        state_ = RENDERER_PAUSED;
+    }
+
     return result;
 }
 
@@ -792,7 +808,7 @@ bool AudioRendererPrivate::Unmute(StateChangeCmdType cmdType) const
     return true;
 }
 
-bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType) const
+bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType)
 {
     Trace trace("AudioRenderer::Pause");
     std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
@@ -801,12 +817,12 @@ bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType) const
 
     CHECK_AND_RETURN_RET_LOG(!isSwitching_, false, "Pause failed. Switching state: %{public}d", isSwitching_);
 
-    if (audioInterrupt_.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION &&
-        !isEnableVoiceModemCommunicationStartStream_) {
+    if (IsNoStreamRenderer()) {
         // When the cellular call stream is pausing, only need to deactivate audio interrupt.
         if (AudioPolicyManager::GetInstance().DeactivateAudioInterrupt(audioInterrupt_) != 0) {
             AUDIO_ERR_LOG("DeactivateAudioInterrupt Failed");
         }
+        state_ = RENDERER_PAUSED;
         return true;
     }
 
@@ -814,6 +830,9 @@ bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType) const
     CHECK_AND_RETURN_RET_LOG(state == RENDERER_RUNNING, false,
         "State of stream is not running. Illegal state:%{public}u", state);
     bool result = audioStream_->PauseAudioStream(cmdType);
+    if (result) {
+        state_ = RENDERER_PAUSED;
+    }
 
     // When user is intentionally pausing, deactivate to remove from audioFocusInfoList_
     int32_t ret = AudioPolicyManager::GetInstance().DeactivateAudioInterrupt(audioInterrupt_);
@@ -825,23 +844,26 @@ bool AudioRendererPrivate::Pause(StateChangeCmdType cmdType) const
     return result;
 }
 
-bool AudioRendererPrivate::Stop() const
+bool AudioRendererPrivate::Stop()
 {
     AUDIO_INFO_LOG("StreamClientState for Renderer::Stop. id: %{public}u", sessionID_);
     std::shared_lock<std::shared_mutex> lock(switchStreamMutex_);
     CHECK_AND_RETURN_RET_LOG(!isSwitching_, false,
         "AudioRenderer::Stop failed. Switching state: %{public}d", isSwitching_);
-    if (audioInterrupt_.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION &&
-        !isEnableVoiceModemCommunicationStartStream_) {
+    if (IsNoStreamRenderer()) {
         // When the cellular call stream is stopping, only need to deactivate audio interrupt.
         if (AudioPolicyManager::GetInstance().DeactivateAudioInterrupt(audioInterrupt_) != 0) {
             AUDIO_WARNING_LOG("DeactivateAudioInterrupt Failed");
         }
+        state_ = RENDERER_STOPPED;
         return true;
     }
 
     WriteUnderrunEvent();
     bool result = audioStream_->StopAudioStream();
+    if (result) {
+        state_ = RENDERER_STOPPED;
+    }
     int32_t ret = AudioPolicyManager::GetInstance().DeactivateAudioInterrupt(audioInterrupt_);
     if (ret != 0) {
         AUDIO_WARNING_LOG("DeactivateAudioInterrupt Failed");
@@ -1735,28 +1757,32 @@ void RendererPolicyServiceDiedCallback::RestoreTheadLoop()
 {
     int32_t tryCounter = 10;
     uint32_t sleepTime = 300000;
-    bool result = false;
-    int32_t ret = -1;
-    while (!result && tryCounter > 0) {
+    bool restoreResult = false;
+    while (!restoreResult && tryCounter > 0) {
         tryCounter--;
         usleep(sleepTime);
-        if (renderer_ == nullptr || renderer_->audioStream_ == nullptr ||
-            renderer_->abortRestore_) {
-            AUDIO_INFO_LOG("RendererPolicyServiceDiedCallback RestoreTheadLoop abort restore");
+        if (renderer_ == nullptr || renderer_->audioStream_ == nullptr || renderer_->abortRestore_) {
+            AUDIO_INFO_LOG("abort restore");
             break;
         }
-        result = renderer_->audioStream_->RestoreAudioStream();
-        if (!result) {
-            AUDIO_ERR_LOG("RestoreAudioStream Failed, %{public}d attempts remaining", tryCounter);
-            continue;
+
+        if (renderer_->IsNoStreamRenderer()) {
+            // no stream renderer don't need to restore stream
+            restoreResult = true;
         } else {
+            restoreResult = renderer_->audioStream_->RestoreAudioStream();
+            if (!restoreResult) {
+                AUDIO_ERR_LOG("restore audio stream failed, %{public}d attempts remaining", tryCounter);
+                continue;
+            }
             renderer_->abortRestore_ = false;
         }
+
         if (renderer_->GetStatus() == RENDERER_RUNNING) {
             renderer_->GetAudioInterrupt(audioInterrupt_);
-            ret = AudioPolicyManager::GetInstance().ActivateAudioInterrupt(audioInterrupt_);
+            int32_t ret = AudioPolicyManager::GetInstance().ActivateAudioInterrupt(audioInterrupt_);
             if (ret != SUCCESS) {
-                AUDIO_ERR_LOG("AudioRenderer::ActivateAudioInterrupt Failed");
+                AUDIO_ERR_LOG("active audio interrupt failed");
             }
         }
     }
@@ -1873,6 +1899,12 @@ void AudioRendererPrivate::ConcedeStream()
 void AudioRendererPrivate::EnableVoiceModemCommunicationStartStream(bool enable)
 {
     isEnableVoiceModemCommunicationStartStream_ = enable;
+}
+
+bool AudioRendererPrivate::IsNoStreamRenderer() const
+{
+    return rendererInfo_.streamUsage == STREAM_USAGE_VOICE_MODEM_COMMUNICATION &&
+        !isEnableVoiceModemCommunicationStartStream_;
 }
 
 int32_t AudioRendererPrivate::SetDefaultOutputDevice(DeviceType deviceType)
