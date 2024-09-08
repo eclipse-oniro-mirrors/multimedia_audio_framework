@@ -212,7 +212,7 @@ int32_t PaCapturerStreamImpl::GetLatency(uint64_t &latency)
 
     // Get PA latency
     while (true) {
-        pa_operation *operation = pa_stream_update_timing_info(paStream_, NULL, NULL);
+        pa_operation *operation = pa_stream_update_timing_info(paStream_, PAStreamUpdateTimingInfoSuccessCb, NULL);
         if (operation != nullptr) {
             pa_operation_unref(operation);
         } else {
@@ -508,5 +508,13 @@ uint32_t PaCapturerStreamImpl::GetStreamIndex()
 {
     return streamIndex_;
 }
+
+void PaCapturerStreamImpl::PAStreamUpdateTimingInfoSuccessCb(pa_stream *stream, int32_t success, void *userdata)
+{
+    PaCapturerStreamImpl *capturerStreamImpl = (PaCapturerStreamImpl *)userdata;
+    pa_threaded_mainloop *mainLoop = (pa_threaded_mainloop *)capturerStreamImpl->mainloop_;
+    pa_threaded_mainloop_signal(mainLoop, 0);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS

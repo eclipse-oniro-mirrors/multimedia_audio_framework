@@ -693,14 +693,18 @@ AudioIOHandle AudioAdapterManager::OpenAudioPort(const AudioModuleInfo &audioMod
 
     CHECK_AND_RETURN_RET_LOG(audioServiceAdapter_ != nullptr, ERR_OPERATION_FAILED, "ServiceAdapter is null");
     curActiveCount_++;
-    return audioServiceAdapter_->OpenAudioPort(audioModuleInfo.lib, moduleArgs.c_str());
+    AudioIOHandle ioHandle = audioServiceAdapter_->OpenAudioPort(audioModuleInfo.lib, moduleArgs.c_str());
+    AUDIO_INFO_LOG("Open %{public}d port end.", static_cast<int32_t>(ioHandle));
+    return ioHandle;
 }
 
 int32_t AudioAdapterManager::CloseAudioPort(AudioIOHandle ioHandle)
 {
     CHECK_AND_RETURN_RET_LOG(audioServiceAdapter_ != nullptr, ERR_OPERATION_FAILED, "ServiceAdapter is null");
     curActiveCount_--;
-    return audioServiceAdapter_->CloseAudioPort(ioHandle);
+    int32_t ret = audioServiceAdapter_->CloseAudioPort(ioHandle);
+    AUDIO_INFO_LOG("Close %{public}d port end.", static_cast<int32_t>(ioHandle));
+    return ret;
 }
 
 int32_t AudioAdapterManager::GetCurActivateCount() const

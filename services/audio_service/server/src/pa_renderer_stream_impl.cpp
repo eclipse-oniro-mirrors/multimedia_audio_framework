@@ -36,7 +36,7 @@
 namespace OHOS {
 namespace AudioStandard {
 static SafeMap<void *, std::weak_ptr<PaRendererStreamImpl>> rendererStreamInstanceMap_;
-static const int32_t PA_STREAM_IMPL_TIMEOUT = 15; // 15s
+static const int32_t PA_STREAM_IMPL_TIMEOUT = 5; // 5s
 const uint32_t DOUBLE_VALUE = 2;
 const uint32_t MAX_LENGTH_OFFLOAD = 500;
 const int32_t OFFLOAD_HDI_CACHE1 = 200; // ms, should equal with val in hdi_sink.c
@@ -390,6 +390,8 @@ int32_t PaRendererStreamImpl::GetCurrentPosition(uint64_t &framePosition, uint64
         return ERR_OPERATION_FAILED;
     }
 
+    lock.Unlock();
+
     // Processing data for algorithmic time delays
     uint32_t algorithmLatency = GetEffectChainLatency();
     if (!offloadEnable_) {
@@ -448,6 +450,8 @@ int32_t PaRendererStreamImpl::GetLatency(uint64_t &latency)
             return ERR_OPERATION_FAILED;
         }
     }
+
+    lock.Unlock();
 
     latency = paLatency + cacheLatency;
     uint32_t algorithmLatency = GetEffectChainLatency();

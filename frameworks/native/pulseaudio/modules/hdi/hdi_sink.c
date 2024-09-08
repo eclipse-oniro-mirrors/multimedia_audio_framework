@@ -3126,7 +3126,8 @@ static void ThreadFuncRendererTimerBus(void *userdata)
         }
 
         if (ret == 0) {
-            AUDIO_INFO_LOG("Thread %s(use timing bus) shutting down, pid %d, tid %d", deviceClass, getpid(), gettid());
+            AUDIO_INFO_LOG("Thread %{public}s(use timing bus) shutting down, pid %{public}d, tid %{public}d",
+                deviceClass, getpid(), gettid());
             pthread_rwlock_unlock(&u->rwlockSleep);
             break;
         }

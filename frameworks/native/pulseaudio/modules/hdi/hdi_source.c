@@ -314,6 +314,7 @@ static void ThreadFuncCapturerTimer(void *userdata)
         AUTO_CTRACE("FuncCapturerLoop");
         bool result = PaRtpollSetTimerFunc(u, timerElapsed);
         if (!result) {
+            AUDIO_ERR_LOG("PaRtpollSetTimerFunc failed");
             break;
         }
         /* Hmm, nothing to do. Let's sleep */
@@ -331,6 +332,7 @@ static void ThreadFuncCapturerTimer(void *userdata)
         timerElapsed = pa_rtpoll_timer_elapsed(u->rtpoll);
 
         if (ret == 0) {
+            AUDIO_INFO_LOG("Thread OS_ReadHdi shutting down, pid %{public}d, tid %{public}d", getpid(), gettid());
             return;
         }
     }
