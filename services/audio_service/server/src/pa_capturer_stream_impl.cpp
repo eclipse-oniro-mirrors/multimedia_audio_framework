@@ -212,7 +212,7 @@ int32_t PaCapturerStreamImpl::GetLatency(uint64_t &latency)
 
     // Get PA latency
     while (true) {
-        pa_operation *operation = pa_stream_update_timing_info(paStream_, NULL, NULL);
+        pa_operation *operation = pa_stream_update_timing_info(paStream_, PAStreamUpdateTimingInfoSuccessCb, NULL);
         if (operation != nullptr) {
             pa_operation_unref(operation);
         } else {

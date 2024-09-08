@@ -564,7 +564,7 @@ int32_t PulseAudioServiceAdapterImpl::SetSourceOutputMute(int32_t uid, bool setM
             pa_operation *operation = pa_context_set_source_output_mute(mContext, sourOutputs[i].paStreamId,
                 (setMute ? 1 : 0), nullptr, nullptr);
             if (operation == nullptr) {
-                AUDIO_ERR_LOG("pa_context_get_sink_input_info_list nullptr");
+                AUDIO_ERR_LOG("pa_context_set_source_output_mute nullptr");
                 return ERROR;
             }
             pa_operation_unref(operation);

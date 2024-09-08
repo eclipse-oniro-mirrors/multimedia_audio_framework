@@ -390,6 +390,8 @@ int32_t PaRendererStreamImpl::GetCurrentPosition(uint64_t &framePosition, uint64
         return ERR_OPERATION_FAILED;
     }
 
+    lock.Unlock();
+
     // Processing data for algorithmic time delays
     uint32_t algorithmLatency = GetEffectChainLatency();
     if (!offloadEnable_) {
@@ -448,6 +450,8 @@ int32_t PaRendererStreamImpl::GetLatency(uint64_t &latency)
             return ERR_OPERATION_FAILED;
         }
     }
+
+    lock.Unlock();
 
     latency = paLatency + cacheLatency;
     uint32_t algorithmLatency = GetEffectChainLatency();
