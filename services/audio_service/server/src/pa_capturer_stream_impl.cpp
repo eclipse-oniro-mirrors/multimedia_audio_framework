@@ -496,5 +496,13 @@ uint32_t PaCapturerStreamImpl::GetStreamIndex()
 {
     return streamIndex_;
 }
+
+void PaCapturerStreamImpl::PAStreamUpdateTimingInfoSuccessCb(pa_stream *stream, int32_t success, void *userdata)
+{
+    PaCapturerStreamImpl *capturerStreamImpl = (PaCapturerStreamImpl *)userdata;
+    pa_threaded_mainloop *mainLoop = (pa_threaded_mainloop *)capturerStreamImpl->mainloop_;
+    pa_threaded_mainloop_signal(mainLoop, 0);
+}
+
 } // namespace AudioStandard
 } // namespace OHOS
