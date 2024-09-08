@@ -534,11 +534,8 @@ sptr<AudioProcessInServer> AudioService::GetAudioProcess(const AudioProcessConfi
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, nullptr, "ConfigProcessBuffer failed");
 
     ret = LinkProcessToEndpoint(process, audioEndpoint);
-
-    // Add here before check, because process release need this to trigger endpoint release
-    linkedPairedList_.push_back(std::make_pair(process, audioEndpoint));
-
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, nullptr, "LinkProcessToEndpoint failed");
+    linkedPairedList_.push_back(std::make_pair(process, audioEndpoint));
 
     CheckInnerCapForProcess(process, audioEndpoint);
     return process;
@@ -560,6 +557,7 @@ void AudioService::ResetAudioEndpoint()
             std::string endpointName = (*paired).second->GetEndpointName();
             if (endpointList_.find(endpointName) != endpointList_.end()) {
                 (*paired).second->Release();
+                AUDIO_INFO_LOG("Erase endpoint %{public}s from endpointList_", endpointName.c_str());
                 endpointList_.erase(endpointName);
             }
 
@@ -569,11 +567,9 @@ void AudioService::ResetAudioEndpoint()
             CHECK_AND_RETURN_LOG(audioEndpoint != nullptr, "Get new endpoint failed");
 
             ret = LinkProcessToEndpoint((*paired).first, audioEndpoint);
-
-            // Add here before check, because process release need this to trigger endpoint release
+            CHECK_AND_RETURN_LOG(ret == SUCCESS, "LinkProcessToEndpoint failed");
             linkedPairedList_.push_back(std::make_pair((*paired).first, audioEndpoint));
 
-            CHECK_AND_RETURN_LOG(ret == SUCCESS, "LinkProcessToEndpoint failed");
             CheckInnerCapForProcess((*paired).first, audioEndpoint);
         }
         paired++;
@@ -612,7 +608,15 @@ int32_t AudioService::LinkProcessToEndpoint(sptr<AudioProcessInServer> process,
     std::shared_ptr<AudioEndpoint> endpoint)
 {
     int32_t ret = endpoint->LinkProcessStream(process);
-    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERR_OPERATION_FAILED, "LinkProcessStream failed");
+    if (ret != SUCCESS && endpoint->GetLinkedProcessCount() == 0 &&
+        endpointList_.count(endpoint->GetEndpointName())) {
+        std::string endpointToErase = endpoint->GetEndpointName();
+        endpointList_.erase(endpoint->GetEndpointName());
+        AUDIO_ERR_LOG("LinkProcessStream failed, erase endpoint %{public}s", endpointToErase.c_str());
+        return ERR_OPERATION_FAILED;
+    }
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERR_OPERATION_FAILED, "LinkProcessStream to endpoint %{public}s failed",
+        endpoint->GetEndpointName().c_str());
 
     ret = process->AddProcessStatusListener(endpoint);
     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERR_OPERATION_FAILED, "AddProcessStatusListener failed");
@@ -725,6 +729,7 @@ std::shared_ptr<AudioEndpoint> AudioService::GetAudioEndpointForDevice(DeviceInf
             std::shared_ptr<AudioEndpoint> endpoint = AudioEndpoint::CreateEndpoint(isVoipStream ?
                 AudioEndpoint::TYPE_VOIP_MMAP : AudioEndpoint::TYPE_MMAP, endpointFlag, clientConfig, deviceInfo);
             CHECK_AND_RETURN_RET_LOG(endpoint != nullptr, nullptr, "Create mmap AudioEndpoint failed.");
+            AUDIO_INFO_LOG("Add endpoint %{public}s to endpointList_", deviceKey.c_str());
             endpointList_[deviceKey] = endpoint;
             return endpoint;
         }
@@ -735,6 +740,7 @@ std::shared_ptr<AudioEndpoint> AudioService::GetAudioEndpointForDevice(DeviceInf
             g_id, clientConfig, deviceInfo);
         CHECK_AND_RETURN_RET_LOG(endpoint != nullptr, nullptr, "Create independent AudioEndpoint failed.");
         g_id++;
+        AUDIO_INFO_LOG("Add endpointSeperate %{public}s to endpointList_", deviceKey.c_str());
         endpointList_[deviceKey] = endpoint;
         return endpoint;
     }
