@@ -168,6 +168,7 @@ public:
     }
 
     float GetMaxAmplitude() override;
+    uint32_t GetLinkedProcessCount() override;
 
 private:
     AudioProcessConfig GetInnerCapConfig();
@@ -2193,6 +2194,12 @@ void AudioEndpointInner::WriterRenderStreamStandbySysEvent(uint32_t sessionId, i
     bean->Add("STREAMID", static_cast<int32_t>(sessionId));
     bean->Add("STANDBY", standby);
     Media::MediaMonitor::MediaMonitorManager::GetInstance().WriteLogMsg(bean);
+}
+
+uint32_t AudioEndpointInner::GetLinkedProcessCount()
+{
+    std::lock_guard<std::mutex> lock(listLock_);
+    return processList_.size();
 }
 } // namespace AudioStandard
 } // namespace OHOS
