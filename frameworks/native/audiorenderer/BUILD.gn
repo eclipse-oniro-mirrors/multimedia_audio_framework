@@ -1,0 +1,206 @@
+# Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/multimedia/audio_framework/audio_ohcore.gni")
+
+pulseaudio_dir = "//third_party/pulseaudio"
+
+config("audio_renderer_config") {
+  include_dirs = [
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiorenderer/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/audiorenderer/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/audiostream/include",
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiomanager/include",
+    "//foundation/multimedia/audio_framework/services/audio_service/client/include",
+    "//foundation/multimedia/audio_framework/services/audio_service/test/example",
+    "//commonlibrary/c_utils/base/include",
+    "$pulseaudio_dir/src",
+    "$pulseaudio_dir/confgure/src",
+  ]
+
+  cflags = [
+    "-Wall",
+    "-Werror",
+  ]
+}
+
+ohos_shared_library("audio_renderer") {
+  sanitize = {
+    cfi = true
+    debug = false
+    blocklist = "//foundation/multimedia/audio_framework/cfi_blocklist.txt"
+  }
+  install_enable = true
+
+  configs = [ ":audio_renderer_config" ]
+
+  if ("${product_name}" == "ohcore") {
+    defines = [ "OHCORE" ]
+  }
+
+  include_dirs = audio_gateway_include_dirs
+
+  sources = [
+    "src/audio_renderer.cpp",
+    "src/audio_renderer_proxy_obj.cpp",
+  ]
+
+  deps = [
+    "//foundation/multimedia/audio_framework/services/audio_policy:audio_policy_client",
+    "//foundation/multimedia/audio_framework/services/audio_service:audio_client",
+  ]
+
+  deps += audio_renderer_gateway_deps
+
+  public_configs = [ ":audio_external_library_config" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
+  ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+config("audio_external_library_config") {
+  include_dirs = [ "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiorenderer/include" ]
+}
+
+group("audio_renderer_test_packages") {
+  deps = [
+    ":audio_interrupt_test",
+    ":audio_latency_accuracy_test",
+    ":audio_render_mode_callback_test",
+    ":audio_renderer_test",
+    ":audio_voip_test",
+    ":interrupt_multi_renderer_test",
+  ]
+}
+
+ohos_executable("audio_renderer_test") {
+  install_enable = false
+
+  sources = [ "test/example/audio_renderer_test.cpp" ]
+
+  configs = [ ":audio_renderer_config" ]
+
+  deps = [ ":audio_renderer" ]
+
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_executable("audio_latency_accuracy_test") {
+  install_enable = false
+
+  sources = [ "test/example/audio_renderer_test.cpp" ]
+
+  configs = [ ":audio_renderer_config" ]
+  cflags = [ "-DLATENCY_ACCURACY_TEST" ]
+
+  deps = [ ":audio_renderer" ]
+
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_executable("audio_render_mode_callback_test") {
+  install_enable = false
+
+  sources = [ "test/example/audio_render_mode_callback_test.cpp" ]
+
+  configs = [ ":audio_renderer_config" ]
+
+  deps = [ ":audio_renderer" ]
+
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_executable("audio_voip_test") {
+  install_enable = false
+
+  sources = [ "test/example/audio_voip_test.cpp" ]
+
+  include_dirs = [
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocapturer/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/audiocapturer/include",
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiorenderer/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/audiorenderer/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/audiostream/include",
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+    "//foundation/multimedia/audio_framework/services/audio_service/client/include",
+    "//commonlibrary/c_utils/base/include",
+    "$pulseaudio_dir/src",
+    "$pulseaudio_dir/confgure/src",
+  ]
+
+  cflags = [
+    "-Wall",
+    "-Werror",
+  ]
+
+  configs = [ ":audio_renderer_config" ]
+
+  deps = [
+    ":audio_renderer",
+    "//foundation/multimedia/audio_framework/frameworks/native/audiocapturer:audio_capturer",
+  ]
+
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_executable("audio_interrupt_test") {
+  install_enable = false
+
+  sources = [ "test/example/audio_interrupt_test.cpp" ]
+
+  configs = [ ":audio_renderer_config" ]
+
+  deps = [
+    ":audio_renderer",
+    "//foundation/multimedia/audio_framework/services/audio_service:audio_client",
+  ]
+
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_executable("interrupt_multi_renderer_test") {
+  install_enable = false
+
+  sources = [ "test/example/interrupt_multi_renderer_test.cpp" ]
+
+  configs = [ ":audio_renderer_config" ]
+
+  deps = [ ":audio_renderer" ]
+
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}

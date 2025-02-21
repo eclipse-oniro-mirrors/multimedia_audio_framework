@@ -1,0 +1,53 @@
+# Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+pulseaudio_build_path = "//third_party/pulseaudio/ohosbuild"
+
+ohos_shared_library("pulse_audio_service_adapter") {
+  sanitize = {
+    cfi = true
+    debug = false
+    blocklist = "//foundation/multimedia/audio_framework/cfi_blocklist.txt"
+  }
+  install_enable = true
+  sources = [ "//foundation/multimedia/audio_framework/frameworks/native/audioadapter/src/pulse_audio_service_adapter_impl.cpp" ]
+  cflags = [ "-fPIC" ]
+  cflags += [ "-Wall" ]
+  cflags_cc = cflags
+
+  include_dirs = [
+    "$pulseaudio_build_path/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/audioadapter/include",
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+    "//third_party/pulseaudio/src",
+    "//third_party/pulseaudio/confgure/src",
+    "//third_party/pulseaudio/include",
+  ]
+
+  public_configs = [ ":audio_external_library_config" ]
+
+  deps = [ "$pulseaudio_build_path/src/pulse:pulse" ]
+
+  external_deps = [
+    "hisysevent_native:libhisysevent",
+    "hiviewdfx_hilog_native:libhilog",
+  ]
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+config("audio_external_library_config") {
+  include_dirs = [ "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include" ]
+}

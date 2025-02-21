@@ -1,0 +1,155 @@
+# Copyright (c) 2022-2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//drivers/hdf_core/adapter/uhdf2/uhdf.gni")
+import("//foundation/multimedia/audio_framework/config.gni")
+
+ohos_shared_library("audio_capturer_source") {
+  sanitize = {
+    cfi = true
+    debug = false
+    blocklist = "//foundation/multimedia/audio_framework/cfi_blocklist.txt"
+  }
+  install_enable = true
+  sources = [ "primary/audio_capturer_source.cpp" ]
+  cflags = [ "-fPIC" ]
+  cflags += [ "-Wall" ]
+  cflags_cc = cflags
+
+  include_dirs = [
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/audioutils/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/hdiadapter/source/common",
+    "//drivers/peripheral/audio/interfaces/include",
+  ]
+
+  deps = [ "//foundation/multimedia/audio_framework/frameworks/native/audioutils:audio_utils" ]
+  deps += [ multimedia_audio_framework_hdi_audio_client ]
+
+  external_deps = [ 
+    "hiviewdfx_hilog_native:libhilog",
+    "power_manager:powermgr_client",
+  ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_shared_library("remote_audio_capturer_source") {
+  sanitize = {
+    cfi = true
+    debug = false
+    blocklist = "//foundation/multimedia/audio_framework/cfi_blocklist.txt"
+  }
+  install_enable = true
+  sources = [ "remote/remote_audio_capturer_source.cpp" ]
+  cflags = [ "-fPIC" ]
+  cflags += [ "-Wall" ]
+  cflags_cc = cflags
+  if ("${product_name}" == "m40") {
+    cflags += [ "-DPRODUCT_M40" ]
+  }
+
+  include_dirs = [
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/hdiadapter/source/common",
+    "//drivers/peripheral/audio/interfaces/include",
+  ]
+
+  if ("${product_name}" == "m40") {
+    deps = [ "//foundation/distributedhardware/distributed_audio/hdf_service/distributed_audio/audio_client:daudio_client" ]
+  } else {
+    deps = [ multimedia_audio_framework_hdi_audio_client ]
+  }
+
+  external_deps = [ 
+    "hiviewdfx_hilog_native:libhilog",
+    "power_manager:powermgr_client",
+  ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_shared_library("audio_capturer_file_source") {
+  sanitize = {
+    cfi = true
+    debug = false
+    blocklist = "//foundation/multimedia/audio_framework/cfi_blocklist.txt"
+  }
+  install_enable = true
+
+  sources = [ "file/audio_capturer_file_source.cpp" ]
+
+  cflags = [ "-fPIC" ]
+  cflags += [ "-Wall" ]
+
+  cflags_cc = cflags
+
+  include_dirs = [
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+    "//foundation/multimedia/audio_framework/frameworks/native/hdiadapter/source/common",
+    "//drivers/peripheral/audio/interfaces/include",
+  ]
+
+  external_deps = [ 
+    "hiviewdfx_hilog_native:libhilog",
+    "power_manager:powermgr_client",
+  ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_shared_library("capturer_source_adapter") {
+  sanitize = {
+    cfi = true
+    debug = false
+    blocklist = "//foundation/multimedia/audio_framework/cfi_blocklist.txt"
+  }
+  install_enable = true
+
+  sources = [
+    "common/capturer_source_adapter.c",
+    "common/i_audio_capturer_source.cpp",
+  ]
+
+  cflags = [ "-fPIC" ]
+  cflags += [ "-Wall" ]
+
+  cflags_cc = cflags
+
+  include_dirs = [
+    "//foundation/multimedia/audio_framework/frameworks/native/hdiadapter/source/common",
+    "//foundation/multimedia/audio_framework/frameworks/native/hdiadapter/source/primary",
+    "//foundation/multimedia/audio_framework/frameworks/native/hdiadapter/source/file",
+    "//foundation/multimedia/audio_framework/frameworks/native/hdiadapter/source/remote",
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+    "//drivers/peripheral/audio/interfaces/include",
+  ]
+
+  deps = [
+    ":audio_capturer_file_source",
+    ":audio_capturer_source",
+    ":remote_audio_capturer_source",
+  ]
+
+  external_deps = [ 
+    "hiviewdfx_hilog_native:libhilog",
+    "power_manager:powermgr_client",
+  ]
+
+  part_name = "multimedia_audio_framework"
+  subsystem_name = "multimedia"
+}

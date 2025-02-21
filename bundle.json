@@ -1,0 +1,154 @@
+{
+    "name": "@ohos/audio_framework",
+    "description": "Audio standard provides managers and provides the audio resources to application for play/record audio",
+    "version": "3.1",
+    "license": "Apache License 2.0",
+    "publishAs": "code-segment",
+    "segment": {
+        "destPath": "foundation/multimedia/audio_framework"
+    },
+    "dirs": {},
+    "scripts": {},
+    "component": {
+        "name": "multimedia_audio_framework",
+        "subsystem": "multimedia",
+        "syscap": [
+          "SystemCapability.Multimedia.Audio.Core",
+          "SystemCapability.Multimedia.Audio.Renderer",
+          "SystemCapability.Multimedia.Audio.Capturer",
+          "SystemCapability.Multimedia.Audio.Device",
+          "SystemCapability.Multimedia.Audio.Volume",
+          "SystemCapability.Multimedia.Audio.Communication",
+          "SystemCapability.Multimedia.Audio.Tone",
+          "SystemCapability.Multimedia.Audio.Interrupt"
+        ],
+        "features": [],
+        "adapted_system_type": [ "standard" ],
+        "rom": "",
+        "ram": "",
+        "hisysevent_config": [ "//foundation/multimedia/audio_framework/hisysevent.yaml" ],
+        "deps": {
+          "components": [
+              "ability_manager",
+              "appexecfwk_base",
+              "ace_napi",
+              "ipc_core",
+              "libhilog",
+              "native_dataability",
+              "native_rdb",
+              "samgr_proxy",
+              "system_ability_fwk",
+              "eventhandler"
+            ],
+            "third_party": [
+              "libsnd",
+              "pulseaudio"
+            ]
+        },
+        "build": {
+          "group_type": {
+            "base_group": [
+            ],
+            "fwk_group": [
+              "//foundation/multimedia/audio_framework/frameworks/js/napi:audio",
+              "//foundation/multimedia/audio_framework/frameworks/native/opensles:opensles",
+              "//foundation/multimedia/audio_framework/frameworks/native/audiocompatibility:audio_renderer_gateway",
+              "//foundation/multimedia/audio_framework/frameworks/native/audiocompatibility:audio_capturer_gateway"
+            ],
+            "service_group": [
+              "//foundation/multimedia/audio_framework/sa_profile:audio_service_sa_profile",
+              "//foundation/multimedia/audio_framework/services/audio_service:audio_service_packages",
+              "//foundation/multimedia/audio_framework/sa_profile:audio_policy_service_sa_profile",
+              "//foundation/multimedia/audio_framework/services/audio_policy:audio_policy_packages",
+              "//third_party/pulseaudio/ohosbuild:pulseaudio_packages",
+              "//foundation/multimedia/audio_framework/frameworks/native/pulseaudio/modules:pa_extend_modules"
+            ]
+          },
+          "inner_kits": [
+            {
+              "type": "none",
+              "name": "//foundation/multimedia/audio_framework/services/audio_service:audio_client",
+              "header": {
+                "header_files": [
+                  "audio_system_manager.h",
+                  "audio_stream_manager.h",
+                  "audio_info.h"
+                ],
+                "header_base": [
+                    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiomanager/include",
+                    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include"
+                ]
+              }
+            },
+            {
+              "type": "none",
+              "name": "//foundation/multimedia/audio_framework/frameworks/native/audiocapturer:audio_capturer",
+              "header": {
+                "header_files": [
+                  "audio_capturer.h",
+                  "audio_info.h"
+                ],
+                "header_base": [
+                    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocapturer/include",
+                    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include"
+                 ]
+              }
+            },
+            {
+              "type": "none",
+              "name": "//foundation/multimedia/audio_framework/frameworks/native/audiorenderer:audio_renderer",
+              "header": {
+                "header_files": [
+                  "audio_renderer.h",
+                  "audio_info.h"
+                ],
+                "header_base": "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiorenderer/include"
+              }
+            },
+            {
+              "type": "none",
+              "name": "//foundation/multimedia/audio_framework/frameworks/native/toneplayer:audio_toneplayer",
+              "header": {
+                "header_files": [
+                  "audio_toneplayer_private.h",
+                  "audio_renderer.h",
+                  "audio_info.h"
+                ],
+                "header_base": "//foundation/multimedia/audio_framework/interfaces/inner_api/native/toneplayer/include"
+              }
+            },
+            {
+              "type": "none",
+              "name": "//foundation/multimedia/audio_framework/frameworks/js/napi:audio",
+              "header": {
+                "header_files": [
+                  "audio_manager_napi.h",
+                  "audio_capturer_napi.h",
+                  "audio_renderer_napi.h",
+                  "audio_parameters_napi.h"
+                ],
+                "header_base": [
+                     "//foundation/multimedia/audio_framework/interfaces/kits/js/audio_manager/include",
+                     "//foundation/multimedia/audio_framework/interfaces/kits/js/audio_capturer/include",
+                     "//foundation/multimedia/audio_framework/interfaces/kits/js/audio_renderer/include"
+                ]
+              }
+            }
+          ],
+          "test": [
+            "//foundation/multimedia/audio_framework/test:audio_unit_test",
+            "//foundation/multimedia/audio_framework/test:audio_module_test",
+            "//foundation/multimedia/audio_framework/test:audio_fuzz_test",
+            "//foundation/multimedia/audio_framework/frameworks/native/audiorenderer:audio_renderer_test_packages",
+            "//foundation/multimedia/audio_framework/frameworks/native/audiocapturer:audio_capturer_test_packages",
+            "//foundation/multimedia/audio_framework/frameworks/native/opensles:audio_opensles_test_packages",
+            "//foundation/multimedia/audio_framework/frameworks/native/toneplayer:audio_toneplayer_test",
+            "//foundation/multimedia/audio_framework/services/audio_service:audio_service_test_packages",
+            "//foundation/multimedia/audio_framework/services/audio_policy:audio_policy_test_packages",
+            "//foundation/multimedia/audio_framework/test/benchmarktest/audiorenderer:benchmarktest",
+            "//foundation/multimedia/audio_framework/test/benchmarktest/audiocapturer:benchmarktest",
+            "//foundation/multimedia/audio_framework/test/benchmarktest/audiomanager:benchmarktest"
+          ]
+        }
+    }
+}

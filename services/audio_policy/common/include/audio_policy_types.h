@@ -1,0 +1,87 @@
+/*
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef ST_AUDIO_POLICY_TYPES_H
+#define ST_AUDIO_POLICY_TYPES_H
+
+#include <audio_info.h>
+
+namespace OHOS {
+namespace AudioStandard {
+enum AudioPolicyCommand {
+    SET_STREAM_VOLUME,
+    GET_STREAM_VOLUME,
+    SET_STREAM_MUTE,
+    GET_STREAM_MUTE,
+    IS_STREAM_ACTIVE,
+    SET_DEVICE_ACTIVE,
+    IS_DEVICE_ACTIVE,
+    GET_ACTIVE_OUTPUT_DEVICE,
+    GET_ACTIVE_INPUT_DEVICE,
+    SET_RINGER_MODE,
+    GET_RINGER_MODE,
+    SET_AUDIO_SCENE,
+    GET_AUDIO_SCENE,
+    SET_MICROPHONE_MUTE,
+    SET_MICROPHONE_MUTE_AUDIO_CONFIG,
+    IS_MICROPHONE_MUTE,
+    SET_RINGERMODE_CALLBACK,
+    UNSET_RINGERMODE_CALLBACK,
+    SET_CALLBACK,
+    UNSET_CALLBACK,
+    ACTIVATE_INTERRUPT,
+    DEACTIVATE_INTERRUPT,
+    SET_INTERRUPT_CALLBACK,
+    UNSET_INTERRUPT_CALLBACK,
+    REQUEST_AUDIO_FOCUS,
+    ABANDON_AUDIO_FOCUS,
+    GET_STREAM_IN_FOCUS,
+    GET_SESSION_INFO_IN_FOCUS,
+    SET_VOLUME_KEY_EVENT_CALLBACK,
+    UNSET_VOLUME_KEY_EVENT_CALLBACK,
+    GET_DEVICES,
+    SET_DEVICE_CHANGE_CALLBACK,
+    UNSET_DEVICE_CHANGE_CALLBACK,
+    QUERY_PERMISSION,
+    SELECT_OUTPUT_DEVICE,
+    GET_SELECTED_DEVICE_INFO,
+    SELECT_INPUT_DEVICE,
+    RECONFIGURE_CHANNEL,
+    GET_AUDIO_LATENCY,
+    GET_SINK_LATENCY,
+    REGISTER_PLAYBACK_EVENT,
+    UNREGISTER_PLAYBACK_EVENT,
+    REGISTER_RECORDING_EVENT,
+    UNREGISTER_RECORDING_EVENT,
+    REGISTER_TRACKER,
+    UPDATE_TRACKER,
+    GET_RENDERER_CHANGE_INFOS,
+    GET_CAPTURER_CHANGE_INFOS,
+    SET_LOW_POWER_STREM_VOLUME,
+    GET_LOW_POWRR_STREM_VOLUME,
+    UPDATE_STREAM_STATE,
+    GET_SINGLE_STREAM_VOLUME,
+    GET_VOLUME_GROUP_INFO,
+    GET_TONEINFO,
+    GET_SUPPORTED_TONES,
+    IS_AUDIO_RENDER_LOW_LATENCY_SUPPORTED,
+    SET_MIC_STATE_CHANGE_CALLBACK,
+    GET_USING_PEMISSION_FROM_PRIVACY,
+    GET_ACTIVE_OUTPUT_DEVICE_DESCRIPTORS,
+};
+} // namespace AudioStandard
+} // namespace OHOS
+
+#endif // ST_AUDIO_POLICY_TYPES_H
