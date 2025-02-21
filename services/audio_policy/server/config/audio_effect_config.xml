@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (c) 2023 Huawei Device Co., Ltd.
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<audio_effects_conf version="1.0">
+    <libraries>
+        <library name="histen" path="libaudio_integration.z.so"/>
+        <library name="hvs" path="libaudio_integration_hvs.z.so"/>
+    </libraries>
+
+    <effects>
+        <effect name="histen" library="histen"/>
+        <effect name="hvs" library="hvs"/>
+    </effects>
+
+    <effectChains>
+        <effectChain name="EFFECTCHAIN_SPK_MUSIC">
+            <apply effect="histen"/>
+        </effectChain>
+        <effectChain name="EFFECTCHAIN_BT_MUSIC">
+            <apply effect="hvs"/>
+        </effectChain>
+    </effectChains>
+
+    <preProcess>
+    </preProcess>
+
+    <postProcess>
+        <stream scene="SCENE_MUSIC">
+            <streamEffectMode mode="EFFECT_DEFAULT">
+                <devicePort type="DEVICE_TYPE_SPEAKER" effectChain="EFFECTCHAIN_SPK_MUSIC"/>
+                <devicePort type="DEVICE_TYPE_BLUETOOTH_A2DP" effectChain="EFFECTCHAIN_BT_MUSIC"/>
+            </streamEffectMode>
+        </stream>
+        <stream scene="SCENE_MOVIE">
+            <streamEffectMode mode="EFFECT_DEFAULT">
+                <devicePort type="DEVICE_TYPE_SPEAKER" effectChain="EFFECTCHAIN_SPK_MUSIC"/>
+                <devicePort type="DEVICE_TYPE_BLUETOOTH_A2DP" effectChain="EFFECTCHAIN_BT_MUSIC"/>
+            </streamEffectMode>  
+        </stream>
+        <stream scene="SCENE_GAME">
+            <streamEffectMode mode="EFFECT_DEFAULT">
+                <devicePort type="DEVICE_TYPE_SPEAKER" effectChain="EFFECTCHAIN_SPK_MUSIC"/>
+                <devicePort type="DEVICE_TYPE_BLUETOOTH_A2DP" effectChain="EFFECTCHAIN_BT_MUSIC"/>
+            </streamEffectMode>  
+        </stream>
+        <stream scene="SCENE_SPEECH">
+            <streamEffectMode mode="EFFECT_DEFAULT">
+                <devicePort type="DEVICE_TYPE_SPEAKER" effectChain="EFFECTCHAIN_SPK_MUSIC"/>
+                <devicePort type="DEVICE_TYPE_BLUETOOTH_A2DP" effectChain="EFFECTCHAIN_BT_MUSIC"/>
+            </streamEffectMode>  
+        </stream>
+        <stream scene="SCENE_RING">
+            <streamEffectMode mode="EFFECT_DEFAULT">
+                <devicePort type="DEVICE_TYPE_SPEAKER" effectChain="EFFECTCHAIN_SPK_MUSIC"/>
+                <devicePort type="DEVICE_TYPE_BLUETOOTH_A2DP" effectChain="EFFECTCHAIN_BT_MUSIC"/>
+            </streamEffectMode>  
+        </stream>
+        <stream scene="SCENE_OTHERS">
+            <streamEffectMode mode="EFFECT_DEFAULT">
+                <devicePort type="DEVICE_TYPE_SPEAKER" effectChain="EFFECTCHAIN_SPK_MUSIC"/>
+                <devicePort type="DEVICE_TYPE_BLUETOOTH_A2DP" effectChain="EFFECTCHAIN_BT_MUSIC"/>
+            </streamEffectMode>  
+        </stream>
+    </postProcess>
+</audio_effects_conf>

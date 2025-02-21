@@ -1,0 +1,77 @@
+# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+declare_args() {
+  audio_framework_feature_double_pnp_detect = false
+  audio_framework_feature_dtmf_tone = true
+  audio_framework_feature_opensl_es = true
+  sonic_enable = true
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.distributedhardware_distributed_audio)) {
+    audio_framework_feature_daudio_enable = true
+  } else {
+    audio_framework_feature_daudio_enable = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.hiviewdfx_hitrace)) {
+    audio_framework_feature_hitrace_enable = true
+  } else {
+    audio_framework_feature_hitrace_enable = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.customization_config_policy)) {
+    audio_framework_config_policy_enable = true
+  } else {
+    audio_framework_config_policy_enable = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.multimodalinput_input)) {
+    audio_framework_feature_input = true
+  } else {
+    audio_framework_feature_input = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.powermgr_power_manager)) {
+    audio_framework_feature_power_manager = true
+  } else {
+    audio_framework_feature_power_manager = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.distributedhardware_device_manager)) {
+    audio_framework_feature_device_manager = true
+  } else {
+    audio_framework_feature_device_manager = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.hiviewdfx_hiview)) {
+    audio_framework_feature_hiview_enable = true
+  } else {
+    audio_framework_feature_hiview_enable = false
+  }
+
+  audio_framework_feature_new_napi = true
+  multimedia_audio_framework_pulse_audio = "//third_party/pulseaudio/include"
+
+  multimedia_audio_framework_pulse_audio_src = "//third_party/pulseaudio/src"
+
+  multimedia_audio_framework_drivers =
+      "//drivers/peripheral/audio/interfaces/include/"
+}
+
+third_party_path = "//third_party"
