@@ -1,0 +1,102 @@
+# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//foundation/multimedia/audio_framework/config.gni")
+
+group("audio_unit_test") {
+  testonly = true
+
+  deps = [
+    "../frameworks/js/napi/audiomanager/test/unittest/audio_manager_test:jsunittest",
+    "../frameworks/js/napi/audiomanager/test/unittest/group_manager_test:jsunittest",
+    "../frameworks/js/napi/audiomanager/test/unittest/routing_manager_test:jsunittest",
+    "../frameworks/js/napi/audiomanager/test/unittest/spatialization_manager_test:jsunittest",
+    "../frameworks/js/napi/audiomanager/test/unittest/stream_manager_test:jsunittest",
+    "../frameworks/js/napi/audiomanager/test/unittest/volume_manager_test:jsunittest",
+    "../frameworks/js/napi/audiorenderer/test/unittest/audio_renderer_interrupt_test:js_audio_interrupt_test",
+    "../frameworks/js/napi/audiorenderer/test/unittest/audio_renderer_test:jsunittest",
+    "../frameworks/js/napi/audiorenderer/toneplayer/test/unittest/tone_player_test:jsunittest",
+    "../frameworks/native/audiocapturer/test/unittest/capturer_test:audio_capturer_unit_test",
+    "../frameworks/native/audiocapturer/test/unittest/capturer_test:audio_fast_capturer_unit_test",
+    "../frameworks/native/audiocapturer/test/unittest/capturer_test:inner_capturer_unit_test",
+    "../frameworks/native/audiocapturer/test/unittest/multiple_capturer_test:multiple_audio_capturer_unit_test",
+    "../frameworks/native/audioeffect/test/unittest/effect_unit_test:audio_effect_chain_manager_unit_test",
+    "../frameworks/native/audiopolicy/test/unittest/group_manager_test:audio_group_manager_unit_test",
+    "../frameworks/native/audiopolicy/test/unittest/manager_test:audio_manager_unit_test",
+    "../frameworks/native/audiopolicy/test/unittest/policy_test:audio_policy_unit_test",
+    "../frameworks/native/audiopolicy/test/unittest/routing_manager_test:audio_routing_manager_test",
+    "../frameworks/native/audiopolicy/test/unittest/spatialization_manager_test:audio_spatialization_manager_test",
+    "../frameworks/native/audiopolicy/test/unittest/stream_manager_test:audio_stream_manager_unit_test",
+    "../frameworks/native/audiopolicy/test/unittest/volume_change_test:audio_volume_change_unit_test",
+    "../frameworks/native/audiorenderer/test/multithreadtest:audio_renderer_multi_test",
+    "../frameworks/native/audiorenderer/test/unittest/renderer_test:audio_fast_renderer_unit_test",
+    "../frameworks/native/audiorenderer/test/unittest/renderer_test:audio_renderer_unit_test",
+    "../frameworks/native/audiorenderer/test/unittest/renderer_test:capture_renderer_interrupt_unit_test",
+    "../frameworks/native/audiorenderer/test/unittest/renderer_test:renderer_capture_interrupt_unit_test",
+    "../frameworks/native/audioutils/test/unittest:audio_utils_unit_test",
+    "../frameworks/native/examples:pa_stream_test",
+    "../frameworks/native/hdiadapter/sink/test/unittest/audio_running_lock_manager_unit_test:audio_running_lock_manager_unit_test",
+    "../frameworks/native/offlineaudioeffect/test/unittest:offline_audio_effect_manager_unit_test",
+    "../frameworks/native/ohaudio/test/unittest/oh_audio_capture_test:audio_oh_capture_unit_test",
+    "../frameworks/native/ohaudio/test/unittest/oh_audio_render_test:audio_oh_render_unit_test",
+    "../frameworks/native/ohaudio/test/unittest/oh_audio_stream_builder_test:audio_oh_builder_unit_test",
+    "../frameworks/native/playbackcapturer/test/unittest:playback_capturer_manager_unit_test",
+    "../frameworks/native/toneplayer/test/unittest:audio_toneplayer_unit_test",
+    "../services/audio_service/test/unittest:audio_balance_unit_test",
+  ]
+
+  if (audio_framework_feature_opensl_es) {
+    deps += [
+      "../frameworks/native/opensles/test/unittest/opensles_player_test:audio_opensles_player_unit_test",
+      "../frameworks/native/opensles/test/unittest/opensles_recorder_test:audio_opensles_recorder_unit_test",
+    ]
+  }
+
+  if (speex_enable == true) {
+    deps += [
+      "../services/audio_service/test/unittest:audio_direct_sink_unit_test",
+      "../services/audio_service/test/unittest:none_mix_engine_unit_test",
+    ]
+  }
+}
+
+group("audio_module_test") {
+  testonly = true
+
+  deps = [ "moduletest/audiopolicy:audio_policy_module_test" ]
+}
+
+group("audio_fuzz_test") {
+  testonly = true
+
+  deps = [
+    "fuzztest/audiobluetoothmanager_fuzzer:fuzztest",
+    "fuzztest/audiointerruptservice_fuzzer:fuzztest",
+    "fuzztest/audiomanager_fuzzer:fuzztest",
+    "fuzztest/audiopolicy_fuzzer:fuzztest",
+    "fuzztest/audiopolicyanother_fuzzer:fuzztest",
+    "fuzztest/audioserver_fuzzer:fuzztest",
+    "fuzztest/audioserverbalance_fuzzer:fuzztest",
+    "fuzztest/audiostream_fuzzer:fuzztest",
+  ]
+}
+
+group("audio_benchmark_test") {
+  testonly = true
+
+  deps = [
+    "../frameworks/native/audiocapturer/test/benchmark:benchmarktest",
+    "../frameworks/native/audiopolicy/test/benchmark:benchmarktest",
+    "../frameworks/native/audiorenderer/test/benchmark:benchmarktest",
+  ]
+}
