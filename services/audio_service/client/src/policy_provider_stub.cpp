@@ -1,0 +1,312 @@
+/*
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef LOG_TAG
+#define LOG_TAG "PolicyProviderStub"
+#endif
+
+#include "policy_provider_stub.h"
+#include "audio_service_log.h"
+#include "audio_errors.h"
+
+namespace OHOS {
+namespace AudioStandard {
+bool PolicyProviderStub::CheckInterfaceToken(MessageParcel &data)
+{
+    static auto localDescriptor = IPolicyProviderIpc::GetDescriptor();
+    auto remoteDescriptor = data.ReadInterfaceToken();
+    CHECK_AND_RETURN_RET_LOG(remoteDescriptor == localDescriptor, false, "CheckInterFfaceToken failed.");
+    return true;
+}
+
+int PolicyProviderStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply,
+    MessageOption &option)
+{
+    bool ret = CheckInterfaceToken(data);
+    CHECK_AND_RETURN_RET(ret, AUDIO_ERR);
+    if (code >= IPolicyProviderMsg::POLICY_PROVIDER_MAX_MSG) {
+        AUDIO_WARNING_LOG("OnRemoteRequest unsupported request code:%{public}d.", code);
+        return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+    }
+    switch (code) {
+        case GET_DEVICE_INFO:
+            return HandleGetProcessDeviceInfo(data, reply);
+        case INIT_VOLUME_MAP:
+            return HandleInitSharedVolume(data, reply);
+        case SET_WAKEUP_ADUIO_CAPTURER:
+            return HandleSetWakeupCapturer(data, reply);
+        case SET_AUDIO_CAPTURER:
+            return HandleSetCapturer(data, reply);
+        case REMOVE_WAKEUP_CAPUTER:
+            return HandleWakeupCapturerRemoved(data, reply);
+        case IS_ABS_VOLUME_SUPPORTED:
+            return HandleIsAbsVolumeSupported(data, reply);
+        case OFFLOAD_GET_RENDER_POSITION:
+            return HandleOffloadGetRenderPosition(data, reply);
+        case GET_AND_SAVE_CLIENT_TYPE:
+            return HandleGetAndSaveClientType(data, reply);
+        case GET_MAX_RENDERER_INSTANCES:
+            return HandleGetMaxRendererInstances(data, reply);
+        case ACTIVATE_CONCURRENCY_FROM_SERVER:
+            return HandleConcurrencyFromServer(data, reply);
+        case REMOVE_AUDIO_CAPTURER:
+            return HandleNotifyCapturerRemoved(data, reply);
+        case SET_DEFAULT_OUTPUT_DEVICE:
+            return HandleSetDefaultOutputDevice(data, reply);
+#ifdef HAS_FEATURE_INNERCAPTURER
+        case LOAD_MODERN_INNER_CAPTURE_SINK:
+            return HandleLoadModernInnerCapSink(data, reply);
+        case UNLOAD_MODERN_INNER_CAPTURE_SINK:
+            return HandleUnloadModernInnerCapSink(data, reply);
+#endif
+        default:
+            AUDIO_WARNING_LOG("OnRemoteRequest unsupported request code:%{public}d.", code);
+            return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+    }
+}
+
+int32_t PolicyProviderStub::HandleGetProcessDeviceInfo(MessageParcel &data, MessageParcel &reply)
+{
+    AudioProcessConfig config;
+    int32_t ret = ProcessConfig::ReadConfigFromParcel(config, data);
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERR_OPERATION_FAILED, "ReadConfigFromParcel failed %{public}d", ret);
+    bool flag = data.ReadBool();
+    AudioDeviceDescriptor deviceInfo(AudioDeviceDescriptor::DEVICE_INFO);
+    ret = GetProcessDeviceInfo(config, flag, deviceInfo);
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERR_OPERATION_FAILED, "GetProcessDeviceInfo failed %{public}d", ret);
+    deviceInfo.Marshalling(reply);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleInitSharedVolume(MessageParcel &data, MessageParcel &reply)
+{
+    (void)data;
+    std::shared_ptr<AudioSharedMemory> buffer = nullptr;
+    int32_t ret = InitSharedVolume(buffer);
+    if (ret == SUCCESS && buffer != nullptr) {
+        ret = AudioSharedMemory::WriteToParcel(buffer, reply);
+    } else {
+        AUDIO_ERR_LOG("error: ResolveBuffer failed.");
+        return AUDIO_INVALID_PARAM;
+    }
+    return ret;
+}
+
+int32_t PolicyProviderStub::HandleSetWakeupCapturer(MessageParcel &data, MessageParcel &reply)
+{
+    AudioProcessConfig config;
+    int32_t ret = ProcessConfig::ReadConfigFromParcel(config, data);
+    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ERR_OPERATION_FAILED, "ReadConfigFromParcel failed %{public}d", ret);
+    ret = SetWakeUpAudioCapturerFromAudioServer(config);
+    reply.WriteInt32(ret);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleSetCapturer(MessageParcel &data, MessageParcel &reply)
+{
+    AudioCapturerInfo capturerInfo;
+    AudioStreamInfo streamInfo;
+    uint32_t sessionId;
+    capturerInfo.Unmarshalling(data);
+    streamInfo.Unmarshalling(data);
+    data.ReadUint32(sessionId);
+    int32_t ret = NotifyCapturerAdded(capturerInfo, streamInfo, sessionId);
+    reply.WriteInt32(ret);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleWakeupCapturerRemoved(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = NotifyWakeUpCapturerRemoved();
+    reply.WriteInt32(ret);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleIsAbsVolumeSupported(MessageParcel &data, MessageParcel &reply)
+{
+    bool ret = IsAbsVolumeSupported();
+    reply.WriteBool(ret);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleOffloadGetRenderPosition(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t delayValue = 0;
+    uint64_t sendDataSize = 0;
+    uint32_t timeStamp = 0;
+    int32_t ret = OffloadGetRenderPosition(delayValue, sendDataSize, timeStamp);
+    reply.WriteInt32(ret);
+    reply.WriteUint32(delayValue);
+    reply.WriteUint64(sendDataSize);
+    reply.WriteUint32(timeStamp);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleGetAndSaveClientType(MessageParcel &data, MessageParcel &reply)
+{
+    uint32_t uid = data.ReadUint32();
+    std::string bundleName = data.ReadString();
+    int32_t ret = GetAndSaveClientType(uid, bundleName);
+    reply.WriteInt32(ret);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleGetMaxRendererInstances(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = GetMaxRendererInstances();
+    reply.WriteInt32(ret);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleConcurrencyFromServer(MessageParcel &data, MessageParcel &reply)
+{
+    AudioPipeType incomingPipe = static_cast<AudioPipeType>(data.ReadInt32());
+    int32_t ret = ActivateConcurrencyFromServer(incomingPipe);
+    reply.WriteInt32(ret);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleNotifyCapturerRemoved(MessageParcel &data, MessageParcel &reply)
+{
+    uint64_t sessionId = data.ReadUint64();
+    int32_t ret = NotifyCapturerRemoved(sessionId);
+    reply.WriteInt32(ret);
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleSetDefaultOutputDevice(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t deviceType = data.ReadInt32();
+    uint32_t sessionID = data.ReadUint32();
+    int32_t streamUsage = data.ReadInt32();
+    bool isRunning = data.ReadBool();
+    reply.WriteInt32(SetDefaultOutputDevice(static_cast<OHOS::AudioStandard::DeviceType>(deviceType),
+        sessionID, static_cast<OHOS::AudioStandard::StreamUsage>(streamUsage), isRunning));
+    return AUDIO_OK;
+}
+
+#ifdef HAS_FEATURE_INNERCAPTURER
+int32_t PolicyProviderStub::HandleLoadModernInnerCapSink(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t innerCapId = data.ReadInt32();
+    reply.WriteInt32(LoadModernInnerCapSink(innerCapId));
+    return AUDIO_OK;
+}
+
+int32_t PolicyProviderStub::HandleUnloadModernInnerCapSink(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t innerCapId = data.ReadInt32();
+    reply.WriteInt32(UnloadModernInnerCapSink(innerCapId));
+    return AUDIO_OK;
+}
+#endif
+PolicyProviderWrapper::~PolicyProviderWrapper()
+{
+    policyWorker_ = nullptr;
+}
+
+PolicyProviderWrapper::PolicyProviderWrapper(IPolicyProvider *policyWorker) : policyWorker_(policyWorker)
+{
+}
+
+int32_t PolicyProviderWrapper::GetProcessDeviceInfo(const AudioProcessConfig &config, bool lockFlag,
+    AudioDeviceDescriptor &deviceInfo)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->GetProcessDeviceInfo(config, lockFlag, deviceInfo);
+}
+
+int32_t PolicyProviderWrapper::InitSharedVolume(std::shared_ptr<AudioSharedMemory> &buffer)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->InitSharedVolume(buffer);
+}
+
+int32_t PolicyProviderWrapper::SetWakeUpAudioCapturerFromAudioServer(const AudioProcessConfig &config)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->SetWakeUpAudioCapturerFromAudioServer(config);
+}
+
+int32_t PolicyProviderWrapper::NotifyCapturerAdded(AudioCapturerInfo capturerInfo, AudioStreamInfo streamInfo,
+    uint32_t sessionId)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->NotifyCapturerAdded(capturerInfo, streamInfo, sessionId);
+}
+
+int32_t PolicyProviderWrapper::NotifyWakeUpCapturerRemoved()
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->NotifyWakeUpCapturerRemoved();
+}
+
+bool PolicyProviderWrapper::IsAbsVolumeSupported()
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->IsAbsVolumeSupported();
+}
+
+int32_t PolicyProviderWrapper::OffloadGetRenderPosition(uint32_t &delayValue, uint64_t &sendDataSize,
+    uint32_t &timeStamp)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->OffloadGetRenderPosition(delayValue, sendDataSize, timeStamp);
+}
+
+int32_t PolicyProviderWrapper::GetAndSaveClientType(uint32_t uid, const std::string &bundleName)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->GetAndSaveClientType(uid, bundleName);
+}
+
+int32_t PolicyProviderWrapper::GetMaxRendererInstances()
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->GetMaxRendererInstances();
+}
+
+int32_t PolicyProviderWrapper::ActivateConcurrencyFromServer(AudioPipeType incomingPipe)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->ActivateConcurrencyFromServer(incomingPipe);
+}
+
+int32_t PolicyProviderWrapper::NotifyCapturerRemoved(uint64_t sessionId)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->NotifyCapturerRemoved(sessionId);
+}
+int32_t PolicyProviderWrapper::SetDefaultOutputDevice(const DeviceType defaultOutputDevice,
+    const uint32_t sessionID, const StreamUsage streamUsage, bool isRunning)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->SetDefaultOutputDevice(defaultOutputDevice, sessionID, streamUsage, isRunning);
+}
+
+#ifdef HAS_FEATURE_INNERCAPTURER
+int32_t PolicyProviderWrapper::LoadModernInnerCapSink(int32_t innerCapId)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->LoadModernInnerCapSink(innerCapId);
+}
+
+int32_t PolicyProviderWrapper::UnloadModernInnerCapSink(int32_t innerCapId)
+{
+    CHECK_AND_RETURN_RET_LOG(policyWorker_ != nullptr, AUDIO_INIT_FAIL, "policyWorker_ is null");
+    return policyWorker_->UnloadModernInnerCapSink(innerCapId);
+}
+#endif
+} // namespace AudioStandard
+} // namespace OHOS
