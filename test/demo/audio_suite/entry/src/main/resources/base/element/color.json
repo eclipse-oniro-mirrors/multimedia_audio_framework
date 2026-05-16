@@ -1,0 +1,56 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "index_audio_clip_card",
+      "value": "#8161c4"
+    },
+    {
+      "name": "index_title_text_color",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "main_backgroundColor",
+      "value": "#000000"
+    },
+    {
+      "name": "mixing_console_backgroundColor",
+      "value": "#333"
+    },
+    {
+      "name": "mixing_console_mask_color",
+      "value": "#999"
+    },
+    {
+      "name": "sound_speed_tone_backgroundColor",
+      "value": "#eeeeee"
+    },
+    {
+      "name": "transparent_background_color",
+      "value": "#00000000"
+    },
+    {
+      "name": "selected_button",
+      "value": "#FF44ccff"
+    },
+    {
+      "name": "selected_node_info_background_color",
+      "value": "#999"
+    },
+    {
+      "name": "time_line_color",
+      "value": "#8161c4"
+    },
+    {
+      "name": "silent_color",
+      "value": "#BE682A"
+    },
+    {
+      "name": "solo_color",
+      "value": "#3B6DA0"
+    }
+  ]
+}

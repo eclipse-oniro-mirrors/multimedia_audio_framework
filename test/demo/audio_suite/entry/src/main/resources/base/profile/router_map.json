@@ -1,0 +1,39 @@
+{
+    "routerMap": [
+        {
+            "name" : "audioEdit",
+            "pageSourceFile": "src/main/ets/pages/AudioEdit.ets",
+            "buildFunction": "AudioEditBuilder"
+        },
+        {
+            "name" : "songBox",
+            "pageSourceFile": "src/main/ets/pages/SongBox.ets",
+            "buildFunction": "SongBoxBuilder"
+        },
+        {
+            "name" : "export",
+            "pageSourceFile": "src/main/ets/pages/Export.ets",
+            "buildFunction": "ExportBuilder"
+        },
+        {
+            "name" : "autoTest",
+            "pageSourceFile": "src/main/ets/pages/AutoTest.ets",
+            "buildFunction": "AutoTestBuilder"
+        },
+        {
+            "name" : "mixingConsole",
+            "pageSourceFile": "src/main/ets/pages/MixingConsole.ets",
+            "buildFunction": "MixingConsoleBuilder"
+        },
+        {
+            "name": "pipelineCascad",
+            "pageSourceFile": "src/main/ets/pages/PipelineCascad.ets",
+            "buildFunction": "PipelineCascadBuilder"
+        },
+        {
+            "name": "audioTrackEdit",
+            "pageSourceFile": "src/main/ets/pages/AudioTrackEdit.ets",
+            "buildFunction": "AudioTrackEditBuilder"
+        }
+     ]
+}
