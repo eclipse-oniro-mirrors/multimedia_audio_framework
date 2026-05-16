@@ -1,0 +1,450 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "audio_usb_manager_unit_test.h"
+
+#include <gtest/gtest.h>
+
+#include "audio_usb_manager.h"
+#include "audio_policy_service.h"
+
+using namespace testing::ext;
+
+namespace OHOS {
+namespace AudioStandard {
+
+class TestDeviceStatusObserver : public IDeviceStatusObserver {
+public:
+    void OnDeviceStatusUpdated(DeviceType devType, bool isConnected,
+        const std::string &macAddress, const std::string &deviceName,
+        const AudioStreamInfo &streamInfo, DeviceRole role = DEVICE_ROLE_NONE, bool hasPair = false) override {};
+    void OnMicrophoneBlockedUpdate(DeviceType devType, DeviceBlockStatus status) override {};
+    void OnPnpDeviceStatusUpdated(AudioDeviceDescriptor &desc, bool isConnected) override {};
+    void OnDeviceConfigurationChanged(DeviceType deviceType,
+        const std::string &macAddress, const std::string &deviceName,
+        const AudioStreamInfo &streamInfo) override {};
+    void OnDeviceStatusUpdated(DStatusInfo statusInfo, bool isStop = false) override {};
+    void OnServiceConnected(AudioServiceIndex serviceIndex) override {};
+    void OnServiceDisconnected(AudioServiceIndex serviceIndex) override {};
+    void OnForcedDeviceSelected(DeviceType devType, const std::string &macAddress,
+        sptr<AudioRendererFilter> filter = nullptr, const std::string &caller = "") override {};
+    void OnPrivacyDeviceSelected(DeviceType devType, const std::string &macAddress,
+        const std::string &caller = "") override {};
+    void OnDeviceStatusUpdated(AudioDeviceDescriptor &desc, bool isConnected) override {};
+    void OnDeviceInfoUpdated(AudioDeviceDescriptor &desc, const DeviceInfoUpdateCommand updateCommand) override {};
+    void OnConnectFailed(AudioDeviceDescriptor &desc) override {};
+
+    TestDeviceStatusObserver() = default;
+    virtual ~TestDeviceStatusObserver() = default;
+};
+
+void AudioUsbManagerUnitTest::SetUpTestCase(void) {}
+void AudioUsbManagerUnitTest::TearDownTestCase(void) {}
+void AudioUsbManagerUnitTest::SetUp(void) {}
+void AudioUsbManagerUnitTest::TearDown(void) {}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_001.
+ * @tc.desc  : Test Init.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_001, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+
+    auto observer = std::make_shared<TestDeviceStatusObserver>();
+    audioUsbManager->initialized_ = false;
+    audioUsbManager->Init(observer);
+    EXPECT_EQ(audioUsbManager->initialized_, true);
+
+    audioUsbManager->initialized_ = true;
+    audioUsbManager->Init(observer);
+    EXPECT_EQ(audioUsbManager->initialized_, true);
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_002.
+ * @tc.desc  : Test Deinit.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_002, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+    audioUsbManager->initialized_ = true;
+    audioUsbManager->Deinit();
+    EXPECT_EQ(audioUsbManager->initialized_, false);
+
+    audioUsbManager->initialized_ = false;
+    audioUsbManager->Deinit();
+    EXPECT_EQ(audioUsbManager->initialized_, false);
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_003.
+ * @tc.desc  : Test Deinit.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_003, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+
+    EventFwk::CommonEventSubscribeInfo subscribeInfo;
+    audioUsbManager->eventSubscriber_ = std::make_shared<AudioUsbManager::EventSubscriber>(subscribeInfo);
+    audioUsbManager->initialized_ = true;
+    audioUsbManager->Deinit();
+    EXPECT_EQ(audioUsbManager->initialized_, false);
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_004.
+ * @tc.desc  : Test RefreshUsbAudioDevices.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_004, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+
+    audioUsbManager->RefreshUsbAudioDevices();
+    EXPECT_TRUE(audioUsbManager->audioDevices_.empty());
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_006.
+ * @tc.desc  : Test NotifyDevice.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_006, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+
+    auto observer = std::make_shared<TestDeviceStatusObserver>();
+    audioUsbManager->Init(observer);
+    ASSERT_TRUE(observer != nullptr);
+
+    UsbAudioDevice device;
+    SoundCard soundCard;
+    soundCard.isPlayer_ = true;
+    soundCard.isCapturer_ = true;
+    audioUsbManager->HandleAudioDeviceEvent(make_pair(device, true));
+    audioUsbManager->Deinit();
+    EXPECT_TRUE(audioUsbManager->audioDevices_.empty());
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_007.
+ * @tc.desc  : Test NotifyDevice.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_007, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+
+    auto observer = std::make_shared<TestDeviceStatusObserver>();
+    audioUsbManager->Init(observer);
+    ASSERT_TRUE(observer != nullptr);
+
+    UsbAudioDevice device;
+    SoundCard soundCard;
+    soundCard.isPlayer_ = false;
+    soundCard.isCapturer_ = true;
+    audioUsbManager->HandleAudioDeviceEvent(make_pair(device, true));
+    audioUsbManager->Deinit();
+    EXPECT_TRUE(audioUsbManager->audioDevices_.empty());
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_008.
+ * @tc.desc  : Test NotifyDevice.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_008, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+
+    auto observer = std::make_shared<TestDeviceStatusObserver>();
+    audioUsbManager->Init(observer);
+    ASSERT_TRUE(observer != nullptr);
+
+    UsbAudioDevice device;
+    SoundCard soundCard;
+    soundCard.isPlayer_ = true;
+    soundCard.isCapturer_ = false;
+    audioUsbManager->HandleAudioDeviceEvent(make_pair(device, true));
+    audioUsbManager->Deinit();
+    EXPECT_TRUE(audioUsbManager->audioDevices_.empty());
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_010.
+ * @tc.desc  : Test GetUsbAudioDevices.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_010, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+    audioUsbManager->initialized_ = true;
+
+    vector<UsbAudioDevice> result;
+    auto ret = audioUsbManager->GetUsbAudioDevices(result);
+    EXPECT_EQ(ret, SUCCESS);
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_011.
+ * @tc.desc  : Test HandleUsbAudioDeviceAttach.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_011, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+
+    UsbAudioDevice device;
+    audioUsbManager->HandleAudioDeviceEvent(make_pair(device, true));
+
+    audioUsbManager->audioDevices_.push_back(device);
+    audioUsbManager->HandleAudioDeviceEvent(make_pair(device, true));
+    EXPECT_EQ(audioUsbManager->audioDevices_.size(), 1);
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_012.
+ * @tc.desc  : Test HandleUsbAudioDeviceAttach.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_012, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+
+    UsbAudioDevice device;
+    audioUsbManager->HandleAudioDeviceEvent(make_pair(device, false));
+
+    audioUsbManager->audioDevices_.push_back(device);
+    audioUsbManager->HandleAudioDeviceEvent(make_pair(device, false));
+    EXPECT_EQ(audioUsbManager->audioDevices_.size(), 0);
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_013.
+ * @tc.desc  : Test GetUsbSoundCardMap.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_013, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+    audioUsbManager->initialized_ = true;
+
+    auto outMap = AudioUsbManager::GetInstance().GetUsbSoundCardMap();
+    EXPECT_EQ(outMap.size(), 0);
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_014.
+ * @tc.desc  : Test OnReceiveEvent.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_014, TestSize.Level1)
+{
+    EventFwk::CommonEventSubscribeInfo subscribeInfo;
+    auto subscriber = std::make_shared<AudioUsbManager::EventSubscriber>(subscribeInfo);
+    ASSERT_TRUE(subscriber != nullptr);
+
+    EventFwk::CommonEventData data;
+    subscriber->OnReceiveEvent(data);
+
+    OHOS::EventFwk::Want want;
+    want.SetAction("usual.event.hardware.usb.action.USB_DEVICE_ATTACHED");
+    data.SetWant(want);
+    subscriber->OnReceiveEvent(data);
+    want.SetAction("usual.event.hardware.usb.action.USB_DEVICE_DETACHED");
+    data.SetWant(want);
+    subscriber->OnReceiveEvent(data);
+    string s = "{\"busNum\":1,\"devAddress\":1,\"configs\":[{\"interfaces\":[{\"clazz\":1,\"subClass\":1}]}]}";
+    data.SetData(s);
+    want.SetAction("usual.event.hardware.usb.action.USB_DEVICE_ATTACHED");
+    data.SetWant(want);
+    subscriber->OnReceiveEvent(data);
+    want.SetAction("usual.event.hardware.usb.action.USB_DEVICE_DETACHED");
+    data.SetWant(want);
+    subscriber->OnReceiveEvent(data);
+
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+    EXPECT_EQ(audioUsbManager->audioDevices_.size(), 0);
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_015.
+ * @tc.desc  : Test IsAvailableUsbDevice.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_015, TestSize.Level1)
+{
+    UsbAudioDevice device;
+    EXPECT_TRUE(AudioUsbManager::GetInstance().IsAvailableUsbDevice(device));
+
+    std::unordered_map<ClassType, std::list<AudioModuleInfo>> xmlData;
+    std::list<AudioModuleInfo> moduleInfolist;
+    xmlData[ClassType::TYPE_USB] = moduleInfolist;
+    AudioCoreConfigManager::GetInstance().OnXmlParsingCompleted(xmlData);
+    EXPECT_TRUE(AudioUsbManager::GetInstance().IsAvailableUsbDevice(device));
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_016.
+ * @tc.desc  : Test IsAvailableUsbDevice.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_016, TestSize.Level1)
+{
+    std::unordered_map<ClassType, std::list<AudioModuleInfo>> xmlData;
+    std::list<AudioModuleInfo> moduleInfolist;
+    AudioModuleInfo moduleInfo;
+    moduleInfo.allUsbDeviceDisable_ = true;
+    moduleInfolist.push_back(moduleInfo);
+    xmlData[ClassType::TYPE_USB] = moduleInfolist;
+    AudioCoreConfigManager::GetInstance().OnXmlParsingCompleted(xmlData);
+
+    UsbAudioDevice device;
+    EXPECT_FALSE(AudioUsbManager::GetInstance().IsAvailableUsbDevice(device));
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_017.
+ * @tc.desc  : Test IsAvailableUsbDevice.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_017, TestSize.Level1)
+{
+    std::unordered_map<ClassType, std::list<AudioModuleInfo>> xmlData;
+    std::list<AudioModuleInfo> moduleInfolist;
+    AudioModuleInfo moduleInfo;
+    moduleInfolist.push_back(moduleInfo);
+    xmlData[ClassType::TYPE_USB] = moduleInfolist;
+    AudioCoreConfigManager::GetInstance().OnXmlParsingCompleted(xmlData);
+
+    UsbAudioDevice device;
+    EXPECT_TRUE(AudioUsbManager::GetInstance().IsAvailableUsbDevice(device));
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AudioUsbManagerUnitTest_018.
+ * @tc.desc  : Test NotifyDevice.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AudioUsbManagerUnitTest_018, TestSize.Level1)
+{
+    auto audioUsbManager = &AudioUsbManager::GetInstance();
+    ASSERT_TRUE(audioUsbManager != nullptr);
+
+    auto observer = std::make_shared<TestDeviceStatusObserver>();
+    audioUsbManager->Init(observer);
+    ASSERT_TRUE(observer != nullptr);
+
+    std::unordered_map<ClassType, std::list<AudioModuleInfo>> xmlData;
+    std::list<AudioModuleInfo> moduleInfolist;
+    AudioModuleInfo moduleInfo;
+    moduleInfo.allUsbDeviceDisable_ = true;
+    moduleInfolist.push_back(moduleInfo);
+    xmlData[ClassType::TYPE_USB] = moduleInfolist;
+    AudioCoreConfigManager::GetInstance().OnXmlParsingCompleted(xmlData);
+
+    UsbAudioDevice device;
+    bool isConnected = true;
+    audioUsbManager->NotifyDevice(device, isConnected);
+    EXPECT_TRUE(moduleInfo.allUsbDeviceDisable_);
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: NotifySoundCardChange_001.
+ * @tc.desc  : Test NotifySoundCardChange.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, NotifySoundCardChange_001, TestSize.Level1)
+{
+    auto &man = AudioUsbManager::GetInstance();
+    auto observer = make_shared<TestDeviceStatusObserver>();
+    man.SetObserver(observer);
+    man.NotifySoundCardChange("2", true);
+
+    man.audioDevices_.push_back({
+        .cardNum_ = 2,
+    });
+    man.NotifySoundCardChange("2", false);
+    man.initialized_ = true;
+    man.Deinit();
+    EXPECT_TRUE(man.audioDevices_.empty());
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: SetObserver_001.
+ * @tc.desc  : Test SetObserver.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, SetObserver_001, TestSize.Level1)
+{
+    auto &man = AudioUsbManager::GetInstance();
+    auto observer = make_shared<TestDeviceStatusObserver>();
+    man.SetObserver(observer);
+    man.initialized_ = true;
+    man.Deinit();
+    EXPECT_TRUE(man.audioDevices_.empty());
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: AddDeviceBySoundCard_001.
+ * @tc.desc  : Test AddDeviceBySoundCard.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, AddDeviceBySoundCard_001, TestSize.Level1)
+{
+    auto &man = AudioUsbManager::GetInstance();
+    auto observer = make_shared<TestDeviceStatusObserver>();
+    man.SetObserver(observer);
+    man.AddDeviceBySoundCard(0);
+    man.initialized_ = true;
+    man.Deinit();
+    EXPECT_TRUE(man.audioDevices_.empty());
+}
+
+/**
+ * @tc.name  : Test AudioUsbManager.
+ * @tc.number: UpdateDeviceName_001.
+ * @tc.desc  : Test UpdateDeviceName.
+ */
+HWTEST_F(AudioUsbManagerUnitTest, UpdateDeviceName_001, TestSize.Level1)
+{
+    auto &man = AudioUsbManager::GetInstance();
+    UsbAddr usbAddr;
+    std::string name;
+    man.UpdateDeviceName(usbAddr, name);
+    man.pendingMap_[usbAddr] = "1";
+    man.UpdateDeviceName(usbAddr, name);
+    man.initialized_ = true;
+    man.Deinit();
+    EXPECT_TRUE(man.audioDevices_.empty());
+}
+} // namespace AudioStandard
+} // namespace OHOS

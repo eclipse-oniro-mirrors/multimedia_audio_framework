@@ -1,0 +1,677 @@
+/*
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "audio_stream_descriptor.h"
+
+#include <cinttypes>
+
+#include <gtest/gtest.h>
+
+#include "audio_common_log.h"
+#include "audio_utils.h"
+#include "audio_definitions_unit_test_utils.h"
+
+using namespace testing::ext;
+using namespace std;
+
+namespace OHOS {
+namespace AudioStandard {
+
+static const int32_t MAX_STREAM_DESCRIPTORS_SIZE = 1003;
+static const uint32_t TEST_SET_ROUTE = AUDIO_OUTPUT_FLAG_NORMAL;
+static std::string testBundleName = "testBundleName";
+static int32_t MEDIA_SERVICE_UID = 1013;
+static int32_t TEST_SERVICE_UID = 10;
+
+class AudioStreamDescriptorUnitTest : public ::testing::Test {
+public:
+    static void SetUpTestCase(){};
+    static void TearDownTestCase(){};
+    virtual void SetUp();
+    virtual void TearDown();
+
+private:
+    std::shared_ptr<AudioStreamDescriptor> testRendererStream_;
+    std::shared_ptr<AudioStreamDescriptor> testCapturerStream_;
+};
+
+void AudioStreamDescriptorUnitTest::SetUp()
+{
+    testRendererStream_ = AudioDefinitionsUnitTestUtil::GenerateCommonStream(AUDIO_MODE_PLAYBACK);
+    testCapturerStream_ = AudioDefinitionsUnitTestUtil::GenerateCommonStream(AUDIO_MODE_RECORD);
+}
+
+void AudioStreamDescriptorUnitTest::TearDown()
+{
+    testRendererStream_ = nullptr;
+    testCapturerStream_ = nullptr;
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_AllSimpleGet_001
+ * @tc.number : AllSimpleGet_001
+ * @tc.desc   : Test all simple Get() funcs by renderer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, AllSimpleGet_001, TestSize.Level2)
+{
+    EXPECT_EQ(true, testRendererStream_->IsPlayback());
+
+    EXPECT_EQ(false, testRendererStream_->IsRecording());
+
+    EXPECT_EQ(TEST_RENDERER_SESSION_ID, testRendererStream_->GetSessionId());
+
+    EXPECT_EQ(false, testRendererStream_->IsRunning());
+
+    EXPECT_EQ(AUDIO_STREAM_ACTION_DEFAULT, testRendererStream_->GetAction());
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_AudioFlag_001
+ * @tc.number : AudioFlag_001
+ * @tc.desc   : Test audio flag funcs by renderer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, AudioFlag_001, TestSize.Level2)
+{
+    EXPECT_EQ(AUDIO_FLAG_NONE, testRendererStream_->GetAudioFlag());
+
+    testRendererStream_->SetAudioFlag(AUDIO_OUTPUT_FLAG_NORMAL);
+    EXPECT_EQ(false, testRendererStream_->IsUseMoveToConcedeType());
+    testRendererStream_->SetAudioFlag(AUDIO_OUTPUT_FLAG_LOWPOWER);
+    EXPECT_EQ(true, testRendererStream_->IsUseMoveToConcedeType());
+    testRendererStream_->SetAudioFlag(AUDIO_OUTPUT_FLAG_MULTICHANNEL);
+    EXPECT_EQ(true, testRendererStream_->IsUseMoveToConcedeType());
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_RendererRoute_001
+ * @tc.number : RendererRoute_001
+ * @tc.desc   : Test all route funcs by renderer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, RendererRoute_001, TestSize.Level2)
+{
+    EXPECT_EQ(AUDIO_FLAG_NONE, testRendererStream_->GetRoute());
+
+    EXPECT_EQ(AUDIO_FLAG_NONE, testRendererStream_->GetOldRoute());
+
+    EXPECT_EQ(false, testRendererStream_->IsRouteNormal());
+
+    testRendererStream_->SetRoute(TEST_SET_ROUTE);
+    EXPECT_EQ(TEST_SET_ROUTE, testRendererStream_->GetRoute());
+
+    testRendererStream_->SetRoute(AUDIO_OUTPUT_FLAG_NORMAL);
+    EXPECT_EQ(true, testRendererStream_->IsRouteNormal());
+
+    testRendererStream_->SetRoute(AUDIO_OUTPUT_FLAG_LOWPOWER);
+    EXPECT_EQ(true, testRendererStream_->IsRouteOffload());
+    EXPECT_EQ(true, testRendererStream_->IsNoRunningOffload());
+    testRendererStream_->SetStatus(STREAM_STATUS_STARTED);
+    EXPECT_EQ(false, testRendererStream_->IsNoRunningOffload());
+
+    testRendererStream_->SetOldRoute(TEST_SET_ROUTE);
+    EXPECT_EQ(TEST_SET_ROUTE, testRendererStream_->GetOldRoute());
+
+    testRendererStream_->ResetToNormalRoute(false);
+    EXPECT_EQ(true, testRendererStream_->IsRouteNormal());
+
+    testRendererStream_->ResetToNormalRoute(true);
+    EXPECT_EQ(true, testRendererStream_->IsRouteNormal());
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_CapturerRoute_001
+ * @tc.number : CapturerRoute_001
+ * @tc.desc   : Test all simple route funcs by capturer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, CapturerRoute_001, TestSize.Level2)
+{
+    testCapturerStream_->SetRoute(AUDIO_INPUT_FLAG_NORMAL);
+    EXPECT_EQ(true, testCapturerStream_->IsRouteNormal());
+
+    testCapturerStream_->SetRoute(AUDIO_INPUT_FLAG_FAST);
+    EXPECT_EQ(false, testCapturerStream_->IsRouteNormal());
+
+    testCapturerStream_->ResetToNormalRoute(false);
+    EXPECT_EQ(true, testCapturerStream_->IsRouteNormal());
+
+    testCapturerStream_->ResetToNormalRoute(true);
+    EXPECT_EQ(true, testCapturerStream_->IsRouteNormal());
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_RendererDevice_001
+ * @tc.number : RendererDevice_001
+ * @tc.desc   : Test all simple device funcs by renderer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, RendererDevice_001, TestSize.Level2)
+{
+    EXPECT_EQ(DEVICE_TYPE_NONE, testRendererStream_->GetMainNewDeviceType());
+
+    auto device = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE);
+    testRendererStream_->AddNewDevice(device);
+    EXPECT_EQ(DEVICE_TYPE_SPEAKER, testRendererStream_->GetMainNewDeviceType());
+
+    device = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE);
+    device->networkId_ = LOCAL_NETWORK_ID;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> devices;
+    devices.push_back(device);
+    testRendererStream_->UpdateNewDevice(devices);
+    EXPECT_EQ(false, testRendererStream_->IsDeviceRemote());
+
+    device = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE);
+    device->networkId_ = REMOTE_NETWORK_ID;
+    devices.clear();
+    devices.push_back(device);
+    testRendererStream_->UpdateNewDevice(devices);
+    EXPECT_EQ(true, testRendererStream_->IsDeviceRemote());
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_RendererDevice_002
+ * @tc.number : RendererDevice_002
+ * @tc.desc   : Test device funcs error branches by renderer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, RendererDevice_002, TestSize.Level4)
+{
+    auto device = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE);
+    testRendererStream_->AddNewDevice(device);
+    EXPECT_EQ(DEVICE_TYPE_SPEAKER, testRendererStream_->GetMainNewDeviceType());
+
+    testRendererStream_->AddNewDevice(nullptr);
+    EXPECT_EQ(DEVICE_TYPE_SPEAKER, testRendererStream_->GetMainNewDeviceType());
+
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> devices;
+    devices.push_back(nullptr);
+    testRendererStream_->UpdateNewDevice(devices);
+    EXPECT_EQ(DEVICE_TYPE_SPEAKER, testRendererStream_->GetMainNewDeviceType());
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_RendererDevice_003
+ * @tc.number : RendererDevice_003
+ * @tc.desc   : Test device funcs error branches by renderer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, RendererDevice_003, TestSize.Level4)
+{
+    testRendererStream_->AddNewDevice(nullptr);
+    EXPECT_EQ(nullptr, testRendererStream_->GetMainNewDeviceDesc());
+
+    auto device = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_MIC, INPUT_DEVICE);
+    testRendererStream_->AddNewDevice(device);
+    EXPECT_NE(nullptr, testRendererStream_->GetMainNewDeviceDesc());
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_Dump_001
+ * @tc.number : Dump_001
+ * @tc.desc   : Test dump funcs by renderer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, Dump_001, TestSize.Level3)
+{
+    auto device = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE);
+    testRendererStream_->AddNewDevice(device);
+
+    std::string outDump;
+    testRendererStream_->Dump(outDump);
+    EXPECT_NE("", outDump);
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_DeviceString_001
+ * @tc.number : DeviceString_001
+ * @tc.desc   : Test device string funcs by renderer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, DeviceString_001, TestSize.Level3)
+{
+    auto device = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE);
+    testRendererStream_->AddNewDevice(device);
+    std::string devicesTypeStr = testRendererStream_->GetNewDevicesTypeString();
+    EXPECT_NE("", devicesTypeStr);
+
+    std::string devicesInfoStr = testRendererStream_->GetNewDevicesInfo();
+    EXPECT_NE("", devicesInfoStr);
+
+    std::string deviceInfoStr = testRendererStream_->GetDeviceInfo(device);
+    EXPECT_NE("", deviceInfoStr);
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_BundleName_001
+ * @tc.number : BundleName_001
+ * @tc.desc   : Test bundle name funcs by renderer AudioStreamDescriptor instance
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, BundleName_001, TestSize.Level3)
+{
+    testRendererStream_->SetBundleName(testBundleName);
+    EXPECT_EQ(testBundleName, testRendererStream_->GetBundleName());
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_Marshalling_001
+ * @tc.number : Marshalling_001
+ * @tc.desc   : Test marshall and unmarshall funcs
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, Marshalling_001, TestSize.Level3)
+{
+    Parcel testParcel;
+    testRendererStream_->Marshalling(testParcel);
+    AudioStreamDescriptor *outStream = AudioStreamDescriptor::Unmarshalling(testParcel);
+    EXPECT_EQ(testRendererStream_->IsPlayback(), outStream->IsPlayback());
+    EXPECT_EQ(testRendererStream_->GetSessionId(), outStream->GetSessionId());
+    EXPECT_EQ(testRendererStream_->GetAction(), outStream->GetAction());
+    EXPECT_EQ(testRendererStream_->GetRoute(), outStream->GetRoute());
+    delete outStream;
+}
+
+/**
+ * @tc.name   : Test WriteDeviceDescVectorToParcel
+ * @tc.number : WriteDeviceDescVectorToParcel_001
+ * @tc.desc   : Test WriteDeviceDescVectorToParcel
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, WriteDeviceDescVectorToParcel_001, TestSize.Level1)
+{
+    AudioStreamDescriptor audioStreamDescriptor;
+    Parcel parcel;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> descs(MAX_STREAM_DESCRIPTORS_SIZE,
+        std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE));
+    EXPECT_TRUE(audioStreamDescriptor.WriteDeviceDescVectorToParcel(parcel, descs));
+}
+
+
+/**
+ * @tc.name   : Test IsSamePidUid
+ * @tc.number : IsSamePidUid_001
+ * @tc.desc   : Test IsSamePidUid
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, IsSamePidUid_001, TestSize.Level1)
+{
+    AudioStreamDescriptor audioStreamDescriptor;
+    audioStreamDescriptor.callerUid_ = 1;
+    audioStreamDescriptor.callerPid_ = 1;
+
+    bool ret = audioStreamDescriptor.IsSamePidUid(0, 0);
+    EXPECT_EQ(ret, false);
+
+    ret = audioStreamDescriptor.IsSamePidUid(0, 1);
+    EXPECT_EQ(ret, false);
+
+    ret = audioStreamDescriptor.IsSamePidUid(1, 0);
+    EXPECT_EQ(ret, false);
+
+    ret = audioStreamDescriptor.IsSamePidUid(1, 1);
+    EXPECT_TRUE(ret);
+}
+
+/**
+ * @tc.name   : Test GetRealUid
+ * @tc.number : GetRealUid_001
+ * @tc.desc   : Test GetRealUid
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, GetRealUid_001, TestSize.Level4)
+{
+    AudioStreamDescriptor audioStreamDescriptor;
+    audioStreamDescriptor.callerUid_ = MEDIA_SERVICE_UID;
+    audioStreamDescriptor.appInfo_.appUid = TEST_SERVICE_UID;
+
+    auto ret = audioStreamDescriptor.GetRealUid();
+    EXPECT_EQ(ret, TEST_SERVICE_UID);
+
+    audioStreamDescriptor.callerUid_ = TEST_SERVICE_UID;
+    ret = audioStreamDescriptor.GetRealUid();
+    EXPECT_EQ(ret, TEST_SERVICE_UID);
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptor_IsMediaScene_001
+ * @tc.number : IsMediaScene_001
+ * @tc.desc   : Test IsMediaScene() with various streamUsage values
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, IsMediaScene_001, TestSize.Level2)
+{
+    testRendererStream_->rendererInfo_.streamUsage = STREAM_USAGE_MUSIC;
+    EXPECT_TRUE(testRendererStream_->IsMediaScene());
+
+    testRendererStream_->rendererInfo_.streamUsage = STREAM_USAGE_MOVIE;
+    EXPECT_TRUE(testRendererStream_->IsMediaScene());
+
+    testRendererStream_->rendererInfo_.streamUsage = STREAM_USAGE_GAME;
+    EXPECT_TRUE(testRendererStream_->IsMediaScene());
+
+    testRendererStream_->rendererInfo_.streamUsage = STREAM_USAGE_AUDIOBOOK;
+    EXPECT_TRUE(testRendererStream_->IsMediaScene());
+
+    testRendererStream_->rendererInfo_.streamUsage = STREAM_USAGE_NOTIFICATION;
+    EXPECT_FALSE(testRendererStream_->IsMediaScene());
+
+    testRendererStream_->rendererInfo_.streamUsage = STREAM_USAGE_ALARM;
+    EXPECT_FALSE(testRendererStream_->IsMediaScene());
+}
+
+/**
+ * @tc.name  : Test AudioStreamDescriptor API
+ * @tc.type  : FUNC
+ * @tc.number: GetUltraFastFlag_001
+ * @tc.desc  : Test AudioStreamDescriptor::GetUltraFastFlag with default value
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, GetUltraFastFlag_001, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    // Default value should be ULTRA_NONE
+    uint32_t flag = streamDesc.GetUltraFastFlag();
+    EXPECT_EQ(flag, ULTRA_NONE);
+}
+
+/**
+ * @tc.name  : Test AudioStreamDescriptor API
+ * @tc.type  : FUNC
+ * @tc.number: ResetUltraFastFlag_001
+ * @tc.desc  : Test AudioStreamDescriptor::ResetUltraFastFlag
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, ResetUltraFastFlag_001, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    // First set some flags
+    streamDesc.SetUltraFastRequested(true);
+    streamDesc.SetUltraFastImplemented(true);
+
+    // Verify flags are set
+    EXPECT_TRUE(streamDesc.IsUltraFastRequested());
+    EXPECT_TRUE(streamDesc.IsUltraFastImplemented());
+
+    // Reset flags
+    streamDesc.ResetUltraFastFlag();
+
+    // Verify all flags are cleared
+    EXPECT_FALSE(streamDesc.IsUltraFastRequested());
+    EXPECT_FALSE(streamDesc.IsUltraFastImplemented());
+    EXPECT_EQ(streamDesc.GetUltraFastFlag(), ULTRA_NONE);
+}
+
+/**
+ * @tc.name  : Test AudioStreamDescriptor API
+ * @tc.type  : FUNC
+ * @tc.number: SetUltraFastRequested_001
+ * @tc.desc  : Test AudioStreamDescriptor::SetUltraFastRequested true
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, SetUltraFastRequested_001, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    // Set requested flag to true
+    streamDesc.SetUltraFastRequested(true);
+
+    // Verify requested flag is set
+    EXPECT_TRUE(streamDesc.IsUltraFastRequested());
+    EXPECT_FALSE(streamDesc.IsUltraFastImplemented());
+
+    // Verify combined flag
+    uint32_t flag = streamDesc.GetUltraFastFlag();
+    EXPECT_EQ(flag, ULTRA_REQUESTED);
+}
+
+/**
+ * @tc.name  : Test AudioStreamDescriptor API
+ * @tc.type  : FUNC
+ * @tc.number: SetUltraFastRequested_002
+ * @tc.desc  : Test AudioStreamDescriptor::SetUltraFastRequested false
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, SetUltraFastRequested_002, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    // First set requested flag to true
+    streamDesc.SetUltraFastRequested(true);
+    EXPECT_TRUE(streamDesc.IsUltraFastRequested());
+
+    // Now set requested flag to false
+    streamDesc.SetUltraFastRequested(false);
+
+    // Verify requested flag is cleared
+    EXPECT_FALSE(streamDesc.IsUltraFastRequested());
+    EXPECT_FALSE(streamDesc.IsUltraFastImplemented());
+
+    // Verify combined flag
+    uint32_t flag = streamDesc.GetUltraFastFlag();
+    EXPECT_EQ(flag, ULTRA_NONE);
+}
+
+/**
+ * @tc.name  : Test AudioStreamDescriptor API
+ * @tc.type  : FUNC
+ * @tc.number: SetUltraFastRequested_003
+ * @tc.desc  : Test AudioStreamDescriptor::SetUltraFastRequested with existing implemented flag
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, SetUltraFastRequested_003, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    // First set implemented flag
+    streamDesc.SetUltraFastImplemented(true);
+    EXPECT_TRUE(streamDesc.IsUltraFastImplemented());
+    EXPECT_FALSE(streamDesc.IsUltraFastRequested());
+
+    // Now set requested flag to true
+    streamDesc.SetUltraFastRequested(true);
+
+    // Verify both flags are set
+    EXPECT_TRUE(streamDesc.IsUltraFastRequested());
+    EXPECT_TRUE(streamDesc.IsUltraFastImplemented());
+
+    // Verify combined flag
+    uint32_t flag = streamDesc.GetUltraFastFlag();
+    EXPECT_EQ(flag, ULTRA_REQUESTED | ULTRA_IMPLEMENTED);
+}
+
+/**
+ * @tc.name  : Test AudioStreamDescriptor API
+ * @tc.type  : FUNC
+ * @tc.number: SetUltraFastImplemented_001
+ * @tc.desc  : Test AudioStreamDescriptor::SetUltraFastImplemented true
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, SetUltraFastImplemented_001, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    // Set implemented flag to true
+    streamDesc.SetUltraFastImplemented(true);
+
+    // Verify implemented flag is set
+    EXPECT_TRUE(streamDesc.IsUltraFastImplemented());
+    EXPECT_FALSE(streamDesc.IsUltraFastRequested());
+
+    // Verify combined flag
+    uint32_t flag = streamDesc.GetUltraFastFlag();
+    EXPECT_EQ(flag, ULTRA_IMPLEMENTED);
+}
+
+/**
+ * @tc.name  : Test AudioStreamDescriptor API
+ * @tc.type  : FUNC
+ * @tc.number: SetUltraFastImplemented_002
+ * @tc.desc  : Test AudioStreamDescriptor::SetUltraFastImplemented with existing requested flag
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, SetUltraFastImplemented_002, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    // First set requested flag
+    streamDesc.SetUltraFastRequested(true);
+    EXPECT_TRUE(streamDesc.IsUltraFastRequested());
+    EXPECT_FALSE(streamDesc.IsUltraFastImplemented());
+
+    // Now set implemented flag to true
+    streamDesc.SetUltraFastImplemented(true);
+
+    // Verify both flags are set
+    EXPECT_TRUE(streamDesc.IsUltraFastRequested());
+    EXPECT_TRUE(streamDesc.IsUltraFastImplemented());
+
+    // Verify combined flag
+    uint32_t flag = streamDesc.GetUltraFastFlag();
+    EXPECT_EQ(flag, ULTRA_REQUESTED | ULTRA_IMPLEMENTED);
+}
+
+/**
+ * @tc.name  : Test AudioStreamDescriptor API
+ * @tc.type  : FUNC
+ * @tc.number: IsUltraFastRequested_001
+ * @tc.desc  : Test AudioStreamDescriptor::IsUltraFastRequested various states
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, IsUltraFastRequested_001, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    // Initially should be false
+    EXPECT_FALSE(streamDesc.IsUltraFastRequested());
+
+    // Set requested flag
+    streamDesc.SetUltraFastRequested(true);
+    EXPECT_TRUE(streamDesc.IsUltraFastRequested());
+
+    // Clear requested flag
+    streamDesc.SetUltraFastRequested(false);
+    EXPECT_FALSE(streamDesc.IsUltraFastRequested());
+
+    // Test with only implemented flag set
+    streamDesc.SetUltraFastImplemented(true);
+    EXPECT_FALSE(streamDesc.IsUltraFastRequested());
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptorUnitTest_DumpRendererStreamAttrs_NoFast_001
+ * @tc.number : DumpRendererStreamAttrs_NoFast_001
+ * @tc.desc   : Test DumpRendererStreamAttrs when stream is not fast
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, DumpRendererStreamAttrs_NoFast_001, TestSize.Level2)
+{
+    std::string dumpStr;
+    testRendererStream_->routeFlag_ = AUDIO_OUTPUT_FLAG_NORMAL;
+    testRendererStream_->SetUltraFastRequested(true);
+    dumpStr.clear();
+    testRendererStream_->Dump(dumpStr);
+    EXPECT_EQ(std::string::npos, dumpStr.find("UltralFastStream"));
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptorUnitTest_DumpRendererStreamAttrs_FastTrue_001
+ * @tc.number : DumpRendererStreamAttrs_FastTrue_001
+ * @tc.desc   : Test DumpRendererStreamAttrs when route is fast and ultraFast flag is true
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, DumpRendererStreamAttrs_FastTrue_001, TestSize.Level2)
+{
+    std::string dumpStr;
+    testRendererStream_->routeFlag_ = AUDIO_OUTPUT_FLAG_FAST;
+    testRendererStream_->SetUltraFastRequested(true);
+    dumpStr.clear();
+    testRendererStream_->Dump(dumpStr);
+    EXPECT_NE(std::string::npos, dumpStr.find("UltralFastStream: 1"));
+}
+
+/**
+ * @tc.name   : AudioStreamDescriptorUnitTest_DumpRendererStreamAttrs_FastFalse_001
+ * @tc.number : DumpRendererStreamAttrs_FastFalse_001
+ * @tc.desc   : Test DumpRendererStreamAttrs when route is fast and ultraFast flag is false
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, DumpRendererStreamAttrs_FastFalse_001, TestSize.Level2)
+{
+    std::string dumpStr;
+    testRendererStream_->routeFlag_ = AUDIO_OUTPUT_FLAG_FAST;
+    testRendererStream_->SetUltraFastRequested(false);
+    dumpStr.clear();
+    testRendererStream_->Dump(dumpStr);
+    EXPECT_NE(std::string::npos, dumpStr.find("UltralFastStream: 0"));
+}
+
+/**
+ * @tc.name   : Test AudioStreamDescriptor API
+ * @tc.type   : FUNC
+ * @tc.number : SetForcedNormalBool_001
+ * @tc.desc   : Test AudioStreamDescriptor::SetFastStreamForcedNormalFlag true
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, SetForcedNormalBool_001, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    streamDesc.SetFastStreamForcedNormalFlag(true);
+    EXPECT_TRUE(streamDesc.GetFastStreamForcedNormalFlag());
+}
+
+/**
+ * @tc.name   : Test AudioStreamDescriptor API
+ * @tc.type   : FUNC
+ * @tc.number : SetForcedNormalBool_002
+ * @tc.desc   : Test AudioStreamDescriptor::SetFastStreamForcedNormalFlag false
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, SetForcedNormalBool_002, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    streamDesc.SetFastStreamForcedNormalFlag(true);
+    EXPECT_TRUE(streamDesc.GetFastStreamForcedNormalFlag());
+
+    streamDesc.SetFastStreamForcedNormalFlag(false);
+    EXPECT_FALSE(streamDesc.GetFastStreamForcedNormalFlag());
+}
+
+/**
+ * @tc.name   : Test AudioStreamDescriptor API
+ * @tc.type   : FUNC
+ * @tc.number : GetForcedNormalBool_001
+ * @tc.desc   : Test AudioStreamDescriptor::GetFastStreamForcedNormalFlag default value
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, GetForcedNormalBool_001, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    EXPECT_FALSE(streamDesc.GetFastStreamForcedNormalFlag());
+}
+
+/**
+ * @tc.name   : Test AudioStreamDescriptor API
+ * @tc.type   : FUNC
+ * @tc.number : ResetForcedNormalBool_001
+ * @tc.desc   : Test AudioStreamDescriptor::ResetFastStreamForcedNormalFlag
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, ResetForcedNormalBool_001, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    streamDesc.SetFastStreamForcedNormalFlag(true);
+    EXPECT_TRUE(streamDesc.GetFastStreamForcedNormalFlag());
+
+    bool oldValue = streamDesc.ResetFastStreamForcedNormalFlag();
+    EXPECT_TRUE(oldValue);
+    EXPECT_FALSE(streamDesc.GetFastStreamForcedNormalFlag());
+}
+
+/**
+ * @tc.name   : Test AudioStreamDescriptor API
+ * @tc.type   : FUNC
+ * @tc.number : ResetForcedNormalBool_002
+ * @tc.desc   : Test AudioStreamDescriptor::ResetFastStreamForcedNormalFlag
+ */
+HWTEST_F(AudioStreamDescriptorUnitTest, ResetForcedNormalBool_002, TestSize.Level1)
+{
+    AudioStreamDescriptor streamDesc;
+
+    EXPECT_FALSE(streamDesc.GetFastStreamForcedNormalFlag());
+
+    bool oldValue = streamDesc.ResetFastStreamForcedNormalFlag();
+    EXPECT_FALSE(oldValue);
+    EXPECT_FALSE(streamDesc.GetFastStreamForcedNormalFlag());
+}
+} // namespace AudioStandard
+} // namespace OHOS

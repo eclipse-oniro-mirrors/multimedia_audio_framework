@@ -1,0 +1,388 @@
+/*
+ * Copyright (c) 2025-2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef LOG_TAG
+#define LOG_TAG "AudioVolumeUtils"
+#endif
+
+#include "audio_volume_utils.h"
+#include "audio_volume_parser.h"
+#include "audio_zone_service.h"
+
+namespace OHOS {
+namespace AudioStandard {
+static constexpr int32_t MAX_VOLUME_LEVEL = 15;
+static constexpr int32_t MIN_VOLUME_LEVEL = 0;
+static constexpr int32_t DEFAULT_VOLUME_LEVEL = 7;
+static constexpr int32_t DP_DEFAULT_VOLUME_LEVEL = 25;
+static constexpr float HEARING_AID_MAX_VOLUME_PROP = 0.8;
+
+AudioVolumeUtils& AudioVolumeUtils::GetInstance()
+{
+    static AudioVolumeUtils utils;
+    return utils;
+}
+
+void AudioVolumeUtils::Init()
+{
+    std::lock_guard<std::mutex> lock(streamVolumeInfosMutex_);
+    LoadConfig();
+}
+
+bool AudioVolumeUtils::LoadConfig()
+{
+    std::unique_ptr<AudioVolumeParser> parser = std::make_unique<AudioVolumeParser>();
+    CHECK_AND_RETURN_RET_LOG(parser != nullptr, false, "parser is null");
+    return parser->LoadConfig(streamVolumeInfos_);
+}
+
+int32_t AudioVolumeUtils::GetDefaultVolumeLevel(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t zoneId)
+{
+    CHECK_AND_RETURN_RET_LOG(desc != nullptr, DEFAULT_VOLUME_LEVEL, "desc is null");
+    int32_t defaultVolumeLevel = DEFAULT_VOLUME_LEVEL;
+    switch (desc->deviceType_) {
+        case DEVICE_TYPE_REMOTE_CAST:
+            GetDefaultVolumeLevelForDistributedDevice(desc, streamType, defaultVolumeLevel);
+            break;
+        case DEVICE_TYPE_HEARING_AID:
+            GetDefaultVolumeLevelForHearingAidDevice(desc, streamType, defaultVolumeLevel);
+            break;
+        case DEVICE_TYPE_DP:
+        case DEVICE_TYPE_HDMI:
+            GetDefaultVolumeLevelForDPsDevice(desc, streamType, defaultVolumeLevel);
+            break;
+        case DEVICE_TYPE_SPEAKER:
+            if (desc->networkId_ != LOCAL_NETWORK_ID) {
+                GetDefaultVolumeLevelForDistributedDevice(desc, streamType, defaultVolumeLevel);
+            } else {
+                GetDefaultVolumeLevelFromConfig(desc, streamType, defaultVolumeLevel, zoneId);
+            }
+            break;
+        default:
+            GetDefaultVolumeLevelFromConfig(desc, streamType, defaultVolumeLevel, zoneId);
+            break;
+    }
+    return defaultVolumeLevel;
+}
+
+#ifdef FEATURE_AUDIO_ZONE
+void AudioVolumeUtils::GetDefaultVolumeLevelFromConfig(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t &volumeLevel, int32_t zoneId)
+{
+    std::lock_guard<std::mutex> lock(zoneVolumeConfigMapMutex_);
+    std::string zoneName = AudioZoneService::GetInstance().GetZoneNameById(zoneId);
+    CHECK_AND_RETURN_LOG(zoneVolumeConfigMap_.contains(zoneName), "zoneVolumeConfigMap_ not contain zone");
+    
+    std::map<AudioVolumeType, AudioZoneVolumeConfig> zoneConfigIt = zoneVolumeConfigMap_[zoneName];
+    AudioVolumeType internalVolumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    if (internalVolumeType == STREAM_NOTIFICATION) {
+        // Use the volume config of ringtone instead of notification.
+        internalVolumeType = STREAM_RING;
+    }
+    CHECK_AND_RETURN_LOG(zoneConfigIt.contains(internalVolumeType), "streamType in zone not config");
+    volumeLevel = zoneConfigIt[internalVolumeType].defaultVolume;
+}
+#else
+void AudioVolumeUtils::GetDefaultVolumeLevelFromConfig(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t &volumeLevel, int32_t zoneId)
+{
+    std::lock_guard<std::mutex> lock(streamVolumeInfosMutex_);
+    if (streamVolumeInfos_.empty()) {
+        bool ret = LoadConfig();
+        CHECK_AND_RETURN_LOG(ret == SUCCESS, "LoadConfig failed");
+    }
+    CHECK_AND_RETURN_LOG(desc != nullptr, "desc is null");
+    AudioVolumeType internalVolumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    if (internalVolumeType == STREAM_NOTIFICATION) {
+        // Use the volume config of ringtone instead of notification.
+        internalVolumeType = STREAM_RING;
+    }
+    if (!DEVICE_TYPE_TO_DEVICE_VOLUME_TYPE_MAP.contains(desc->deviceType_)) {
+        CHECK_AND_RETURN(streamVolumeInfos_.contains(internalVolumeType) &&
+            streamVolumeInfos_[internalVolumeType] != nullptr);
+        volumeLevel = streamVolumeInfos_[internalVolumeType]->defaultLevel;
+        return;
+    }
+
+    CHECK_AND_RETURN_LOG(streamVolumeInfos_.contains(internalVolumeType) &&
+        streamVolumeInfos_[internalVolumeType] != nullptr, "streamVolumeInfos_ not contain volume type");
+    
+    volumeLevel = streamVolumeInfos_[internalVolumeType]->defaultLevel;
+
+    std::shared_ptr<StreamVolumeInfo> streamVolumeInfo = streamVolumeInfos_[internalVolumeType];
+    DeviceVolumeType deviceVolumeType = DEVICE_TYPE_TO_DEVICE_VOLUME_TYPE_MAP.find(desc->deviceType_)->second;
+    CHECK_AND_RETURN_LOG(streamVolumeInfo->deviceVolumeInfos.contains(deviceVolumeType),
+        "deviceVolumeInfos not contain device volume type");
+    auto deviceVolumeInfoIt = streamVolumeInfo->deviceVolumeInfos[deviceVolumeType];
+    CHECK_AND_RETURN_LOG(deviceVolumeInfoIt != nullptr, "deviceVolumeInfoIt is null");
+    
+    CHECK_AND_RETURN_LOG(deviceVolumeInfoIt->defaultLevel != -1, "defaultLevel is -1, not use");
+    volumeLevel = deviceVolumeInfoIt->defaultLevel;
+}
+#endif
+
+void AudioVolumeUtils::GetDefaultVolumeLevelForDPsDevice(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t &volumeLevel)
+{
+    CHECK_AND_RETURN_LOG(desc != nullptr, "desc is null");
+    AudioVolumeType volumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    if (Util::IsDualToneStreamType(volumeType)) {
+        std::shared_ptr<AudioDeviceDescriptor> tmp = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER);
+        GetDefaultVolumeLevelFromConfig(tmp, streamType, volumeLevel);
+        return;
+    }
+    int32_t maxVolumeLevel = GetMaxVolumeLevel(desc, volumeType);
+    volumeLevel = maxVolumeLevel >= DP_DEFAULT_VOLUME_LEVEL ? DP_DEFAULT_VOLUME_LEVEL : maxVolumeLevel;
+}
+
+void AudioVolumeUtils::GetDefaultVolumeLevelForDistributedDevice(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t &volumeLevel)
+{
+    CHECK_AND_RETURN_LOG(desc != nullptr, "desc is null");
+    AudioVolumeType volumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    if (Util::IsDualToneStreamType(volumeType)) {
+        std::shared_ptr<AudioDeviceDescriptor> tmp = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER);
+        GetDefaultVolumeLevelFromConfig(tmp, streamType, volumeLevel);
+        return;
+    }
+    volumeLevel = GetMaxVolumeLevel(desc, streamType);
+}
+
+void AudioVolumeUtils::GetDefaultVolumeLevelForHearingAidDevice(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t &volumeLevel)
+{
+    CHECK_AND_RETURN_LOG(desc != nullptr, "desc is null");
+    AudioVolumeType volumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    if (Util::IsDualToneStreamType(volumeType)) {
+        std::shared_ptr<AudioDeviceDescriptor> tmp = std::make_shared<AudioDeviceDescriptor>(DEVICE_TYPE_SPEAKER);
+        GetDefaultVolumeLevelFromConfig(tmp, streamType, volumeLevel);
+        return;
+    }
+    int32_t maxVolumeLevel = GetMaxVolumeLevel(desc, volumeType);
+    volumeLevel = static_cast<int32_t>(std::ceil(maxVolumeLevel * HEARING_AID_MAX_VOLUME_PROP));
+}
+
+int32_t AudioVolumeUtils::GetMaxVolumeLevel(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t zoneId)
+{
+    CHECK_AND_RETURN_RET_LOG(desc != nullptr, MAX_VOLUME_LEVEL, "desc is null");
+    AudioVolumeType volumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    int32_t maxVolumeLevel = MAX_VOLUME_LEVEL;
+    GetMaxVolumeLevelFromConfig(desc, volumeType, maxVolumeLevel, zoneId);
+    return maxVolumeLevel;
+}
+
+#ifdef FEATURE_AUDIO_ZONE
+void AudioVolumeUtils::GetMaxVolumeLevelFromConfig(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t &volumeLevel, int32_t zoneId)
+{
+    std::lock_guard<std::mutex> lock(zoneVolumeConfigMapMutex_);
+    std::string zoneName = AudioZoneService::GetInstance().GetZoneNameById(zoneId);
+    CHECK_AND_RETURN_LOG(zoneVolumeConfigMap_.contains(zoneName), "zoneVolumeConfigMap_ not contain zone");
+    
+    std::map<AudioVolumeType, AudioZoneVolumeConfig> zoneConfigIt = zoneVolumeConfigMap_[zoneName];
+    AudioVolumeType internalVolumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    CHECK_AND_RETURN_LOG(zoneConfigIt.contains(internalVolumeType), "streamType in zone not config");
+    volumeLevel = zoneConfigIt[internalVolumeType].maxVolume;
+}
+#else
+void AudioVolumeUtils::GetMaxVolumeLevelFromConfig(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t &volumeLevel, int32_t zoneId)
+{
+    std::lock_guard<std::mutex> lock(streamVolumeInfosMutex_);
+    if (streamVolumeInfos_.empty()) {
+        bool ret = LoadConfig();
+        CHECK_AND_RETURN_LOG(ret == SUCCESS, "LoadConfig failed");
+    }
+    CHECK_AND_RETURN_LOG(desc != nullptr, "desc is null");
+    AudioVolumeType internalVolumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    if (internalVolumeType == STREAM_NOTIFICATION) {
+        // Use the volume config of ringtone instead of notification.
+        internalVolumeType = STREAM_RING;
+    }
+    if (!DEVICE_TYPE_TO_DEVICE_VOLUME_TYPE_MAP.contains(desc->deviceType_)) {
+        CHECK_AND_RETURN(streamVolumeInfos_.contains(internalVolumeType) &&
+            streamVolumeInfos_[internalVolumeType] != nullptr);
+        volumeLevel = streamVolumeInfos_[internalVolumeType]->maxLevel;
+        return;
+    }
+
+    CHECK_AND_RETURN_LOG(streamVolumeInfos_.contains(internalVolumeType) &&
+        streamVolumeInfos_[internalVolumeType] != nullptr, "streamVolumeInfos_ not contain volume type");
+    
+    volumeLevel = streamVolumeInfos_[internalVolumeType]->maxLevel;
+
+    std::shared_ptr<StreamVolumeInfo> streamVolumeInfo = streamVolumeInfos_[internalVolumeType];
+    DeviceVolumeType deviceVolumeType = DEVICE_TYPE_TO_DEVICE_VOLUME_TYPE_MAP.find(desc->deviceType_)->second;
+    CHECK_AND_RETURN_LOG(streamVolumeInfo->deviceVolumeInfos.contains(deviceVolumeType),
+        "deviceVolumeInfos not contain device volume type");
+    auto deviceVolumeInfoIt = streamVolumeInfo->deviceVolumeInfos[deviceVolumeType];
+    CHECK_AND_RETURN_LOG(deviceVolumeInfoIt != nullptr, "deviceVolumeInfoIt is null");
+    
+    CHECK_AND_RETURN_LOG(deviceVolumeInfoIt->maxLevel != -1, "maxLevel is -1, not use");
+    volumeLevel = deviceVolumeInfoIt->maxLevel;
+}
+#endif
+
+int32_t AudioVolumeUtils::GetMinVolumeLevel(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t zoneId)
+{
+    CHECK_AND_RETURN_RET_LOG(desc != nullptr, MIN_VOLUME_LEVEL, "desc is null");
+    AudioVolumeType volumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    int32_t minVolumeLevel = MIN_VOLUME_LEVEL;
+    GetMinVolumeLevelFromConfig(desc, volumeType, minVolumeLevel, zoneId);
+    return minVolumeLevel;
+}
+
+#ifdef FEATURE_AUDIO_ZONE
+void AudioVolumeUtils::GetMinVolumeLevelFromConfig(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t &volumeLevel, int32_t zoneId)
+{
+    std::lock_guard<std::mutex> lock(zoneVolumeConfigMapMutex_);
+    std::string zoneName = AudioZoneService::GetInstance().GetZoneNameById(zoneId);
+    CHECK_AND_RETURN_LOG(zoneVolumeConfigMap_.contains(zoneName), "zoneVolumeConfigMap_ not contain zone");
+    
+    std::map<AudioVolumeType, AudioZoneVolumeConfig> zoneConfigIt = zoneVolumeConfigMap_[zoneName];
+    AudioVolumeType internalVolumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    if (internalVolumeType == STREAM_NOTIFICATION) {
+        // Use the volume config of ringtone instead of notification.
+        internalVolumeType = STREAM_RING;
+    }
+    CHECK_AND_RETURN_LOG(zoneConfigIt.contains(internalVolumeType), "streamType in zone not config");
+    volumeLevel = zoneConfigIt[internalVolumeType].minVolume;
+}
+#else
+void AudioVolumeUtils::GetMinVolumeLevelFromConfig(std::shared_ptr<AudioDeviceDescriptor> desc,
+    AudioStreamType streamType, int32_t &volumeLevel, int32_t zoneId)
+{
+    std::lock_guard<std::mutex> lock(streamVolumeInfosMutex_);
+    if (streamVolumeInfos_.empty()) {
+        bool ret = LoadConfig();
+        CHECK_AND_RETURN_LOG(ret == SUCCESS, "LoadConfig failed");
+    }
+
+    CHECK_AND_RETURN_LOG(desc != nullptr, "desc is null");
+    AudioVolumeType internalVolumeType = VolumeUtils::GetVolumeTypeFromStreamType(streamType);
+    if (internalVolumeType == STREAM_NOTIFICATION) {
+        // Use the volume config of ringtone instead of notification.
+        internalVolumeType = STREAM_RING;
+    }
+    if (!DEVICE_TYPE_TO_DEVICE_VOLUME_TYPE_MAP.contains(desc->deviceType_)) {
+        CHECK_AND_RETURN(streamVolumeInfos_.contains(internalVolumeType) &&
+            streamVolumeInfos_[internalVolumeType] != nullptr);
+        volumeLevel = streamVolumeInfos_[internalVolumeType]->minLevel;
+        return;
+    }
+
+    CHECK_AND_RETURN_LOG(streamVolumeInfos_.contains(internalVolumeType) &&
+        streamVolumeInfos_[internalVolumeType] != nullptr, "streamVolumeInfos_ not contain volume type");
+    
+    volumeLevel = streamVolumeInfos_[internalVolumeType]->minLevel;
+
+    std::shared_ptr<StreamVolumeInfo> streamVolumeInfo = streamVolumeInfos_[internalVolumeType];
+    DeviceVolumeType deviceVolumeType = DEVICE_TYPE_TO_DEVICE_VOLUME_TYPE_MAP.find(desc->deviceType_)->second;
+    CHECK_AND_RETURN_LOG(streamVolumeInfo->deviceVolumeInfos.contains(deviceVolumeType),
+        "deviceVolumeInfos not contain device volume type");
+    auto deviceVolumeInfoIt = streamVolumeInfo->deviceVolumeInfos[deviceVolumeType];
+    CHECK_AND_RETURN_LOG(deviceVolumeInfoIt != nullptr, "deviceVolumeInfoIt is null");
+    
+    CHECK_AND_RETURN_LOG(deviceVolumeInfoIt->minLevel != -1, "minLevel is -1, not use");
+    volumeLevel = deviceVolumeInfoIt->minLevel;
+}
+#endif
+
+bool AudioVolumeUtils::IsDistributedDevice(std::shared_ptr<AudioDeviceDescriptor> desc)
+{
+    CHECK_AND_RETURN_RET_LOG(desc != nullptr, false, "desc is null");
+    if (desc->deviceType_ == DEVICE_TYPE_SPEAKER && desc->networkId_ != LOCAL_NETWORK_ID) {
+        return true;
+    }
+    if (desc->deviceType_ == DEVICE_TYPE_REMOTE_CAST) {
+        return true;
+    }
+    return false;
+}
+
+bool AudioVolumeUtils::IsVolumeTypeValid(AudioStreamType streamType)
+{
+    bool result = false;
+    switch (streamType) {
+        case STREAM_MUSIC:
+        case STREAM_RING:
+        case STREAM_NOTIFICATION:
+        case STREAM_VOICE_CALL:
+        case STREAM_VOICE_COMMUNICATION:
+        case STREAM_VOICE_ASSISTANT:
+        case STREAM_ALARM:
+        case STREAM_SYSTEM:
+        case STREAM_ACCESSIBILITY:
+        case STREAM_ULTRASONIC:
+        case STREAM_NAVIGATION:
+        case STREAM_ALL:
+        case STREAM_VOICE_RING:
+        case STREAM_CAMCORDER:
+            result = true;
+            break;
+        default:
+            result = false;
+            AUDIO_ERR_LOG("IsVolumeTypeValid: streamType[%{public}d] is not supported", streamType);
+            break;
+    }
+    return result;
+}
+
+bool AudioVolumeUtils::IsDeviceWithSafeVolume(std::shared_ptr<AudioDeviceDescriptor> desc)
+{
+    CHECK_AND_RETURN_RET_LOG(desc != nullptr, false, "desc is null");
+    switch (desc->deviceType_) {
+        case DEVICE_TYPE_WIRED_HEADSET:
+        case DEVICE_TYPE_WIRED_HEADPHONES:
+        case DEVICE_TYPE_USB_HEADSET:
+        case DEVICE_TYPE_USB_ARM_HEADSET:
+            return true;
+        case DEVICE_TYPE_BLUETOOTH_SCO:
+        case DEVICE_TYPE_BLUETOOTH_A2DP:
+        case DEVICE_TYPE_NEARLINK:
+            if (desc->deviceCategory_ == BT_CAR || desc->deviceCategory_ == BT_SOUNDBOX) {
+                return false;
+            }
+            return true;
+        default:
+            return false;
+    }
+}
+
+int32_t AudioVolumeUtils::SetAudioZoneVolumeConfig(const std::string &zoneName,
+    const std::vector<AudioZoneVolumeConfig> &configs)
+{
+    std::lock_guard<std::mutex> lock(zoneVolumeConfigMapMutex_);
+    for (const auto &config : configs) {
+        zoneVolumeConfigMap_[zoneName][config.volumeType] = config;
+        AUDIO_INFO_LOG("zoneName: %{public}s, volumeType: %{public}d, default: %{public}d,"
+            "min: %{public}d, max: %{public}d", zoneName.c_str(), config.volumeType,
+            config.defaultVolume, config.minVolume, config.maxVolume);
+    }
+    zoneVolumeHasConfiged_.insert(zoneName);
+    return SUCCESS;
+}
+
+bool AudioVolumeUtils::HasZoneVolumeConfiged(const std::string &zoneName)
+{
+    AUDIO_INFO_LOG("zoneName: %{public}s", zoneName.c_str());
+    return zoneVolumeHasConfiged_.contains(zoneName);
+}
+} // namespace AudioStandard
+} // namespace OHOS

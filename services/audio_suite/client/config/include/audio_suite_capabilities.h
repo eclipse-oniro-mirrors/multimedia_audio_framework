@@ -1,0 +1,97 @@
+/*
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef AUDIO_SUITE_CAPABILITIES_H
+#define AUDIO_SUITE_CAPABILITIES_H
+
+#include <dlfcn.h>
+#include "audio_suite_base.h"
+#include "audio_suite_capabilities_parser.h"
+#include "imedia_api.h"
+#include "audio_hms_ainr_api.h"
+#include "audio_voicemorphing_api.h"
+#include "audio_suite_tempo_pitch_api.h"
+#include "audio_effect.h"
+#include "audio_hms_space_render_api.h"
+#include "audio_suite_common.h"
+
+namespace OHOS {
+namespace AudioStandard {
+namespace AudioSuite {
+
+class AudioSuiteCapabilities {
+public:
+    AudioSuiteCapabilities(const AudioSuiteCapabilities&) = delete;
+    AudioSuiteCapabilities& operator=(const AudioSuiteCapabilities&) = delete;
+
+    static AudioSuiteCapabilities& GetInstance()
+    {
+        static AudioSuiteCapabilities instance;
+        return instance;
+    }
+
+    int32_t IsNodeTypeSupported(AudioNodeType nodeType, bool &isSupported);
+    int32_t GetNodeParameter(AudioNodeType nodeType, NodeParameter &nodeParameter);
+
+private:
+    AudioSuiteLibraryManager algoLibrary_;
+
+    AudioSuiteCapabilities();
+    ~AudioSuiteCapabilities() = default;
+
+    template <typename T>
+    int32_t LoadCapability(const std::string& functionName, std::string algoSoPath, T &specs);
+
+    template <typename T>
+    int32_t SetAudioParameters(NodeParameter &np, T &specs);
+
+    int32_t LoadVbCapability(NodeParameter &np);
+    int32_t LoadEqCapability(NodeParameter &np);
+    int32_t LoadAinrCapability(NodeParameter &np);
+    int32_t LoadSfCapability(NodeParameter &np);
+    int32_t LoadEnvCapability(NodeParameter &np);
+    int32_t LoadSrCapability(NodeParameter &np);
+    int32_t LoadAissCapability(NodeParameter &np);
+    int32_t LoadGeneralCapability(NodeParameter &np);
+    int32_t LoadPureCapability(NodeParameter &np);
+    int32_t LoadTempoPitchCapability(NodeParameter &np);
+    std::unordered_map<AudioNodeType, NodeParameter> audioSuiteCapabilities_;
+    AudioSuiteCapabilitiesParser audioSuiteCapabilitiesParser_;
+};
+
+class DlHandleGuard {
+public:
+    explicit DlHandleGuard(void* handle = nullptr) : handle_(handle) {}
+    ~DlHandleGuard()
+    {
+        if (handle_) {
+            dlclose(handle_);
+        }
+    }
+    
+    DlHandleGuard(const DlHandleGuard&) = delete;
+    DlHandleGuard& operator=(const DlHandleGuard&) = delete;
+    
+    void* get() const { return handle_; }
+    operator bool() const { return handle_ != nullptr; }
+    
+private:
+    void* handle_;
+};
+}
+}
+}
+
+#endif // AUDIO_SUITE_CAPABILITIES_H

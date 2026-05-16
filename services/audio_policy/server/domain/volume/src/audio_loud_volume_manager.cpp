@@ -1,0 +1,278 @@
+/*
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef LOG_TAG
+#define LOG_TAG "AudioLoudVolumeManager"
+#endif
+
+#include "audio_loud_volume_manager.h"
+
+#ifdef FEATURE_MULTIMODALINPUT_INPUT
+#include "input_manager.h"
+#include "audio_policy_manager_factory.h"
+#endif
+#include "parameters.h"
+#include "audio_safe_volume_notification.h"
+#include "media_monitor_manager.h"
+#include "media_monitor_info.h"
+
+using namespace std;
+namespace OHOS {
+namespace AudioStandard {
+
+#ifdef FEATURE_MULTIMODALINPUT_INPUT
+LoudVolumeManager::LoudVolumeManager()
+    : audioActiveDevice_(AudioActiveDevice::GetInstance()),
+      audioPolicyManager_(AudioPolicyManagerFactory::GetAudioPolicyManager())
+{
+    loudVolumeSupportMode_ = system::GetIntParameter("const.audio.loudvolume", 0);
+    AUDIO_INFO_LOG("create LoudVolumeManager");
+};
+
+LoudVolumeManager::~LoudVolumeManager()
+{
+    AUDIO_WARNING_LOG("dtor should not happen");
+};
+
+bool LoudVolumeManager::IsSkipCloseLoudVolType(AudioStreamType streamType)
+{
+    auto iter = CONCURRENCY_KSIP_CLOSE_LOUD_VOL_TYPE.find(VolumeUtils::GetVolumeTypeFromStreamType(streamType));
+    if (iter != CONCURRENCY_KSIP_CLOSE_LOUD_VOL_TYPE.end()) {
+        return true;
+    }
+    return false;
+}
+
+std::map<AudioVolumeType, LoudVolumeHoldType>& LoudVolumeManager::GetLoudVolumeEnableMap()
+{
+    if (loudVolumeSupportMode_ == LOUD_VOLUME_SUPPORT_ONLY_MUSIC) {
+        return LOUD_VOL_STREAM_TYPE_ENABLE_ONLY_MUSIC;
+    } else if (loudVolumeSupportMode_ == LOUD_VOLUME_SUPPORT_ONLY_VOICE) {
+        return LOUD_VOL_STREAM_TYPE_ENABLE_ONLY_VOICE;
+    } else {
+        return LOUD_VOL_STREAM_TYPE_ENABLE;
+    }
+}
+
+bool LoudVolumeManager::FindLoudVolStreamTypeEnable(
+    AudioStreamType streamType, LoudVolumeHoldType &funcHoldType)
+{
+    std::map<AudioVolumeType, LoudVolumeHoldType> map = GetLoudVolumeEnableMap();
+    auto iter = map.find(VolumeUtils::GetVolumeTypeFromStreamType(streamType));
+    if (iter != map.end()) {
+        funcHoldType = iter->second;
+        return true;
+    }
+    return false;
+}
+
+void LoudVolumeManager::SetLoudVolumeHoldMap(LoudVolumeHoldType funcHoldType, bool state)
+{
+    std::lock_guard<std::mutex> lock(setLoudVolHoldMutex_);
+    loudVolumeHoldMap_[funcHoldType] = state;
+}
+
+bool LoudVolumeManager::ClearLoudVolumeHoldMap(LoudVolumeHoldType funcHoldType)
+{
+    std::lock_guard<std::mutex> lock(setLoudVolHoldMutex_);
+    auto it = loudVolumeHoldMap_.find(funcHoldType);
+    if (it != loudVolumeHoldMap_.end()) {
+        loudVolumeHoldMap_.erase(it);
+        return true;
+    }
+    return false;
+}
+
+bool LoudVolumeManager::GetLoudVolumeHoldMap(LoudVolumeHoldType funcHoldType, bool &state)
+{
+    std::lock_guard<std::mutex> lock(setLoudVolHoldMutex_);
+    if (loudVolumeHoldMap_.count(funcHoldType) > 0) {
+        state = loudVolumeHoldMap_[funcHoldType];
+        return true;
+    }
+    return false;
+}
+
+bool LoudVolumeManager::ReloadLoudVolumeModeSwitch(LoudVolumeHoldType funcHoldType, SetLoudVolMode setVolMode)
+{
+    bool isHolding = false;
+    if (funcHoldType != LOUD_VOLUME_MODE_MUSIC && funcHoldType != LOUD_VOLUME_MODE_VOICE) {
+        AUDIO_ERR_LOG("funHoldType error : %{public}d", funcHoldType);
+        return false;
+    }
+    bool isInLoudVolumeMode = GetLoudVolumeHoldMap(funcHoldType, isHolding);
+    switch (setVolMode) {
+        case LOUD_VOLUME_SWITCH_ON:
+            if (!isInLoudVolumeMode) {
+                if (funcHoldType == LOUD_VOLUME_MODE_MUSIC) {
+                    SetLoudVolumeHoldMap(funcHoldType, true);
+                } else {
+                    SetLoudVolumeHoldMap(funcHoldType, false);
+                }
+                SendLoudVolumeMode(funcHoldType, true, true);
+            }
+            break;
+        case LOUD_VOLUME_SWITCH_OFF:
+            if (isInLoudVolumeMode) {
+                ClearLoudVolumeHoldMap(funcHoldType);
+                SendLoudVolumeMode(funcHoldType, false);
+            }
+            break;
+        case LOUD_VOLUME_SWITCH_PAUSE:
+            if (isInLoudVolumeMode) {
+                SendLoudVolumeMode(funcHoldType, false);
+            }
+            break;
+        case LOUD_VOLUME_SWITCH_AUTO:
+            if (isInLoudVolumeMode && isHolding) {
+                SendLoudVolumeMode(funcHoldType, true);
+            } else {
+                AUDIO_INFO_LOG("no need load loud volume mode");
+            }
+            break;
+        default:
+            AUDIO_ERR_LOG("setVolMode error : %{public}d", setVolMode);
+            return false;
+    }
+
+    return true;
+}
+
+bool LoudVolumeManager::ReloadLoudVolumeMode(
+    const AudioStreamType streamInFocus, SetLoudVolMode setVolMode)
+{
+    if (loudVolumeSupportMode_ == LOUD_VOLUME_NOT_SUPPORT) {
+        return false;
+    }
+    LoudVolumeHoldType funcHoldType = LOUD_VOLUME_MODE_INVALID;
+    if (IsSkipCloseLoudVolType(streamInFocus)) {
+        AUDIO_INFO_LOG("streamType = %{public}d, skip operation loud volume mode.", streamInFocus);
+        return false;
+    }
+    if (!FindLoudVolStreamTypeEnable(streamInFocus, funcHoldType) ||
+        audioActiveDevice_.GetCurrentOutputDeviceNetworkId() != LOCAL_NETWORK_ID ||
+        audioActiveDevice_.GetCurrentOutputDeviceType() != DeviceType::DEVICE_TYPE_SPEAKER) {
+        AUDIO_INFO_LOG("streamType = %{public}d, or deviceType = %{public}d not support loud volume mode.",
+            streamInFocus, audioActiveDevice_.GetCurrentOutputDeviceType());
+        return false;
+    }
+
+    return ReloadLoudVolumeModeSwitch(funcHoldType, setVolMode);
+}
+
+bool LoudVolumeManager::CheckLoudVolumeMode(const int32_t volLevel,
+    const int32_t keyType, const AudioStreamType &streamInFocus)
+{
+    LoudVolumeHoldType funcHoldType = LOUD_VOLUME_MODE_INVALID;
+    if (loudVolumeSupportMode_ == LOUD_VOLUME_NOT_SUPPORT ||
+        !FindLoudVolStreamTypeEnable(streamInFocus, funcHoldType)) {
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(loudVolTrigTimeMutex_);
+    constexpr int32_t MAX_TRIGGER_TIMES = 2;
+    constexpr int32_t ENABLE_TRIGGER_TIMES = 1;
+    constexpr int32_t MAX_LOUD_VOLUME_MSEC = 3000;
+    constexpr int32_t MIN_LOUD_VOLUME_MSEC = 400;
+    bool isHolding = false;
+
+    struct timeval tv;
+    struct timezone tz;
+    gettimeofday(&tv, &tz);
+    int64_t mSec = static_cast<int64_t>(tv.tv_sec * 1000 + tv.tv_usec / AUDIO_MS_PER_SECOND);
+
+    int32_t volumeLevelMax = GetMaxVolumeLevel(streamInFocus);
+    int32_t volumeLevelInInt = (keyType == OHOS::MMI::KeyEvent::KEYCODE_VOLUME_UP) ? volLevel + 1 : volLevel - 1;
+    if (keyType == OHOS::MMI::KeyEvent::KEYCODE_VOLUME_UP && (volumeLevelInInt >= volumeLevelMax)) {
+        if (GetLoudVolumeHoldMap(funcHoldType, isHolding)) {
+            AUDIO_DEBUG_LOG("no need to repeatedly set loud volume mode.");
+            return false;
+        }
+        if (triggerTime == MAX_TRIGGER_TIMES && mSec - upTriggerTimeMSec < MAX_LOUD_VOLUME_MSEC) {
+            triggerTime = ENABLE_TRIGGER_TIMES;
+            bool ret = ReloadLoudVolumeMode(streamInFocus, LOUD_VOLUME_SWITCH_ON);
+            CHECK_AND_RETURN_RET_LOG(ret != false, false, "set LoudVolume on error");
+            LoudVolumeMonitor();
+            return true;
+        } else if (triggerTime == ENABLE_TRIGGER_TIMES && (mSec - upTriggerTimeMSec > MIN_LOUD_VOLUME_MSEC)) {
+            triggerTime++;
+        } else {
+            triggerTime = ENABLE_TRIGGER_TIMES;
+        }
+        upTriggerTimeMSec = mSec;
+    } else if (keyType == OHOS::MMI::KeyEvent::KEYCODE_VOLUME_DOWN && GetLoudVolumeHoldMap(funcHoldType, isHolding)) {
+        upTriggerTimeMSec = mSec;
+        triggerTime = ENABLE_TRIGGER_TIMES;
+        bool ret = ReloadLoudVolumeMode(streamInFocus, LOUD_VOLUME_SWITCH_OFF);
+        CHECK_AND_RETURN_RET_LOG(ret != false, false, "set LoudVolume off error");
+        return true;
+    } else {
+        upTriggerTimeMSec = 0;
+        triggerTime = 0;
+    }
+    return false;
+}
+
+int32_t LoudVolumeManager::GetMaxVolumeLevel(AudioVolumeType volumeType, DeviceType deviceType) const
+{
+    if (volumeType == STREAM_ALL) {
+        volumeType = STREAM_MUSIC;
+    }
+    return audioPolicyManager_.GetMaxVolumeLevel(volumeType, deviceType);
+}
+
+void LoudVolumeManager::PublishLoudVolumeNotification(int32_t notificationId)
+{
+    void *libHandle = dlopen("libaudio_safe_volume_notification_impl.z.so", RTLD_LAZY);
+    if (libHandle == nullptr) {
+        AUDIO_ERR_LOG("dlopen failed %{public}s", __func__);
+        return;
+    }
+    CreateLoudVolumeNotification *createLoudVolumeNotificationImpl =
+        reinterpret_cast<CreateLoudVolumeNotification*>(dlsym(libHandle, "CreateLoudVolumeNotificationImpl"));
+    if (createLoudVolumeNotificationImpl == nullptr) {
+        AUDIO_ERR_LOG("createLoudVolumeNotificationImpl failed %{public}s", __func__);
+        dlclose(libHandle);
+        return;
+    }
+    AudioLoudVolumeNotification *audioLoudVolumeNotificationImpl = createLoudVolumeNotificationImpl();
+    if (audioLoudVolumeNotificationImpl == nullptr) {
+        AUDIO_ERR_LOG("audioLoudVolumeNotificationImpl is nullptr %{public}s", __func__);
+        dlclose(libHandle);
+        return;
+    }
+    audioLoudVolumeNotificationImpl->PublishLoudVolumeNotification(notificationId);
+    delete audioLoudVolumeNotificationImpl;
+        dlclose(libHandle);
+}
+
+void LoudVolumeManager::SendLoudVolumeMode(LoudVolumeHoldType funcHoldType, bool state, bool repeatTrigNotif)
+{
+    if (state && repeatTrigNotif) {
+        const int INSTANT_NOTIFICATION_ID = 6;
+        PublishLoudVolumeNotification(INSTANT_NOTIFICATION_ID);
+    }
+    audioPolicyManager_.SendLoudVolumeModeToDsp(funcHoldType, state);
+}
+
+void LoudVolumeManager::LoudVolumeMonitor()
+{
+    std::shared_ptr<Media::MediaMonitor::EventBean> bean = std::make_shared<Media::MediaMonitor::EventBean>(
+        Media::MediaMonitor::AUDIO, Media::MediaMonitor::VOLUME_SETTING_STATISTICS,
+        Media::MediaMonitor::FREQUENCY_AGGREGATION_EVENT);
+    bean->Add("SCENE_TYPE", LOUD_VOLUME_SCENE);
+    Media::MediaMonitor::MediaMonitorManager::GetInstance().WriteLogMsg(bean);
+}
+#endif
+}
+}

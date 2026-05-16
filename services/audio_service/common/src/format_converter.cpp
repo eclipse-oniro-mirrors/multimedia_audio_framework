@@ -1,0 +1,1175 @@
+/*
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef LOG_TAG
+#define LOG_TAG "FormatConverter"
+#endif
+
+#include "format_converter.h"
+#include "audio_stream_info.h"
+#include "audio_log.h"
+#include <string>
+#include <vector>
+
+namespace OHOS {
+namespace AudioStandard {
+#define PCM_FLOAT_EPS 1e-6f
+#define BIT_8 8
+#define BIT_16 16
+#define BIT_24 24
+#define BIT_32 32
+#define INT32_FORMAT_SHIFT 31
+#define VOLUME_DIV_NUMBER 65536
+
+namespace {
+constexpr size_t QUARTER = 4;
+constexpr float FLOAT_SCALE_16 = 1.0f / (1 << (BIT_16 - 1));
+constexpr float FLOAT_SCALE_32 = 1.0f / (1U << (BIT_32 - 1));
+constexpr size_t FORMAT_S24_BYTES = 3;
+constexpr int64_t INT24_MAX = (1 << (BIT_24 - 1)) - 1;
+constexpr int64_t INT24_MIN = -(1 << (BIT_24 - 1));
+}
+
+static float CapMax(float v)
+{
+    float value = v;
+    if (v >= 1.0f) {
+        value = 1.0f - PCM_FLOAT_EPS;
+    } else if (v <= -1.0f) {
+        value = -1.0f + PCM_FLOAT_EPS;
+    }
+    return value;
+}
+
+static int16_t ConvertFromFloatTo16Bit(const float *a)
+{
+    float tmp = *a;
+    float v = CapMax(tmp) * (1 << (BIT_16 - 1));
+    return static_cast<int16_t>(v);
+}
+
+static int32_t ConvertFromFloatTo24Bit(const float *a)
+{
+    float tmp = *a;
+    float v = CapMax(tmp) * INT24_MAX;
+    return static_cast<int32_t>(v);
+}
+
+void MixS16Volume(const std::vector<AudioStreamData> &srcDataList, const AudioStreamData &dstData)
+{
+    size_t srcListSize = srcDataList.size();
+    size_t loopCount = dstData.bufferDesc.dataLength / sizeof(int16_t);
+
+    int16_t *dstPtr = reinterpret_cast<int16_t *>(dstData.bufferDesc.buffer);
+    for (size_t offset = 0; loopCount > 0; loopCount--) {
+        int32_t sum = 0;
+        for (size_t i = 0; i < srcListSize; i++) {
+            int32_t vol = srcDataList[i].volumeStart;
+            int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDataList[i].bufferDesc.buffer) + offset;
+            sum += (*srcPtr * static_cast<int64_t>(vol)) / VOLUME_DIV_NUMBER;
+        }
+        offset++;
+        *dstPtr++ = sum > INT16_MAX ? INT16_MAX : (sum < INT16_MIN ? INT16_MIN : sum);
+    }
+}
+
+void MixS16WithoutVolume(const std::vector<AudioStreamData> &srcDataList, const AudioStreamData &dstData)
+{
+    size_t srcListSize = srcDataList.size();
+    size_t loopCount = dstData.bufferDesc.dataLength / sizeof(int16_t);
+
+    int16_t *dstPtr = reinterpret_cast<int16_t *>(dstData.bufferDesc.buffer);
+    for (size_t offset = 0; loopCount > 0; loopCount--) {
+        int32_t sum = 0;
+        for (size_t i = 0; i < srcListSize; i++) {
+            int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDataList[i].bufferDesc.buffer) + offset;
+            sum += *srcPtr;
+        }
+        offset++;
+        *dstPtr++ = sum > INT16_MAX ? INT16_MAX : (sum < INT16_MIN ? INT16_MIN : sum);
+    }
+}
+
+void MixS24Volume(const std::vector<AudioStreamData> &srcDataList, const AudioStreamData &dstData)
+{
+    size_t srcListSize = srcDataList.size();
+    size_t loopCount = dstData.bufferDesc.dataLength / FORMAT_S24_BYTES;
+
+    uint8_t *dstPtr = reinterpret_cast<uint8_t *>(dstData.bufferDesc.buffer);
+    for (size_t offset = 0; loopCount > 0; loopCount--, offset += FORMAT_S24_BYTES) {
+        int64_t sum = 0;
+        for (size_t i = 0; i < srcListSize; i++) {
+            int32_t vol = srcDataList[i].volumeStart;
+            uint8_t *srcBuffer = srcDataList[i].bufferDesc.buffer + offset;
+            uint32_t srcAudioBuffer24Bit = (srcBuffer[2] << BIT_16) | (srcBuffer[1] << BIT_8) | srcBuffer[0];
+            int32_t srcAudioData24Bit = (static_cast<int32_t>(srcAudioBuffer24Bit) << BIT_8) >> BIT_8;
+            sum += (srcAudioData24Bit * static_cast<int64_t>(vol)) / VOLUME_DIV_NUMBER;
+        }
+        sum = std::min(INT24_MAX, std::max(INT24_MIN, sum));
+        *dstPtr++ = static_cast<uint8_t>(sum & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((sum >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((sum >> BIT_16) & 0xFF);
+    }
+}
+
+void MixS32Volume(const std::vector<AudioStreamData> &srcDataList, const AudioStreamData &dstData)
+{
+    size_t srcListSize = srcDataList.size();
+    size_t loopCount = dstData.bufferDesc.dataLength / sizeof(int32_t);
+
+    int32_t *dstPtr = reinterpret_cast<int32_t *>(dstData.bufferDesc.buffer);
+    for (size_t offset = 0; loopCount > 0; loopCount--) {
+        int64_t sum = 0;
+        for (size_t i = 0; i < srcListSize; i++) {
+            int32_t vol = srcDataList[i].volumeStart;
+            int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDataList[i].bufferDesc.buffer) + offset;
+            sum += (*srcPtr * static_cast<int64_t>(vol)) / VOLUME_DIV_NUMBER;
+        }
+        offset++;
+        sum = sum > INT32_MAX ? INT32_MAX : (sum < INT32_MIN ? INT32_MIN : sum);
+        *dstPtr++ = static_cast<int32_t>(sum);
+    }
+}
+
+// check audio stream data is vaild
+bool CheckStreamDataVaild(const std::vector<AudioStreamData> &srcDataList, const AudioStreamData &dstData)
+{
+    // Assum using STEREO channel
+    CHECK_AND_RETURN_RET_LOG(dstData.streamInfo.channels == STEREO, false, "Invalid channels");
+
+    for (size_t i = 0; i < srcDataList.size(); i++) {
+        if (srcDataList[i].streamInfo.format != dstData.streamInfo.format ||
+            srcDataList[i].streamInfo.channels != STEREO ||
+            srcDataList[i].bufferDesc.bufLength != dstData.bufferDesc.bufLength ||
+            srcDataList[i].bufferDesc.dataLength != dstData.bufferDesc.dataLength) {
+            AUDIO_ERR_LOG("ProcessData failed, streamInfo are different: format %{public}d channels %{public}d "
+                "bufLength %{public}zu dataLength %{public}zu", srcDataList[i].streamInfo.format,
+                srcDataList[i].streamInfo.channels, srcDataList[i].bufferDesc.bufLength,
+                srcDataList[i].bufferDesc.dataLength);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// only use volumeStart, not smooth from volumeStart to volumeEnd
+bool FormatConverter::DataAccumulationFromVolume(const std::vector<AudioStreamData> &srcDataList,
+    const AudioStreamData &dstData)
+{
+    CHECK_AND_RETURN_RET(CheckStreamDataVaild(srcDataList, dstData), false);
+
+    if (dstData.streamInfo.format == SAMPLE_S16LE) {
+        MixS16Volume(srcDataList, dstData);
+    } else if (dstData.streamInfo.format == SAMPLE_S24LE) {
+        MixS24Volume(srcDataList, dstData);
+    } else if (dstData.streamInfo.format == SAMPLE_S32LE) {
+        MixS32Volume(srcDataList, dstData);
+    } else {
+        AUDIO_ERR_LOG("Invalid format: %{public}d", static_cast<int32_t>(dstData.streamInfo.format));
+    }
+    return true;
+}
+
+// voip volume down, no need calculate volume
+bool FormatConverter::DataAccumulationWithoutVolume(const std::vector<AudioStreamData> &srcDataList,
+    const AudioStreamData &dstData)
+{
+    CHECK_AND_RETURN_RET(CheckStreamDataVaild(srcDataList, dstData), false);
+
+    if (dstData.streamInfo.format == SAMPLE_S16LE) {
+        MixS16Volume(srcDataList, dstData); // process data with stream volume.
+    } else {
+        AUDIO_ERR_LOG("Invalid format: %{public}d", static_cast<int32_t>(dstData.streamInfo.format));
+    }
+
+    return true;
+}
+
+int32_t FormatConverter::S32MonoToS16Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    size_t quarter = sizeof(int32_t);
+    if (srcDesc.bufLength != dstDesc.bufLength || srcDesc.bufLength % quarter != 0) {
+        return -1;
+    }
+    int32_t *stcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    int16_t *dstPtr = reinterpret_cast<int16_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / quarter;
+
+    double maxInt32 = INT32_MAX;
+    double maxInt16 = INT16_MAX;
+    for (size_t idx = 0; idx < count; idx++) {
+        int16_t temp = static_cast<int16_t>((static_cast<double>(*stcPtr) / maxInt32) * maxInt16);
+        stcPtr++;
+        *(dstPtr++) = temp;
+        *(dstPtr++) = temp;
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S32StereoToS16Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    size_t half = 2;
+    if (srcDesc.bufLength / half != dstDesc.bufLength || dstDesc.bufLength % half != 0) {
+        return -1;
+    }
+    int32_t *stcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    int16_t *dstPtr = reinterpret_cast<int16_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / half / half;
+    double maxInt32 = INT32_MAX;
+    double maxInt16 = INT16_MAX;
+    for (size_t idx = 0; idx < count; idx++) {
+        int16_t temp = static_cast<int16_t>((static_cast<double>(*stcPtr) / maxInt32) * maxInt16);
+        stcPtr++;
+        *(dstPtr++) = temp;
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S16MonoToS16Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    size_t half = 2; // mono(1) -> stereo(2)
+    if (srcDesc.bufLength != dstDesc.bufLength / half) {
+        return -1;
+    }
+    int16_t *stcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    int16_t *dstPtr = reinterpret_cast<int16_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int16_t);
+    for (size_t idx = 0; idx < count; idx++) {
+        *(dstPtr++) = *stcPtr;
+        *(dstPtr++) = *stcPtr++;
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S16StereoToS16Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    size_t half = 2; // stereo(2) -> mono(1)
+    if (dstDesc.bufLength != srcDesc.bufLength / half) {
+        return -1;
+    }
+    int16_t *stcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    int16_t *dstPtr = reinterpret_cast<int16_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / half / sizeof(int16_t);
+    for (size_t idx = 0; idx < count; idx++) {
+        *(dstPtr++) = (*stcPtr + *(stcPtr + 1)) / 2; // To obtain mono channel, add left to right, then divide by 2
+        stcPtr += 2; // ptr++ on mono is equivalent to ptr+=2 on stereo
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S16StereoToS32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    const size_t half = sizeof(int16_t);
+    if (srcDesc.bufLength != dstDesc.bufLength / half) {
+        return -1;
+    }
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    int32_t *dstPtr = reinterpret_cast<int32_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int16_t);
+    double maxInt16 = INT16_MAX;
+    double maxInt32 = INT32_MAX;
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>((static_cast<double>(*srcPtr) / maxInt16) * maxInt32);
+        srcPtr++;
+        *(dstPtr++) = temp;
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S16MonoToS32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    const size_t quarter = sizeof(int32_t);
+    if (srcDesc.bufLength != dstDesc.bufLength / quarter) {
+        return -1;
+    }
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    int32_t *dstPtr = reinterpret_cast<int32_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int16_t);
+    double maxInt16 = INT16_MAX;
+    double maxInt32 = INT32_MAX;
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>((static_cast<double>(*srcPtr) / maxInt16) * maxInt32);
+        srcPtr++;
+        *(dstPtr++) = temp; // left
+        *(dstPtr++) = temp; // right
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S32MonoToS32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    const size_t half = sizeof(int16_t);
+    if (srcDesc.bufLength != dstDesc.bufLength / half) {
+        return -1;
+    }
+    int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    int32_t *dstPtr = reinterpret_cast<int32_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int32_t);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        *(dstPtr++) = *srcPtr; // left
+        *(dstPtr++) = *srcPtr++; // right
+    }
+    return 0;
+}
+
+int32_t FormatConverter::F32MonoToS32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    const size_t half = 2;
+    if (srcDesc.bufLength != dstDesc.bufLength / half) {
+        return -1;
+    }
+    float *srcPtr = reinterpret_cast<float *>(srcDesc.buffer);
+    int32_t *dstPtr = reinterpret_cast<int32_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(float);
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>(CapMax(*(srcPtr++)) * (1 << INT32_FORMAT_SHIFT));
+        *(dstPtr++) = temp; // left
+        *(dstPtr++) = temp; // right
+    }
+    return 0;
+}
+
+int32_t FormatConverter::F32StereoToS32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    if (srcDesc.bufLength != dstDesc.bufLength) {
+        return -1;
+    }
+    float *srcPtr = reinterpret_cast<float *>(srcDesc.buffer);
+    int32_t *dstPtr = reinterpret_cast<int32_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(float);
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>(CapMax(*(srcPtr++)) * (1 << INT32_FORMAT_SHIFT));
+        *(dstPtr++) = temp;
+    }
+    return 0;
+}
+
+int32_t FormatConverter::F32StereoToF32Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    const size_t half = 2; // stereo has 2 channels
+    if (srcDesc.bufLength == 0 || dstDesc.bufLength == 0 ||
+        srcDesc.bufLength / half  != dstDesc.bufLength) {
+        return -1;
+    }
+
+    float *srcPtr = reinterpret_cast<float*>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float*>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / (sizeof(float) * half);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        float left = *srcPtr++;
+        float right = *srcPtr++;
+        *dstPtr++ = (left + right) / 2.0f; // 2.0f is average to mono
+    }
+    return 0;
+}
+
+int32_t FormatConverter::F32StereoToS16Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    const size_t half = 2; // stereo has 2 channels
+    const size_t outSampleSize = sizeof(int16_t);
+    if (srcDesc.bufLength == 0 || dstDesc.bufLength == 0 ||
+        (srcDesc.bufLength / (half * sizeof(float)) * outSampleSize) != dstDesc.bufLength) {
+        return -1;
+    }
+
+    float *srcPtr = reinterpret_cast<float *>(srcDesc.buffer);
+    int16_t *dstPtr = reinterpret_cast<int16_t*>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / (sizeof(float) * half);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        float left = CapMax(*srcPtr++); // apply safety clamping
+        float right = CapMax(*srcPtr++);
+        float mono = (left + right) / 2.0f; // 2.0f is average to mono
+
+        // convert to 16 bit PCM with proper scaling
+        *dstPtr++ = static_cast<int16_t>(mono * (1 << (BIT_16 - 1)));
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S16MonoToF32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    if (srcDesc.bufLength != dstDesc.bufLength / QUARTER) {
+        return -1;
+    }
+
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int16_t);
+    for (size_t idx = 0; idx < count; idx++) {
+        float temp = (*srcPtr) * FLOAT_SCALE_16;
+        *(dstPtr++) = temp; // left
+        *(dstPtr++) = temp; // right
+        srcPtr++;
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S16StereoToF32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+
+    size_t half = 2;
+    if (srcDesc.bufLength != dstDesc.bufLength / half) {
+        return -1;
+    }
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int16_t);
+    for (size_t idx = 0; idx < count; idx++) {
+        *dstPtr = (*srcPtr) * FLOAT_SCALE_16;
+        dstPtr++;
+        srcPtr++;
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S32MonoToF32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    size_t half = 2;
+    if (srcDesc.bufLength != dstDesc.bufLength / half) {
+        return -1;
+    }
+
+    int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int32_t);
+    for (size_t idx = 0; idx < count; idx++) {
+        float temp  = (*srcPtr) * FLOAT_SCALE_32;
+        *(dstPtr++) = temp; // left
+        *(dstPtr++) = temp; // right
+        srcPtr++;
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S32StereoToF32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    if (srcDesc.bufLength != dstDesc.bufLength) {
+        return -1;
+    }
+
+    int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int32_t);
+    for (size_t idx = 0; idx < count; idx++) {
+        *(dstPtr)  = (*srcPtr) * FLOAT_SCALE_32;
+        srcPtr++;
+        dstPtr++;
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::F32MonoToF32Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    size_t half = 2;
+    if (srcDesc.bufLength != dstDesc.bufLength / half) {
+        return -1;
+    }
+
+    float *srcPtr = reinterpret_cast<float *>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(float);
+    for (size_t idx = 0; idx < count; idx++) {
+        *(dstPtr++) = (*srcPtr); // left
+        *(dstPtr++) = (*srcPtr); // right
+        srcPtr++;
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S16MonoToF32Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    
+    size_t half = 2;
+    if (srcDesc.bufLength != dstDesc.bufLength / half) {
+        return -1;
+    }
+
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int16_t);
+    
+    for (size_t idx = 0; idx < count; idx++) {
+        *dstPtr = (*srcPtr) * FLOAT_SCALE_16;
+        srcPtr++;
+        dstPtr++;
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S16StereoToF32Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    if (srcDesc.bufLength != dstDesc.bufLength) {
+        return -1;
+    }
+    size_t half = 2;
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / half / sizeof(int16_t);
+    const size_t SRC_INCREMENT = 2;
+    for (size_t idx = 0; idx < count; idx++) {
+        *dstPtr = (static_cast<float>(*srcPtr + *(srcPtr + 1)) / half) * FLOAT_SCALE_16;
+        dstPtr++;
+        srcPtr += SRC_INCREMENT;
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S32MonoToF32Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+
+    if (srcDesc.bufLength != dstDesc.bufLength) {
+        return -1;
+    }
+
+    int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int32_t);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        *dstPtr = (*srcPtr) * FLOAT_SCALE_32;
+        srcPtr++;
+        dstPtr++;
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S32StereoToF32Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    size_t half = 2;
+    if (srcDesc.bufLength / half != dstDesc.bufLength) {
+        return -1;
+    }
+
+    int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    float *dstPtr = reinterpret_cast<float *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / sizeof(int32_t) / half;  // Stereo -> Mono
+
+    for (size_t idx = 0; idx < count; idx++) {
+        float left = (*srcPtr++) * FLOAT_SCALE_32;
+        float right = (*srcPtr++) * FLOAT_SCALE_32;
+        *dstPtr = (left + right) / 2.0f;  // Average the left and right channels
+        dstPtr++;
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::F32MonoToS16Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    if (srcDesc.bufLength != dstDesc.bufLength || srcDesc.bufLength % QUARTER != 0) {
+        return -1;
+    }
+    float *stcPtr = reinterpret_cast<float *>(srcDesc.buffer);
+    int16_t *dstPtr = reinterpret_cast<int16_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / QUARTER;
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int16_t temp = ConvertFromFloatTo16Bit(stcPtr);
+        stcPtr++;
+        *(dstPtr++) = temp;
+        *(dstPtr++) = temp;
+    }
+    return 0;
+}
+
+int32_t FormatConverter::F32StereoToS16Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    size_t half = 2;
+    if (srcDesc.bufLength / half != dstDesc.bufLength || dstDesc.bufLength % half != 0) {
+        return -1;
+    }
+    float *stcPtr = reinterpret_cast<float *>(srcDesc.buffer);
+    int16_t *dstPtr = reinterpret_cast<int16_t *>(dstDesc.buffer);
+    size_t count = srcDesc.bufLength / half / half;
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int16_t temp = ConvertFromFloatTo16Bit(stcPtr);
+        stcPtr++;
+        *(dstPtr++) = temp;
+    }
+    return 0;
+}
+
+int32_t FormatConverter::S16MonoToS24Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / sizeof(int16_t) * FORMAT_S24_BYTES == dstDesc.bufLength / STEREO &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / sizeof(int16_t);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT16_MAX) * INT24_MAX);
+        srcPtr++;
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S16StereoToS24Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / sizeof(int16_t) * FORMAT_S24_BYTES == dstDesc.bufLength &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / sizeof(int16_t);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT16_MAX) * INT24_MAX);
+        srcPtr++;
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S32MonoToS24Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / sizeof(int32_t) * FORMAT_S24_BYTES == dstDesc.bufLength / STEREO &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / sizeof(int32_t);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT32_MAX) * INT24_MAX);
+        srcPtr++;
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S32StereoToS24Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / sizeof(int32_t) * FORMAT_S24_BYTES == dstDesc.bufLength &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / sizeof(int32_t);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT32_MAX) * INT24_MAX);
+        srcPtr++;
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::F32StereoToS24Stereo(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / sizeof(float) * FORMAT_S24_BYTES == dstDesc.bufLength &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    float *stcPtr = reinterpret_cast<float *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / sizeof(float);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        uint32_t temp = static_cast<uint32_t>(ConvertFromFloatTo24Bit(stcPtr++));
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S16MonoToS24Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / sizeof(int16_t) * FORMAT_S24_BYTES == dstDesc.bufLength &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / sizeof(int16_t);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT16_MAX) * INT24_MAX);
+        srcPtr++;
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S16StereoToS24Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / STEREO / sizeof(int16_t) * FORMAT_S24_BYTES == dstDesc.bufLength &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    int16_t *srcPtr = reinterpret_cast<int16_t *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / (2 * sizeof(int16_t));
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t left = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT16_MAX) * INT24_MAX);
+        srcPtr++;
+        int32_t right = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT16_MAX) * INT24_MAX);
+        srcPtr++;
+        int32_t temp = (left + right) / 2;
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S32MonoToS24Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / sizeof(int32_t) * FORMAT_S24_BYTES == dstDesc.bufLength &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / sizeof(int32_t);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t temp = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT32_MAX) * INT24_MAX);
+        srcPtr++;
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::S32StereoToS24Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / STEREO / sizeof(int32_t) * FORMAT_S24_BYTES == dstDesc.bufLength &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    int32_t *srcPtr = reinterpret_cast<int32_t *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / (2 * sizeof(int32_t));
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t left = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT32_MAX) * INT24_MAX);
+        srcPtr++;
+        int32_t right = static_cast<int32_t>((static_cast<double>(*srcPtr) / INT32_MAX) * INT24_MAX);
+        srcPtr++;
+        int32_t temp = (left + right) / 2;
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::F32MonoToS24Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / sizeof(float) * FORMAT_S24_BYTES == dstDesc.bufLength &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    float *srcPtr = reinterpret_cast<float *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / sizeof(float);
+
+    for (size_t idx = 0; idx < count; idx++) {
+        uint32_t temp = static_cast<uint32_t>(ConvertFromFloatTo24Bit(srcPtr++));
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+int32_t FormatConverter::F32StereoToS24Mono(const BufferDesc &srcDesc, const BufferDesc &dstDesc)
+{
+    CHECK_AND_RETURN_RET(srcDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET(dstDesc.buffer != nullptr, -1);
+    CHECK_AND_RETURN_RET_LOG(srcDesc.bufLength / STEREO / sizeof(float) * FORMAT_S24_BYTES == dstDesc.bufLength &&
+        dstDesc.bufLength % FORMAT_S24_BYTES == 0, -1, "Buffer len not match");
+    float *srcPtr = reinterpret_cast<float *>(srcDesc.buffer);
+    uint8_t *dstPtr = dstDesc.buffer;
+    const size_t count = srcDesc.bufLength / (2 * sizeof(float));
+
+    for (size_t idx = 0; idx < count; idx++) {
+        int32_t left = static_cast<int32_t>(ConvertFromFloatTo24Bit(srcPtr++));
+        int32_t right = static_cast<int32_t>(ConvertFromFloatTo24Bit(srcPtr++));
+        int32_t temp = (left + right) / 2;
+        *dstPtr++ = static_cast<uint8_t>(temp & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_8) & 0xFF);
+        *dstPtr++ = static_cast<uint8_t>((temp >> BIT_16) & 0xFF);
+    }
+
+    return 0;
+}
+
+FormatHandlerMap FormatConverter::formatHandlers = []() {
+    FormatHandlerMap handlers;
+
+    InitToS16StereoHandlers(handlers);
+    InitToS24StereoHandlers(handlers);
+    InitToS32StereoHandlers(handlers);
+    InitToF32StereoHandlers(handlers);
+    InitToS16MonoHandlers(handlers);
+    InitToS24MonoHandlers(handlers);
+    InitToF32MonoHandlers(handlers);
+    return handlers;
+}();
+
+FormatHandlerMap &FormatConverter::GetFormatHandlers()
+{
+    return formatHandlers;
+}
+
+bool FormatConverter::AutoConvert(FormatKey key, const BufferDesc &srcData, const BufferDesc &dstData)
+{
+    CHECK_AND_RETURN_RET_LOG(formatHandlers.count(key) != 0, false, "find format handler failed");
+    bool isDoConvert = false;
+    return formatHandlers[key](srcData, dstData, isDoConvert) == 0;
+}
+
+// add convert to S16 and stereo handlers
+void FormatConverter::InitToS16StereoHandlers(FormatHandlerMap& handlers)
+{
+    handlers[{MONO, SAMPLE_S16LE, STEREO, SAMPLE_S16LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16MonoToS16Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S16LE, STEREO, SAMPLE_S16LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = false;
+        return 0;
+    };
+
+    handlers[{MONO, SAMPLE_S32LE, STEREO, SAMPLE_S16LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32MonoToS16Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S32LE, STEREO, SAMPLE_S16LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32StereoToS16Stereo(inBuf, outBuf);
+    };
+
+    handlers[{MONO, SAMPLE_F32LE, STEREO, SAMPLE_S16LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32MonoToS16Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_F32LE, STEREO, SAMPLE_S16LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32StereoToS16Stereo(inBuf, outBuf);
+    };
+}
+
+// add convert to S24 and stereo handlers
+void FormatConverter::InitToS24StereoHandlers(FormatHandlerMap& handlers)
+{
+    handlers[{MONO, SAMPLE_S16LE, STEREO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16MonoToS24Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S16LE, STEREO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16StereoToS24Stereo(inBuf, outBuf);
+    };
+
+    handlers[{MONO, SAMPLE_S32LE, STEREO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32MonoToS24Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S32LE, STEREO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32StereoToS24Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_F32LE, STEREO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32StereoToS24Stereo(inBuf, outBuf);
+    };
+}
+
+// add convert to S32 and stereo handlers
+void FormatConverter::InitToS32StereoHandlers(FormatHandlerMap& handlers)
+{
+    handlers[{MONO, SAMPLE_S16LE, STEREO, SAMPLE_S32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16MonoToS32Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S16LE, STEREO, SAMPLE_S32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16StereoToS32Stereo(inBuf, outBuf);
+    };
+
+    handlers[{MONO, SAMPLE_S32LE, STEREO, SAMPLE_S32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32MonoToS32Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S32LE, STEREO, SAMPLE_S32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = false;
+        return 0;
+    };
+
+    handlers[{MONO, SAMPLE_F32LE, STEREO, SAMPLE_S32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32MonoToS32Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_F32LE, STEREO, SAMPLE_S32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32StereoToS32Stereo(inBuf, outBuf);
+    };
+}
+
+// add convert to F32 and stereo handlers
+void FormatConverter::InitToF32StereoHandlers(FormatHandlerMap& handlers)
+{
+    handlers[{MONO, SAMPLE_S16LE, STEREO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16MonoToF32Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S16LE, STEREO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16StereoToF32Stereo(inBuf, outBuf);
+    };
+
+    handlers[{MONO, SAMPLE_S32LE, STEREO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32MonoToF32Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S32LE, STEREO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32StereoToF32Stereo(inBuf, outBuf);
+    };
+
+    handlers[{MONO, SAMPLE_F32LE, STEREO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32MonoToF32Stereo(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_F32LE, STEREO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = false;
+        return 0;
+    };
+}
+
+// add convert to S16 and mono handlers
+void FormatConverter::InitToS16MonoHandlers(FormatHandlerMap& handlers)
+{
+    handlers[{STEREO, SAMPLE_S16LE, MONO, SAMPLE_S16LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16StereoToS16Mono(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_F32LE, MONO, SAMPLE_S16LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32StereoToS16Mono(inBuf, outBuf);
+    };
+}
+
+// add convert to S24 and mono handlers
+void FormatConverter::InitToS24MonoHandlers(FormatHandlerMap& handlers)
+{
+    handlers[{MONO, SAMPLE_S16LE, MONO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16MonoToS24Mono(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S16LE, MONO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16StereoToS24Mono(inBuf, outBuf);
+    };
+
+    handlers[{MONO, SAMPLE_S32LE, MONO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32MonoToS24Mono(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_S32LE, MONO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32StereoToS24Mono(inBuf, outBuf);
+    };
+
+    handlers[{MONO, SAMPLE_F32LE, MONO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32MonoToS24Mono(inBuf, outBuf);
+    };
+
+    handlers[{STEREO, SAMPLE_F32LE, MONO, SAMPLE_S24LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32StereoToS24Mono(inBuf, outBuf);
+    };
+}
+
+// add convert to F32 and mono handlers
+void FormatConverter::InitToF32MonoHandlers(FormatHandlerMap& handlers)
+{
+    handlers[{MONO, SAMPLE_S16LE, MONO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16MonoToF32Mono(inBuf, outBuf);
+    };
+    
+    handlers[{STEREO, SAMPLE_S16LE, MONO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S16StereoToF32Mono(inBuf, outBuf);
+    };
+
+    handlers[{MONO, SAMPLE_S32LE, MONO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32MonoToF32Mono(inBuf, outBuf);
+    };
+    
+    handlers[{STEREO, SAMPLE_S32LE, MONO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::S32StereoToF32Mono(inBuf, outBuf);
+    };
+
+    handlers[{MONO, SAMPLE_F32LE, MONO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = false;
+        return 0;
+    };
+
+    handlers[{STEREO, SAMPLE_F32LE, MONO, SAMPLE_F32LE}] =
+    [](const BufferDesc &inBuf, const BufferDesc &outBuf, bool &isDoConvert) {
+        isDoConvert = true;
+        return FormatConverter::F32StereoToF32Mono(inBuf, outBuf);
+    };
+}
+} // namespace AudioStandard
+} // namespace OHOS

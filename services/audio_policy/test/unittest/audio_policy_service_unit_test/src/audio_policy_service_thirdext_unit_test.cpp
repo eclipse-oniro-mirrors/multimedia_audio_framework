@@ -1,0 +1,2372 @@
+/*
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "get_server_util.h"
+#include "audio_policy_service_thirdext_unit_test.h"
+#include "audio_core_config_manager.h"
+#include "audio_server_proxy.h"
+#include "nativetoken_kit.h"
+#include "dfx_msg_manager.h"
+#include "audio_errors.h"
+#include "audio_unit_test.h"
+#include <thread>
+#include <memory>
+#include <vector>
+using namespace testing::ext;
+
+namespace OHOS {
+namespace AudioStandard {
+
+bool g_hasPermissioned = false;
+
+const int32_t TEST_SESSIONID = MIN_STREAMID + 1010;
+const int32_t A2DP_STOPPED = 1;
+const int32_t A2DP_PLAYING = 2;
+const int32_t A2DP_INVALID = 3;
+const uint32_t ROTATE = 1;
+const int32_t SESSION_ID = 1000001;
+const int32_t STATE = 1;
+const uint32_t TEST_APP_UID = 1;
+
+const uint32_t MIN_VOLUME_LEVEL = 0;
+const uint32_t MAX_VOLUME_LEVEL = 15;
+
+void AudioPolicyServiceFourthUnitTest::SetUpTestCase(void)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest::SetUpTestCase start-end");
+}
+void AudioPolicyServiceFourthUnitTest::TearDownTestCase(void)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest::TearDownTestCase start-end");
+}
+void AudioPolicyServiceFourthUnitTest::SetUp(void)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest::SetUp start-end");
+}
+void AudioPolicyServiceFourthUnitTest::TearDown(void)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest::TearDown start-end");
+}
+
+GetDynamicInfoTestData::GetDynamicInfoTestData(AudioStreamInfo streamInfo, AudioSampleFormat format,
+    uint32_t sampleRate, AudioChannelLayout channelLayout, AudioChannel channels)
+    : streamInfo_(streamInfo)
+{
+    streamPropInfo_ = std::make_shared<PipeStreamPropInfo>();
+    streamPropInfo_->format_ = format;
+    streamPropInfo_->sampleRate_ = sampleRate;
+    streamPropInfo_->channelLayout_ = channelLayout;
+    streamPropInfo_->channels_ = channels;
+}
+
+bool GetDynamicInfoTestData::Check(std::shared_ptr<PipeStreamPropInfo> streamPropInfo)
+{
+    if (streamPropInfo == nullptr) {
+        return false;
+    }
+    return streamPropInfo->sampleRate_ == streamPropInfo_->sampleRate_ &&
+        streamPropInfo->channels_ == streamPropInfo_->channels_ &&
+        streamPropInfo->format_ == streamPropInfo_->format_ &&
+        streamPropInfo->channelLayout_ == streamPropInfo_->channelLayout_;
+}
+
+static std::vector<GetDynamicInfoTestData> testData = {
+    {
+        { SAMPLE_RATE_48000, ENCODING_PCM, SAMPLE_S16LE, CHANNEL_10, CH_LAYOUT_5POINT1POINT4 },
+        SAMPLE_S16LE, SAMPLE_RATE_48000, CH_LAYOUT_5POINT1POINT4, CHANNEL_10
+    },
+    {
+        { SAMPLE_RATE_48000, ENCODING_PCM, SAMPLE_S24LE, CHANNEL_10, CH_LAYOUT_5POINT1POINT4 },
+        SAMPLE_S16LE, SAMPLE_RATE_48000, CH_LAYOUT_5POINT1POINT4, CHANNEL_10
+    },
+    {
+        { SAMPLE_RATE_192000, ENCODING_PCM, SAMPLE_S16LE, CHANNEL_10, CH_LAYOUT_5POINT1POINT4 },
+        SAMPLE_S16LE, SAMPLE_RATE_48000, CH_LAYOUT_5POINT1POINT4, CHANNEL_10
+    },
+    {
+        { SAMPLE_RATE_192000, ENCODING_PCM, SAMPLE_S24LE, CHANNEL_10, CH_LAYOUT_5POINT1POINT4 },
+        SAMPLE_S16LE, SAMPLE_RATE_48000, CH_LAYOUT_5POINT1POINT4, CHANNEL_10
+    },
+    {
+        { SAMPLE_RATE_48000, ENCODING_PCM, SAMPLE_S16LE, CHANNEL_8, CH_LAYOUT_7POINT1 },
+        SAMPLE_S16LE, SAMPLE_RATE_48000, CH_LAYOUT_7POINT1POINT4, CHANNEL_12
+    },
+    {
+        { SAMPLE_RATE_48000, ENCODING_PCM, SAMPLE_S24LE, CHANNEL_8, CH_LAYOUT_7POINT1 },
+        SAMPLE_S24LE, SAMPLE_RATE_48000, CH_LAYOUT_7POINT1POINT4, CHANNEL_12
+    },
+    {
+        { SAMPLE_RATE_192000, ENCODING_PCM, SAMPLE_S16LE, CHANNEL_8, CH_LAYOUT_7POINT1 },
+        SAMPLE_S16LE, SAMPLE_RATE_48000, CH_LAYOUT_7POINT1POINT4, CHANNEL_12
+    },
+    {
+        { SAMPLE_RATE_192000, ENCODING_PCM, SAMPLE_S24LE, CHANNEL_8, CH_LAYOUT_7POINT1 },
+        SAMPLE_S24LE, SAMPLE_RATE_48000, CH_LAYOUT_7POINT1POINT4, CHANNEL_12
+    },
+    {
+        { SAMPLE_RATE_48000, ENCODING_PCM, SAMPLE_S16LE, CHANNEL_8, CH_LAYOUT_UNKNOWN },
+        SAMPLE_S16LE, SAMPLE_RATE_48000, CH_LAYOUT_7POINT1POINT4, CHANNEL_12
+    },
+    {
+        { SAMPLE_RATE_48000, ENCODING_PCM, SAMPLE_S24LE, CHANNEL_8, CH_LAYOUT_UNKNOWN },
+        SAMPLE_S24LE, SAMPLE_RATE_48000, CH_LAYOUT_7POINT1POINT4, CHANNEL_12
+    },
+    {
+        { SAMPLE_RATE_192000, ENCODING_PCM, SAMPLE_S16LE, CHANNEL_8, CH_LAYOUT_UNKNOWN },
+        SAMPLE_S16LE, SAMPLE_RATE_48000, CH_LAYOUT_7POINT1POINT4, CHANNEL_12
+    },
+    {
+        { SAMPLE_RATE_192000, ENCODING_PCM, SAMPLE_S24LE, CHANNEL_8, CH_LAYOUT_UNKNOWN },
+        SAMPLE_S24LE, SAMPLE_RATE_48000, CH_LAYOUT_7POINT1POINT4, CHANNEL_12
+    },
+};
+
+static void GetPermission()
+{
+    if (!g_hasPermissioned) {
+        uint64_t tokenId;
+        constexpr int perNum = 10;
+        const char *perms[perNum] = {
+            "ohos.permission.MICROPHONE",
+            "ohos.permission.MANAGE_INTELLIGENT_VOICE",
+            "ohos.permission.MANAGE_AUDIO_CONFIG",
+            "ohos.permission.MICROPHONE_CONTROL",
+            "ohos.permission.MODIFY_AUDIO_SETTINGS",
+            "ohos.permission.ACCESS_NOTIFICATION_POLICY",
+            "ohos.permission.USE_BLUETOOTH",
+            "ohos.permission.CAPTURE_VOICE_DOWNLINK_AUDIO",
+            "ohos.permission.RECORD_VOICE_CALL",
+            "ohos.permission.MANAGE_SYSTEM_AUDIO_EFFECTS",
+        };
+
+        NativeTokenInfoParams infoInstance = {
+            .dcapsNum = 0,
+            .permsNum = 10,
+            .aclsNum = 0,
+            .dcaps = nullptr,
+            .perms = perms,
+            .acls = nullptr,
+            .processName = "audio_policy_service_unit_test",
+            .aplStr = "system_basic",
+        };
+        tokenId = GetAccessTokenId(&infoInstance);
+        SetSelfTokenID(tokenId);
+        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+        g_hasPermissioned = true;
+    }
+}
+
+static bool IsSelectResultCorrect(std::shared_ptr<PipeStreamPropInfo> streamPropInfo,
+    const StreamPropTestInfo &testInfo)
+{
+    return streamPropInfo->sampleRate_ == testInfo.sampleRate_ &&
+        streamPropInfo->channels_ == testInfo.channels_ &&
+        streamPropInfo->format_ == testInfo.format_ &&
+        streamPropInfo->channelLayout_ == testInfo.channelLayout_;
+}
+
+static std::shared_ptr<AdapterPipeInfo> CreateAdapterPipeInfo(const std::vector<StreamPropTestInfo> &testInfos)
+{
+    std::shared_ptr<AdapterPipeInfo> info = std::make_shared<AdapterPipeInfo>();
+
+    for (auto &testInfo : testInfos) {
+        std::shared_ptr<PipeStreamPropInfo> pipeStreamPropInfo = std::make_shared<PipeStreamPropInfo>();
+        pipeStreamPropInfo->format_ = testInfo.format_;
+        pipeStreamPropInfo->sampleRate_ = testInfo.sampleRate_;
+        pipeStreamPropInfo->channelLayout_ = testInfo.channelLayout_;
+        pipeStreamPropInfo->channels_ = testInfo.channels_;
+        info->dynamicStreamPropInfos_.push_back(pipeStreamPropInfo);
+    }
+    return info;
+}
+
+/**
+* @tc.name  : Test AudioPolicyService.
+* @tc.number: AudioPolicyServiceTest_001
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, AudioPolicyServiceTest_Prepare001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest AudioPolicyServiceTest_Prepare001 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+
+    // Get permission for test
+    GetPermission();
+
+    // Call OnServiceConnected for HDI_SERVICE_INDEX
+    GetServerUtil::GetServerPtr()->audioPolicyService_.OnServiceConnected(HDI_SERVICE_INDEX);
+}
+
+/**
+* @tc.name  : Test LoadHdiEffectModel.
+* @tc.number: LoadHdiEffectModel_001
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, LoadHdiEffectModel_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest LoadHdiEffectModel_001 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+
+    GetServerUtil::GetServerPtr()->audioPolicyService_.LoadHdiEffectModel();
+}
+
+/**
+* @tc.name  : Test OnReceiveUpdateDeviceNameEvent.
+* @tc.number: OnReceiveUpdateDeviceNameEvent_001
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, OnReceiveUpdateDeviceNameEvent_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest OnReceiveUpdateDeviceNameEvent_001 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+
+    const std::string macAddress = "11-11-11-11-11-11";
+    const std::string deviceName = "deviceName";
+}
+
+/**
+* @tc.name  : Test WaitForConnectionCompleted.
+* @tc.number: WaitForConnectionCompleted_001
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, WaitForConnectionCompleted_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest WaitForConnectionCompleted_001 start");
+    EXPECT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_CONNECTED;
+    audioA2dpOffloadManager_.WaitForConnectionCompleted();
+    EXPECT_FALSE(!(audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ =
+        CONNECTION_STATUS_CONNECTED));
+}
+#ifdef AUDIO_POLICY_SERVICE_UNIT_TEST_DIFF
+/**
+* @tc.name  : Test WaitForConnectionCompleted.
+* @tc.number: WaitForConnectionCompleted_002
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, WaitForConnectionCompleted_002, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest WaitForConnectionCompleted_001 start");
+    EXPECT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_CONNECTING;
+    audioA2dpOffloadManager_.WaitForConnectionCompleted();
+    EXPECT_FALSE(!(audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ =
+        CONNECTION_STATUS_CONNECTED));
+}
+#endif
+/**
+* @tc.name  : Test IsA2dpOffloadConnecting.
+* @tc.number: IsA2dpOffloadConnecting_001
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsA2dpOffloadConnecting_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest IsA2dpOffloadConnecting_001 start");
+    EXPECT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_CONNECTING;
+    audioA2dpOffloadManager_.connectionTriggerSessionIds_ = {0};
+
+    bool ret = audioA2dpOffloadManager_.IsA2dpOffloadConnecting(0);
+    EXPECT_TRUE(ret);
+}
+
+/**
+* @tc.name  : Test IsA2dpOffloadConnecting.
+* @tc.number: IsA2dpOffloadConnecting_002
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsA2dpOffloadConnecting_002, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest IsA2dpOffloadConnecting_001 start");
+    EXPECT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_CONNECTING;
+    audioA2dpOffloadManager_.connectionTriggerSessionIds_ = {0};
+
+    bool ret = audioA2dpOffloadManager_.IsA2dpOffloadConnecting(1);
+    EXPECT_FALSE(ret);
+}
+
+/**
+* @tc.name  : Test IsA2dpOffloadConnecting.
+* @tc.number: IsA2dpOffloadConnecting_003
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsA2dpOffloadConnecting_003, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest IsA2dpOffloadConnecting_001 start");
+    EXPECT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_CONNECTED;
+    audioA2dpOffloadManager_.connectionTriggerSessionIds_ = {0};
+
+    bool ret = audioA2dpOffloadManager_.IsA2dpOffloadConnecting(0);
+    EXPECT_FALSE(ret);
+}
+
+/**
+* @tc.name  : Test OnA2dpPlayingStateChanged.
+* @tc.number: OnA2dpPlayingStateChanged_001
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, OnA2dpPlayingStateChanged_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest OnA2dpPlayingStateChanged_001 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    const std::string deviceAddress = "test";
+    int32_t playingState = A2DP_STOPPED;
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_CONNECTED;
+    audioA2dpOffloadManager_.OnA2dpPlayingStateChanged(deviceAddress, playingState);
+}
+
+/**
+* @tc.name  : Test OnA2dpPlayingStateChanged.
+* @tc.number: OnA2dpPlayingStateChanged_002
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, OnA2dpPlayingStateChanged_002, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest OnA2dpPlayingStateChanged_002 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    const std::string deviceAddress = "test";
+    int32_t playingState = A2DP_STOPPED;
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_DISCONNECTED;
+    audioA2dpOffloadManager_.OnA2dpPlayingStateChanged(deviceAddress, playingState);
+}
+
+/**
+* @tc.name  : Test OnA2dpPlayingStateChanged.
+* @tc.number: OnA2dpPlayingStateChanged_003
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, OnA2dpPlayingStateChanged_003, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest OnA2dpPlayingStateChanged_003 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    const std::string deviceAddress = "test";
+    int32_t playingState = A2DP_PLAYING;
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_CONNECTED;
+    audioA2dpOffloadManager_.OnA2dpPlayingStateChanged(deviceAddress, playingState);
+    EXPECT_EQ(CONNECTION_STATUS_DISCONNECTED,
+        audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_);
+}
+
+/**
+* @tc.name  : Test OnA2dpPlayingStateChanged.
+* @tc.number: OnA2dpPlayingStateChanged_004
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, OnA2dpPlayingStateChanged_004, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest OnA2dpPlayingStateChanged_004 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    const std::string deviceAddress = "test";
+    int32_t playingState = A2DP_PLAYING;
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_DISCONNECTED;
+    audioA2dpOffloadManager_.OnA2dpPlayingStateChanged(deviceAddress, playingState);
+}
+
+/**
+* @tc.name  : Test OnA2dpPlayingStateChanged.
+* @tc.number: OnA2dpPlayingStateChanged_005
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, OnA2dpPlayingStateChanged_005, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest OnA2dpPlayingStateChanged_005 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    const std::string deviceAddress = "";
+    int32_t playingState = A2DP_PLAYING;
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_CONNECTING;
+    audioA2dpOffloadManager_.OnA2dpPlayingStateChanged(deviceAddress, playingState);
+    EXPECT_EQ(CONNECTION_STATUS_CONNECTED,
+        audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_);
+}
+
+/**
+* @tc.name  : Test OnA2dpPlayingStateChanged.
+* @tc.number: OnA2dpPlayingStateChanged_006
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, OnA2dpPlayingStateChanged_006, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest OnA2dpPlayingStateChanged_006 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    const std::string deviceAddress = "";
+    int32_t playingState = A2DP_PLAYING;
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_CONNECTED;
+    audioA2dpOffloadManager_.OnA2dpPlayingStateChanged(deviceAddress, playingState);
+}
+
+/**
+* @tc.name  : Test OnA2dpPlayingStateChanged.
+* @tc.number: OnA2dpPlayingStateChanged_007
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, OnA2dpPlayingStateChanged_007, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest OnA2dpPlayingStateChanged_007 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    const std::string deviceAddress = "";
+    int32_t playingState = A2DP_STOPPED;
+    audioA2dpOffloadManager_.OnA2dpPlayingStateChanged(deviceAddress, playingState);
+    EXPECT_EQ(CONNECTION_STATUS_DISCONNECTED,
+        audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_);
+}
+
+/**
+* @tc.name  : Test OnA2dpPlayingStateChanged.
+* @tc.number: OnA2dpPlayingStateChanged_008
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, OnA2dpPlayingStateChanged_008, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest OnA2dpPlayingStateChanged_008 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    const std::string deviceAddress = "";
+    int32_t playingState = A2DP_INVALID;
+    audioA2dpOffloadManager_.OnA2dpPlayingStateChanged(deviceAddress, playingState);
+    EXPECT_NE(A2DP_STOPPED, playingState);
+    EXPECT_NE(A2DP_PLAYING, playingState);
+}
+
+/**
+* @tc.name  : Test ErasePreferredDeviceByType.
+* @tc.number: ErasePreferredDeviceByType_001
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, ErasePreferredDeviceByType_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest ErasePreferredDeviceByType_001 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+
+    AudioPolicyUtils::GetInstance().isBTReconnecting_ = true;
+    const PreferredType preferredType = AUDIO_MEDIA_RENDER;
+    auto ret = AudioPolicyUtils::GetInstance().ErasePreferredDeviceByType(preferredType);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+* @tc.name  : Test ErasePreferredDeviceByType.
+* @tc.number: ErasePreferredDeviceByType_002
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, ErasePreferredDeviceByType_002, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest ErasePreferredDeviceByType_002 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+
+    const PreferredType preferredType = AUDIO_MEDIA_RENDER;
+    auto ret = AudioPolicyUtils::GetInstance().ErasePreferredDeviceByType(preferredType);
+    EXPECT_EQ(SUCCESS, ret);
+}
+
+/**
+* @tc.name  : Test UpdateSessionConnectionState.
+* @tc.number: UpdateSessionConnectionState_001
+* @tc.desc  : Test UpdateSessionConnectionState interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UpdateSessionConnectionState_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest UpdateSessionConnectionState_001 start");
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+    int32_t sessionID = SESSION_ID;
+    int32_t state = STATE;
+    EXPECT_EQ(nullptr, AudioServerProxy::GetInstance().GetAudioServerProxy());
+}
+
+/**
+* @tc.name  : Test IsRingerOrAlarmerDualDevicesRange.
+* @tc.number: IsRingerOrAlarmerDualDevicesRange_001
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsRingerOrAlarmerDualDevicesRange_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest IsRingerOrAlarmerDualDevicesRange_001 start");
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    InternalDeviceType deviceType = DEVICE_TYPE_SPEAKER;
+    bool ret = server->audioPolicyService_.audioDeviceCommon_.IsRingerOrAlarmerDualDevicesRange(deviceType);
+    EXPECT_EQ(true, ret);
+
+    deviceType = DEVICE_TYPE_WIRED_HEADSET;
+    ret = server->audioPolicyService_.audioDeviceCommon_.IsRingerOrAlarmerDualDevicesRange(deviceType);
+    EXPECT_EQ(true, ret);
+
+    deviceType = DEVICE_TYPE_WIRED_HEADPHONES;
+    ret = server->audioPolicyService_.audioDeviceCommon_.IsRingerOrAlarmerDualDevicesRange(deviceType);
+    EXPECT_EQ(true, ret);
+
+    deviceType = DEVICE_TYPE_BLUETOOTH_SCO;
+    ret = server->audioPolicyService_.audioDeviceCommon_.IsRingerOrAlarmerDualDevicesRange(deviceType);
+    EXPECT_EQ(true, ret);
+}
+
+/**
+* @tc.name  : Test IsRingerOrAlarmerDualDevicesRange.
+* @tc.number: IsRingerOrAlarmerDualDevicesRange_002
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsRingerOrAlarmerDualDevicesRange_002, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest IsRingerOrAlarmerDualDevicesRange_002 start");
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    InternalDeviceType deviceType = DEVICE_TYPE_BLUETOOTH_A2DP;
+    bool ret = server->audioPolicyService_.audioDeviceCommon_.IsRingerOrAlarmerDualDevicesRange(deviceType);
+    EXPECT_EQ(true, ret);
+
+    deviceType = DEVICE_TYPE_USB_HEADSET;
+    ret = server->audioPolicyService_.audioDeviceCommon_.IsRingerOrAlarmerDualDevicesRange(deviceType);
+    EXPECT_EQ(true, ret);
+
+    deviceType = DEVICE_TYPE_USB_ARM_HEADSET;
+    ret = server->audioPolicyService_.audioDeviceCommon_.IsRingerOrAlarmerDualDevicesRange(deviceType);
+    EXPECT_EQ(true, ret);
+
+    deviceType = DEVICE_TYPE_DP;
+    ret = server->audioPolicyService_.audioDeviceCommon_.IsRingerOrAlarmerDualDevicesRange(deviceType);
+    EXPECT_EQ(false, ret);
+}
+
+/**
+ * @tc.name  : Test ScoInputDeviceFetchedForRecongnition.
+ * @tc.number: ScoInputDeviceFetchedForRecongnition_001
+ * @tc.desc  : Test ScoInputDeviceFetchedForRecongnition interfaces.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, ScoInputDeviceFetchedForRecongnition_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest ScoInputDeviceFetchedForRecongnition_001 start");
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+    std::string address = "";
+
+    bool handleFlag = false;
+    ConnectState connectState = DEACTIVE_CONNECTED;
+    int32_t result = server->audioPolicyService_.audioDeviceCommon_.ScoInputDeviceFetchedForRecongnition(handleFlag,
+        address, connectState);
+    EXPECT_NE(SUCCESS, result);
+
+    handleFlag = true;
+    connectState = VIRTUAL_CONNECTED;
+    result = server->audioPolicyService_.audioDeviceCommon_.ScoInputDeviceFetchedForRecongnition(handleFlag,
+        address, connectState);
+    EXPECT_EQ(SUCCESS, result);
+}
+#ifdef AUDIO_POLICY_SERVICE_UNIT_TEST_DIFF
+/**
+* @tc.name  : Test SetRotationToEffect.
+* @tc.number: SetRotationToEffect_001
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, SetRotationToEffect_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest SetRotationToEffect_001 start");
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+    uint32_t rotate = ROTATE;
+    server->audioPolicyService_.SetRotationToEffect(rotate);
+    EXPECT_NE(nullptr, AudioServerProxy::GetInstance().GetAudioServerProxy());
+}
+#endif
+
+/**
+* @tc.name  : Test SetPreferredDevice.
+* @tc.number: SetPreferredDevice_001
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, SetPreferredDevice_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest SetPreferredDevice_001 start");
+    ASSERT_NE(nullptr, GetServerUtil::GetServerPtr());
+
+    std::shared_ptr<AudioDeviceDescriptor> audioDeviceDescriptorSptr1 = nullptr;
+    int32_t result = AudioPolicyUtils::GetInstance().SetPreferredDevice(
+        AUDIO_MEDIA_RENDER, audioDeviceDescriptorSptr1);
+    EXPECT_EQ(ERR_INVALID_PARAM, result);
+
+    std::shared_ptr<AudioDeviceDescriptor> audioDeviceDescriptorSptr2 = std::make_shared<AudioDeviceDescriptor>();
+    audioDeviceDescriptorSptr2->deviceType_ = DEVICE_TYPE_NONE;
+    result = AudioPolicyUtils::GetInstance().SetPreferredDevice(
+        AUDIO_CALL_RENDER, audioDeviceDescriptorSptr2, -1);
+    EXPECT_EQ(SUCCESS, result);
+
+    result = AudioPolicyUtils::GetInstance().SetPreferredDevice(
+        AUDIO_CALL_CAPTURE, audioDeviceDescriptorSptr2);
+    EXPECT_EQ(SUCCESS, result);
+
+    result = AudioPolicyUtils::GetInstance().SetPreferredDevice(
+        AUDIO_RECORD_CAPTURE, audioDeviceDescriptorSptr2);
+    EXPECT_EQ(SUCCESS, result);
+
+    result = AudioPolicyUtils::GetInstance().SetPreferredDevice(
+        AUDIO_RING_RENDER, audioDeviceDescriptorSptr2);
+    EXPECT_EQ(ERR_INVALID_PARAM, result);
+
+    result = AudioPolicyUtils::GetInstance().SetPreferredDevice(
+        AUDIO_RECOGNITION_CAPTURE, audioDeviceDescriptorSptr2, INVALID_PID);
+    EXPECT_EQ(SUCCESS, result);
+
+    result = AudioPolicyUtils::GetInstance().SetPreferredDevice(
+        AUDIO_TONE_RENDER, audioDeviceDescriptorSptr2);
+    EXPECT_EQ(ERR_INVALID_PARAM, result);
+
+    uint32_t preferredType = 9999;
+    PreferredType ERR_PFTYPE = static_cast<PreferredType>(preferredType);
+    result = AudioPolicyUtils::GetInstance().SetPreferredDevice(
+        ERR_PFTYPE, audioDeviceDescriptorSptr2);
+    EXPECT_EQ(ERR_INVALID_PARAM, result);
+}
+
+/**
+* @tc.name  : Test IsA2dpOffloadConnecting.
+* @tc.number: IsA2dpOffloadConnecting_004
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsA2dpOffloadConnecting_004, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest IsA2dpOffloadConnecting_004 start");
+    EXPECT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_DISCONNECTED;
+    audioA2dpOffloadManager_.connectionTriggerSessionIds_ = {0};
+
+    bool ret = audioA2dpOffloadManager_.IsA2dpOffloadConnecting(0);
+    EXPECT_FALSE(ret);
+}
+
+/**
+* @tc.name  : Test IsA2dpOffloadConnecting.
+* @tc.number: IsA2dpOffloadConnecting_005
+* @tc.desc  : Test AudioPolicyServic interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsA2dpOffloadConnecting_005, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest IsA2dpOffloadConnecting_005 start");
+    EXPECT_NE(nullptr, GetServerUtil::GetServerPtr());
+    AudioA2dpOffloadManager audioA2dpOffloadManager_;
+
+    audioA2dpOffloadManager_.audioA2dpOffloadFlag_.currentOffloadConnectionState_ = CONNECTION_STATUS_TIMEOUT;
+    audioA2dpOffloadManager_.connectionTriggerSessionIds_ = {0};
+
+    bool ret = audioA2dpOffloadManager_.IsA2dpOffloadConnecting(0);
+    EXPECT_FALSE(ret);
+}
+
+/**
+* @tc.name  : Test GetA2dpOffloadFlag.
+* @tc.number: GetA2dpOffloadFlag_001
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetA2dpOffloadFlag_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest GetA2dpOffloadFlag_001 start");
+    auto server = GetServerUtil::GetServerPtr();
+    ASSERT_NE(nullptr, server);
+    EXPECT_EQ(NO_A2DP_DEVICE, server->audioPolicyService_.GetA2dpOffloadFlag());
+}
+
+/**
+* @tc.name  : Test GetA2dpOffloadFlag.
+* @tc.number: GetA2dpOffloadFlag_002
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetA2dpOffloadFlag_002, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest GetA2dpOffloadFlag_002 start");
+    auto server = GetServerUtil::GetServerPtr();
+    ASSERT_NE(nullptr, server);
+    server->audioPolicyService_.audioA2dpOffloadManager_ = std::make_shared<AudioA2dpOffloadManager>();
+    ASSERT_NE(nullptr, server->audioPolicyService_.audioA2dpOffloadManager_);
+    BluetoothOffloadState flag = server->audioPolicyService_.GetA2dpOffloadFlag();
+    EXPECT_EQ(NO_A2DP_DEVICE, server->audioPolicyService_.GetA2dpOffloadFlag());
+}
+
+/**
+* @tc.name  : Test NotifyCapturerRemoved.
+* @tc.number: NotifyCapturerRemoved_001
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, NotifyCapturerRemoved_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest NotifyCapturerRemoved_001 start");
+    auto server = GetServerUtil::GetServerPtr();
+    ASSERT_NE(nullptr, server);
+    uint64_t sessionId = 0;
+    EXPECT_EQ(SUCCESS, server->audioPolicyService_.NotifyCapturerRemoved(sessionId));
+}
+
+/**
+* @tc.name  : Test NotifyCapturerRemoved.
+* @tc.number: NotifyCapturerRemoved_002
+* @tc.desc  : Test AudioPolicyService interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, NotifyCapturerRemoved_002, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest NotifyCapturerRemoved_002 start");
+    auto server = GetServerUtil::GetServerPtr();
+    ASSERT_NE(nullptr, server);
+    uint64_t sessionId = 0;
+    server->audioPolicyService_.audioPolicyServerHandler_ = std::make_shared<AudioPolicyServerHandler>();
+    EXPECT_EQ(SUCCESS, server->audioPolicyService_.NotifyCapturerRemoved(sessionId));
+}
+
+#ifdef HAS_FEATURE_INNERCAPTURER
+/**
+* @tc.name  : Test LoadModernInnerCapSink.
+* @tc.number: LoadModernInnerCapSink_001
+* @tc.desc  : Test LoadModernInnerCapSink interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, LoadModernInnerCapSink_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+    int32_t ret = server->audioPolicyService_.LoadModernInnerCapSink(1);
+    EXPECT_EQ(ret, SUCCESS);
+}
+
+
+/**
+* @tc.name  : Test UnloadModernInnerCapSink.
+* @tc.number: UnloadModernInnerCapSink_001
+* @tc.desc  : Test UnloadModernInnerCapSink interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UnloadModernInnerCapSink_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+    int32_t ret = server->audioPolicyService_.UnloadModernInnerCapSink(1);
+    EXPECT_EQ(ret, SUCCESS);
+}
+#endif
+
+/**
+* @tc.name  : Test AudioDeviceManager.
+* @tc.number: AudioDeviceManager_001
+* @tc.desc  : Test AudioDeviceManager interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, AudioDeviceManager_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest AudioDeviceManager_001 start");
+    auto server = GetServerUtil::GetServerPtr();
+    ASSERT_NE(nullptr, server);
+    server->audioDeviceManager_.FindConnectedDeviceById(1);
+}
+
+/**
+ * @tc.name   : Test UnexcludeOutputDevices API
+ * @tc.number : UnexcludeOutputDevicesTest_001
+ * @tc.desc   : Test UnexcludeOutputDevices interface.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UnexcludeOutputDevicesTest_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest UnexcludeOutputDevicesTest_001 start");
+    MockNative::GenerateNativeTokenID("multimodalinput");
+    MockNative::Mock();
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    AudioDeviceUsage audioDevUsage = MEDIA_OUTPUT_DEVICES;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors;
+    std::shared_ptr<AudioDeviceDescriptor> audioDevDesc = std::make_shared<AudioDeviceDescriptor>();
+    audioDevDesc->deviceType_ = DEVICE_TYPE_BLUETOOTH_A2DP;
+    audioDevDesc->networkId_ = LOCAL_NETWORK_ID;
+    audioDevDesc->deviceRole_ = DeviceRole::OUTPUT_DEVICE;
+    audioDevDesc->macAddress_ = "00:00:00:00:00:00";
+    audioDeviceDescriptors.push_back(audioDevDesc);
+
+    int32_t result = server->UnexcludeOutputDevices(audioDevUsage, audioDeviceDescriptors);
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest UnexcludeOutputDevicesTest_001() result:%{public}d", result);
+
+    EXPECT_EQ(result, SUCCESS);
+    MockNative::Resume();
+}
+
+/**
+ * @tc.name   : Test UnexcludeOutputDevices API
+ * @tc.number : UnexcludeOutputDevicesTest_002
+ * @tc.desc   : Test UnexcludeOutputDevices interface.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UnexcludeOutputDevicesTest_002, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest UnexcludeOutputDevicesTest_002 start");
+    MockNative::GenerateNativeTokenID("multimodalinput");
+    MockNative::Mock();
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    AudioDeviceUsage audioDevUsage = CALL_OUTPUT_DEVICES;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors;
+    std::shared_ptr<AudioDeviceDescriptor> audioDevDesc = std::make_shared<AudioDeviceDescriptor>();
+    audioDevDesc->deviceType_ = DEVICE_TYPE_BLUETOOTH_SCO;
+    audioDevDesc->networkId_ = LOCAL_NETWORK_ID;
+    audioDevDesc->deviceRole_ = DeviceRole::OUTPUT_DEVICE;
+    audioDevDesc->macAddress_ = "00:00:00:00:00:00";
+    audioDeviceDescriptors.push_back(audioDevDesc);
+
+    int32_t result = server->UnexcludeOutputDevices(audioDevUsage, audioDeviceDescriptors);
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest UnexcludeOutputDevicesTest_002() result:%{public}d", result);
+
+    EXPECT_EQ(result, SUCCESS);
+    MockNative::Resume();
+}
+
+/**
+ * @tc.name   : Test GetExcludedDevices API
+ * @tc.number : GetExcludedDevicesTest_001
+ * @tc.desc   : Test GetExcludedDevices interface.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetExcludedDevicesTest_001, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest GetExcludedDevicesTest_001 start");
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    AudioDeviceUsage audioDevUsage = MEDIA_OUTPUT_DEVICES;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors;
+    server->GetExcludedDevices(audioDevUsage, audioDeviceDescriptors);
+    EXPECT_EQ(audioDeviceDescriptors.size(), 0);
+}
+
+/**
+ * @tc.name   : Test GetExcludedDevices API
+ * @tc.number : GetExcludedDevicesTest_002
+ * @tc.desc   : Test GetExcludedDevices interface.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetExcludedDevicesTest_002, TestSize.Level1)
+{
+    AUDIO_INFO_LOG("AudioPolicyServiceFourthUnitTest GetExcludedDevicesTest_002 start");
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    AudioDeviceUsage audioDevUsage = CALL_OUTPUT_DEVICES;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors;
+    server->GetExcludedDevices(audioDevUsage, audioDeviceDescriptors);
+    EXPECT_EQ(audioDeviceDescriptors.size(), 0);
+}
+
+/**
+* @tc.name  : Test DFX_MSG_MANAGER
+* @tc.number: DfxMsgManagerPrcess_001
+* @tc.desc  : Test DFX_MSG_MANAGER interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, DfxMsgManagerPrcess_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    auto &manager = DfxMsgManager::GetInstance();
+    const int DFX_MSG_ACTION_LOOP_TIMES = 100;
+    std::list<RenderDfxInfo> renderInfo{};
+    std::list<InterruptDfxInfo> interruptInfo{};
+    for (size_t i = 0; i < DFX_MSG_ACTION_LOOP_TIMES; i++) {
+        renderInfo.push_back({});
+        interruptInfo.push_back({});
+    }
+
+    const int DFX_MSG_LOOP_TIMES = 20;
+    DfxMessage renderMsg = {.appUid = TEST_APP_UID, .renderInfo = renderInfo};
+    DfxMessage interruptMsg = {.appUid = TEST_APP_UID, .interruptInfo = interruptInfo};
+    for (size_t i = 0; i < DFX_MSG_LOOP_TIMES; i++) {
+        manager.Process(renderMsg);
+        manager.Process(interruptMsg);
+    }
+
+    EXPECT_EQ(DFX_MSG_LOOP_TIMES, manager.reportQueue_.size());
+    bool checkFlag = true;
+    for (auto &item : manager.reportQueue_) {
+        if (item.second.renderInfo.size() != DFX_MSG_ACTION_LOOP_TIMES ||
+            item.second.interruptInfo.size() != DFX_MSG_ACTION_LOOP_TIMES) {
+            checkFlag = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(checkFlag);
+    manager.reportQueue_.clear();
+}
+
+/**
+* @tc.name  : Test DFX_MSG_MANAGER
+* @tc.number: DfxMsgManagerPrcess_002
+* @tc.desc  : Test DFX_MSG_MANAGER interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, DfxMsgManagerPrcess_002, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    auto &manager = DfxMsgManager::GetInstance();
+    const int DFX_MSG_ACTION_LOOP_TIMES = 100;
+    const int DFX_MSG_ACTION_LOOP_TIMES_1 = 50;
+    const int DFX_MSG_ACTION_LOOP_TIMES_2 = 60;
+    std::list<RenderDfxInfo> renderInfo{};
+    for (size_t i = 1; i <= DFX_MSG_ACTION_LOOP_TIMES_1; i++) {
+        DfxStatAction rendererAction{};
+        rendererAction.firstByte = i;
+        renderInfo.push_back({.rendererAction = rendererAction});
+    }
+
+    std::list<RenderDfxInfo> renderInfo2{};
+    for (size_t i = 1; i <= DFX_MSG_ACTION_LOOP_TIMES_2; i++) {
+        DfxStatAction rendererAction{};
+        rendererAction.firstByte = DFX_MSG_ACTION_LOOP_TIMES_1 + i;
+        renderInfo2.push_back({.rendererAction = rendererAction});
+    }
+
+    std::list<InterruptDfxInfo> interruptInfo{};
+    for (size_t i = 0; i < DFX_MSG_ACTION_LOOP_TIMES; i++) {
+        interruptInfo.push_back({});
+    }
+
+    const int DFX_MSG_LOOP_TIMES = 20;
+    for (size_t i = 0; i < DFX_MSG_LOOP_TIMES; i++) {
+        DfxMessage renderMsg = {.appUid = TEST_APP_UID, .renderInfo = renderInfo};
+        DfxMessage renderMsg2 = {.appUid = TEST_APP_UID, .renderInfo = renderInfo2};
+        DfxMessage interruptMsg = {.appUid = TEST_APP_UID, .interruptInfo = interruptInfo};
+        manager.Process(renderMsg);
+        manager.Process(renderMsg2);
+        manager.Process(interruptMsg);
+    }
+
+    EXPECT_EQ(DFX_MSG_LOOP_TIMES, manager.reportQueue_.size());
+    auto upper = manager.reportQueue_.upper_bound(TEST_APP_UID);
+    auto lastIt = --upper;
+    auto checkValue = static_cast<int>(lastIt->second.renderInfo.back().rendererAction.firstByte);
+
+    EXPECT_EQ(DFX_MSG_ACTION_LOOP_TIMES - (DFX_MSG_ACTION_LOOP_TIMES_2 - DFX_MSG_ACTION_LOOP_TIMES_1), checkValue);
+    manager.reportQueue_.clear();
+}
+
+/**
+* @tc.name  : Test DFX_MSG_MANAGER
+* @tc.number: DfxMsgManagerPrcess_003
+* @tc.desc  : Test DFX_MSG_MANAGER interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, DfxMsgManagerPrcess_003, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    auto &manager = DfxMsgManager::GetInstance();
+    const int DFX_MSG_ACTION_LOOP_TIMES_1 = 50;
+    const int DFX_MSG_ACTION_LOOP_TIMES_2 = 60;
+    std::list<RenderDfxInfo> renderInfo{};
+    for (size_t i = 1; i <= DFX_MSG_ACTION_LOOP_TIMES_1; i++) {
+        DfxStatAction rendererAction{};
+        rendererAction.firstByte = i;
+        renderInfo.push_back({.rendererAction = rendererAction});
+    }
+
+    std::list<RenderDfxInfo> renderInfo2{};
+    for (size_t i = 1; i <= DFX_MSG_ACTION_LOOP_TIMES_2; i++) {
+        DfxStatAction rendererAction{};
+        rendererAction.firstByte = DFX_MSG_ACTION_LOOP_TIMES_1 + i;
+        renderInfo2.push_back({.rendererAction = rendererAction});
+    }
+
+    DfxMessage renderMsg = {.appUid = TEST_APP_UID, .renderInfo = renderInfo};
+    manager.Process(renderMsg);
+    DfxMessage renderMsg2 = {.appUid = TEST_APP_UID, .renderInfo = renderInfo2};
+    manager.Process(renderMsg2);
+
+    int loopTimes = 0;
+    int checkValue1 = 0;
+    int checkValue2 = 0;
+    const int DFX_MSG_MAX_ACTION_SIZE = 100;
+    for (auto &item : manager.reportQueue_) {
+        loopTimes++;
+        if (loopTimes == 1) {
+            checkValue1 = item.second.renderInfo.size();
+        } else if (loopTimes == 2) {
+            checkValue2 = item.second.renderInfo.size();
+        }
+    }
+
+    EXPECT_EQ(DFX_MSG_MAX_ACTION_SIZE, checkValue1);
+    EXPECT_EQ(DFX_MSG_ACTION_LOOP_TIMES_2 + DFX_MSG_ACTION_LOOP_TIMES_1 - DFX_MSG_MAX_ACTION_SIZE, checkValue2);
+    manager.reportQueue_.clear();
+}
+
+
+/**
+* @tc.name  : Test DFX_MSG_MANAGER
+* @tc.number: DfxMsgManagerPrcess_004
+* @tc.desc  : Test DFX_MSG_MANAGER interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, DfxMsgManagerPrcess_004, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    auto &manager = DfxMsgManager::GetInstance();
+    const int DFX_MSG_ACTION_LOOP_TIMES = 100;
+    std::list<RenderDfxInfo> renderInfo{};
+    std::list<InterruptDfxInfo> interruptInfo{};
+    for (size_t i = 0; i < DFX_MSG_ACTION_LOOP_TIMES; i++) {
+        renderInfo.push_back({});
+        interruptInfo.push_back({});
+    }
+
+    const int DFX_MSG_LOOP_TIMES = 20;
+    DfxMessage renderMsg = {.appUid = TEST_APP_UID, .renderInfo = renderInfo};
+    DfxMessage interruptMsg = {.appUid = TEST_APP_UID, .interruptInfo = interruptInfo};
+    for (size_t i = 0; i < DFX_MSG_LOOP_TIMES; i++) {
+        manager.Process(renderMsg);
+        manager.Process(interruptMsg);
+    }
+
+    manager.CheckReportDfxMsg();
+    EXPECT_TRUE(manager.isFull_);
+
+    const int32_t DEFAULT_DFX_REPORT_INTERVAL_MIN = 24 * 60;
+    manager.lastReportTime_ -= DEFAULT_DFX_REPORT_INTERVAL_MIN;
+    manager.Process(renderMsg);
+    manager.CheckReportDfxMsg();
+    EXPECT_TRUE(manager.isFull_);
+    manager.reportQueue_.clear();
+}
+
+/**
+* @tc.name  : Test DFX_MSG_MANAGER
+* @tc.number: DfxMsgManagerEnqueue_001
+* @tc.desc  : Test DFX_MSG_MANAGER interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, DfxMsgManagerEnqueue_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    auto &manager = DfxMsgManager::GetInstance();
+
+    constexpr int32_t BOOTUP_MUSIC_UID = 1003;
+    DfxMessage renderMsg = {.appUid = BOOTUP_MUSIC_UID};
+    auto ret = manager.Enqueue(renderMsg);
+    EXPECT_FALSE(ret);
+
+    DfxMessage renderMsg2 = {.appUid = TEST_APP_UID};
+    manager.isFull_ = true;
+    ret = manager.Enqueue(renderMsg2);
+    EXPECT_FALSE(ret);
+    manager.isFull_ = false;
+}
+
+/**
+* @tc.name  : Test DFX_MSG_MANAGER
+* @tc.number: DfxMsgManagerAppStateTest_001
+* @tc.desc  : Test DFX_MSG_MANAGER interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, DfxMsgManagerAppStateTest_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    auto &manager = DfxMsgManager::GetInstance();
+    manager.SaveAppInfo({TEST_APP_UID});
+    manager.UpdateAppState(TEST_APP_UID, DFX_APP_STATE_START);
+
+    int32_t size = 0;
+    int32_t checkSize1 = 1;
+    int32_t checkSize2 = 2;
+    if (manager.appInfo_.count(TEST_APP_UID)) {
+        auto &item = manager.appInfo_[TEST_APP_UID];
+        size = item.appStateVec.size();
+    }
+    EXPECT_EQ(checkSize1, size);
+
+    size = 0;
+    manager.UpdateAppState(TEST_APP_UID, DFX_APP_STATE_FOREGROUND);
+    if (manager.appInfo_.count(TEST_APP_UID)) {
+        auto &item = manager.appInfo_[TEST_APP_UID];
+        size = item.appStateVec.size();
+    }
+    EXPECT_EQ(checkSize1, size);
+
+    manager.UpdateAppState(TEST_APP_UID, DFX_APP_STATE_FOREGROUND, true);
+    if (manager.appInfo_.count(TEST_APP_UID)) {
+        auto &item = manager.appInfo_[TEST_APP_UID];
+        size = item.appStateVec.size();
+    }
+    EXPECT_EQ(checkSize2, size);
+    manager.appInfo_.clear();
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: AudioCoreConfigManager_001
+* @tc.desc  : Test AudioCoreConfigManager.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, AudioCoreConfigManager_001, TestSize.Level1)
+{
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(), false);
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+
+    AudioPolicyConfigData &configData = AudioPolicyConfigData::GetInstance();
+    configData.Reorganize();
+    std::string version = configData.GetVersion();
+    EXPECT_NE(version, "");
+
+    EXPECT_NE(configData.adapterInfoMap.size(), 0);
+    EXPECT_NE(configData.deviceInfoMap.size(), 0);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: AudioCoreConfigManager_002
+* @tc.desc  : Test AudioCoreConfigManager.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, AudioCoreConfigManager_002, TestSize.Level1)
+{
+    AudioPolicyConfigData &configData = AudioPolicyConfigData::GetInstance();
+    size_t adapterMapSize = configData.adapterInfoMap.size();
+    std::unordered_map<AudioAdapterType, std::pair<size_t, size_t>> adapterSizeMap {};
+
+    for (auto &item : configData.adapterInfoMap) {
+        std::pair<size_t, size_t> sizePair = std::make_pair(item.second->deviceInfos.size(),
+            item.second->pipeInfos.size());
+        adapterSizeMap.insert({item.first, sizePair});
+    }
+
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+    configData.Reorganize();
+
+    EXPECT_NE(configData.adapterInfoMap.size(), 0);
+
+    for (auto &item : adapterSizeMap) {
+        auto adapterInfoIt = configData.adapterInfoMap.find(item.first);
+        EXPECT_NE(adapterInfoIt, configData.adapterInfoMap.end());
+
+        EXPECT_NE(adapterInfoIt->second->adapterName, "");
+        EXPECT_NE(adapterInfoIt->second->deviceInfos.size(), 0);
+        EXPECT_NE(adapterInfoIt->second->pipeInfos.size(), 0);
+
+        std::pair<size_t, size_t> sizePair = std::make_pair(adapterInfoIt->second->deviceInfos.size(),
+            adapterInfoIt->second->pipeInfos.size());
+        EXPECT_EQ(item.second, sizePair);
+
+        for (auto &deviceInfo : adapterInfoIt->second->deviceInfos) {
+            EXPECT_NE(deviceInfo->supportPipeMap_.size(), 0);
+        }
+
+        for (auto &pipeInfo : adapterInfoIt->second->pipeInfos) {
+            for (auto &streamPropInfo : pipeInfo->streamPropInfos_) {
+                EXPECT_NE(streamPropInfo->supportDeviceMap_.size(), 0);
+            }
+        }
+    }
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: AudioCoreConfigManager_003
+* @tc.desc  : Test AudioCoreConfigManager.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, AudioCoreConfigManager_003, TestSize.Level1)
+{
+    AudioPolicyConfigData &configData = AudioPolicyConfigData::GetInstance();
+    size_t deviceMapSize = configData.deviceInfoMap.size();
+    std::unordered_map<std::pair<DeviceType, DeviceRole>, size_t, PairHash> deviceSizeMap;
+
+    for (auto &pair : configData.deviceInfoMap) {
+        deviceSizeMap.insert({pair.first, pair.second.size()});
+    }
+
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+    configData.Reorganize();
+
+    EXPECT_NE(configData.deviceInfoMap.size(), 0);
+    for (auto &pair : deviceSizeMap) {
+        auto deviceSetIt = configData.deviceInfoMap.find(pair.first);
+        EXPECT_NE(deviceSetIt, configData.deviceInfoMap.end());
+        EXPECT_EQ(deviceSetIt->second.size(), pair.second);
+    }
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: AudioCoreConfigManager_004
+* @tc.desc  : Test AudioCoreConfigManager.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, AudioCoreConfigManager_004, TestSize.Level1)
+{
+    AudioPolicyConfigData &configData = AudioPolicyConfigData::GetInstance();
+    size_t adapterMapSize = configData.adapterInfoMap.size();
+    std::unordered_map<AudioAdapterType, std::pair<size_t, size_t>> adapterSizeMap {};
+
+    for (auto &item : configData.adapterInfoMap) {
+        std::pair<size_t, size_t> sizePair = std::make_pair(item.second->deviceInfos.size(),
+            item.second->pipeInfos.size());
+        adapterSizeMap.insert({item.first, sizePair});
+    }
+
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+    configData.Reorganize();
+
+    AudioStreamInfo streamInfo;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> desc;
+
+    bool ret = audioConfigManager_.IsFastStreamSupported(streamInfo, desc);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: AudioCoreConfigManager_005
+* @tc.desc  : Test AudioCoreConfigManager.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, AudioCoreConfigManager_005, TestSize.Level1)
+{
+    AudioPolicyConfigData &configData = AudioPolicyConfigData::GetInstance();
+    size_t adapterMapSize = configData.adapterInfoMap.size();
+    std::unordered_map<AudioAdapterType, std::pair<size_t, size_t>> adapterSizeMap {};
+
+    for (auto &item : configData.adapterInfoMap) {
+        std::pair<size_t, size_t> sizePair = std::make_pair(item.second->deviceInfos.size(),
+            item.second->pipeInfos.size());
+        adapterSizeMap.insert({item.first, sizePair});
+    }
+
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+    configData.Reorganize();
+
+    AudioStreamInfo streamInfo;
+    std::shared_ptr<AdapterDeviceInfo> deviceInfo;
+    bool ret = audioConfigManager_.GetFastStreamSupport(streamInfo, deviceInfo);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: AudioCoreConfigManager_006
+* @tc.desc  : Test AudioCoreConfigManager.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, AudioCoreConfigManager_006, TestSize.Level1)
+{
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+
+    PolicyGlobalConfigs gCfg;
+    gCfg.adapter_ = "hdmi";
+    gCfg.pipe_ = "default";
+    gCfg.device_ = "speaker";
+    gCfg.commonConfigs_.push_back({"offloadInnerCaptureSupport", "true", "bool"});
+    gCfg.commonConfigs_.push_back({"mute", "0", "bool"});
+    gCfg.updateRouteSupport_ = true;
+
+    audioConfigManager_.OnGlobalConfigsParsed(gCfg);
+    bool ret = audioConfigManager_.IsSupportInnerCaptureOffload();
+    EXPECT_EQ(ret, true);
+
+    audioConfigManager_.isSupportInnerCaptureOffload_ = std::nullopt;
+    PolicyGlobalConfigs gCfg2;
+    audioConfigManager_.OnGlobalConfigsParsed(gCfg2);
+    ret = audioConfigManager_.IsSupportInnerCaptureOffload();
+    EXPECT_EQ(ret, false);
+
+    ret = audioConfigManager_.IsSupportInnerCaptureOffload();
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test DFX_MSG_MANAGER
+* @tc.number: DfxMsgManagerActionTest_001
+* @tc.desc  : Test DFX_MSG_MANAGER interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, DfxMsgManagerActionTest_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    auto &manager = DfxMsgManager::GetInstance();
+    const int DFX_MSG_ACTION_LOOP_TIMES_1 = 50;
+    const int DFX_MSG_ACTION_LOOP_TIMES_2 = 60;
+    const int DFX_MSG_ACTION_SPLIT_NUM = 2;
+    std::list<RenderDfxInfo> renderInfo{};
+    int infoIndex = 0;
+    for (size_t i = 1; i <= DFX_MSG_ACTION_LOOP_TIMES_1; i++) {
+        DfxStatAction rendererAction{};
+        if (i % DFX_MSG_ACTION_SPLIT_NUM == 0) {
+            rendererAction.fourthByte = RendererStage::RENDERER_STAGE_START_OK;
+            rendererAction.firstByte = ++infoIndex;
+        }
+        renderInfo.push_back({.rendererAction = rendererAction});
+    }
+
+    std::list<RenderDfxInfo> renderInfo2{};
+    infoIndex = 0;
+    for (size_t i = 1; i <= DFX_MSG_ACTION_LOOP_TIMES_2; i++) {
+        DfxStatAction rendererAction{};
+        if (i % DFX_MSG_ACTION_SPLIT_NUM == 0) {
+            rendererAction.fourthByte = RendererStage::RENDERER_STAGE_START_FAIL;
+            rendererAction.firstByte = ++infoIndex;
+        }
+        renderInfo2.push_back({.rendererAction = rendererAction});
+    }
+
+    DfxMessage renderMsg = {.appUid = TEST_APP_UID, .renderInfo = renderInfo};
+    DfxMessage renderMsg2 = {.appUid = TEST_APP_UID, .renderInfo = renderInfo2};
+    manager.Process(renderMsg);
+    manager.Process(renderMsg2);
+
+    int8_t checkValue = 0;
+    for (auto &item : manager.reportQueue_) {
+        manager.UpdateAction(TEST_APP_UID, item.second.renderInfo);
+        checkValue = manager.GetDfxIndexByType(TEST_APP_UID, DfxMsgIndexType::DFX_MSG_IDX_TYPE_RENDER_INFO);
+    }
+
+    EXPECT_EQ(checkValue, (DFX_MSG_ACTION_LOOP_TIMES_1 / DFX_MSG_ACTION_SPLIT_NUM) +
+        (DFX_MSG_ACTION_LOOP_TIMES_2 / DFX_MSG_ACTION_SPLIT_NUM));
+    manager.reportQueue_.clear();
+}
+
+/**
+* @tc.name  : Test AudioDeviceDescriptor.
+* @tc.number: AudioDeviceDescriptor_001
+* @tc.desc  : Test AudioDeviceDescriptor.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, AudioDeviceDescriptor_001, TestSize.Level1)
+{
+    Parcel parcel;
+    std::shared_ptr<AudioDeviceDescriptor> audioDeviceDescriptor = std::make_shared<AudioDeviceDescriptor>();
+    EXPECT_NE(audioDeviceDescriptor, nullptr);
+    audioDeviceDescriptor->deviceType_ = DEVICE_TYPE_NONE;
+    audioDeviceDescriptor->MarshallingToDeviceInfo(parcel, false, false, API_10);
+    EXPECT_EQ(audioDeviceDescriptor->audioStreamInfo_.size(), 0);
+
+    DeviceStreamInfo streamInfo;
+    audioDeviceDescriptor->audioStreamInfo_.push_back(streamInfo);
+    audioDeviceDescriptor->MarshallingToDeviceInfo(parcel, false, false, API_10);
+    EXPECT_EQ(audioDeviceDescriptor->GetDeviceStreamInfo().samplingRate.size(), 0);
+
+    streamInfo.samplingRate.insert(SAMPLE_RATE_44100);
+    streamInfo.channelLayout.insert(CH_LAYOUT_STEREO);
+    audioDeviceDescriptor->audioStreamInfo_.push_back(streamInfo);
+    audioDeviceDescriptor->MarshallingToDeviceInfo(parcel, false, false, API_10);
+    EXPECT_NE(audioDeviceDescriptor->GetDeviceStreamInfo().samplingRate.size(), 0);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: GetStreamPropInfo_001
+* @tc.desc  : Test GetStreamPropInfo
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetStreamPropInfo_001, TestSize.Level1)
+{
+    uint32_t routerFlag = AUDIO_OUTPUT_FLAG_FAST;
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+    AudioPolicyConfigData &configData = AudioPolicyConfigData::GetInstance();
+    configData.Reorganize();
+
+    std::shared_ptr<PipeStreamPropInfo> propInfo = std::make_shared<PipeStreamPropInfo>();
+    propInfo->format_ = AudioSampleFormat::SAMPLE_S16LE;
+    propInfo->sampleRate_ = AudioSamplingRate::SAMPLE_RATE_48000;
+    propInfo->channels_ = AudioChannel::STEREO;
+    std::shared_ptr<AdapterPipeInfo> pipeInfo = std::make_shared<AdapterPipeInfo>();
+    pipeInfo->streamPropInfos_ = {propInfo};
+
+    std::shared_ptr<AdapterDeviceInfo> deviceInfo = std::make_shared<AdapterDeviceInfo>();
+    deviceInfo->supportPipeMap_.insert({routerFlag, pipeInfo});
+    std::set<std::shared_ptr<AdapterDeviceInfo>> deviceInfoSet = {deviceInfo};
+    auto devicekey = std::make_pair<DeviceType, DeviceRole>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE);
+    configData.deviceInfoMap.insert({devicekey, deviceInfoSet});
+
+    std::shared_ptr<AudioStreamDescriptor> streamDesc = std::make_shared<AudioStreamDescriptor>();
+    streamDesc->audioMode_ = AUDIO_MODE_PLAYBACK;
+    streamDesc->newDeviceDescs_.push_back(std::make_shared<AudioDeviceDescriptor>());
+    streamDesc->newDeviceDescs_.front()->deviceType_ = DEVICE_TYPE_SPEAKER;
+    streamDesc->newDeviceDescs_.front()->deviceRole_ = OUTPUT_DEVICE;
+    streamDesc->newDeviceDescs_.front()->networkId_ = "LocalDevice";
+    streamDesc->streamInfo_.format = AudioSampleFormat::SAMPLE_S16LE;
+    streamDesc->streamInfo_.samplingRate = AudioSamplingRate::SAMPLE_RATE_48000;
+    streamDesc->streamInfo_.channels = AudioChannel::STEREO;
+
+    streamDesc->routeFlag_ = AUDIO_INPUT_FLAG_FAST;
+    std::shared_ptr<PipeStreamPropInfo> streamPropInfo = std::make_shared<PipeStreamPropInfo>();
+    manager.GetStreamPropInfo(streamDesc, streamPropInfo);
+    streamDesc->routeFlag_ = routerFlag;
+    manager.GetStreamPropInfo(streamDesc, streamPropInfo);
+    EXPECT_EQ(streamPropInfo->channels_, AudioChannel::STEREO);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: GetStreamPropInfo_002
+* @tc.desc  : Test GetStreamPropInfo
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetStreamPropInfo_002, TestSize.Level1)
+{
+    uint32_t routerFlag = AUDIO_OUTPUT_FLAG_MULTICHANNEL; // for multichannel_output
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+    AudioPolicyConfigData &configData = AudioPolicyConfigData::GetInstance();
+    configData.Reorganize();
+
+    std::shared_ptr<PipeStreamPropInfo> propInfo = std::make_shared<PipeStreamPropInfo>();
+    propInfo->format_ = AudioSampleFormat::SAMPLE_S16LE;
+    propInfo->sampleRate_ = AudioSamplingRate::SAMPLE_RATE_48000;
+    propInfo->channels_ = AudioChannel::STEREO;
+    std::shared_ptr<AdapterPipeInfo> pipeInfo = std::make_shared<AdapterPipeInfo>();
+    pipeInfo->streamPropInfos_ = {propInfo};
+    pipeInfo->name_ = "multichannel_output";
+
+    std::shared_ptr<AdapterDeviceInfo> deviceInfo = std::make_shared<AdapterDeviceInfo>();
+    deviceInfo->supportPipeMap_.insert({routerFlag, pipeInfo});
+    std::shared_ptr<PolicyAdapterInfo> adapterInfo = std::make_shared<PolicyAdapterInfo>();
+    adapterInfo->adapterName = "primary";
+    deviceInfo->adapterInfo_ = adapterInfo;
+    std::set<std::shared_ptr<AdapterDeviceInfo>> deviceInfoSet = {deviceInfo};
+    auto devicekey = std::make_pair<DeviceType, DeviceRole>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE);
+    configData.deviceInfoMap[devicekey] = deviceInfoSet;
+
+    std::shared_ptr<AudioStreamDescriptor> streamDesc = std::make_shared<AudioStreamDescriptor>();
+    streamDesc->audioMode_ = AUDIO_MODE_PLAYBACK;
+    streamDesc->newDeviceDescs_.push_back(std::make_shared<AudioDeviceDescriptor>());
+    streamDesc->newDeviceDescs_.front()->deviceType_ = DEVICE_TYPE_SPEAKER;
+    streamDesc->newDeviceDescs_.front()->deviceRole_ = OUTPUT_DEVICE;
+    streamDesc->newDeviceDescs_.front()->networkId_ = LOCAL_NETWORK_ID;
+    streamDesc->streamInfo_.format = AudioSampleFormat::SAMPLE_S16LE;
+    streamDesc->streamInfo_.samplingRate = AudioSamplingRate::SAMPLE_RATE_48000;
+    streamDesc->streamInfo_.channels = AudioChannel::STEREO;
+    streamDesc->streamInfo_.channelLayout = AudioChannelLayout::CH_LAYOUT_4POINT0;
+    streamDesc->routeFlag_ = AUDIO_OUTPUT_FLAG_MULTICHANNEL;
+    streamDesc->streamInfo_.encoding == AudioEncodingType::ENCODING_AUDIOVIVID;
+
+    std::shared_ptr<PipeStreamPropInfo> streamPropInfo = std::make_shared<PipeStreamPropInfo>();
+    manager.GetStreamPropInfo(streamDesc, streamPropInfo);
+    EXPECT_EQ(streamPropInfo->channels_, AudioChannel::CHANNEL_6);
+    EXPECT_EQ(streamPropInfo->channelLayout_, AudioChannelLayout::CH_LAYOUT_5POINT1);
+    streamDesc->streamInfo_.encoding == AudioEncodingType::ENCODING_PCM;
+    manager.GetStreamPropInfo(streamDesc, streamPropInfo);
+    EXPECT_EQ(streamPropInfo->channels_, AudioChannel::CHANNEL_6);
+    EXPECT_EQ(streamPropInfo->channelLayout_, AudioChannelLayout::CH_LAYOUT_5POINT1);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: GetStreamPropInfo_003
+* @tc.desc  : Test GetStreamPropInfo
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetStreamPropInfo_003, TestSize.Level1)
+{
+    uint32_t routerFlag = AUDIO_OUTPUT_FLAG_LOWPOWER;
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+    AudioPolicyConfigData &configData = AudioPolicyConfigData::GetInstance();
+    configData.Reorganize();
+
+    std::vector<AudioChannel> channelVec = {AudioChannel::STEREO, AudioChannel::CHANNEL_8};
+    std::vector<AudioChannelLayout> channelLayoutVec = {
+        AudioChannelLayout::CH_LAYOUT_STEREO, AudioChannelLayout::CH_LAYOUT_5POINT1POINT2};
+    std::vector<uint32_t> sampleRateVec = {
+        AudioSamplingRate::SAMPLE_RATE_48000, AudioSamplingRate::SAMPLE_RATE_48000};
+    std::shared_ptr<AdapterPipeInfo> info = std::make_shared<AdapterPipeInfo>();
+    for (size_t i = 0; i < channelVec.size(); i++) {
+        std::shared_ptr<PipeStreamPropInfo> temp = std::make_shared<PipeStreamPropInfo>();
+        temp->channels_ = channelVec[i];
+        temp->sampleRate_ = sampleRateVec[i];
+        temp->channelLayout_ = channelLayoutVec[i];
+        info->dynamicStreamPropInfos_.push_back(temp);
+    }
+    std::shared_ptr<AdapterDeviceInfo> deviceInfo = std::make_shared<AdapterDeviceInfo>();
+    deviceInfo->supportPipeMap_.insert({routerFlag, info});
+    std::set<std::shared_ptr<AdapterDeviceInfo>> deviceInfoSet = {deviceInfo};
+    auto deviceKey = std::make_pair<DeviceType, DeviceRole>(DEVICE_TYPE_SPEAKER, OUTPUT_DEVICE);
+    configData.deviceInfoMap[deviceKey] = deviceInfoSet;
+
+    std::shared_ptr<AudioStreamDescriptor> streamDesc = std::make_shared<AudioStreamDescriptor>();
+    streamDesc->audioMode_ = AUDIO_MODE_PLAYBACK;
+    streamDesc->newDeviceDescs_.push_back(std::make_shared<AudioDeviceDescriptor>());
+    streamDesc->newDeviceDescs_.front()->deviceType_ = DEVICE_TYPE_SPEAKER;
+    streamDesc->newDeviceDescs_.front()->deviceRole_ = OUTPUT_DEVICE;
+    streamDesc->newDeviceDescs_.front()->networkId_ = "remote";
+    streamDesc->streamInfo_.format = AudioSampleFormat::SAMPLE_S16LE;
+    streamDesc->streamInfo_.samplingRate = AudioSamplingRate::SAMPLE_RATE_48000;
+    streamDesc->streamInfo_.channels = AudioChannel::STEREO;
+    streamDesc->streamInfo_.channelLayout = AudioChannelLayout::CH_LAYOUT_STEREO;
+    streamDesc->routeFlag_ = AUDIO_OUTPUT_FLAG_LOWPOWER;
+
+    streamDesc->streamInfo_.encoding = AudioEncodingType::ENCODING_AUDIOVIVID;
+    std::shared_ptr<PipeStreamPropInfo> streamPropInfo = std::make_shared<PipeStreamPropInfo>();
+    manager.GetStreamPropInfo(streamDesc, streamPropInfo);
+    EXPECT_EQ(streamPropInfo->channels_, AudioChannel::CHANNEL_8);
+    EXPECT_EQ(streamPropInfo->channelLayout_, AudioChannelLayout::CH_LAYOUT_5POINT1POINT2);
+
+    streamDesc->streamInfo_.encoding = AudioEncodingType::ENCODING_PCM;
+    info->dynamicStreamPropInfos_.clear();
+    manager.GetStreamPropInfo(streamDesc, streamPropInfo);
+    EXPECT_TRUE(streamPropInfo == nullptr);
+    configData.deviceInfoMap.erase(deviceKey);
+}
+
+/**
+ * @tc.name  : Test AudioCoreConfigManager.
+ * @tc.number: GetAvailableStreamPropInfoForDevice_001
+ * @tc.desc  : Test GetAvailableStreamPropInfoForDevice returns matched stream prop.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetAvailableStreamPropInfoForDevice_001, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::list<std::shared_ptr<PipeStreamPropInfo>> streamPropInfos;
+
+    auto usbStreamProp = std::make_shared<PipeStreamPropInfo>();
+    usbStreamProp->channels_ = STEREO;
+    usbStreamProp->supportDeviceMap_.insert({DEVICE_TYPE_USB_HEADSET, std::make_shared<AdapterDeviceInfo>()});
+    auto micStreamProp = std::make_shared<PipeStreamPropInfo>();
+    micStreamProp->channels_ = CHANNEL_3;
+    micStreamProp->supportDeviceMap_.insert({DEVICE_TYPE_MIC, std::make_shared<AdapterDeviceInfo>()});
+    streamPropInfos.push_back(usbStreamProp);
+    streamPropInfos.push_back(micStreamProp);
+
+    auto result = manager.GetAvailableStreamPropInfoForDevice(streamPropInfos, DEVICE_TYPE_MIC);
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result, micStreamProp);
+}
+
+/**
+ * @tc.name  : Test AudioCoreConfigManager.
+ * @tc.number: GetAvailableStreamPropInfoForDevice_002
+ * @tc.desc  : Test GetAvailableStreamPropInfoForDevice skips nullptr items and finds matched stream prop.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetAvailableStreamPropInfoForDevice_002, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::list<std::shared_ptr<PipeStreamPropInfo>> streamPropInfos;
+
+    streamPropInfos.push_back(nullptr);
+    auto micStreamProp = std::make_shared<PipeStreamPropInfo>();
+    micStreamProp->channels_ = CHANNEL_3;
+    micStreamProp->supportDeviceMap_.insert({DEVICE_TYPE_MIC, std::make_shared<AdapterDeviceInfo>()});
+    streamPropInfos.push_back(micStreamProp);
+
+    auto result = manager.GetAvailableStreamPropInfoForDevice(streamPropInfos, DEVICE_TYPE_MIC);
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result, micStreamProp);
+}
+
+/**
+ * @tc.name  : Test AudioCoreConfigManager.
+ * @tc.number: GetAvailableStreamPropInfoForDevice_003
+ * @tc.desc  : Test GetAvailableStreamPropInfoForDevice falls back to front when no device matches.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetAvailableStreamPropInfoForDevice_003, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::list<std::shared_ptr<PipeStreamPropInfo>> streamPropInfos;
+
+    auto frontStreamProp = std::make_shared<PipeStreamPropInfo>();
+    frontStreamProp->channels_ = STEREO;
+    streamPropInfos.push_back(frontStreamProp);
+    streamPropInfos.push_back(nullptr);
+
+    auto result = manager.GetAvailableStreamPropInfoForDevice(streamPropInfos, DEVICE_TYPE_MIC);
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result, frontStreamProp);
+}
+
+/**
+ * @tc.name  : Test AudioCoreConfigManager.
+ * @tc.number: GetAvailableStreamPropInfoForDevice_004
+ * @tc.desc  : Test GetAvailableStreamPropInfoForDevice returns nullptr for empty stream prop list.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetAvailableStreamPropInfoForDevice_004, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::list<std::shared_ptr<PipeStreamPropInfo>> streamPropInfos;
+
+    auto result = manager.GetAvailableStreamPropInfoForDevice(streamPropInfos, DEVICE_TYPE_MIC);
+    EXPECT_EQ(result, nullptr);
+}
+
+/**
+ * @tc.name  : Test AudioCoreConfigManager.
+ * @tc.number: GetAvailableStreamPropInfoForDevice_005
+ * @tc.desc  : Test GetAvailableStreamPropInfoForDevice returns nullptr when front item is nullptr and no match exists.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetAvailableStreamPropInfoForDevice_005, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::list<std::shared_ptr<PipeStreamPropInfo>> streamPropInfos;
+
+    streamPropInfos.push_back(nullptr);
+    auto usbStreamProp = std::make_shared<PipeStreamPropInfo>();
+    usbStreamProp->channels_ = STEREO;
+    usbStreamProp->supportDeviceMap_.insert({DEVICE_TYPE_USB_HEADSET, std::make_shared<AdapterDeviceInfo>()});
+    streamPropInfos.push_back(usbStreamProp);
+
+    auto result = manager.GetAvailableStreamPropInfoForDevice(streamPropInfos, DEVICE_TYPE_MIC);
+    EXPECT_EQ(result, nullptr);
+}
+
+/**
+ * @tc.name  : Test AudioCoreConfigManager.
+ * @tc.number: GetAvailableStreamPropInfoForDevice_006
+ * @tc.desc  : Test GetAvailableStreamPropInfoForDevice returns nullptr when all items are nullptr.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetAvailableStreamPropInfoForDevice_006, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::list<std::shared_ptr<PipeStreamPropInfo>> streamPropInfos;
+
+    streamPropInfos.push_back(nullptr);
+    streamPropInfos.push_back(nullptr);
+
+    auto result = manager.GetAvailableStreamPropInfoForDevice(streamPropInfos, DEVICE_TYPE_MIC);
+    EXPECT_EQ(result, nullptr);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: UpdateBasicStreamInfo_001
+* @tc.desc  : Test UpdateBasicStreamInfo
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UpdateBasicStreamInfo_001, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+    std::shared_ptr<AudioStreamDescriptor> streamDesc = nullptr;
+    std::shared_ptr<AdapterPipeInfo> pipeInfo = nullptr;
+    AudioStreamInfo streamInfo;
+    streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
+    manager.UpdateBasicStreamInfo(streamDesc, pipeInfo, streamInfo);
+
+    streamDesc = std::make_shared<AudioStreamDescriptor>();
+    streamDesc->streamInfo_.channels = MONO;
+    manager.UpdateBasicStreamInfo(streamDesc, pipeInfo, streamInfo);
+
+    pipeInfo = std::make_shared<AdapterPipeInfo>();
+    manager.UpdateBasicStreamInfo(streamDesc, pipeInfo, streamInfo);
+
+    streamDesc->routeFlag_ = (AUDIO_INPUT_FLAG_VOIP | AUDIO_INPUT_FLAG_FAST);
+    manager.UpdateBasicStreamInfo(streamDesc, pipeInfo, streamInfo);
+    EXPECT_EQ(streamInfo.channels, STEREO);
+
+    streamDesc->routeFlag_ = (AUDIO_OUTPUT_FLAG_VOIP | AUDIO_OUTPUT_FLAG_FAST);
+    manager.UpdateBasicStreamInfo(streamDesc, pipeInfo, streamInfo);
+    EXPECT_EQ(streamInfo.channels, STEREO);
+
+    streamDesc->routeFlag_ = AUDIO_OUTPUT_FLAG_FAST;
+    manager.UpdateBasicStreamInfo(streamDesc, pipeInfo, streamInfo);
+
+    std::shared_ptr<PipeStreamPropInfo> propInfo = std::make_shared<PipeStreamPropInfo>();
+    propInfo->format_ = AudioSampleFormat::SAMPLE_S16LE;
+    propInfo->sampleRate_ = AudioSamplingRate::SAMPLE_RATE_48000;
+    propInfo->channels_ = AudioChannel::STEREO;
+    pipeInfo->streamPropInfos_ = {propInfo};
+    manager.UpdateBasicStreamInfo(streamDesc, pipeInfo, streamInfo);
+
+    EXPECT_EQ(streamInfo.format, AudioSampleFormat::SAMPLE_S16LE);
+    EXPECT_EQ(streamInfo.channels, STEREO);
+}
+
+/**
+ * @tc.name  : Test UpdateStreamSampleInfo API
+ * @tc.number: UpdateStreamSampleInfo_001
+ * @tc.desc  : Test UpdateStreamSampleInfo with non-VOIP_FAST route flag, should return early.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UpdateStreamSampleInfo_001, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::shared_ptr<AudioStreamDescriptor> desc = std::make_shared<AudioStreamDescriptor>();
+    AudioStreamInfo streamInfo;
+    streamInfo.samplingRate = SAMPLE_RATE_44100;
+    desc->routeFlag_ = AUDIO_INPUT_FLAG_FAST; // Not VOIP | FAST combination
+
+    manager.UpdateStreamSampleInfo(desc, streamInfo);
+
+    // Should return early without modifying sampling rate
+    EXPECT_EQ(streamInfo.samplingRate, SAMPLE_RATE_44100);
+}
+
+/**
+ * @tc.name  : Test UpdateStreamSampleInfo API
+ * @tc.number: UpdateStreamSampleInfo_002
+ * @tc.desc  : Test UpdateStreamSampleInfo with VOIP_FAST route and 16000 sampling rate, should not modify.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UpdateStreamSampleInfo_002, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::shared_ptr<AudioStreamDescriptor> desc = std::make_shared<AudioStreamDescriptor>();
+    AudioStreamInfo streamInfo;
+    streamInfo.samplingRate = SAMPLE_RATE_16000;
+    desc->routeFlag_ = (AUDIO_INPUT_FLAG_VOIP | AUDIO_INPUT_FLAG_FAST);
+
+    manager.UpdateStreamSampleInfo(desc, streamInfo);
+
+    // Should modify streamInfo since desc's rate is not 16000.
+    EXPECT_EQ(streamInfo.samplingRate, SAMPLE_RATE_48000);
+}
+
+/**
+ * @tc.name  : Test UpdateStreamSampleInfo API
+ * @tc.number: UpdateStreamSampleInfo_003
+ * @tc.desc  : Test UpdateStreamSampleInfo with VOIP_FAST route and 48000 sampling rate, should not modify.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UpdateStreamSampleInfo_003, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::shared_ptr<AudioStreamDescriptor> desc = std::make_shared<AudioStreamDescriptor>();
+    AudioStreamInfo streamInfo;
+    streamInfo.samplingRate = SAMPLE_RATE_48000;
+    desc->routeFlag_ = (AUDIO_INPUT_FLAG_VOIP | AUDIO_INPUT_FLAG_FAST);
+
+    manager.UpdateStreamSampleInfo(desc, streamInfo);
+
+    // Should not modify since it's already 48000
+    EXPECT_EQ(streamInfo.samplingRate, SAMPLE_RATE_48000);
+}
+
+/**
+ * @tc.name  : Test UpdateStreamSampleInfo API
+ * @tc.number: UpdateStreamSampleInfo_004
+ * @tc.desc  : Test UpdateStreamSampleInfo with VOIP_FAST route and 44100 sampling rate, should change to 48000.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UpdateStreamSampleInfo_004, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    std::shared_ptr<AudioStreamDescriptor> desc = std::make_shared<AudioStreamDescriptor>();
+    AudioStreamInfo streamInfo;
+    streamInfo.samplingRate = SAMPLE_RATE_44100;
+    desc->routeFlag_ = (AUDIO_INPUT_FLAG_VOIP | AUDIO_INPUT_FLAG_FAST);
+
+    manager.UpdateStreamSampleInfo(desc, streamInfo);
+
+    // Should change from 44100 to 48000
+    EXPECT_EQ(streamInfo.samplingRate, SAMPLE_RATE_48000);
+}
+/**
+ * @tc.name  : Test UpdateStreamSampleInfo API
+ * @tc.number: UpdateStreamSampleInfo_005
+ * @tc.desc  : Test UpdateStreamSampleInfo with VOIP_FAST route and various unsupported sampling rates.
+ */
+HWTEST_F(AudioPolicyServiceFourthUnitTest, UpdateStreamSampleInfo_005, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+
+    // Test various sampling rates that should be converted to 48000
+    std::vector<AudioSamplingRate> testRates = {
+        SAMPLE_RATE_8000,   // Should change to 48000
+        SAMPLE_RATE_11025,  // Should change to 48000
+        SAMPLE_RATE_12000,  // Should change to 48000
+        SAMPLE_RATE_22050,  // Should change to 48000
+        SAMPLE_RATE_24000,  // Should change to 48000
+        SAMPLE_RATE_64000,  // Should change to 48000
+        SAMPLE_RATE_88200,  // Should change to 48000
+        SAMPLE_RATE_176400, // Should change to 48000
+        SAMPLE_RATE_192000, // Should change to 48000
+        SAMPLE_RATE_384000  // Should change to 48000
+    };
+
+    for (auto rate : testRates) {
+        std::shared_ptr<AudioStreamDescriptor> desc = std::make_shared<AudioStreamDescriptor>();
+        AudioStreamInfo streamInfo;
+        streamInfo.samplingRate = rate;
+        desc->routeFlag_ = (AUDIO_INPUT_FLAG_VOIP | AUDIO_INPUT_FLAG_FAST);
+
+        manager.UpdateStreamSampleInfo(desc, streamInfo);
+
+        // All unsupported rates should be changed to 48000
+        EXPECT_EQ(streamInfo.samplingRate, SAMPLE_RATE_48000);
+    }
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: GetDynamicStreamPropInfoFromPipe_001
+* @tc.desc  : Test GetDynamicStreamPropInfoFromPipe
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetDynamicStreamPropInfoFromPipe_001, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+    std::vector<AudioChannel> channelVec = {AudioChannel::MONO, AudioChannel::STEREO, AudioChannel::CHANNEL_3,
+        AudioChannel::CHANNEL_4, AudioChannel::STEREO, AudioChannel::STEREO};
+    std::vector<AudioChannelLayout> channelLayoutVec = {CH_LAYOUT_MONO, CH_LAYOUT_STEREO, CH_LAYOUT_2POINT1,
+        CH_LAYOUT_3POINT1, CH_LAYOUT_STEREO, CH_LAYOUT_STEREO};
+    std::vector<uint32_t> sampleRateVec = {192000, 32000, 48000, 96000, 42000, 41000};
+    std::shared_ptr<AdapterPipeInfo> info = std::make_shared<AdapterPipeInfo>();
+    info->dynamicStreamPropInfos_.push_back(nullptr);
+    for (size_t i = 0; i < channelVec.size(); i++) {
+        std::shared_ptr<PipeStreamPropInfo> temp = std::make_shared<PipeStreamPropInfo>();
+        temp->channels_ = channelVec[i];
+        temp->sampleRate_ = sampleRateVec[i];
+        temp->channelLayout_ = channelLayoutVec[i];
+        info->dynamicStreamPropInfos_.push_back(temp);
+    }
+    info->dynamicStreamPropInfos_.push_back(nullptr);
+
+    AudioSampleFormat format = AudioSampleFormat::SAMPLE_S16LE;
+    std::shared_ptr<PipeStreamPropInfo> defaultStreamProp = nullptr;
+    uint32_t sampleRate;
+    AudioChannel channels;
+    auto isEqual = [](const AudioChannel &channel, const uint32_t &sampleRate,
+        std::shared_ptr<PipeStreamPropInfo> &defaultStreamProp) {
+            return channel == defaultStreamProp->channels_ && sampleRate == defaultStreamProp->sampleRate_;
+    };
+
+    sampleRate = 192100;
+    channels = AudioChannel::CHANNEL_5;
+    AudioStreamInfo temp_0(static_cast<AudioSamplingRate>(sampleRate), ENCODING_PCM, format, channels);
+    defaultStreamProp = manager.GetDynamicStreamPropInfoFromPipe(info, temp_0);
+    EXPECT_EQ(true, isEqual(channelVec[3], sampleRateVec[3], defaultStreamProp));
+
+    sampleRate = 41000;
+    channels = AudioChannel::STEREO;
+    AudioStreamInfo temp_1(static_cast<AudioSamplingRate>(sampleRate), ENCODING_PCM, format, channels);
+    defaultStreamProp = manager.GetDynamicStreamPropInfoFromPipe(info, temp_1);
+    EXPECT_EQ(true, isEqual(channelVec[3], sampleRateVec[3], defaultStreamProp));
+
+    sampleRate = 44100;
+    channels = AudioChannel::STEREO;
+    AudioChannelLayout channelLayout = CH_LAYOUT_STEREO;
+    AudioStreamInfo temp_2(static_cast<AudioSamplingRate>(sampleRate), ENCODING_PCM, format, channels, channelLayout);
+    defaultStreamProp = manager.GetDynamicStreamPropInfoFromPipe(info, temp_2);
+    EXPECT_EQ(true, isEqual(channelVec[4], sampleRateVec[4], defaultStreamProp));
+
+    info->dynamicStreamPropInfos_.clear();
+    info->dynamicStreamPropInfos_.push_back(nullptr);
+    info->dynamicStreamPropInfos_.push_back(nullptr);
+    defaultStreamProp = manager.GetDynamicStreamPropInfoFromPipe(info, temp_2);
+    EXPECT_EQ(true, defaultStreamProp == nullptr);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: GetDynamicStreamPropInfoFromPipe_002
+* @tc.desc  : Test GetDynamicStreamPropInfoFromPipe
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetDynamicStreamPropInfoFromPipe_002, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+    std::vector<AudioChannel> channelVec = {AudioChannel::MONO, AudioChannel::CHANNEL_8};
+    std::vector<AudioChannelLayout> channelLayoutVec = {
+        AudioChannelLayout::CH_LAYOUT_STEREO, AudioChannelLayout::CH_LAYOUT_7POINT1};
+    std::vector<uint32_t> sampleRateVec = {192000, 41000};
+    std::shared_ptr<AdapterPipeInfo> info = std::make_shared<AdapterPipeInfo>();
+    info->dynamicStreamPropInfos_.push_back(nullptr);
+    for (size_t i = 0; i < channelVec.size(); i++) {
+        std::shared_ptr<PipeStreamPropInfo> temp = std::make_shared<PipeStreamPropInfo>();
+        temp->channels_ = channelVec[i];
+        temp->sampleRate_ = sampleRateVec[i];
+        temp->channelLayout_ = channelLayoutVec[i];
+        info->dynamicStreamPropInfos_.push_back(temp);
+    }
+    info->dynamicStreamPropInfos_.push_back(nullptr);
+
+    AudioSampleFormat format = AudioSampleFormat::SAMPLE_S16LE;
+    std::shared_ptr<PipeStreamPropInfo> defaultStreamProp = nullptr;
+    uint32_t sampleRate;
+    AudioChannel channels;
+
+    std::shared_ptr<AudioStreamDescriptor> streamDesc = std::make_shared<AudioStreamDescriptor>();
+    streamDesc->streamInfo_.encoding = AudioEncodingType::ENCODING_PCM;
+    streamDesc->streamInfo_.channelLayout = CH_LAYOUT_7POINT1;
+    sampleRate = 192100;
+    channels = AudioChannel::CHANNEL_8;
+    AudioStreamInfo temp_0(static_cast<AudioSamplingRate>(sampleRate), ENCODING_PCM, format, channels);
+    defaultStreamProp = manager.GetDynamicStreamPropInfoFromPipe(info, temp_0);
+    EXPECT_EQ(channelLayoutVec[1], defaultStreamProp->channelLayout_);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: GetDynamicStreamPropInfoFromPipe_003
+* @tc.desc  : Test GetDynamicStreamPropInfoFromPipe
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetDynamicStreamPropInfoFromPipe_003, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+
+    std::vector<StreamPropTestInfo> propVec = {
+        {AudioSampleFormat::SAMPLE_S16LE, 48000, AudioChannelLayout::CH_LAYOUT_STEREO, AudioChannel::STEREO},
+        {AudioSampleFormat::SAMPLE_S16LE, 96000, AudioChannelLayout::CH_LAYOUT_STEREO, AudioChannel::STEREO},
+        {AudioSampleFormat::SAMPLE_S16LE, 48000, AudioChannelLayout::CH_LAYOUT_5POINT1, AudioChannel::CHANNEL_6},
+        {AudioSampleFormat::SAMPLE_S16LE, 48000, AudioChannelLayout::CH_LAYOUT_5POINT1POINT4, AudioChannel::CHANNEL_10},
+        {AudioSampleFormat::SAMPLE_S16LE, 48000, AudioChannelLayout::CH_LAYOUT_7POINT1POINT4, AudioChannel::CHANNEL_12},
+        {AudioSampleFormat::SAMPLE_S24LE, 48000, AudioChannelLayout::CH_LAYOUT_7POINT1POINT4, AudioChannel::CHANNEL_12},
+    };
+    auto info = CreateAdapterPipeInfo(propVec);
+    EXPECT_NE(info, nullptr);
+
+    for (auto &data : testData) {
+        auto streamProp = manager.GetDynamicStreamPropInfoFromPipe(info, data.streamInfo_);
+        EXPECT_EQ(data.Check(streamProp), true);
+    }
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: GetStreamPropInfoFromPipe_001
+* @tc.desc  : Test GetStreamPropInfoFromPipe
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetStreamPropInfoFromPipe_001, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+
+    std::shared_ptr<AdapterPipeInfo> info = std::make_shared<AdapterPipeInfo>();
+    uint32_t sampleRate = 48000;
+    AudioSampleFormat format = AudioSampleFormat::SAMPLE_S16LE;
+    AudioChannel channels = AudioChannel::STEREO;
+    AudioStreamInfo streamInfo(static_cast<AudioSamplingRate>(sampleRate), ENCODING_PCM, format, channels);
+
+    auto streamProp = manager.GetStreamPropInfoFromPipe(info, streamInfo);
+    EXPECT_TRUE(streamProp == nullptr);
+
+    std::vector<StreamPropTestInfo> propVec = {
+        {AudioSampleFormat::SAMPLE_S16LE, 48000, AudioChannelLayout::CH_LAYOUT_STEREO, AudioChannel::STEREO}
+    };
+    info = CreateAdapterPipeInfo(propVec);
+    streamProp = manager.GetStreamPropInfoFromPipe(info, streamInfo);
+    EXPECT_TRUE(streamProp->channelLayout_ == CH_LAYOUT_STEREO);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: ParseFormat_001
+* @tc.desc  : Test ParseFormat
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, ParseFormat_001, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+    EXPECT_EQ(manager.ParseFormat("s16le"), SAMPLE_S16LE);
+    EXPECT_EQ(manager.ParseFormat("s24le"), SAMPLE_S24LE);
+    EXPECT_EQ(manager.ParseFormat("s32le"), SAMPLE_S32LE);
+    EXPECT_EQ(manager.ParseFormat("123"), SAMPLE_S16LE);
+}
+
+/**
+* @tc.name  : Test AudioCoreConfigManager.
+* @tc.number: CheckDynamicCapturerConfig_001
+* @tc.desc  : Test CheckDynamicCapturerConfig
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, CheckDynamicCapturerConfig_001, TestSize.Level1)
+{
+    AudioCoreConfigManager &manager = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(manager.Init(true), true);
+
+    std::shared_ptr<AudioStreamDescriptor> streamDesc = std::make_shared<AudioStreamDescriptor>();
+    std::shared_ptr<AudioDeviceDescriptor> deviceDesc = std::make_shared<AudioDeviceDescriptor>();
+    std::shared_ptr<PipeStreamPropInfo> info = std::make_shared<PipeStreamPropInfo>();
+    deviceDesc->deviceType_ = DEVICE_TYPE_USB_ARM_HEADSET;
+    streamDesc->newDeviceDescs_.push_back(deviceDesc);
+    AudioModuleInfo moduleInfo = {
+        .rate = "8000",
+        .format = "s16le",
+    };
+    manager.dynamicCapturerConfig_[ClassType::TYPE_USB] = moduleInfo;
+
+    manager.CheckDynamicCapturerConfig(streamDesc, info);
+    EXPECT_EQ(info->format_, SAMPLE_S16LE);
+    EXPECT_EQ(info->sampleRate_, 8000);
+
+    manager.dynamicCapturerConfig_.clear();
+    info->format_ = SAMPLE_U8;
+    info->sampleRate_ = 0;
+    manager.CheckDynamicCapturerConfig(streamDesc, info);
+    EXPECT_EQ(info->format_, SAMPLE_U8);
+    EXPECT_EQ(info->sampleRate_, 0);
+
+    streamDesc->newDeviceDescs_.front()->deviceType_ = DEVICE_TYPE_DEFAULT;
+    info->format_ = SAMPLE_U8;
+    info->sampleRate_ = 0;
+    manager.CheckDynamicCapturerConfig(streamDesc, info);
+    EXPECT_EQ(info->format_, SAMPLE_U8);
+    EXPECT_EQ(info->sampleRate_, 0);
+}
+
+/**
+* @tc.name  : Test GetMaxVolumeLevel.
+* @tc.number: GetMaxVolumeLevel_001
+* @tc.desc  : valid parameters, return SUCCESS and volumeLevel is correct.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetMaxVolumeLevel_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    int32_t volumeType = 1;
+    int32_t volumeLevel = 0;
+    int32_t deviceType = 0;
+    int ret = server->GetMaxVolumeLevel(volumeType, volumeLevel, deviceType);
+
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_EQ(volumeLevel, MAX_VOLUME_LEVEL);
+}
+
+/**
+* @tc.name  : Test GetMaxVolumeLevel.
+* @tc.number: GetMaxVolumeLevel_002
+* @tc.desc  : no valid parameters, return SUCCESS and volumeLevel is no valid value.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetMaxVolumeLevel_002, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    int32_t volumeType = -1;
+    int32_t volumeLevel = 0;
+    int32_t deviceType = -1;
+    int ret = server->GetMaxVolumeLevel(volumeType, volumeLevel, deviceType);
+
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_EQ(volumeLevel, ERR_INVALID_PARAM);
+}
+
+/**
+* @tc.name  : Test GetMinVolumeLevel.
+* @tc.number: GetMaxVolumeLevel_001
+* @tc.desc  : valid parameters, return SUCCESS and volumeLevel is correct.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetMinVolumeLevel_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    int32_t volumeType = 1;
+    int32_t volumeLevel = 0;
+    int32_t deviceType = 0;
+    int ret = server->GetMinVolumeLevel(volumeType, volumeLevel, deviceType);
+
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_EQ(volumeLevel, MIN_VOLUME_LEVEL);
+}
+
+/**
+* @tc.name  : Test GetMinVolumeLevel.
+* @tc.number: GetMinVolumeLevel_002
+* @tc.desc  : no valid parameters, return SUCCESS and volumeLevel is no valid value.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetMinVolumeLevel_002, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    int32_t volumeType = -1;
+    int32_t volumeLevel = 0;
+    int32_t deviceType = -1;
+    int ret = server->GetMinVolumeLevel(volumeType, volumeLevel, deviceType);
+
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_EQ(volumeLevel, ERR_INVALID_PARAM);
+}
+
+/**
+* @tc.name  : Test IsIntelligentNoiseReductionEnabledForCurrentDevice.
+* @tc.number: IsIntelligentNoiseReductionEnabledForCurrentDevice_001
+* @tc.desc  : Test IsIntelligentNoiseReductionEnabledForCurrentDevice interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsIntelligentNoiseReductionEnabledForCurrentDevice_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    SourceType sourceType = SourceType::SOURCE_TYPE_MIC;
+    bool ret = server->audioPolicyService_.IsIntelligentNoiseReductionEnabledForCurrentDevice(sourceType);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test IsIntelligentNoiseReductionEnabledForCurrentDevice.
+* @tc.number: IsIntelligentNoiseReductionEnabledForCurrentDevice_002
+* @tc.desc  : Test IsIntelligentNoiseReductionEnabledForCurrentDevice interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsIntelligentNoiseReductionEnabledForCurrentDevice_002, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    SourceType sourceType = SourceType::SOURCE_TYPE_LIVE;
+    bool ret = server->audioPolicyService_.IsIntelligentNoiseReductionEnabledForCurrentDevice(sourceType);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test IsIntelligentNoiseReductionEnabledForCurrentDevice.
+* @tc.number: IsIntelligentNoiseReductionEnabledForCurrentDevice_003
+* @tc.desc  : Test IsIntelligentNoiseReductionEnabledForCurrentDevice interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsIntelligentNoiseReductionEnabledForCurrentDevice_003, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    SourceType sourceType = SourceType::SOURCE_TYPE_VOICE_COMMUNICATION;
+    server->audioPolicyService_.ecEnableState_ = 1;
+    bool ret = server->audioPolicyService_.IsIntelligentNoiseReductionEnabledForCurrentDevice(sourceType);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test IsIntelligentNoiseReductionEnabledForCurrentDevice.
+* @tc.number: IsIntelligentNoiseReductionEnabledForCurrentDevice_004
+* @tc.desc  : Test IsIntelligentNoiseReductionEnabledForCurrentDevice interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, IsIntelligentNoiseReductionEnabledForCurrentDevice_004, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    SourceType sourceType = SourceType::SOURCE_TYPE_VOICE_COMMUNICATION;
+    server->audioPolicyService_.ecEnableState_ = 0;
+    bool ret = server->audioPolicyService_.IsIntelligentNoiseReductionEnabledForCurrentDevice(sourceType);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test CheckVoipAnrOn.
+* @tc.number: CheckVoipAnrOn_001
+* @tc.desc  : Test CheckVoipAnrOn interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, CheckVoipAnrOn_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    AudioEffectPropertyArray propertyArray = {};
+    propertyArray.property.push_back({"record", "NROFF"});
+    bool ret = server->audioPolicyService_.CheckVoipAnrOn(propertyArray.property);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test CheckVoipAnrOn.
+* @tc.number: CheckVoipAnrOn_002
+* @tc.desc  : Test CheckVoipAnrOn interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, CheckVoipAnrOn_002, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    AudioEffectPropertyArray propertyArray = {};
+    propertyArray.property.push_back({"voip_up", "NROFF"});
+    bool ret = server->audioPolicyService_.CheckVoipAnrOn(propertyArray.property);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test CheckVoipAnrOn.
+* @tc.number: CheckVoipAnrOn_003
+* @tc.desc  : Test CheckVoipAnrOn interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, CheckVoipAnrOn_003, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    AudioEffectPropertyArray propertyArray = {};
+    propertyArray.property.push_back({"record", "AINR"});
+    bool ret = server->audioPolicyService_.CheckVoipAnrOn(propertyArray.property);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test CheckVoipAnrOn.
+* @tc.number: CheckVoipAnrOn_004
+* @tc.desc  : Test CheckVoipAnrOn interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, CheckVoipAnrOn_004, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    AudioEffectPropertyArray propertyArray = {};
+    propertyArray.property.push_back({"voip_up", "AINR"});
+    bool ret = server->audioPolicyService_.CheckVoipAnrOn(propertyArray.property);
+    EXPECT_EQ(ret, true);
+}
+
+/**
+* @tc.name  : Test ClearActiveHfpDevice.
+* @tc.number: ClearActiveHfpDevice_001.
+* @tc.desc  : Test ClearActiveHfpDevice interfaces.
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, ClearActiveHfpDevice_001, TestSize.Level1)
+{
+    auto server = GetServerUtil::GetServerPtr();
+    EXPECT_NE(nullptr, server);
+
+    std::shared_ptr<AudioDeviceDescriptor> desc = std::make_shared<AudioDeviceDescriptor>();
+    desc->deviceType_ = DEVICE_TYPE_SPEAKER;
+    int32_t ret = server->audioPolicyService_.audioRecoveryDevice_.ClearActiveHfpDevice(desc);
+    EXPECT_EQ(ret, SUCCESS);
+    desc->deviceType_ = DEVICE_TYPE_BLUETOOTH_SCO;
+    ret = server->audioPolicyService_.audioRecoveryDevice_.ClearActiveHfpDevice(desc);
+    EXPECT_EQ(ret, SUCCESS);
+}
+
+/**
+* @tc.name  : Test GetFastStreamSupport
+* @tc.number: GetFastStreamSupport_001
+* @tc.desc  : Test GetFastStreamSupport with AUDIO_OUTPUT_FLAG_FAST and supported format
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetFastStreamSupport_001, TestSize.Level1)
+{
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+
+    AudioStreamInfo streamInfo;
+    streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
+    streamInfo.channelLayout = AudioChannelLayout::CH_LAYOUT_STEREO;
+    streamInfo.samplingRate = AudioSamplingRate::SAMPLE_RATE_48000;
+
+    std::shared_ptr<PipeStreamPropInfo> propInfo = std::make_shared<PipeStreamPropInfo>();
+    propInfo->format_ = AudioSampleFormat::SAMPLE_S16LE;
+    propInfo->channelLayout_ = AudioChannelLayout::CH_LAYOUT_STEREO;
+    propInfo->sampleRate_ = AudioSamplingRate::SAMPLE_RATE_48000;
+
+    std::shared_ptr<AdapterPipeInfo> pipeInfo = std::make_shared<AdapterPipeInfo>();
+    pipeInfo->supportFlags_ = AUDIO_OUTPUT_FLAG_FAST;
+    pipeInfo->streamPropInfos_ = {propInfo};
+
+    std::shared_ptr<AdapterDeviceInfo> deviceInfo = std::make_shared<AdapterDeviceInfo>();
+    deviceInfo->role_ = OUTPUT_DEVICE;
+    deviceInfo->supportPipeMap_.insert({0, pipeInfo});
+
+    bool ret = audioConfigManager_.GetFastStreamSupport(streamInfo, deviceInfo);
+    EXPECT_EQ(ret, true);
+}
+
+/**
+* @tc.name  : Test GetFastStreamSupport
+* @tc.number: GetFastStreamSupport_002
+* @tc.desc  : Test GetFastStreamSupport with AUDIO_OUTPUT_FLAG_FAST and unsupported format
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetFastStreamSupport_002, TestSize.Level1)
+{
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+
+    AudioStreamInfo streamInfo;
+    streamInfo.format = AudioSampleFormat::SAMPLE_U8;
+    streamInfo.channelLayout = AudioChannelLayout::CH_LAYOUT_STEREO;
+
+    std::shared_ptr<PipeStreamPropInfo> propInfo = std::make_shared<PipeStreamPropInfo>();
+    propInfo->format_ = AudioSampleFormat::SAMPLE_U8;
+    propInfo->channelLayout_ = AudioChannelLayout::CH_LAYOUT_STEREO;
+    propInfo->sampleRate_ = AudioSamplingRate::SAMPLE_RATE_48000;
+
+    std::shared_ptr<AdapterPipeInfo> pipeInfo = std::make_shared<AdapterPipeInfo>();
+    pipeInfo->supportFlags_ = AUDIO_OUTPUT_FLAG_FAST;
+    pipeInfo->streamPropInfos_ = {propInfo};
+
+    std::shared_ptr<AdapterDeviceInfo> deviceInfo = std::make_shared<AdapterDeviceInfo>();
+    deviceInfo->role_ = OUTPUT_DEVICE;
+    deviceInfo->supportPipeMap_.insert({0, pipeInfo});
+
+    bool ret = audioConfigManager_.GetFastStreamSupport(streamInfo, deviceInfo);
+    EXPECT_EQ(ret, false);
+}
+
+/**
+* @tc.name  : Test GetFastStreamSupport
+* @tc.number: GetFastStreamSupport_003
+* @tc.desc  : Test GetFastStreamSupport with AUDIO_INPUT_FLAG_FAST and supported format
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetFastStreamSupport_003, TestSize.Level1)
+{
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+
+    AudioStreamInfo streamInfo;
+    streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
+    streamInfo.channelLayout = AudioChannelLayout::CH_LAYOUT_STEREO;
+    streamInfo.samplingRate = AudioSamplingRate::SAMPLE_RATE_48000;
+
+    std::shared_ptr<PipeStreamPropInfo> propInfo = std::make_shared<PipeStreamPropInfo>();
+    propInfo->format_ = AudioSampleFormat::SAMPLE_S16LE;
+    propInfo->channelLayout_ = AudioChannelLayout::CH_LAYOUT_STEREO;
+    propInfo->sampleRate_ = AudioSamplingRate::SAMPLE_RATE_48000;
+
+    std::shared_ptr<AdapterPipeInfo> pipeInfo = std::make_shared<AdapterPipeInfo>();
+    pipeInfo->supportFlags_ = AUDIO_INPUT_FLAG_FAST;
+    pipeInfo->streamPropInfos_ = {propInfo};
+
+    std::shared_ptr<AdapterDeviceInfo> deviceInfo = std::make_shared<AdapterDeviceInfo>();
+    deviceInfo->role_ = INPUT_DEVICE;
+    deviceInfo->supportPipeMap_.insert({0, pipeInfo});
+
+    bool ret = audioConfigManager_.GetFastStreamSupport(streamInfo, deviceInfo);
+    EXPECT_EQ(ret, true);
+}
+
+/**
+* @tc.name  : Test GetFastStreamSupport
+* @tc.number: GetFastStreamSupport_004
+* @tc.desc  : Test GetFastStreamSupport with AUDIO_INPUT_FLAG_FAST and unsupported format
+*/
+HWTEST_F(AudioPolicyServiceFourthUnitTest, GetFastStreamSupport_004, TestSize.Level1)
+{
+    AudioCoreConfigManager &audioConfigManager_ = AudioCoreConfigManager::GetInstance();
+    EXPECT_EQ(audioConfigManager_.Init(true), true);
+
+    AudioStreamInfo streamInfo;
+    streamInfo.format = AudioSampleFormat::SAMPLE_S32LE;
+    streamInfo.channelLayout = AudioChannelLayout::CH_LAYOUT_STEREO;
+
+    std::shared_ptr<PipeStreamPropInfo> propInfo = std::make_shared<PipeStreamPropInfo>();
+    propInfo->format_ = AudioSampleFormat::SAMPLE_S32LE;
+    propInfo->channelLayout_ = AudioChannelLayout::CH_LAYOUT_STEREO;
+    propInfo->sampleRate_ = AudioSamplingRate::SAMPLE_RATE_48000;
+
+    std::shared_ptr<AdapterPipeInfo> pipeInfo = std::make_shared<AdapterPipeInfo>();
+    pipeInfo->supportFlags_ = AUDIO_INPUT_FLAG_FAST;
+    pipeInfo->streamPropInfos_ = {propInfo};
+
+    std::shared_ptr<AdapterDeviceInfo> deviceInfo = std::make_shared<AdapterDeviceInfo>();
+    deviceInfo->role_ = INPUT_DEVICE;
+    deviceInfo->supportPipeMap_.insert({0, pipeInfo});
+
+    bool ret = audioConfigManager_.GetFastStreamSupport(streamInfo, deviceInfo);
+    EXPECT_EQ(ret, false);
+}
+} // namespace AudioStandard
+} // namespace OHOS
